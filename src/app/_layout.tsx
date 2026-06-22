@@ -1,0 +1,86 @@
+import '../../../global.css';
+import { useEffect } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StatusBar } from 'expo-status-bar';
+import { registerUnauthenticatedHandler } from '@/services/api/client';
+import { authService } from '@/features/auth/auth.service';
+import { useAuthStore } from '@/features/auth/auth.store';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 2, // 2 min
+      gcTime: 1000 * 60 * 10,   // 10 min
+    },
+  },
+});
+
+export default function RootLayout() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RootNavigator />
+    </QueryClientProvider>
+  );
+}
+
+function RootNavigator() {
+  const router = useRouter();
+  const segments = useSegments();
+  const { isAuthenticated, isHydrated } = useAuthStore();
+
+  // Register 401 handler — clears store and redirects to login
+  useEffect(() => {
+    registerUnauthenticatedHandler(() => {
+      router.replace('/(auth)/login');
+    });
+  }, [router]);
+
+  // Hydrate session from SecureStore on boot
+  useEffect(() => {
+    authService.hydrate();
+  }, []);
+
+  // Route guard — runs after hydration
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, isHydrated, segments, router]);
+
+  if (!isHydrated) {
+    // Splash is shown by Expo while JS loads — nothing to render here
+    return null;
+  }
+
+  return (
+    <>
+      <StatusBar style="light" />
+      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="(post)/[id]"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="(chat)/[id]"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="(story)/[id]"
+          options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+        />
+        <Stack.Screen name="(places)/[id]" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+    </>
+  );
+}

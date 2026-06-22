@@ -1,0 +1,58 @@
+export const colors = {
+  primary: '#7C3AED',
+  primaryLight: '#EDE6FF',
+  accent: '#F59E0B',
+  background: '#0A0A0A',
+  card: '#161616',
+  elevated: '#1F1F1F',
+  white: '#FFFFFF',
+  textPrimary: '#FAFAFA',
+  textSecondary: '#A1A1AA',
+  textMuted: '#52525B',
+  border: '#27272A',
+  danger: '#EF4444',
+  success: '#22C55E',
+} as const;
+
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  '2xl': 48,
+  '3xl': 64,
+} as const;
+
+export const radius = {
+  sm: 6,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  full: 9999,
+} as const;
+
+export const typography = {
+  fontSize: {
+    xs: 11,
+    sm: 13,
+    base: 15,
+    md: 17,
+    lg: 20,
+    xl: 24,
+    '2xl': 30,
+    '3xl': 36,
+  },
+  fontWeight: {
+    regular: '400' as const,
+    medium: '500' as const,
+    semibold: '600' as const,
+    bold: '700' as const,
+    extrabold: '800' as const,
+  },
+  lineHeight: {
+    tight: 1.2,
+    normal: 1.5,
+    relaxed: 1.75,
+  },
+} as const;
