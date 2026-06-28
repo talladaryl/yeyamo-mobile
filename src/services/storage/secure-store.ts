@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 const KEYS = {
   AUTH_TOKEN: 'yeyamo_auth_token',
   USER_ID: 'yeyamo_user_id',
+  HAS_SEEN_ONBOARDING: 'yeyamo_has_seen_onboarding',
 } as const;
 
 type StoreKey = (typeof KEYS)[keyof typeof KEYS];

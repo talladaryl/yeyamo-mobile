@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { SocialButton } from '@/components/auth/SocialButton';
 import { useAuth } from '@/features/auth/useAuth';
 import { loginSchema, type LoginForm } from '@/utils/validation';
 
@@ -30,6 +31,11 @@ export default function LoginScreen() {
     }
   };
 
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+    // TODO: Implement social login
+    console.log(`${provider} login not implemented yet`);
+  };
+
   return (
     <SafeScreen>
       <KeyboardAvoidingView
@@ -40,28 +46,31 @@ export default function LoginScreen() {
           contentContainerClassName="flex-1 justify-center px-6 py-12"
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View className="mb-10">
-            <Text className="text-white text-4xl font-extrabold tracking-tight">
+          {/* Logo et Header */}
+          <View className="items-center mb-10">
+            <View className="w-20 h-20 bg-[#EF4444] rounded-2xl items-center justify-center mb-4">
+              <Text className="text-white text-2xl font-bold">Y</Text>
+            </View>
+            <Text className="text-white text-4xl font-extrabold tracking-tight mb-2">
               YEYAMO
             </Text>
-            <Text className="text-[#A1A1AA] text-base mt-2">
-              Sign in to continue
+            <Text className="text-[#A1A1AA] text-base text-center">
+              Connectez-vous à votre{'\n'}compte YEYAMO
             </Text>
           </View>
 
-          {/* Form */}
-          <View className="gap-4">
+          {/* Formulaire */}
+          <View className="gap-4 mb-6">
             <Controller
               control={control}
               name="email"
               render={({ field: { value, onChange, onBlur } }) => (
                 <Input
-                  label="Email"
+                  label="Email ou numéro de téléphone"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  placeholder="you@example.com"
+                  placeholder="nom.utilisateur"
                   keyboardType="email-address"
                   textContentType="emailAddress"
                   autoComplete="email"
@@ -75,7 +84,7 @@ export default function LoginScreen() {
               name="password"
               render={({ field: { value, onChange, onBlur } }) => (
                 <Input
-                  label="Password"
+                  label="Mot de passe"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -93,20 +102,60 @@ export default function LoginScreen() {
             ) : null}
 
             <Button
-              label="Sign In"
+              label="Se connecter"
               onPress={handleSubmit(onSubmit)}
               isLoading={isLoading}
               className="mt-2"
             />
           </View>
 
-          {/* Footer */}
-          <View className="flex-row justify-center items-center mt-8 gap-1">
-            <Text className="text-[#A1A1AA] text-sm">Don't have an account?</Text>
+          {/* Lien mot de passe oublié */}
+          <TouchableOpacity 
+            onPress={() => router.push('/(auth)/forgot-password')}
+            className="items-center mb-6"
+          >
+            <Text className="text-[#EF4444] text-sm">Mot de passe oublié ?</Text>
+          </TouchableOpacity>
+
+          {/* Inscription */}
+          <View className="flex-row justify-center items-center mb-6 gap-1">
+            <Text className="text-[#A1A1AA] text-sm">Vous n'avez pas de compte ?</Text>
             <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-              <Text className="text-[#7C3AED] text-sm font-semibold">Sign Up</Text>
+              <Text className="text-[#EF4444] text-sm font-semibold">Créer un compte</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Séparateur */}
+          <View className="flex-row items-center mb-6">
+            <View className="flex-1 h-px bg-[#27272A]" />
+            <Text className="text-[#A1A1AA] text-sm mx-4">ou</Text>
+            <View className="flex-1 h-px bg-[#27272A]" />
+          </View>
+
+          {/* Connexion sociale */}
+          <View className="gap-3">
+            <SocialButton
+              provider="google"
+              onPress={() => handleSocialLogin('google')}
+              disabled={isLoading}
+            />
+            <SocialButton
+              provider="apple"
+              onPress={() => handleSocialLogin('apple')}
+              disabled={isLoading}
+            />
+          </View>
+
+          {/* Lien inscription partenaire */}
+          <TouchableOpacity 
+            onPress={() => router.push('/(auth)/register-partner')}
+            className="items-center mt-6"
+          >
+            <Text className="text-[#A1A1AA] text-sm">
+              Vous êtes un partenaire ?{' '}
+              <Text className="text-[#EF4444]">Créer un compte partenaire</Text>
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeScreen>

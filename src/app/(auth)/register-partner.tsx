@@ -7,11 +7,11 @@ import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { PhoneInput } from '@/components/auth/PhoneInput';
-import { SocialButton } from '@/components/auth/SocialButton';
+import { CategoryPicker } from '@/components/auth/CategoryPicker';
 import { useAuth } from '@/features/auth/useAuth';
-import { registerSchema, type RegisterForm } from '@/utils/validation';
+import { partnerRegisterSchema, type PartnerRegisterForm } from '@/utils/validation';
 
-export default function RegisterScreen() {
+export default function RegisterPartnerScreen() {
   const router = useRouter();
   const { register: registerUser, isLoading, error } = useAuth();
   const [countryCode, setCountryCode] = useState('+237');
@@ -22,38 +22,32 @@ export default function RegisterScreen() {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<RegisterForm>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<PartnerRegisterForm>({
+    resolver: zodResolver(partnerRegisterSchema),
     defaultValues: { 
-      display_name: '', 
-      username: '', 
-      email: '', 
-      password: '', 
-      password_confirmation: '', 
-      city: '',
-      phone: ''
+      company_name: '',
+      category: '',
+      email: '',
+      phone: '',
+      password: '',
+      password_confirmation: '',
+      accept_terms: false,
     },
   });
 
   const phoneValue = watch('phone') || '';
+  const categoryValue = watch('category') || '';
+  const acceptTerms = watch('accept_terms');
 
-  const onSubmit = async (data: RegisterForm) => {
+  const onSubmit = async (data: PartnerRegisterForm) => {
     try {
-      const fullPhone = data.phone ? `${countryCode}${data.phone}` : undefined;
-      await registerUser({
-        ...data,
-        phone: fullPhone,
-      });
-      // Navigation handled by root layout guard or verification screen
+      const fullPhone = `${countryCode}${data.phone}`;
+      // TODO: Call partner registration API
+      console.log('Partner registration:', { ...data, phone: fullPhone });
       router.replace('/(auth)/verify-code');
     } catch {
       // error displayed via useAuth state
     }
-  };
-
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
-    // TODO: Implement social login
-    console.log(`${provider} login not implemented yet`);
   };
 
   return (
@@ -67,35 +61,45 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Header avec bouton retour */}
+          <View className="flex-row items-center mb-6">
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text className="text-white text-2xl">←</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Logo et Header */}
           <View className="items-center mb-8">
             <View className="w-16 h-16 bg-[#EF4444] rounded-2xl items-center justify-center mb-3">
               <Text className="text-white text-xl font-bold">Y</Text>
             </View>
-            <Text className="text-white text-2xl font-bold mb-1">
-              Rejoignez la
-            </Text>
-            <Text className="text-white text-2xl font-bold mb-2">
-              communauté YEYAMO
+            <Text className="text-white text-2xl font-bold mb-2 text-center">
+              Développez votre activité{'\n'}avec YEYAMO
             </Text>
             <Text className="text-[#A1A1AA] text-sm text-center">
-              Découvrez tous les lieux avec les{'\n'}meilleures offres et nouveautés de{'\n'}la communauté
+              Présentez votre établissement,{'\n'}publiez vos produits et services et connectez-vous{'\n'}avec vos clients et partenaires.
             </Text>
           </View>
 
           {/* Formulaire */}
-          <View className="gap-4 mb-4">
+          <View className="gap-4 mb-6">
+            <CategoryPicker
+              value={categoryValue}
+              onValueChange={(value) => setValue('category', value)}
+              error={errors.category?.message}
+            />
+
             <Controller
               control={control}
-              name="display_name"
+              name="company_name"
               render={({ field: { value, onChange, onBlur } }) => (
                 <Input
-                  label="Nom complet"
+                  label="Nom de l'établissement"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  placeholder="Nom complet"
-                  error={errors.display_name?.message}
+                  placeholder="Nom de l'établissement"
+                  error={errors.company_name?.message}
                 />
               )}
             />
@@ -105,11 +109,11 @@ export default function RegisterScreen() {
               name="email"
               render={({ field: { value, onChange, onBlur } }) => (
                 <Input
-                  label="E-mail"
+                  label="Email professionnel"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  placeholder="Email"
+                  placeholder="Email professionnel"
                   keyboardType="email-address"
                   textContentType="emailAddress"
                   autoComplete="email"
@@ -119,28 +123,13 @@ export default function RegisterScreen() {
             />
 
             <PhoneInput
-              label="Téléphone (+237 par défaut)"
+              label="Téléphone (+237)"
               value={phoneValue}
               onChangeText={(text) => setValue('phone', text)}
               countryCode={countryCode}
               onCountryCodeChange={setCountryCode}
               placeholder="6XX XX XX XX"
               error={errors.phone?.message}
-            />
-
-            <Controller
-              control={control}
-              name="city"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <Input
-                  label="Ville de résidence"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="Ville de résidence"
-                  error={errors.city?.message}
-                />
-              )}
             />
 
             <Controller
@@ -177,72 +166,50 @@ export default function RegisterScreen() {
               )}
             />
 
-            {/* Auto-generate username from display_name */}
-            <Controller
-              control={control}
-              name="username"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <Input
-                  label="Nom d'utilisateur (auto-généré)"
-                  value={value || watch('display_name')?.toLowerCase().replace(/\s+/g, '_')}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="nom_utilisateur"
-                  error={errors.username?.message}
-                />
-              )}
-            />
-
             {error && (
               <Text className="text-[#EF4444] text-sm text-center">{error}</Text>
             )}
 
-            {/* CGU/Politique */}
-            <View className="flex-row items-start mb-2">
-              <View className="w-4 h-4 border border-[#A1A1AA] rounded mr-3 mt-0.5" />
-              <Text className="text-[#A1A1AA] text-xs flex-1 leading-4">
+            {/* Conditions générales */}
+            <TouchableOpacity 
+              className="flex-row items-start mb-4"
+              onPress={() => setValue('accept_terms', !acceptTerms)}
+            >
+              <View className={`w-5 h-5 border-2 rounded mr-3 mt-0.5 items-center justify-center ${
+                acceptTerms ? 'bg-[#EF4444] border-[#EF4444]' : 'border-[#A1A1AA]'
+              }`}>
+                {acceptTerms && (
+                  <Text className="text-white text-xs">✓</Text>
+                )}
+              </View>
+              <Text className="text-[#A1A1AA] text-sm flex-1 leading-5">
                 J'accepte les{' '}
                 <Text className="text-[#EF4444]">Conditions Générales d'Utilisation</Text>
                 {' '}et la{' '}
-                <Text className="text-[#EF4444]">Politique de Confidentialité</Text>
+                <Text className="text-[#EF4444]">Politique</Text>
               </Text>
-            </View>
+            </TouchableOpacity>
+
+            {errors.accept_terms && (
+              <Text className="text-[#EF4444] text-sm -mt-4">
+                {errors.accept_terms.message}
+              </Text>
+            )}
 
             <Button
-              label="Créer mon compte"
+              label="Continuer"
               onPress={handleSubmit(onSubmit)}
               isLoading={isLoading}
               className="mt-2"
             />
           </View>
 
-          {/* Connexion */}
-          <View className="flex-row justify-center items-center mb-6 gap-1">
-            <Text className="text-[#A1A1AA] text-sm">Vous avez déjà un compte ?</Text>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text className="text-[#EF4444] text-sm font-semibold">Se connecter</Text>
+          {/* Navigation vers inscription utilisateur */}
+          <View className="flex-row justify-center items-center gap-1">
+            <Text className="text-[#A1A1AA] text-sm">Vous êtes un utilisateur ?</Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+              <Text className="text-[#EF4444] text-sm font-semibold">Créer un compte utilisateur</Text>
             </TouchableOpacity>
-          </View>
-
-          {/* Séparateur */}
-          <View className="flex-row items-center mb-6">
-            <View className="flex-1 h-px bg-[#27272A]" />
-            <Text className="text-[#A1A1AA] text-sm mx-4">ou</Text>
-            <View className="flex-1 h-px bg-[#27272A]" />
-          </View>
-
-          {/* Connexion sociale */}
-          <View className="gap-3 mb-6">
-            <SocialButton
-              provider="google"
-              onPress={() => handleSocialLogin('google')}
-              disabled={isLoading}
-            />
-            <SocialButton
-              provider="apple"
-              onPress={() => handleSocialLogin('apple')}
-              disabled={isLoading}
-            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

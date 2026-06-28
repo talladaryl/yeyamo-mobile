@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { registerUnauthenticatedHandler } from '@/services/api/client';
 import { authService } from '@/features/auth/auth.service';
 import { useAuthStore } from '@/features/auth/auth.store';
+import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,7 @@ function RootNavigator() {
   const router = useRouter();
   const segments = useSegments();
   const { isAuthenticated, isHydrated } = useAuthStore();
+  const { hasSeenOnboarding, checkOnboardingStatus } = useOnboardingStore();
 
   // Register 401 handler — clears store and redirects to login
   useEffect(() => {
@@ -40,6 +42,7 @@ function RootNavigator() {
   // Hydrate session from SecureStore on boot
   useEffect(() => {
     authService.hydrate();
+    checkOnboardingStatus();
   }, []);
 
   // Route guard — runs after hydration
@@ -47,13 +50,16 @@ function RootNavigator() {
     if (!isHydrated) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inOnboardingGroup = segments[0] === '(onboarding)';
 
-    if (!isAuthenticated && !inAuthGroup) {
+    if (!hasSeenOnboarding && !inOnboardingGroup) {
+      router.replace('/(onboarding)/splash');
+    } else if (!isAuthenticated && !inAuthGroup && hasSeenOnboarding) {
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
+    } else if (isAuthenticated && (inAuthGroup || inOnboardingGroup)) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isHydrated, segments, router]);
+  }, [isAuthenticated, isHydrated, hasSeenOnboarding, segments, router]);
 
   if (!isHydrated) {
     // Splash is shown by Expo while JS loads — nothing to render here
@@ -64,6 +70,7 @@ function RootNavigator() {
     <>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+        <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
