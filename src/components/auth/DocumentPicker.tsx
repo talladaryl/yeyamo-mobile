@@ -1,27 +1,25 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 interface DocumentPickerProps {
-  label: string;
   value: string | null;
   onValueChange: (uri: string) => void;
-  acceptedFormats?: string;
-  maxSize?: string;
+  label?: string;
   error?: string;
   disabled?: boolean;
+  acceptedFormats?: string;
 }
 
 export function DocumentPicker({
-  label,
   value,
   onValueChange,
-  acceptedFormats = 'PDF, JPG ou PNG',
-  maxSize = '5 Mo',
+  label = 'Document',
   error,
   disabled = false,
+  acceptedFormats = 'PDF, JPG ou PNG - Max 5 Mo',
 }: DocumentPickerProps) {
-  const handlePickDocument = async () => {
+  const pickDocument = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -39,48 +37,37 @@ export function DocumentPicker({
 
   return (
     <View className="mb-4">
-      <Text className="text-sm text-[#A1A1AA] font-medium mb-2">
-        {label}
-      </Text>
-      
+      {label && (
+        <Text className="text-sm text-[#A1A1AA] font-medium mb-1">
+          {label}
+        </Text>
+      )}
+
       <TouchableOpacity
-        onPress={handlePickDocument}
+        onPress={pickDocument}
         disabled={disabled}
-        className={`border-2 border-dashed rounded-xl p-4 ${
-          error ? 'border-[#EF4444]' : 'border-[#27272A]'
-        } ${value ? 'bg-[#1F1F1F]' : 'bg-transparent'}`}
+        className={`flex-row items-center justify-between px-4 py-4 rounded-xl ${
+          error ? 'border-2 border-[#EF4444]' : 'border border-[#27272A]'
+        } bg-[#1F1F1F]`}
       >
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1">
-            {value ? (
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-[#EF4444]/20 rounded-lg items-center justify-center mr-3">
-                  <Text className="text-[#EF4444] text-lg">📄</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-white text-sm font-medium">
-                    Document sélectionné
-                  </Text>
-                  <Text className="text-[#A1A1AA] text-xs">
-                    {acceptedFormats} • Max {maxSize}
-                  </Text>
-                </View>
-              </View>
-            ) : (
-              <View>
-                <Text className="text-[#A1A1AA] text-sm mb-1">
-                  Cliquez pour télécharger
-                </Text>
-                <Text className="text-[#52525B] text-xs">
-                  {acceptedFormats} • Max {maxSize}
-                </Text>
-              </View>
-            )}
-          </View>
-          
-          <View className="w-10 h-10 bg-[#EF4444]/10 rounded-full items-center justify-center ml-3">
-            <Text className="text-[#EF4444] text-lg">📤</Text>
-          </View>
+        <View className="flex-1">
+          {value ? (
+            <Text className="text-white text-base" numberOfLines={1}>
+              Document sélectionné
+            </Text>
+          ) : (
+            <View>
+              <Text className="text-[#52525B] text-base mb-1">
+                Télécharger le document
+              </Text>
+              <Text className="text-[#A1A1AA] text-xs">
+                {acceptedFormats}
+              </Text>
+            </View>
+          )}
+        </View>
+        <View className="ml-3">
+          <Text className="text-2xl">📤</Text>
         </View>
       </TouchableOpacity>
 

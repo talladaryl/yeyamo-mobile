@@ -3,25 +3,23 @@ import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 interface GalleryPickerProps {
-  label: string;
-  values: string[];
-  onValuesChange: (uris: string[]) => void;
-  minPhotos?: number;
-  maxPhotos?: number;
+  value: string[];
+  onValueChange: (uris: string[]) => void;
+  label?: string;
   error?: string;
   disabled?: boolean;
+  minPhotos?: number;
 }
 
 export function GalleryPicker({
-  label,
-  values,
-  onValuesChange,
-  minPhotos = 3,
-  maxPhotos = 10,
+  value,
+  onValueChange,
+  label = 'Galerie photos',
   error,
   disabled = false,
+  minPhotos = 3,
 }: GalleryPickerProps) {
-  const handlePickImages = async () => {
+  const pickPhotos = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -29,68 +27,71 @@ export function GalleryPicker({
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets.length > 0) {
-        const newUris = result.assets.map(asset => asset.uri);
-        const updatedValues = [...values, ...newUris].slice(0, maxPhotos);
-        onValuesChange(updatedValues);
+      if (!result.canceled && result.assets) {
+        const uris = result.assets.map(asset => asset.uri);
+        onValueChange([...value, ...uris]);
       }
     } catch (error) {
-      console.error('Error picking images:', error);
+      console.error('Error picking photos:', error);
     }
   };
 
-  const handleRemoveImage = (index: number) => {
-    const updatedValues = values.filter((_, i) => i !== index);
-    onValuesChange(updatedValues);
+  const removePhoto = (index: number) => {
+    const newValue = value.filter((_, i) => i !== index);
+    onValueChange(newValue);
   };
 
   return (
     <View className="mb-4">
-      <View className="flex-row items-center justify-between mb-2">
-        <Text className="text-sm text-[#A1A1AA] font-medium">
-          {label}
+      {label && (
+        <Text className="text-sm text-[#A1A1AA] font-medium mb-1">
+          {label} (min. {minPhotos})
         </Text>
-        <Text className="text-xs text-[#52525B]">
-          {values.length}/{maxPhotos} photos
-        </Text>
-      </View>
+      )}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
-        <View className="flex-row gap-3">
-          {/* Add button */}
-          <TouchableOpacity
-            onPress={handlePickImages}
-            disabled={disabled || values.length >= maxPhotos}
-            className={`w-24 h-24 border-2 border-dashed rounded-xl items-center justify-center ${
-              error ? 'border-[#EF4444]' : 'border-[#27272A]'
-            } ${values.length >= maxPhotos ? 'opacity-50' : ''}`}
-          >
-            <Text className="text-[#EF4444] text-2xl mb-1">+</Text>
-            <Text className="text-[#A1A1AA] text-xs">Ajouter</Text>
-          </TouchableOpacity>
+      <TouchableOpacity
+        onPress={pickPhotos}
+        disabled={disabled}
+        className={`flex-row items-center justify-between px-4 py-4 rounded-xl ${
+          error ? 'border-2 border-[#EF4444]' : 'border border-[#27272A]'
+        } bg-[#1F1F1F] mb-3`}
+      >
+        <View className="flex-1">
+          <Text className="text-[#52525B] text-base mb-1">
+            Sélectionner plusieurs photos
+          </Text>
+          <Text className="text-[#A1A1AA] text-xs">
+            JPG ou PNG - Max 5 Mo
+          </Text>
+        </View>
+        <View className="ml-3">
+          <Text className="text-2xl">📷</Text>
+        </View>
+      </TouchableOpacity>
 
-          {/* Selected images */}
-          {values.map((uri, index) => (
-            <View key={index} className="relative w-24 h-24">
+      {value.length > 0 && (
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          className="flex-row gap-2"
+        >
+          {value.map((uri, index) => (
+            <View key={index} className="relative mr-2">
               <Image
                 source={{ uri }}
-                className="w-full h-full rounded-xl"
-                resizeMode="cover"
+                className="w-20 h-20 rounded-lg"
+                style={{ width: 80, height: 80 }}
               />
               <TouchableOpacity
-                onPress={() => handleRemoveImage(index)}
+                onPress={() => removePhoto(index)}
                 className="absolute -top-2 -right-2 w-6 h-6 bg-[#EF4444] rounded-full items-center justify-center"
               >
                 <Text className="text-white text-xs font-bold">✕</Text>
               </TouchableOpacity>
             </View>
           ))}
-        </View>
-      </ScrollView>
-
-      <Text className="text-xs text-[#52525B]">
-        Minimum {minPhotos} photos • JPG ou PNG • Max 5 Mo chacune
-      </Text>
+        </ScrollView>
+      )}
 
       {error && (
         <Text className="text-xs text-[#EF4444] mt-1">
