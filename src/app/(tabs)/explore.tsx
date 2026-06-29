@@ -1,80 +1,105 @@
-import { useState, useMemo } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeScreen } from '@/components/ui/SafeScreen';
-import { Input } from '@/components/ui/Input';
-import { Image } from 'expo-image';
-import { usePlaces } from '@/features/places/usePlaces';
-import { useDebounce } from '@/hooks/useDebounce';
-import type { Place } from '@/features/places/types';
+import { Icon } from '@/components/ui/Icon';
+import { CategoryCard } from '@/components/explore/CategoryCard';
+import { TrendingPlaceCard } from '@/components/explore/TrendingPlaceCard';
+import { categories, trendingPlaces } from '@/features/explore/mockData';
 
-export default function ExploreScreen() {
+export default function ExploreHomeScreen() {
   const router = useRouter();
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 400);
-
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = usePlaces(
-    debouncedSearch ? { search: debouncedSearch } : {},
-  );
-
-  const places = useMemo<Place[]>(
-    () => data?.pages.flatMap((p) => p.data) ?? [],
-    [data],
-  );
 
   return (
-    <SafeScreen>
-      <View className="px-4 pt-4 pb-2">
-        <Text className="text-white text-2xl font-bold mb-3">Explore</Text>
-        <Input
-          placeholder="Search places, cities..."
-          value={search}
-          onChangeText={setSearch}
-          containerClassName="mb-1"
-        />
-      </View>
+    <View className="flex-1 bg-[#0A0A0A]">
+      <SafeAreaView>
+        {/* Header */}
+        <View className="px-4 pt-3 pb-2 flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2">
+            <Icon library="ionicons" name="location" size={20} color="#EF4444" />
+            <Text className="text-white font-semibold text-base">Yaoundé</Text>
+            <Icon library="ionicons" name="chevron-down" size={16} color="#A1A1AA" />
+          </View>
 
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#7C3AED" />
+          <TouchableOpacity activeOpacity={0.7}>
+            <Icon library="ionicons" name="notifications-outline" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
-      ) : (
-        <FlatList
-          data={places}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerClassName="px-4 pb-6 gap-3"
-          onEndReached={() => hasNextPage && fetchNextPage()}
-          onEndReachedThreshold={0.4}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => router.push(`/(places)/${item.id}`)}
-              className="bg-[#161616] rounded-2xl overflow-hidden"
-              activeOpacity={0.8}
-            >
-              {item.cover_image_url ? (
-                <Image
-                  source={{ uri: item.cover_image_url }}
-                  style={{ width: '100%', height: 160 }}
-                  contentFit="cover"
+      </SafeAreaView>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Title */}
+        <View className="px-4 pt-4 pb-4">
+          <Text className="text-white text-2xl font-bold">
+            Bonjour,
+          </Text>
+          <Text className="text-white text-2xl font-bold mt-1">
+            Que souhaitez-vous{'\n'}découvrir aujourd'hui ?
+          </Text>
+        </View>
+
+        {/* Search Bar */}
+        <TouchableOpacity
+          onPress={() => router.push('/(explore)/search')}
+          className="mx-4 mb-6 bg-[#161616] rounded-xl px-4 py-3.5 flex-row items-center gap-3"
+          activeOpacity={0.8}
+        >
+          <Icon library="ionicons" name="search" size={20} color="#A1A1AA" />
+          <Text className="text-[#A1A1AA] text-sm flex-1">
+            Recherchez un lieu, événement...
+          </Text>
+        </TouchableOpacity>
+
+        {/* Categories */}
+        <View className="px-4 mb-6">
+          <View className="flex-row flex-wrap gap-y-4">
+            {categories.map((category) => (
+              <View key={category.id} style={{ width: '33.33%' }}>
+                <CategoryCard
+                  category={category}
+                  onPress={() => {
+                    // Navigate to filtered places list
+                    router.push({
+                      pathname: '/(explore)/places',
+                      params: { category: category.id },
+                    });
+                  }}
                 />
-              ) : (
-                <View className="w-full h-40 bg-[#1F1F1F] items-center justify-center">
-                  <Text style={{ fontSize: 36 }}>📍</Text>
-                </View>
-              )}
-              <View className="p-3">
-                <Text className="text-white font-semibold text-base">{item.name}</Text>
-                <Text className="text-[#A1A1AA] text-sm mt-0.5">{item.city}</Text>
               </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Trending Places */}
+        <View className="mb-6">
+          <View className="px-4 flex-row items-center justify-between mb-3">
+            <Text className="text-white text-lg font-bold">
+              Tendances près de vous
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push('/(explore)/places')}
+              activeOpacity={0.7}
+            >
+              <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
             </TouchableOpacity>
-          )}
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <ActivityIndicator color="#7C3AED" className="py-4" />
-            ) : null
-          }
-        />
-      )}
-    </SafeScreen>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+          >
+            {trendingPlaces.map((place) => (
+              <TrendingPlaceCard
+                key={place.id}
+                place={place}
+                onPress={() => router.push(`/(places)/${place.id}`)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Spacing for bottom nav */}
+        <View className="h-6" />
+      </ScrollView>
+    </View>
   );
 }
