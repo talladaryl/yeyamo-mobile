@@ -9,13 +9,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Couleurs YEYAMO officielles
+        yeyamo: {
+          DEFAULT: '#EF4444',
+          primary: '#EF4444',
+          secondary: '#DC2626',
+          dark: '#B91C1C',
+        },
         primary: {
-          DEFAULT: '#7C3AED',
-          50: '#F5F0FF',
-          100: '#EDE6FF',
-          500: '#7C3AED',
-          600: '#6D28D9',
-          700: '#5B21B6',
+          DEFAULT: '#EF4444', // Utilise YEYAMO comme couleur primaire
+          50: '#FEF2F2',
+          100: '#FEE2E2',
+          500: '#EF4444',
+          600: '#DC2626',
+          700: '#B91C1C',
         },
         accent: '#F59E0B',
         surface: {

@@ -1,6 +1,12 @@
 export const colors = {
-  primary: '#7C3AED',
-  primaryLight: '#EDE6FF',
+  // Couleurs YEYAMO officielles
+  yeyamo: {
+    primary: '#EF4444',
+    secondary: '#DC2626',
+    dark: '#B91C1C',
+  },
+  primary: '#EF4444',  // Couleur principale = YEYAMO rouge
+  primaryLight: '#FEE2E2',
   accent: '#F59E0B',
   background: '#0A0A0A',
   card: '#161616',
@@ -10,7 +16,7 @@ export const colors = {
   textSecondary: '#A1A1AA',
   textMuted: '#52525B',
   border: '#27272A',
-  danger: '#EF4444',
+  danger: '#EF4444',  // Danger = YEYAMO rouge aussi
   success: '#22C55E',
 } as const;
 

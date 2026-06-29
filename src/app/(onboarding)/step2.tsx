@@ -52,7 +52,7 @@ export default function Step2Screen() {
         >
           {/* Header du post */}
           <View className="flex-row items-center p-4 border-b border-[#27272A]">
-            <View className="w-10 h-10 rounded-full bg-[#7C3AED] items-center justify-center mr-3">
+            <View className="w-10 h-10 rounded-full bg-[#EF4444] items-center justify-center mr-3">
               <Text className="text-white font-semibold">👤</Text>
             </View>
             <View>

@@ -60,7 +60,7 @@ export default function PlaceDetailScreen() {
           <View className="flex-row items-start justify-between">
             <View className="flex-1">
               <Text className="text-white text-2xl font-bold">{place.name}</Text>
-              <Text className="text-[#7C3AED] text-sm font-medium mt-0.5 capitalize">
+              <Text className="text-[#EF4444] text-sm font-medium mt-0.5 capitalize">
                 {place.category}
               </Text>
             </View>

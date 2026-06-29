@@ -13,7 +13,7 @@ export default function NotFoundScreen() {
           The screen you're looking for doesn't exist.
         </Text>
         <Link href="/(tabs)" className="mt-4">
-          <Text className="text-[#7C3AED] font-semibold text-base">Go to Home</Text>
+          <Text className="text-[#EF4444] font-semibold text-base">Go to Home</Text>
         </Link>
       </View>
     </SafeScreen>

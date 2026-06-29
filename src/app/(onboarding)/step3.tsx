@@ -83,8 +83,8 @@ export default function Step3Screen() {
                   Yaoundé
                 </Text>
               </View>
-              <View className="bg-[#7C3AED]/20 rounded-full px-3 py-1">
-                <Text className="text-[#7C3AED] text-xs font-semibold">2j restants</Text>
+              <View className="bg-[#EF4444]/20 rounded-full px-3 py-1">
+                <Text className="text-[#EF4444] text-xs font-semibold">2j restants</Text>
               </View>
             </View>
             <View className="flex-row items-center">
@@ -109,7 +109,7 @@ export default function Step3Screen() {
                 </Text>
               </View>
               <View className="flex-row items-center">
-                <View className="w-6 h-6 rounded-full bg-[#7C3AED] items-center justify-center mr-1">
+                <View className="w-6 h-6 rounded-full bg-[#EF4444] items-center justify-center mr-1">
                   <Text className="text-white text-xs">👤</Text>
                 </View>
                 <Text className="text-[#A1A1AA] text-xs">+3 autres</Text>

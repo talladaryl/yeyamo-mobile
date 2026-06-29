@@ -14,10 +14,10 @@ interface ButtonProps {
 }
 
 const variantClasses: Record<Variant, { container: string; text: string }> = {
-  primary: { container: 'bg-[#7C3AED]', text: 'text-white font-semibold' },
+  primary: { container: 'bg-[#EF4444]', text: 'text-white font-semibold' },
   outline: {
-    container: 'border border-[#7C3AED] bg-transparent',
-    text: 'text-[#7C3AED] font-semibold',
+    container: 'border border-[#EF4444] bg-transparent',
+    text: 'text-[#EF4444] font-semibold',
   },
   ghost: { container: 'bg-transparent', text: 'text-[#A1A1AA]' },
   danger: { container: 'bg-[#EF4444]', text: 'text-white font-semibold' },

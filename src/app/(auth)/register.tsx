@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { PhoneInput } from '@/components/auth/PhoneInput';
 import { SocialButton } from '@/components/auth/SocialButton';
+import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/features/auth/useAuth';
 import { registerSchema, type RegisterForm } from '@/utils/validation';
 
@@ -69,10 +70,9 @@ export default function RegisterScreen() {
         >
           {/* Logo et Header */}
           <View className="items-center mb-8">
-            <View className="w-16 h-16 bg-[#EF4444] rounded-2xl items-center justify-center mb-3">
-              <Text className="text-white text-xl font-bold">Y</Text>
-            </View>
-            <Text className="text-white text-2xl font-bold mb-1">
+            <Logo size="medium" />
+            <Text className="text-white text-2xl font-bold mb-1 mt-3">
+              Rejoignez la
               Rejoignez la
             </Text>
             <Text className="text-white text-2xl font-bold mb-2">

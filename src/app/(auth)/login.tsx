@@ -6,6 +6,7 @@ import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { SocialButton } from '@/components/auth/SocialButton';
+import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/features/auth/useAuth';
 import { loginSchema, type LoginForm } from '@/utils/validation';
 
@@ -48,10 +49,8 @@ export default function LoginScreen() {
         >
           {/* Logo et Header */}
           <View className="items-center mb-10">
-            <View className="w-20 h-20 bg-[#EF4444] rounded-2xl items-center justify-center mb-4">
-              <Text className="text-white text-2xl font-bold">Y</Text>
-            </View>
-            <Text className="text-white text-4xl font-extrabold tracking-tight mb-2">
+            <Logo size="large" />
+            <Text className="text-white text-4xl font-extrabold tracking-tight mt-4 mb-2">
               YEYAMO
             </Text>
             <Text className="text-[#A1A1AA] text-base text-center">

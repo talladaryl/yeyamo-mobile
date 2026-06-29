@@ -25,7 +25,7 @@ export default function ProfileScreen() {
             <Text className="text-[#A1A1AA] text-xs mt-1">📍 {user.city}</Text>
           ) : null}
           {user.is_verified ? (
-            <Text className="text-[#7C3AED] text-xs mt-1 font-semibold">✓ Verified</Text>
+            <Text className="text-[#EF4444] text-xs mt-1 font-semibold">✓ Verified</Text>
           ) : null}
         </View>
 
