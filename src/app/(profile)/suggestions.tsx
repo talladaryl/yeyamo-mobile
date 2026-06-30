@@ -1,0 +1,52 @@
+// ÉCRAN 5 - Suggestions à suivre
+import { View, Text, FlatList } from 'react-native';
+import { useRouter, Stack } from 'expo-router';
+import { Icon } from '@/components/ui/Icon';
+import { SuggestionCard } from '@/components/social/SuggestionCard';
+import { mockSuggestions } from '@/features/social/mockData';
+
+export default function SuggestionsScreen() {
+  const router = useRouter();
+  const suggestions = mockSuggestions;
+
+  return (
+    <View className="flex-1 bg-[#0A0A0A]">
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerStyle: { backgroundColor: '#0A0A0A' },
+          headerTintColor: '#FFFFFF',
+          headerTitle: 'Suggestions à suivre',
+        }}
+      />
+
+      {/* Header Info */}
+      <View className="px-4 py-4 border-b border-[#27272A]">
+        <Text className="text-white font-bold text-lg mb-1">Pour vous</Text>
+        <Text className="text-[#A1A1AA] text-sm">
+          Découvrez des personnes selon vos centres d'intérêt
+        </Text>
+      </View>
+
+      {/* Suggestions List */}
+      <FlatList
+        data={suggestions}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <SuggestionCard
+            user={item}
+            onPress={() => router.push(`/(profile)/${item.username}`)}
+            onFollowPress={() => console.log('Follow', item.username)}
+            onDismiss={() => console.log('Dismiss', item.username)}
+          />
+        )}
+        ListEmptyComponent={
+          <View className="items-center justify-center py-12">
+            <Icon library="ionicons" name="people-outline" size={64} color="#27272A" />
+            <Text className="text-[#A1A1AA] text-sm mt-4">Aucune suggestion disponible</Text>
+          </View>
+        }
+      />
+    </View>
+  );
+}

@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, Pressable } from 'react-native';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { Avatar } from '@/components/ui/Avatar';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import { StatsRow } from '@/components/ui/StatsRow';
@@ -10,9 +11,12 @@ type ProfileHeaderProps = {
   profile: UserProfile;
   onFollowPress: () => void;
   onMessagePress: () => void;
+  isOwnProfile?: boolean;
 };
 
-export function ProfileHeader({ profile, onFollowPress, onMessagePress }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, onFollowPress, onMessagePress, isOwnProfile = false }: ProfileHeaderProps) {
+  const router = useRouter();
+
   return (
     <View className="bg-[#0A0A0A]">
       {/* Cover photo */}
@@ -50,14 +54,35 @@ export function ProfileHeader({ profile, onFollowPress, onMessagePress }: Profil
           <Text className="text-[#A1A1AA] text-sm mt-1">{profile.city}</Text>
         )}
 
-        {/* Stats */}
-        <StatsRow
-          stats={[
-            { label: 'Publications', value: profile.posts_count },
-            { label: 'Abonnés', value: profile.followers_count },
-            { label: 'Abonnements', value: profile.following_count },
-          ]}
-        />
+        {/* Stats - Cliquables */}
+        <View className="flex-row justify-around py-4 -mx-4 border-y border-[#27272A] my-4">
+          <TouchableOpacity
+            onPress={() => {}}
+            className="flex-1 items-center"
+            activeOpacity={0.7}
+          >
+            <Text className="text-white text-xl font-bold">{profile.posts_count}</Text>
+            <Text className="text-[#A1A1AA] text-xs mt-0.5">Publications</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push('/(profile)/followers')}
+            className="flex-1 items-center"
+            activeOpacity={0.7}
+          >
+            <Text className="text-white text-xl font-bold">{profile.followers_count}</Text>
+            <Text className="text-[#A1A1AA] text-xs mt-0.5">Abonnés</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push('/(profile)/following')}
+            className="flex-1 items-center"
+            activeOpacity={0.7}
+          >
+            <Text className="text-white text-xl font-bold">{profile.following_count}</Text>
+            <Text className="text-[#A1A1AA] text-xs mt-0.5">Abonnements</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Bio */}
         {profile.bio && (
