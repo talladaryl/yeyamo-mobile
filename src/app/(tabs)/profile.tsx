@@ -130,7 +130,7 @@ export default function ProfileScreen() {
             {/* Paramètres Social */}
             <TouchableOpacity
               onPress={() => router.push('/(profile)/social-settings')}
-              className="flex-row items-center p-4"
+              className="flex-row items-center p-4 border-b border-[#27272A]"
               activeOpacity={0.7}
             >
               <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
@@ -139,6 +139,24 @@ export default function ProfileScreen() {
               <Text className="flex-1 text-white font-semibold text-sm ml-3">
                 Paramètres réseau social
               </Text>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
+            </TouchableOpacity>
+
+            {/* Mes Badges */}
+            <TouchableOpacity
+              onPress={() => router.push('/(social-graph)/badges')}
+              className="flex-row items-center p-4"
+              activeOpacity={0.7}
+            >
+              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                <Icon library="ionicons" name="trophy" size={20} color="#F59E0B" />
+              </View>
+              <Text className="flex-1 text-white font-semibold text-sm ml-3">
+                Mes badges
+              </Text>
+              <View className="bg-[#EF4444] px-2 py-0.5 rounded-full mr-2">
+                <Text className="text-white text-xs font-bold">3</Text>
+              </View>
               <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
             </TouchableOpacity>
           </View>

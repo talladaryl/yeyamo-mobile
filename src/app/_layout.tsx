@@ -112,6 +112,8 @@ function RootNavigator() {
         <Stack.Screen name="(partner-dashboard)/statistics" />
         <Stack.Screen name="(partner-dashboard)/notifications" />
         <Stack.Screen name="(partner-dashboard)/settings" />
+        <Stack.Screen name="(social-graph)/badges" />
+        <Stack.Screen name="(social-graph)/badges/[id]" />
         <Stack.Screen name="+not-found" />
       </Stack>
     </>
