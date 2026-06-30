@@ -7,6 +7,9 @@ export interface Event {
   cover_image_url: string | null;
   start_date: string;
   end_date: string;
+  start_time?: string;
+  end_time?: string;
+  duration_hours?: number;
   location: string;
   address: string;
   city: string;
@@ -18,4 +21,11 @@ export interface Event {
   price: number | null;
   currency: string;
   created_at: string;
+  program?: EventProgramItem[];
+}
+
+export interface EventProgramItem {
+  date: string;
+  title: string;
+  description?: string;
 }

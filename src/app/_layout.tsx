@@ -86,6 +86,24 @@ function RootNavigator() {
           options={{ presentation: 'fullScreenModal', animation: 'fade' }}
         />
         <Stack.Screen name="(places)/[id]" />
+        <Stack.Screen name="(events)/[id]" />
+        <Stack.Screen name="(experiences)/[id]" />
+        <Stack.Screen name="(explore)/events" />
+        <Stack.Screen name="(explore)/experiences" />
+        <Stack.Screen name="(create)/choice" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="(create)/publication" />
+        <Stack.Screen name="(create)/story" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="(create)/event" />
+        <Stack.Screen name="(create)/event-settings" />
+        <Stack.Screen name="(create)/suggest-place-step1" />
+        <Stack.Screen name="(create)/suggest-place-step2" />
+        <Stack.Screen name="(partner)/choice" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="(partner)/publication" />
+        <Stack.Screen name="(partner)/story" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="(partner)/add-place-step1" />
+        <Stack.Screen name="(partner)/add-place-step2" />
+        <Stack.Screen name="(partner)/add-event-step1" />
+        <Stack.Screen name="(partner)/add-event-step2" />
         <Stack.Screen name="+not-found" />
       </Stack>
     </>
