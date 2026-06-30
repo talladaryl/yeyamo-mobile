@@ -1,10 +1,13 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { user, logout } = useAuth();
 
   if (!user) return null;
@@ -45,6 +48,24 @@ export default function ProfileScreen() {
 
         {/* Actions */}
         <View className="px-6 pt-6 gap-3">
+          {user.user_type === 'partner' && (
+            <TouchableOpacity
+              onPress={() => router.push('/(partner-dashboard)/dashboard')}
+              className="bg-[#EF4444] rounded-xl p-4 flex-row items-center justify-between"
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 bg-white/20 rounded-full items-center justify-center">
+                  <Icon library="ionicons" name="stats-chart" size={20} color="#FFFFFF" />
+                </View>
+                <View>
+                  <Text className="text-white font-bold text-base">Tableau de bord</Text>
+                  <Text className="text-white/80 text-xs">Gérez votre activité</Text>
+                </View>
+              </View>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
           <Button label="Edit Profile" onPress={() => {}} variant="outline" />
           <Button label="Sign Out" onPress={logout} variant="ghost" />
         </View>

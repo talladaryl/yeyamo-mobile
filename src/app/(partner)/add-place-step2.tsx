@@ -34,9 +34,7 @@ export default function AddPlaceStep2Screen() {
       landmarks,
       coordinates: selectedCoordinates,
     });
-    console.log('Place added:', placeForm);
-    router.back();
-    router.back();
+    router.push('/(partner)/add-place-step3');
   };
 
   return (

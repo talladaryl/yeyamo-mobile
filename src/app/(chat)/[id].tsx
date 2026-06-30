@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native';
+import { Icon } from '@/components/ui/Icon';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { Avatar } from '@/components/ui/Avatar';
 import { useChatMessages, useConversations, useSendMessage } from '@/features/chat/useChat';
@@ -48,7 +49,6 @@ export default function ChatScreen() {
     if (!body || isSending) return;
     setDraft('');
     sendMessage({ conversation_id: conversationId, body });
-    // Scroll to bottom after send
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   }, [draft, conversationId, sendMessage, isSending]);
 
@@ -62,6 +62,10 @@ export default function ChatScreen() {
     [currentUser?.id],
   );
 
+  const isGroup = conversation?.type === 'group';
+  const displayName = isGroup ? conversation?.group_name : conversation?.participant?.display_name;
+  const avatarUrl = isGroup ? conversation?.participants[0]?.avatar_url : conversation?.participant?.avatar_url ?? null;
+
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0A]">
       <Stack.Screen
@@ -71,21 +75,59 @@ export default function ChatScreen() {
           headerTintColor: '#FFFFFF',
           headerTitle: () =>
             conversation ? (
-              <View className="flex-row items-center gap-2">
-                <Avatar
-                  uri={conversation.participant.avatar_url}
-                  displayName={conversation.participant.display_name}
-                  size={32}
-                />
-                <Text className="text-white font-semibold text-sm">
-                  {conversation.participant.display_name}
-                </Text>
-              </View>
+              <TouchableOpacity
+                onPress={() => router.push(`/(chat)/info/${conversationId}`)}
+                className="flex-row items-center gap-2"
+                activeOpacity={0.7}
+              >
+                {isGroup && conversation.participants.length > 1 ? (
+                  <View className="relative w-8 h-8">
+                    <Avatar
+                      uri={conversation.participants[0]?.avatar_url}
+                      displayName={conversation.participants[0]?.display_name}
+                      size={24}
+                      className="absolute top-0 left-0"
+                    />
+                    <Avatar
+                      uri={conversation.participants[1]?.avatar_url}
+                      displayName={conversation.participants[1]?.display_name}
+                      size={24}
+                      className="absolute bottom-0 right-0"
+                    />
+                  </View>
+                ) : (
+                  <Avatar
+                    uri={avatarUrl}
+                    displayName={displayName || ''}
+                    size={32}
+                  />
+                )}
+                <View>
+                  <Text className="text-white font-semibold text-sm">
+                    {displayName}
+                  </Text>
+                  {isGroup && (
+                    <Text className="text-[#A1A1AA] text-xs">
+                      {conversation.participants.length} participants
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
             ) : null,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="pr-4">
-              <Text className="text-white text-base">←</Text>
+              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <View className="flex-row gap-4">
+              <TouchableOpacity>
+                <Icon library="ionicons" name="call-outline" size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push(`/(chat)/info/${conversationId}`)}>
+                <Icon library="ionicons" name="ellipsis-vertical" size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />
@@ -98,7 +140,7 @@ export default function ChatScreen() {
         {/* Message list */}
         {query.isLoading ? (
           <View className="flex-1 items-center justify-center">
-            <ActivityIndicator color="#7C3AED" />
+            <ActivityIndicator color="#EF4444" />
           </View>
         ) : (
           <FlatList
@@ -120,11 +162,23 @@ export default function ChatScreen() {
           />
         )}
 
-        {/* Composer */}
+        {/* Composer with 5 icons */}
         <View className="flex-row items-center gap-2 px-4 py-3 border-t border-[#27272A] bg-[#0A0A0A]">
+          <TouchableOpacity className="w-9 h-9 items-center justify-center">
+            <Icon library="ionicons" name="add-circle-outline" size={26} color="#A1A1AA" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity className="w-9 h-9 items-center justify-center">
+            <Icon library="ionicons" name="camera-outline" size={24} color="#A1A1AA" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity className="w-9 h-9 items-center justify-center">
+            <Icon library="ionicons" name="document-outline" size={22} color="#A1A1AA" />
+          </TouchableOpacity>
+          
           <TextInput
             className="flex-1 bg-[#1F1F1F] text-white rounded-full px-4 py-2.5 text-sm border border-[#27272A]"
-            placeholder="Message..."
+            placeholder="Écrivez un message..."
             placeholderTextColor="#52525B"
             value={draft}
             onChangeText={setDraft}
@@ -134,15 +188,25 @@ export default function ChatScreen() {
             onSubmitEditing={handleSend}
             blurOnSubmit={false}
           />
+          
+          <TouchableOpacity className="w-9 h-9 items-center justify-center">
+            <Icon library="ionicons" name="mic-outline" size={24} color="#A1A1AA" />
+          </TouchableOpacity>
+          
           <TouchableOpacity
             onPress={handleSend}
             disabled={!draft.trim() || isSending}
             className={`w-10 h-10 rounded-full items-center justify-center ${
-              draft.trim() ? 'bg-[#7C3AED]' : 'bg-[#27272A]'
+              draft.trim() ? 'bg-[#EF4444]' : 'bg-[#27272A]'
             }`}
             activeOpacity={0.7}
           >
-            <Text className="text-white text-base">↑</Text>
+            <Icon 
+              library="ionicons" 
+              name="send" 
+              size={18} 
+              color="#FFFFFF"
+            />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

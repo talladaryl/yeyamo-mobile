@@ -31,6 +31,13 @@ export interface AddPlaceForm {
     latitude: number;
     longitude: number;
   };
+
+  // Step 3 - Contact Details
+  phone: string;
+  website?: string;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
 }
 
 export interface AddEventForm {
@@ -43,9 +50,13 @@ export interface AddEventForm {
   start_date: string;
   start_time: string;
   
-  // Step 2 - Details
+  // Step 2 - Date & Time
+  end_date?: string;
+  end_time?: string;
+  
+  // Step 3 - Details & Billing
   description: string;
-  cover_image_url: string | null;
+  cover_image_url?: string | null;
   ticket_price_enabled: boolean;
   ticket_price?: number;
   max_seats?: number;

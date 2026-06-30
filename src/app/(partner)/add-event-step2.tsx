@@ -5,7 +5,6 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
-import { Toggle } from '@/components/ui/Toggle';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { usePartnerStore } from '@/features/partner/partner.store';
 
@@ -13,11 +12,9 @@ export default function AddEventStep2Screen() {
   const router = useRouter();
   const { eventForm, setEventForm } = usePartnerStore();
   
-  const [description, setDescription] = useState(eventForm.description || '');
   const [coverImage, setCoverImage] = useState<string | null>(eventForm.cover_image_url || null);
-  const [ticketPriceEnabled, setTicketPriceEnabled] = useState(eventForm.ticket_price_enabled || false);
-  const [ticketPrice, setTicketPrice] = useState(eventForm.ticket_price?.toString() || '');
-  const [maxSeats, setMaxSeats] = useState(eventForm.max_seats?.toString() || '');
+  const [endDate, setEndDate] = useState(eventForm.end_date || '');
+  const [endTime, setEndTime] = useState(eventForm.end_time || '');
 
   const pickCoverImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -32,17 +29,11 @@ export default function AddEventStep2Screen() {
     }
   };
 
-  const handlePublish = () => {
+  const handleContinue = () => {
     setEventForm({
-      description,
       cover_image_url: coverImage,
-      ticket_price_enabled: ticketPriceEnabled,
-      ticket_price: ticketPrice ? parseFloat(ticketPrice) : undefined,
-      max_seats: maxSeats ? parseInt(maxSeats) : undefined,
     });
-    console.log('Publishing event:', eventForm);
-    router.back();
-    router.back();
+    router.push('/(partner)/add-event-step3');
   };
 
   return (
@@ -65,10 +56,22 @@ export default function AddEventStep2Screen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-4 py-6">
           {/* Stepper */}
-          <Stepper currentStep={2} totalSteps={2} />
+          <Stepper currentStep={2} totalSteps={4} />
+
+          {/* Icon Illustration */}
+          <View className="items-center mb-6 mt-4">
+            <View className="w-24 h-24 bg-[#EF4444]/20 rounded-full items-center justify-center mb-4">
+              <Icon library="ionicons" name="image" size={48} color="#EF4444" />
+            </View>
+          </View>
+
+          {/* Section Title */}
+          <Text className="text-white text-lg font-bold mb-4">
+            Date & Billetterie
+          </Text>
 
           {/* Cover Image */}
-          <View className="mb-6 mt-4">
+          <View className="mb-6">
             <Text className="text-white text-sm font-medium mb-2">
               Image de couverture
             </Text>
@@ -97,68 +100,53 @@ export default function AddEventStep2Screen() {
 
           {/* Description */}
           <View className="mb-6">
-            <Text className="text-white text-lg font-bold mb-4">
-              Description
+            <Text className="text-white text-sm font-medium mb-2">
+              Date de fin (optionnel)
             </Text>
-            <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
-              placeholder="Une soirée inoubliable avec les plus grandes icônes de la musique"
-              placeholderTextColor="#A1A1AA"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              maxLength={1000}
-              style={{ minHeight: 120, textAlignVertical: 'top' }}
-            />
-            <Text className="text-xs text-[#A1A1AA] mt-1 text-right">
-              {description.length}/1000
-            </Text>
+            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+              <Icon library="ionicons" name="calendar-outline" size={20} color="#A1A1AA" />
+              <TextInput
+                className="flex-1 text-white text-sm ml-3"
+                placeholder="25 Déc 2025"
+                placeholderTextColor="#A1A1AA"
+                value={endDate}
+                onChangeText={setEndDate}
+              />
+            </View>
           </View>
 
           {/* Prix du billet */}
           <View className="mb-6">
-            <Text className="text-white text-lg font-bold mb-4">
-              Prix du billet
+            <Text className="text-white text-sm font-medium mb-2">
+              Heure de fin (optionnel)
             </Text>
             
-            <View className="bg-[#161616] rounded-xl px-4 py-2 mb-3">
-              <Toggle
-                label="Activer le prix"
-                value={ticketPriceEnabled}
-                onValueChange={setTicketPriceEnabled}
+            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+              <Icon library="ionicons" name="time-outline" size={20} color="#A1A1AA" />
+              <TextInput
+                className="flex-1 text-white text-sm ml-3"
+                placeholder="22:00"
+                placeholderTextColor="#A1A1AA"
+                value={endTime}
+                onChangeText={setEndTime}
               />
             </View>
-
-            {ticketPriceEnabled && (
-              <View>
-                <Text className="text-white text-sm font-medium mb-2">
-                  Prix (FCFA)
-                </Text>
-                <TextInput
-                  className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
-                  placeholder="5000"
-                  placeholderTextColor="#A1A1AA"
-                  value={ticketPrice}
-                  onChangeText={setTicketPrice}
-                  keyboardType="numeric"
-                />
-              </View>
-            )}
           </View>
 
           {/* Nombre de places */}
           <View className="mb-6">
-            <Text className="text-white text-lg font-bold mb-4">
-              Nombre de places
+            <Text className="text-white text-sm font-medium mb-2">
+              Lieu de l'événement
             </Text>
-            <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
-              placeholder="default"
-              placeholderTextColor="#A1A1AA"
-              value={maxSeats}
-              onChangeText={setMaxSeats}
-              keyboardType="numeric"
-            />
+            <TouchableOpacity
+              className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
+              activeOpacity={0.7}
+            >
+              <Text className="text-[#A1A1AA] text-sm">
+                Sélectionner un lieu
+              </Text>
+              <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -168,10 +156,9 @@ export default function AddEventStep2Screen() {
       {/* Bottom Button */}
       <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
         <CTAButton
-          title="Publier / Enregistrer"
+          title="Continuer"
           variant="primary"
-          onPress={handlePublish}
-          disabled={!description}
+          onPress={handleContinue}
         />
       </View>
     </View>

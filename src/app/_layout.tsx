@@ -104,6 +104,14 @@ function RootNavigator() {
         <Stack.Screen name="(partner)/add-place-step2" />
         <Stack.Screen name="(partner)/add-event-step1" />
         <Stack.Screen name="(partner)/add-event-step2" />
+        <Stack.Screen name="(partner-dashboard)/dashboard" />
+        <Stack.Screen name="(partner-dashboard)/establishments" />
+        <Stack.Screen name="(partner-dashboard)/events" />
+        <Stack.Screen name="(partner-dashboard)/reservations" />
+        <Stack.Screen name="(partner-dashboard)/reviews" />
+        <Stack.Screen name="(partner-dashboard)/statistics" />
+        <Stack.Screen name="(partner-dashboard)/notifications" />
+        <Stack.Screen name="(partner-dashboard)/settings" />
         <Stack.Screen name="+not-found" />
       </Stack>
     </>
