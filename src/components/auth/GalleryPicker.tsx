@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 interface GalleryPickerProps {
-  value: string[];
-  onValueChange: (uris: string[]) => void;
+  value?: string[];
+  values?: string[];
+  onValueChange?: (uris: string[]) => void;
+  onValuesChange?: (uris: string[]) => void;
   label?: string;
   error?: string;
   disabled?: boolean;
@@ -13,12 +15,17 @@ interface GalleryPickerProps {
 
 export function GalleryPicker({
   value,
+  values,
   onValueChange,
+  onValuesChange,
   label = 'Galerie photos',
   error,
   disabled = false,
   minPhotos = 3,
 }: GalleryPickerProps) {
+  const selectedValues = value ?? values ?? [];
+  const handleValueChange = onValueChange ?? onValuesChange;
+
   const pickPhotos = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -29,7 +36,7 @@ export function GalleryPicker({
 
       if (!result.canceled && result.assets) {
         const uris = result.assets.map(asset => asset.uri);
-        onValueChange([...value, ...uris]);
+        handleValueChange?.([...selectedValues, ...uris]);
       }
     } catch (error) {
       console.error('Error picking photos:', error);
@@ -37,8 +44,8 @@ export function GalleryPicker({
   };
 
   const removePhoto = (index: number) => {
-    const newValue = value.filter((_, i) => i !== index);
-    onValueChange(newValue);
+    const newValue = selectedValues.filter((_, i) => i !== index);
+    handleValueChange?.(newValue);
   };
 
   return (
@@ -69,13 +76,13 @@ export function GalleryPicker({
         </View>
       </TouchableOpacity>
 
-      {value.length > 0 && (
+      {selectedValues.length > 0 && (
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
           className="flex-row gap-2"
         >
-          {value.map((uri, index) => (
+          {selectedValues.map((uri, index) => (
             <View key={index} className="relative mr-2">
               <Image
                 source={{ uri }}

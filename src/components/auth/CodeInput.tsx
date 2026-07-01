@@ -48,7 +48,9 @@ export function CodeInput({
         {Array.from({ length }, (_, index) => (
           <TextInput
             key={index}
-            ref={(ref) => (inputRefs.current[index] = ref)}
+            ref={(ref) => {
+              inputRefs.current[index] = ref;
+            }}
             value={value[index] || ''}
             onChangeText={(text) => handleTextChange(text, index)}
             onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}

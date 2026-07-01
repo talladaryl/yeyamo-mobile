@@ -36,6 +36,7 @@ export interface UserSummary {
   display_name: string;
   avatar_url: string | null;
   is_verified: boolean;
+  user_type?: 'local' | 'diaspora' | 'partner' | string;
 }
 
 export interface MediaAttachment {

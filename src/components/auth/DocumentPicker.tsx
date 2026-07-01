@@ -9,6 +9,7 @@ interface DocumentPickerProps {
   error?: string;
   disabled?: boolean;
   acceptedFormats?: string;
+  maxSize?: string;
 }
 
 export function DocumentPicker({
@@ -18,7 +19,9 @@ export function DocumentPicker({
   error,
   disabled = false,
   acceptedFormats = 'PDF, JPG ou PNG - Max 5 Mo',
+  maxSize,
 }: DocumentPickerProps) {
+  const helperText = maxSize ? `${acceptedFormats} - Max ${maxSize}` : acceptedFormats;
   const pickDocument = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -61,7 +64,7 @@ export function DocumentPicker({
                 Télécharger le document
               </Text>
               <Text className="text-[#A1A1AA] text-xs">
-                {acceptedFormats}
+                {helperText}
               </Text>
             </View>
           )}

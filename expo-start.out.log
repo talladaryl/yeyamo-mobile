@@ -1,0 +1,175 @@
+Starting project at E:\Daryl\yeyamo-mobile
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8081
+1 package may need updating. Run npx expo install --check for details.
+Logs for your project will appear below.
+Android Bundling failed 104038ms index.ts (2401 modules)
+Unable to resolve "../../../global.css" from "src\app\_layout.tsx"
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m [32m'../../../global.css'[39m[33m;[39m
+ [90m   |[39m         [31m[1m^[22m[39m
+ [90m 2 |[39m [36mimport[39m { useEffect } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 3 |[39m [36mimport[39m { [33mStack[39m[33m,[39m useRouter[33m,[39m useSegments } [36mfrom[39m [32m'expo-router'[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m { [33mQueryClient[39m[33m,[39m [33mQueryClientProvider[39m } [36mfrom[39m [32m'@tanstack/react-query'[39m[33m;[39m[0m
+
+Import stack:
+
+ src\app\_layout.tsx
+ | import "../../../global.css"
+
+ src\app (require.context)
+
+Android Bundled 7410ms index.ts (2404 modules)
+Android Bundled 21347ms index.ts (1 module)
+ WARN  SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context
+ WARN  [Layout children]: No route named "(social-graph)/badges" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ WARN  [Layout children]: No route named "(social-graph)/badges/[id]" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ WARN  [Layout children]: No route named "(social-graph)/badges" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ WARN  [Layout children]: No route named "(social-graph)/badges/[id]" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ WARN  [Layout children]: No route named "(social-graph)/badges" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ WARN  [Layout children]: No route named "(social-graph)/badges/[id]" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ ERROR  [TypeError: Cannot read property 'displayName' of undefined] 
+
+Code: splash.tsx
+[0m [90m 56 |[39m     [33m<[39m[33mView[39m style[33m=[39m{styles[33m.[39mcontainer}[33m>[39m
+ [90m 57 |[39m       {[90m/* Vidéo d'intro */[39m}
+[31m[1m>[22m[39m[90m 58 |[39m       [33m<[39m[33mVideo[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 59 |[39m         source[33m=[39m{require([32m'../../../assets/Créer_une_vidéo_animée_premium.mp4'[39m)}
+ [90m 60 |[39m         style[33m=[39m{styles[33m.[39mvideo}
+ [90m 61 |[39m         shouldPlay[33m=[39m{[36mtrue[39m}[0m
+Call Stack
+  SplashScreen (src\app\(onboarding)\splash.tsx:58:7) 
+
+Code: _layout.tsx
+[0m [90m 3 |[39m [36mexport[39m [36mdefault[39m [36mfunction[39m [33mOnboardingLayout[39m() {
+ [90m 4 |[39m   [36mreturn[39m (
+[31m[1m>[22m[39m[90m 5 |[39m     [33m<[39m[33mStack[39m
+ [90m   |[39m     [31m[1m^[22m[39m
+ [90m 6 |[39m       screenOptions[33m=[39m{{
+ [90m 7 |[39m         headerShown[33m:[39m [36mfalse[39m[33m,[39m
+ [90m 8 |[39m         gestureEnabled[33m:[39m [36mfalse[39m[33m,[39m[0m
+Call Stack
+  OnboardingLayout (src\app\(onboarding)\_layout.tsx:5:5)
+  RootNavigator (src\app\_layout.tsx:72:7)
+  RootLayout (src\app\_layout.tsx:24:7)
+ WARN  [Layout children]: No route named "(social-graph)/badges" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ WARN  [Layout children]: No route named "(social-graph)/badges/[id]" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ ERROR  [TypeError: Cannot read property 'displayName' of undefined] 
+
+Code: splash.tsx
+[0m [90m 41 |[39m     [90m// Fallback vers logo statique[39m
+ [90m 42 |[39m     [36mreturn[39m (
+[31m[1m>[22m[39m[90m 43 |[39m       [33m<[39m[33mView[39m style[33m=[39m{styles[33m.[39mcontainer}[33m>[39m
+ [90m    |[39m        [31m[1m^[22m[39m
+ [90m 44 |[39m         [33m<[39m[33mView[39m style[33m=[39m{styles[33m.[39mlogoContainer}[33m>[39m
+ [90m 45 |[39m           [33m<[39m[33mLogo[39m size[33m=[39m[32m"xlarge"[39m [33m/[39m[33m>[39m
+ [90m 46 |[39m           [33m<[39m[33mText[39m style[33m=[39m{styles[33m.[39mtitle}[33m>[39m[33mYeyamo[39m[33m<[39m[33m/[39m[33mText[39m[33m>[39m[0m
+Call Stack
+  SplashScreen (src\app\(onboarding)\splash.tsx:43:8) 
+
+Code: TrendingPlaceCard.tsx
+[0m [90m  9 |[39m }[33m;[39m
+ [90m 10 |[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mexport[39m [36mfunction[39m [33mTrendingPlaceCard[39m({ place[33m,[39m onPress }[33m:[39m [33mTrendingPlaceCardProps[39m) {
+ [90m    |[39m                                  [31m[1m^[22m[39m
+ [90m 12 |[39m   [36mreturn[39m (
+ [90m 13 |[39m     [33m<[39m[33mTouchableOpacity[39m
+ [90m 14 |[39m       onPress[33m=[39m{onPress}[0m
+Call Stack
+  TrendingPlaceCard (src\components\explore\TrendingPlaceCard.tsx:11:34)
+  useEffect$argument_0 (src\app\_layout.tsx:50:22)
+  <global> (src\app\_layout.tsx:6)
+ WARN  [Layout children]: No route named "(social-graph)/badges" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ WARN  [Layout children]: No route named "(social-graph)/badges/[id]" exists in nested children: ["+not-found", "(auth)", "(chat)/[id]", "(chat)/info/[id]", "(collections)", "(create)/choice", "(create)/event-settings", "(create)/event", "(create)/publication", "(create)/story", "(create)/suggest-place-step1", "(create)/suggest-place-step2", "(events)/[id]", "(experiences)/[id]", "(explore)/events", "(explore)/experiences", "(explore)/map", "(explore)/places", "(explore)/search", "(onboarding)", "(partner)/add-event-step1", "(partner)/add-event-step2", "(partner)/add-event-step3", "(partner)/add-event-step4", "(partner)/add-place-step1", "(partner)/add-place-step2", "(partner)/add-place-step3", "(partner)/add-place-step4", "(partner)/choice", "(partner)/publication", "(partner)/story", "(partner-dashboard)/dashboard", "(partner-dashboard)/establishments", "(partner-dashboard)/events", "(partner-dashboard)/notifications", "(partner-dashboard)/reservations", "(partner-dashboard)/reviews", "(partner-dashboard)/settings", "(partner-dashboard)/statistics", "(places)/[id]", "(post)/[id]", "(post)/[id]/comments", "(profile)/[username]", "(profile)/activity", "(profile)/find-friends", "(profile)/followers", "(profile)/following", "(profile)/search", "(profile)/social-settings", "(profile)/suggestions", "(regions)/[id]", "(social-graph)", "(story)/[id]", "(tabs)"]
+ ERROR  [TypeError: Cannot read property 'displayName' of undefined] 
+
+Code: splash.tsx
+[0m [90m 41 |[39m     [90m// Fallback vers logo statique[39m
+ [90m 42 |[39m     [36mreturn[39m (
+[31m[1m>[22m[39m[90m 43 |[39m       [33m<[39m[33mView[39m style[33m=[39m{styles[33m.[39mcontainer}[33m>[39m
+ [90m    |[39m        [31m[1m^[22m[39m
+ [90m 44 |[39m         [33m<[39m[33mView[39m style[33m=[39m{styles[33m.[39mlogoContainer}[33m>[39m
+ [90m 45 |[39m           [33m<[39m[33mLogo[39m size[33m=[39m[32m"xlarge"[39m [33m/[39m[33m>[39m
+ [90m 46 |[39m           [33m<[39m[33mText[39m style[33m=[39m{styles[33m.[39mtitle}[33m>[39m[33mYeyamo[39m[33m<[39m[33m/[39m[33mText[39m[33m>[39m[0m
+Call Stack
+  SplashScreen (src\app\(onboarding)\splash.tsx:43:8) 
+
+Code: TrendingPlaceCard.tsx
+[0m [90m  9 |[39m }[33m;[39m
+ [90m 10 |[39m
+[31m[1m>[22m[39m[90m 11 |[39m [36mexport[39m [36mfunction[39m [33mTrendingPlaceCard[39m({ place[33m,[39m onPress }[33m:[39m [33mTrendingPlaceCardProps[39m) {
+ [90m    |[39m                                  [31m[1m^[22m[39m
+ [90m 12 |[39m   [36mreturn[39m (
+ [90m 13 |[39m     [33m<[39m[33mTouchableOpacity[39m
+ [90m 14 |[39m       onPress[33m=[39m{onPress}[0m
+Call Stack
+  TrendingPlaceCard (src\components\explore\TrendingPlaceCard.tsx:11:34)
+  useEffect$argument_0 (src\app\_layout.tsx:50:22)
+  <global> (src\app\_layout.tsx:6)
+Unable to resolve "../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4" from "src\app\(onboarding)\splash.tsx"
+[0m [90m 22 |[39m
+ [90m 23 |[39m   [36mconst[39m player [33m=[39m useVideoPlayer(
+[31m[1m>[22m[39m[90m 24 |[39m     require([32m'../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4'[39m)[33m,[39m
+ [90m    |[39m              [31m[1m^[22m[39m
+ [90m 25 |[39m     (player) [33m=>[39m {
+ [90m 26 |[39m       player[33m.[39mloop [33m=[39m [36mfalse[39m[33m;[39m
+ [90m 27 |[39m       player[33m.[39mplay()[33m;[39m[0m
+
+Import stack:
+
+ src\app\(onboarding)\splash.tsx
+ | import "../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4"
+
+ src\app (require.context)
+
+Unable to resolve "../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4" from "src\app\(onboarding)\splash.tsx"
+[0m [90m 22 |[39m
+ [90m 23 |[39m   [36mconst[39m player [33m=[39m useVideoPlayer(
+[31m[1m>[22m[39m[90m 24 |[39m     require([32m'../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4'[39m)[33m,[39m
+ [90m    |[39m              [31m[1m^[22m[39m
+ [90m 25 |[39m     (player) [33m=>[39m {
+ [90m 26 |[39m       player[33m.[39mloop [33m=[39m [36mfalse[39m[33m;[39m
+ [90m 27 |[39m       player[33m.[39mplay()[33m;[39m[0m
+
+Import stack:
+
+ src\app\(onboarding)\splash.tsx
+ | import "../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4"
+
+ src\app (require.context)
+
+Unable to resolve "../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4" from "src\app\(onboarding)\splash.tsx"
+[0m [90m 22 |[39m
+ [90m 23 |[39m   [36mconst[39m player [33m=[39m useVideoPlayer(
+[31m[1m>[22m[39m[90m 24 |[39m     require([32m'../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4'[39m)[33m,[39m
+ [90m    |[39m              [31m[1m^[22m[39m
+ [90m 25 |[39m     (player) [33m=>[39m {
+ [90m 26 |[39m       player[33m.[39mloop [33m=[39m [36mfalse[39m[33m;[39m
+ [90m 27 |[39m       player[33m.[39mplay()[33m;[39m[0m
+
+Import stack:
+
+ src\app\(onboarding)\splash.tsx
+ | import "../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4"
+
+ src\app (require.context)
+
+Unable to resolve "../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4" from "src\app\(onboarding)\splash.tsx"
+[0m [90m 22 |[39m
+ [90m 23 |[39m   [36mconst[39m player [33m=[39m useVideoPlayer(
+[31m[1m>[22m[39m[90m 24 |[39m     require([32m'../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4'[39m)[33m,[39m
+ [90m    |[39m              [31m[1m^[22m[39m
+ [90m 25 |[39m     (player) [33m=>[39m {
+ [90m 26 |[39m       player[33m.[39mloop [33m=[39m [36mfalse[39m[33m;[39m
+ [90m 27 |[39m       player[33m.[39mplay()[33m;[39m[0m
+
+Import stack:
+
+ src\app\(onboarding)\splash.tsx
+ | import "../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4"
+
+ src\app (require.context)
+

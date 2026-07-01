@@ -145,7 +145,7 @@ export default function ProfileScreen() {
             {/* Mes Badges */}
             <TouchableOpacity
               onPress={() => router.push('/(social-graph)/badges')}
-              className="flex-row items-center p-4"
+              className="flex-row items-center p-4 border-b border-[#27272A]"
               activeOpacity={0.7}
             >
               <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
@@ -156,6 +156,24 @@ export default function ProfileScreen() {
               </Text>
               <View className="bg-[#EF4444] px-2 py-0.5 rounded-full mr-2">
                 <Text className="text-white text-xs font-bold">3</Text>
+              </View>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
+            </TouchableOpacity>
+
+            {/* Mes Collections */}
+            <TouchableOpacity
+              onPress={() => router.push('/(collections)')}
+              className="flex-row items-center p-4"
+              activeOpacity={0.7}
+            >
+              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                <Icon library="ionicons" name="albums" size={20} color="#7C3AED" />
+              </View>
+              <Text className="flex-1 text-white font-semibold text-sm ml-3">
+                Mes collections
+              </Text>
+              <View className="bg-[#7C3AED] px-2 py-0.5 rounded-full mr-2">
+                <Text className="text-white text-xs font-bold">6</Text>
               </View>
               <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
             </TouchableOpacity>

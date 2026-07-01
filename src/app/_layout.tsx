@@ -1,4 +1,4 @@
-import '../../../global.css';
+import '../../global.css';
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -114,6 +114,10 @@ function RootNavigator() {
         <Stack.Screen name="(partner-dashboard)/settings" />
         <Stack.Screen name="(social-graph)/badges" />
         <Stack.Screen name="(social-graph)/badges/[id]" />
+        <Stack.Screen name="(collections)" />
+        <Stack.Screen name="(collections)/[id]" />
+        <Stack.Screen name="(collections)/create" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="(collections)/add-to-collection" options={{ presentation: 'modal' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
     </>

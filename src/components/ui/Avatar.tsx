@@ -2,18 +2,19 @@ import { View, Text } from 'react-native';
 import { Image } from 'expo-image';
 
 interface AvatarProps {
-  uri: string | null;
-  displayName: string;
+  uri?: string | null;
+  displayName?: string | null;
   size?: number;
   className?: string;
 }
 
 export function Avatar({ uri, displayName, size = 40, className = '' }: AvatarProps) {
-  const initials = displayName
+  const name = displayName || '';
+  const initials = name
     .split(' ')
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('');
+    .join('') || '?';
 
   if (uri) {
     return (

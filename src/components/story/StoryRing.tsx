@@ -1,6 +1,7 @@
 import { TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Avatar } from '@/components/ui/Avatar';
+import type { ColorValue } from 'react-native';
 
 type StoryRingProps = {
   uri?: string | null;
@@ -19,7 +20,7 @@ export function StoryRing({
   isViewed = false,
   showAddButton = false,
 }: StoryRingProps) {
-  const gradientColors = isViewed 
+  const gradientColors: readonly [ColorValue, ColorValue, ...ColorValue[]] = isViewed 
     ? ['#52525B', '#52525B'] 
     : ['#EF4444', '#F59E0B', '#EF4444'];
 

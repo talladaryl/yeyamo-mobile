@@ -26,6 +26,33 @@ export interface TrendingPlace {
   category: string;
 }
 
+export interface Place {
+  id: number;
+  name: string;
+  category: {
+    id: number;
+    name: string;
+    icon?: string;
+  };
+  address: string;
+  city: string;
+  region: string;
+  latitude: number;
+  longitude: number;
+  photos: string[];
+  cover_photo_url: string;
+  rating: number;
+  reviews_count: number;
+  price_range?: number;
+  amenities: string[];
+  opening_hours: string[];
+  phone: string | null;
+  website: string | null;
+  is_verified: boolean;
+  is_favorited?: boolean;
+  created_at: string;
+}
+
 export interface Region {
   id: number;
   name: string;

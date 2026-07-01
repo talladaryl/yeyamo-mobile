@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator, type StyleProp, type ViewStyle } from 'react-native';
 
 type CTAButtonProps = {
   title: string;
@@ -7,6 +7,7 @@ type CTAButtonProps = {
   loading?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
 export function CTAButton({
@@ -16,6 +17,7 @@ export function CTAButton({
   loading = false,
   disabled = false,
   fullWidth = true,
+  style,
 }: CTAButtonProps) {
   const variantClasses = {
     primary: 'bg-[#EF4444]',
@@ -34,6 +36,7 @@ export function CTAButton({
       onPress={onPress}
       disabled={disabled || loading}
       className={`${variantClasses[variant]} ${fullWidth ? 'w-full' : ''} py-4 rounded-2xl items-center justify-center ${disabled ? 'opacity-50' : ''}`}
+      style={style}
       activeOpacity={0.8}
     >
       {loading ? (

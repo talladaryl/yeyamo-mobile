@@ -1,9 +1,15 @@
 import { TouchableOpacity, Text, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
-import type { CreationOption } from '@/features/create/types';
 
 interface CreationOptionCardProps {
-  option: CreationOption;
+  option: {
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    iconLibrary: 'ionicons' | 'material' | 'material-community';
+    color: string;
+  };
   onPress: () => void;
 }
 

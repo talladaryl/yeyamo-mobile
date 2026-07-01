@@ -1,16 +1,44 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Video } from 'expo-video';
+import { useEventListener } from 'expo';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { Logo } from '@/components/ui/Logo';
 
 const { width, height } = Dimensions.get('window');
 
 export default function SplashScreen() {
   const router = useRouter();
+  const hasNavigated = useRef(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [canSkip, setCanSkip] = useState(false);
+
+  const goToStep1 = () => {
+    if (hasNavigated.current) return;
+    hasNavigated.current = true;
+    router.replace('/(onboarding)/step1');
+  };
+
+  const player = useVideoPlayer(
+    require('../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4'),
+    (player) => {
+      player.loop = false;
+      player.play();
+    }
+  );
+
+  useEventListener(player, 'statusChange', ({ status }) => {
+    if (status === 'readyToPlay') {
+      setVideoLoaded(true);
+    } else if (status === 'error') {
+      handleVideoError();
+    }
+  });
+
+  useEventListener(player, 'playToEnd', () => {
+    goToStep1();
+  });
 
   useEffect(() => {
     // Permettre de skip après 2 secondes
@@ -22,18 +50,18 @@ export default function SplashScreen() {
   }, []);
 
   const handleVideoEnd = () => {
-    router.replace('/(onboarding)/step1');
+    goToStep1();
   };
 
   const handleSkip = () => {
-    router.replace('/(onboarding)/step1');
+    goToStep1();
   };
 
   const handleVideoError = () => {
     setVideoError(true);
     // Fallback vers animation statique après 2 secondes
     setTimeout(() => {
-      router.replace('/(onboarding)/step1');
+      goToStep1();
     }, 2000);
   };
 
@@ -55,19 +83,12 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
       {/* Vidéo d'intro */}
-      <Video
+      <VideoView
         source={require('../../../assets/Créer_une_vidéo_animée_premium.mp4')}
+        player={player}
         style={styles.video}
-        shouldPlay={true}
-        isLooping={false}
-        resizeMode="cover"
-        onLoad={() => setVideoLoaded(true)}
-        onError={handleVideoError}
-        onPlaybackStatusUpdate={(status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            handleVideoEnd();
-          }
-        }}
+        contentFit="cover"
+        nativeControls={false}
       />
 
       {/* Overlay avec bouton skip */}
