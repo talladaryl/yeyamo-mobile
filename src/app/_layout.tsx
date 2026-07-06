@@ -29,15 +29,20 @@ export default function RootLayout() {
 function RootNavigator() {
   const router = useRouter();
   const segments = useSegments();
-  const { isAuthenticated, isHydrated } = useAuthStore();
-  const { hasSeenOnboarding, checkOnboardingStatus } = useOnboardingStore();
+  const { isAuthenticated, isHydrated, clearAuth } = useAuthStore();
+  const {
+    hasSeenOnboarding,
+    isHydrated: isOnboardingHydrated,
+    checkOnboardingStatus,
+  } = useOnboardingStore();
 
   // Register 401 handler — clears store and redirects to login
   useEffect(() => {
     registerUnauthenticatedHandler(() => {
+      clearAuth();
       router.replace('/(auth)/login');
     });
-  }, [router]);
+  }, [clearAuth, router]);
 
   // Hydrate session from SecureStore on boot
   useEffect(() => {
@@ -47,7 +52,7 @@ function RootNavigator() {
 
   // Route guard — runs after hydration
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!isHydrated || !isOnboardingHydrated) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
@@ -59,9 +64,16 @@ function RootNavigator() {
     } else if (isAuthenticated && (inAuthGroup || inOnboardingGroup)) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isHydrated, hasSeenOnboarding, segments, router]);
+  }, [
+    isAuthenticated,
+    isHydrated,
+    isOnboardingHydrated,
+    hasSeenOnboarding,
+    segments,
+    router,
+  ]);
 
-  if (!isHydrated) {
+  if (!isHydrated || !isOnboardingHydrated) {
     // Splash is shown by Expo while JS loads — nothing to render here
     return null;
   }

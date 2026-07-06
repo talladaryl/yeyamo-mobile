@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEventListener } from 'expo';
@@ -21,7 +21,7 @@ export default function SplashScreen() {
   };
 
   const player = useVideoPlayer(
-    require('../../../assets/CrÃ©er_une_vidÃ©o_animÃ©e_premium.mp4'),
+    require('../../../assets/intro-video.mp4'),
     (player) => {
       player.loop = false;
       player.play();
@@ -41,7 +41,7 @@ export default function SplashScreen() {
   });
 
   useEffect(() => {
-    // Permettre de skip après 2 secondes
+    // Permettre de skip aprÃ¨s 2 secondes
     const skipTimer = setTimeout(() => {
       setCanSkip(true);
     }, 2000);
@@ -55,7 +55,7 @@ export default function SplashScreen() {
 
   const handleVideoError = () => {
     setVideoError(true);
-    // Fallback vers animation statique après 2 secondes
+    // Fallback vers animation statique aprÃ¨s 2 secondes
     setTimeout(() => {
       goToStep1();
     }, 2000);
@@ -69,7 +69,7 @@ export default function SplashScreen() {
           <Logo size="xlarge" />
           <Text style={styles.title}>Yeyamo</Text>
           <Text style={styles.subtitle}>
-            Yeyamo, je découvre{'\n'}mon pays
+            Yeyamo, je dÃ©couvre{'\n'}mon pays
           </Text>
         </View>
       </View>
@@ -78,7 +78,7 @@ export default function SplashScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Vidéo d'intro */}
+      {/* VidÃ©o d'intro */}
       <VideoView
         player={player}
         style={styles.video}
@@ -98,7 +98,7 @@ export default function SplashScreen() {
         </View>
       )}
 
-      {/* Loading indicator si vidéo pas encore chargée */}
+      {/* Loading indicator si vidÃ©o pas encore chargÃ©e */}
       {!videoLoaded && !videoError && (
         <View style={styles.loadingContainer}>
           <Logo size="large" />
@@ -175,3 +175,4 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 });
+

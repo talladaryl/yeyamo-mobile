@@ -8,7 +8,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function Step2Screen() {
   const router = useRouter();
-  const { nextStep, previousStep, setCurrentStep } = useOnboardingStore();
+  const { nextStep, previousStep, setCurrentStep, completeOnboarding } = useOnboardingStore();
 
   const handleNext = () => {
     nextStep();
@@ -20,7 +20,8 @@ export default function Step2Screen() {
     router.back();
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    await completeOnboarding();
     router.replace('/(auth)/login');
   };
 

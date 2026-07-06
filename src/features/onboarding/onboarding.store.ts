@@ -4,6 +4,7 @@ import { secureStore } from '@/services/storage/secure-store';
 interface OnboardingState {
   currentStep: number;
   hasSeenOnboarding: boolean;
+  isHydrated: boolean;
   selectedAccountType: 'explorer' | 'developer' | null;
   // Actions
   setCurrentStep: (step: number) => void;
@@ -19,6 +20,7 @@ const TOTAL_STEPS = 4; // steps 1-4 (splash is step 0)
 export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   currentStep: 0,
   hasSeenOnboarding: false,
+  isHydrated: false,
   selectedAccountType: null,
 
   setCurrentStep: (step) => set({ currentStep: step }),
@@ -41,11 +43,11 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
 
   completeOnboarding: async () => {
     await secureStore.set(secureStore.KEYS.HAS_SEEN_ONBOARDING, 'true');
-    set({ hasSeenOnboarding: true });
+    set({ hasSeenOnboarding: true, isHydrated: true });
   },
 
   checkOnboardingStatus: async () => {
     const hasSeenOnboarding = await secureStore.get(secureStore.KEYS.HAS_SEEN_ONBOARDING);
-    set({ hasSeenOnboarding: hasSeenOnboarding === 'true' });
+    set({ hasSeenOnboarding: hasSeenOnboarding === 'true', isHydrated: true });
   },
 }));

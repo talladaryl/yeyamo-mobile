@@ -8,14 +8,15 @@ const { width, height } = Dimensions.get('window');
 
 export default function Step1Screen() {
   const router = useRouter();
-  const { nextStep, setCurrentStep } = useOnboardingStore();
+  const { nextStep, setCurrentStep, completeOnboarding } = useOnboardingStore();
 
   const handleNext = () => {
     nextStep();
     router.push('/(onboarding)/step2');
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    await completeOnboarding();
     router.replace('/(auth)/login');
   };
 
