@@ -1,0 +1,75 @@
+// ÉCRAN 6 - Mes avis
+import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { UserReviewCard } from '@/components/profile/UserReviewCard';
+import { useUserReviews } from '@/features/profile/useProfile';
+
+export default function ReviewsScreen() {
+  const router = useRouter();
+  const { data: reviews, isLoading } = useUserReviews();
+
+  const handleWriteReview = () => {
+    // TODO: Implémenter la navigation vers le formulaire d'avis
+    router.push('/(explore)/places');
+  };
+
+  return (
+    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+      {/* Header */}
+      <View className="px-4 py-3 border-b border-[#27272A]">
+        <View className="flex-row items-center justify-between">
+          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <Text className="text-white text-xl font-bold">Mes avis</Text>
+          <TouchableOpacity className="p-2">
+            <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Liste des avis */}
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-[#A1A1AA]">Chargement...</Text>
+        </View>
+      ) : reviews && reviews.length > 0 ? (
+        <FlatList
+          data={reviews}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+          renderItem={({ item }) => (
+            <UserReviewCard
+              review={item}
+              onPress={() => router.push(`/(places)/${item.place.id}`)}
+            />
+          )}
+        />
+      ) : (
+        <View className="flex-1 items-center justify-center px-8">
+          <Ionicons name="star-outline" size={64} color="#52525B" />
+          <Text className="text-white text-lg font-semibold mt-4 text-center">
+            Aucun avis
+          </Text>
+          <Text className="text-[#A1A1AA] text-center mt-2">
+            Partagez votre expérience en laissant des avis
+          </Text>
+        </View>
+      )}
+
+      {/* Bouton flottant */}
+      <View className="absolute bottom-6 left-0 right-0 px-4">
+        <TouchableOpacity
+          onPress={handleWriteReview}
+          className="bg-[#EF4444] py-4 rounded-xl flex-row items-center justify-center shadow-lg"
+          activeOpacity={0.8}
+        >
+          <Ionicons name="create-outline" size={24} color="#FFFFFF" />
+          <Text className="text-white font-bold text-base ml-2">Écrire un avis</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}

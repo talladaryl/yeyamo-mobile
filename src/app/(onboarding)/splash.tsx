@@ -49,10 +49,6 @@ export default function SplashScreen() {
     return () => clearTimeout(skipTimer);
   }, []);
 
-  const handleVideoEnd = () => {
-    goToStep1();
-  };
-
   const handleSkip = () => {
     goToStep1();
   };
@@ -84,7 +80,6 @@ export default function SplashScreen() {
     <View style={styles.container}>
       {/* Vidéo d'intro */}
       <VideoView
-        source={require('../../../assets/Créer_une_vidéo_animée_premium.mp4')}
         player={player}
         style={styles.video}
         contentFit="cover"

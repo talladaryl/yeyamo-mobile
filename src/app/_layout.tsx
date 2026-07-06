@@ -118,6 +118,13 @@ function RootNavigator() {
         <Stack.Screen name="(collections)/[id]" />
         <Stack.Screen name="(collections)/create" options={{ presentation: 'modal' }} />
         <Stack.Screen name="(collections)/add-to-collection" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="(profile)/publications" />
+        <Stack.Screen name="(profile)/favorites" />
+        <Stack.Screen name="(profile)/events" />
+        <Stack.Screen name="(profile)/reservations" />
+        <Stack.Screen name="(profile)/reviews" />
+        <Stack.Screen name="(profile)/notifications" />
+        <Stack.Screen name="(profile)/settings" />
         <Stack.Screen name="+not-found" />
       </Stack>
     </>
