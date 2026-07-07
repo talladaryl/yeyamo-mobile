@@ -24,11 +24,15 @@ class ReverbClient {
   // ─── Public API ─────────────────────────────────────────────────────────────
 
   connect(userToken: string): void {
+    if (ENV.USE_MOCKS) return;
+
     this.token = userToken;
     this._open();
   }
 
   subscribe(channel: string, onMessage: MessageHandler): () => void {
+    if (ENV.USE_MOCKS) return () => {};
+
     if (!this.subscriptions.has(channel)) {
       this.subscriptions.set(channel, new Set());
       this._sendSubscribe(channel);

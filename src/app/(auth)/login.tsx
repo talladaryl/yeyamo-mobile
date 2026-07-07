@@ -32,6 +32,14 @@ export default function LoginScreen() {
     }
   };
 
+  const handleDemoLogin = async () => {
+    try {
+      await login({ email: 'demo@yeyamo.com', password: 'password123' });
+    } catch {
+      // error displayed via useAuth state
+    }
+  };
+
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     // TODO: Implement social login
     console.log(`${provider} login not implemented yet`);
@@ -106,6 +114,14 @@ export default function LoginScreen() {
               isLoading={isLoading}
               className="mt-2"
             />
+            <TouchableOpacity
+              onPress={handleDemoLogin}
+              disabled={isLoading}
+              className="bg-[#27272A] rounded-xl py-3 items-center"
+              activeOpacity={0.8}
+            >
+              <Text className="text-white font-semibold">Entrer en mode demo</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Lien mot de passe oublié */}
