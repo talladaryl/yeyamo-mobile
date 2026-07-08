@@ -35,12 +35,12 @@ export default function ProfileScreen() {
         {/* Stats - Cliquables pour accéder aux listes */}
         <View className="flex-row justify-around px-6 py-4 border-y border-[#27272A]">
           <TouchableOpacity
-            onPress={() => {}}
+            onPress={() => router.push('/(profile)/publications')}
             className="items-center"
             activeOpacity={0.7}
           >
-            <Text className="text-white text-xl font-bold">0</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-0.5">Posts</Text>
+            <Text className="text-white text-xl font-bold">128</Text>
+            <Text className="text-[#A1A1AA] text-xs mt-0.5">Publications</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -48,8 +48,8 @@ export default function ProfileScreen() {
             className="items-center"
             activeOpacity={0.7}
           >
-            <Text className="text-white text-xl font-bold">0</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-0.5">Followers</Text>
+            <Text className="text-white text-xl font-bold">2.3K</Text>
+            <Text className="text-[#A1A1AA] text-xs mt-0.5">Abonnements</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -57,9 +57,129 @@ export default function ProfileScreen() {
             className="items-center"
             activeOpacity={0.7}
           >
-            <Text className="text-white text-xl font-bold">0</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-0.5">Following</Text>
+            <Text className="text-white text-xl font-bold">340</Text>
+            <Text className="text-[#A1A1AA] text-xs mt-0.5">Abonnés</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Bouton Modifier le profil */}
+        <View className="px-6 pt-4">
+          <Button label="Modifier le profil" onPress={() => {}} variant="outline" />
+        </View>
+
+        {/* Section Accès rapide */}
+        <View className="px-6 pt-6">
+          <Text className="text-white font-bold text-base mb-3">Accès rapide</Text>
+          
+          <View className="bg-[#161616] rounded-xl overflow-hidden mb-3">
+            {/* Mes publications */}
+            <TouchableOpacity
+              onPress={() => router.push('/(profile)/publications')}
+              className="flex-row items-center p-4 border-b border-[#27272A]"
+              activeOpacity={0.7}
+            >
+              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                <Icon library="ionicons" name="images" size={20} color="#EF4444" />
+              </View>
+              <Text className="flex-1 text-white font-semibold text-sm ml-3">
+                Mes publications
+              </Text>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
+            </TouchableOpacity>
+
+            {/* Mes favoris */}
+            <TouchableOpacity
+              onPress={() => router.push('/(profile)/favorites')}
+              className="flex-row items-center p-4 border-b border-[#27272A]"
+              activeOpacity={0.7}
+            >
+              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                <Icon library="ionicons" name="heart" size={20} color="#EF4444" />
+              </View>
+              <Text className="flex-1 text-white font-semibold text-sm ml-3">
+                Mes favoris
+              </Text>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
+            </TouchableOpacity>
+
+            {/* Mes sorties */}
+            <TouchableOpacity
+              onPress={() => router.push('/(profile)/events')}
+              className="flex-row items-center p-4 border-b border-[#27272A]"
+              activeOpacity={0.7}
+            >
+              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                <Icon library="ionicons" name="calendar" size={20} color="#EF4444" />
+              </View>
+              <Text className="flex-1 text-white font-semibold text-sm ml-3">
+                Mes sorties
+              </Text>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
+            </TouchableOpacity>
+
+            {/* Mes réservations */}
+            <TouchableOpacity
+              onPress={() => router.push('/(profile)/reservations')}
+              className="flex-row items-center p-4 border-b border-[#27272A]"
+              activeOpacity={0.7}
+            >
+              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                <Icon library="ionicons" name="ticket" size={20} color="#EF4444" />
+              </View>
+              <Text className="flex-1 text-white font-semibold text-sm ml-3">
+                Mes réservations
+              </Text>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
+            </TouchableOpacity>
+
+            {/* Mes avis */}
+            <TouchableOpacity
+              onPress={() => router.push('/(profile)/reviews')}
+              className="flex-row items-center p-4 border-b border-[#27272A]"
+              activeOpacity={0.7}
+            >
+              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                <Icon library="ionicons" name="star" size={20} color="#EF4444" />
+              </View>
+              <Text className="flex-1 text-white font-semibold text-sm ml-3">
+                Mes avis
+              </Text>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
+            </TouchableOpacity>
+
+            {/* Notifications */}
+            <TouchableOpacity
+              onPress={() => router.push('/(profile)/notifications')}
+              className="flex-row items-center p-4 border-b border-[#27272A]"
+              activeOpacity={0.7}
+            >
+              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                <Icon library="ionicons" name="notifications" size={20} color="#EF4444" />
+              </View>
+              <Text className="flex-1 text-white font-semibold text-sm ml-3">
+                Notifications
+              </Text>
+              <View className="bg-[#EF4444] px-2 py-0.5 rounded-full mr-2">
+                <Text className="text-white text-xs font-bold">2</Text>
+              </View>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
+            </TouchableOpacity>
+
+            {/* Paramètres */}
+            <TouchableOpacity
+              onPress={() => router.push('/(profile)/settings')}
+              className="flex-row items-center p-4"
+              activeOpacity={0.7}
+            >
+              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                <Icon library="ionicons" name="settings" size={20} color="#EF4444" />
+              </View>
+              <Text className="flex-1 text-white font-semibold text-sm ml-3">
+                Paramètres
+              </Text>
+              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Social Graph Section */}

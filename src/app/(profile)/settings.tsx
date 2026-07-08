@@ -11,14 +11,15 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { logout } = useAuth();
 
-  // États des toggles
+  // États des préférences
+  const [language, setLanguage] = useState('Français');
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const [theme, setTheme] = useState('dark');
 
   const handleLogout = () => {
     Alert.alert(
-      'Se déconnecter',
+      'Déconnexion',
       'Êtes-vous sûr de vouloir vous déconnecter ?',
       [
         { text: 'Annuler', style: 'cancel' },
@@ -44,47 +45,51 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Section Mon compte */}
-        <View className="mt-6">
-          <Text className="text-white font-bold text-base px-4 mb-3">Mon compte</Text>
-          <View className="bg-[#161616] mx-4 rounded-xl overflow-hidden">
+        {/* Mon compte */}
+        <View className="mt-6 px-4">
+          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">Mon compte</Text>
+          
+          <View className="bg-[#161616] rounded-xl overflow-hidden">
             <SettingsItem
               icon="person-outline"
               label="Informations personnelles"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
+              onPress={() => Alert.alert('Informations personnelles', 'Fonctionnalité à venir')}
             />
             <SettingsItem
               icon="lock-closed-outline"
               label="Mot de passe"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
+              onPress={() => Alert.alert('Mot de passe', 'Fonctionnalité à venir')}
               showBorder
             />
             <SettingsItem
               icon="shield-checkmark-outline"
               label="Confidentialité"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
-              showBorder={false}
+              onPress={() => Alert.alert('Confidentialité', 'Fonctionnalité à venir')}
+              showBorder
             />
           </View>
         </View>
 
-        {/* Section Préférences */}
-        <View className="mt-6">
-          <Text className="text-white font-bold text-base px-4 mb-3">Préférences</Text>
-          <View className="bg-[#161616] mx-4 rounded-xl overflow-hidden">
+        {/* Préférences */}
+        <View className="mt-6 px-4">
+          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">Préférences</Text>
+          
+          <View className="bg-[#161616] rounded-xl overflow-hidden">
             <SettingsItem
               icon="language-outline"
               label="Langue"
-              value="Français"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
+              value={language}
+              onPress={() => Alert.alert('Langue', 'Sélection de langue à venir')}
             />
-
+            
             {/* Notifications Push */}
-            <View className="flex-row items-center px-4 py-4 border-t border-[#27272A]">
-              <View className="w-10 h-10 rounded-full bg-[#27272A] items-center justify-center mr-3">
-                <Ionicons name="notifications-outline" size={20} color="#EF4444" />
+            <View className="flex-row items-center justify-between px-4 py-4 border-t border-[#27272A]">
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
+                  <Ionicons name="notifications-outline" size={20} color="#EF4444" />
+                </View>
+                <Text className="text-white font-medium ml-3">Notifications</Text>
               </View>
-              <Text className="flex-1 text-white font-medium text-base">Notifications</Text>
               <Switch
                 value={pushNotifications}
                 onValueChange={setPushNotifications}
@@ -97,58 +102,60 @@ export default function SettingsScreen() {
               icon="contrast-outline"
               label="Thème"
               value="Sombre"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
+              onPress={() => Alert.alert('Thème', 'Sélection de thème à venir')}
               showBorder
             />
+            
             <SettingsItem
               icon="accessibility-outline"
               label="Accessibilité"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
-              showBorder={false}
+              onPress={() => Alert.alert('Accessibilité', 'Fonctionnalité à venir')}
+              showBorder
             />
           </View>
         </View>
 
-        {/* Section Support & à propos */}
-        <View className="mt-6">
-          <Text className="text-white font-bold text-base px-4 mb-3">Support & à propos</Text>
-          <View className="bg-[#161616] mx-4 rounded-xl overflow-hidden">
+        {/* Support & À propos */}
+        <View className="mt-6 px-4">
+          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">Support & à propos</Text>
+          
+          <View className="bg-[#161616] rounded-xl overflow-hidden">
             <SettingsItem
               icon="help-circle-outline"
               label="Aide"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
+              onPress={() => Alert.alert('Aide', 'Centre d\'aide à venir')}
             />
             <SettingsItem
               icon="document-text-outline"
               label="Conditions d'utilisation"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
+              onPress={() => Alert.alert('CGU', 'Conditions d\'utilisation')}
               showBorder
             />
             <SettingsItem
               icon="shield-outline"
               label="Politique de confidentialité"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
+              onPress={() => Alert.alert('Politique', 'Politique de confidentialité')}
               showBorder
             />
             <SettingsItem
               icon="information-circle-outline"
               label="À propos de Yeyamo"
               value="v1.0.0"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
-              showBorder={false}
+              onPress={() => Alert.alert('À propos', 'Yeyamo - Version 1.0.0')}
+              showBorder
             />
           </View>
         </View>
 
-        {/* Bouton Déconnexion */}
-        <View className="px-4 py-6 pb-8">
+        {/* Déconnexion */}
+        <View className="mt-6 px-4 pb-8">
           <TouchableOpacity
             onPress={handleLogout}
-            className="bg-[#27272A] py-4 rounded-xl flex-row items-center justify-center"
+            className="bg-[#161616] rounded-xl p-4 flex-row items-center justify-center border border-[#EF4444]/20"
             activeOpacity={0.7}
           >
             <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-            <Text className="text-[#EF4444] font-semibold text-base ml-2">Se déconnecter</Text>
+            <Text className="text-[#EF4444] font-semibold ml-2">Se déconnecter</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
