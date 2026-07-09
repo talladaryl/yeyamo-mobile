@@ -1,4 +1,5 @@
 import '../../global.css';
+import '@/i18n'; // Initialiser i18n
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

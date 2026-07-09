@@ -1,28 +1,18 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
-import { Icon } from '@/components/ui/Icon';
-import { InfoItem } from '@/components/ui/InfoItem';
-import { CTAButton } from '@/components/ui/CTAButton';
+import { Ionicons } from '@expo/vector-icons';
 import { mockEvents } from '@/features/events/mockData';
+import { useState } from 'react';
+
+const { width } = Dimensions.get('window');
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const [isSaved, setIsSaved] = useState(false);
   
-  // Pour la démo, on prend le premier événement
-  const event = mockEvents[0];
-
-  if (!event) {
-    return (
-      <View className="flex-1 bg-[#0A0A0A] items-center justify-center px-6">
-        <Text className="text-[#EF4444] text-center">Événement introuvable.</Text>
-      </View>
-    );
-  }
-
-  const startDate = new Date(event.start_date);
-  const endDate = new Date(event.end_date);
+  const event = mockEvents.find(e => e.id === Number(id)) || mockEvents[0];
 
   return (
     <View className="flex-1 bg-[#0A0A0A]">
@@ -34,20 +24,23 @@ export default function EventDetailScreen() {
           headerTintColor: '#FFFFFF',
           headerTitle: '',
           headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="ml-4 bg-black/60 w-10 h-10 rounded-full items-center justify-center"
+            <TouchableOpacity 
+              onPress={() => router.back()} 
+              className="ml-4 bg-black/50 w-10 h-10 rounded-full items-center justify-center"
             >
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <View className="flex-row gap-3 mr-4">
-              <TouchableOpacity className="bg-black/60 w-10 h-10 rounded-full items-center justify-center">
-                <Icon library="ionicons" name={event.is_saved ? 'bookmark' : 'bookmark-outline'} size={22} color="#FFFFFF" />
+            <View className="flex-row gap-2 mr-4">
+              <TouchableOpacity 
+                onPress={() => setIsSaved(!isSaved)}
+                className="bg-black/50 w-10 h-10 rounded-full items-center justify-center"
+              >
+                <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity className="bg-black/60 w-10 h-10 rounded-full items-center justify-center">
-                <Icon library="ionicons" name="share-outline" size={22} color="#FFFFFF" />
+              <TouchableOpacity className="bg-black/50 w-10 h-10 rounded-full items-center justify-center">
+                <Ionicons name="share-outline" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           ),
@@ -55,140 +48,177 @@ export default function EventDetailScreen() {
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Hero Image */}
-        {event.cover_image_url ? (
+        {/* Hero Image with Date Badge */}
+        <View className="relative">
           <Image
-            source={{ uri: event.cover_image_url }}
-            style={{ width: '100%', height: 320 }}
+            source={{ uri: event.cover_image_url || '' }}
+            style={{ width, height: 280 }}
             contentFit="cover"
           />
-        ) : (
-          <View className="w-full h-80 bg-[#161616] items-center justify-center">
-            <Icon library="ionicons" name="calendar" size={64} color="#52525B" />
-          </View>
-        )}
-
-        {/* Event Info Card */}
-        <View className="px-4 pt-5">
           {/* Date Badge */}
-          <View className="bg-[#EF4444] self-start px-4 py-2 rounded-lg mb-4">
-            <Text className="text-white text-2xl font-bold">{startDate.getDate()}</Text>
-            <Text className="text-white text-xs uppercase">{startDate.toLocaleDateString('fr-FR', { month: 'short' })}</Text>
+          <View className="absolute top-4 left-4 bg-[#EF4444] rounded-2xl items-center justify-center px-3 py-2">
+            <Text className="text-white text-2xl font-bold">
+              {new Date(event.start_date).getDate()}
+            </Text>
+            <Text className="text-white text-xs font-semibold uppercase">
+              {new Date(event.start_date).toLocaleDateString('fr-FR', { month: 'short' })}
+            </Text>
           </View>
+        </View>
 
+        <View className="px-4">
           {/* Title */}
-          <Text className="text-white text-2xl font-bold mb-4">{event.title}</Text>
+          <Text className="text-white text-2xl font-bold mt-4 mb-2">{event.title}</Text>
+          
+          {/* Location */}
+          <TouchableOpacity 
+            onPress={() => router.push(`/(places)/1`)}
+            className="flex-row items-center gap-2 mb-3"
+          >
+            <Ionicons name="location-outline" size={18} color="#A1A1AA" />
+            <Text className="text-[#A1A1AA] text-sm">{event.location}</Text>
+          </TouchableOpacity>
 
-          {/* Event Details */}
-          <View className="space-y-3 mb-5">
-            <View className="flex-row items-center gap-3">
-              <View className="w-10 h-10 bg-[#161616] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="calendar-outline" size={18} color="#EF4444" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white text-sm">
-                  {startDate.getDate()} - {endDate.getDate()} {endDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-                </Text>
-              </View>
-            </View>
-
-            <View className="flex-row items-center gap-3">
-              <View className="w-10 h-10 bg-[#161616] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="time-outline" size={18} color="#EF4444" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white text-sm">
-                  {event.start_time} - {event.end_time}
-                </Text>
-              </View>
-            </View>
-
-            <View className="flex-row items-center gap-3">
-              <View className="w-10 h-10 bg-[#161616] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="location-outline" size={18} color="#EF4444" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white text-sm">{event.location}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* À propos */}
-          <View className="mb-5">
-            <Text className="text-white text-lg font-bold mb-3">À propos</Text>
-            <Text className="text-white text-sm leading-6">
-              {event.description}
+          {/* Date & Time */}
+          <View className="flex-row items-center gap-2 mb-4">
+            <Ionicons name="time-outline" size={18} color="#A1A1AA" />
+            <Text className="text-white text-sm">
+              {new Date(event.start_date).toLocaleDateString('fr-FR', { 
+                weekday: 'short', 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric' 
+              })} • {event.start_time}
             </Text>
           </View>
 
-          {/* Programme */}
-          {event.program && event.program.length > 0 && (
+          {/* Participants */}
+          <View className="flex-row items-center gap-2 mb-5">
+            <Ionicons name="people-outline" size={18} color="#A1A1AA" />
+            <Text className="text-white text-sm">
+              {event.participants_count} participants intéressés
+            </Text>
+          </View>
+
+          {/* Description */}
+          <View className="mb-5">
+            <Text className="text-white text-base leading-6">{event.description}</Text>
+          </View>
+
+          {/* Ticket Types */}
+          {event.ticket_types && event.ticket_types.length > 0 && (
             <View className="mb-5">
-              <View className="flex-row items-center justify-between mb-3">
-                <Text className="text-white text-lg font-bold">Programme</Text>
-                <TouchableOpacity>
-                  <Text className="text-[#EF4444] text-sm font-semibold">Voir plus</Text>
-                </TouchableOpacity>
-              </View>
-              
-              <View className="space-y-3">
-                {event.program.map((item, index) => (
-                  <View key={index} className="bg-[#161616] rounded-xl p-4">
-                    <Text className="text-white text-base font-semibold mb-1">{item.date}</Text>
-                    <Text className="text-white text-sm mb-1">{item.title}</Text>
-                    {item.description && (
-                      <Text className="text-[#A1A1AA] text-xs">{item.description}</Text>
-                    )}
+              {event.ticket_types.map((ticket) => (
+                <View 
+                  key={ticket.id}
+                  className="bg-[#161616] rounded-2xl p-4 mb-3 flex-row items-center justify-between"
+                >
+                  <View className="flex-1">
+                    <Text className="text-white font-semibold text-base mb-1">{ticket.label}</Text>
+                    <Text className="text-[#A1A1AA] text-sm">
+                      {ticket.price.toLocaleString()} {event.currency}
+                    </Text>
                   </View>
-                ))}
-              </View>
+                  <TouchableOpacity className="bg-[#EF4444] px-6 py-2.5 rounded-xl">
+                    <Text className="text-white font-semibold">Participer</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
           )}
 
-          {/* Objectif Section */}
-          <View className="border-t border-[#27272A] pt-5 mb-5">
-            <Text className="text-white text-lg font-bold mb-3">OBJECTIF</Text>
-            <Text className="text-white text-sm leading-6 mb-3">
-              Donner tous les détails d'un événement et permettre à l'utilisateur de réserver.
-            </Text>
-            
-            <Text className="text-white text-sm font-semibold mb-2">LIENS SUIVANTS :</Text>
-            <View className="space-y-1">
-              <Text className="text-[#A1A1AA] text-sm">• Image couverture</Text>
-              <Text className="text-[#A1A1AA] text-sm">• Titre, heure, lieu</Text>
-              <Text className="text-[#A1A1AA] text-sm">• À propos / Description</Text>
-              <Text className="text-[#A1A1AA] text-sm">• Programme / Activités</Text>
-              <Text className="text-[#A1A1AA] text-sm">• Bouton participer / Réserver</Text>
+          {/* Action Buttons (if no tickets) */}
+          {(!event.ticket_types || event.ticket_types.length === 0) && (
+            <View className="flex-row gap-3 mb-5">
+              <TouchableOpacity className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
+                <Text className="text-white font-semibold text-base">Participer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center">
+                <Ionicons name="share-social-outline" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center">
+                <Ionicons name="add-outline" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Participants Section */}
+          <View className="mb-5">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-white text-lg font-bold">
+                Participants ({event.participants_count})
+              </Text>
+              <TouchableOpacity>
+                <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex-row items-center">
+              {/* Participant Avatars */}
+              <View className="flex-row -space-x-3 mr-3">
+                {event.participants.slice(0, 4).map((participant, index) => (
+                  <Image
+                    key={participant.id}
+                    source={{ uri: participant.avatar_url || '' }}
+                    style={{ 
+                      width: 36, 
+                      height: 36,
+                      borderWidth: 2,
+                      borderColor: '#0A0A0A',
+                    }}
+                    className="rounded-full"
+                  />
+                ))}
+              </View>
+              {event.participants_count > 4 && (
+                <Text className="text-[#A1A1AA] text-sm">
+                  +{event.participants_count - 4} autres
+                </Text>
+              )}
             </View>
           </View>
 
-          {/* Links Variants */}
-          <View className="border-t border-[#27272A] pt-5 mb-5">
-            <Text className="text-white text-lg font-bold mb-3">LIENS SUIVANTS</Text>
-            <View className="space-y-1">
-              <Text className="text-[#A1A1AA] text-sm">Détail événement : Partenaire, Lieu, Partager / Réserver</Text>
+          {/* Événements similaires Section */}
+          <View className="mb-5">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-white text-lg font-bold">Événements similaires</Text>
+              <TouchableOpacity>
+                <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
+              </TouchableOpacity>
             </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 px-4">
+              {mockEvents
+                .filter(e => e.id !== event.id)
+                .slice(0, 3)
+                .map((similarEvent) => (
+                  <TouchableOpacity
+                    key={similarEvent.id}
+                    onPress={() => router.push(`/(events)/${similarEvent.id}`)}
+                    className="mr-3"
+                  >
+                    <Image
+                      source={{ uri: similarEvent.cover_image_url || '' }}
+                      style={{ width: 160, height: 120 }}
+                      className="rounded-xl mb-2"
+                    />
+                    <Text className="text-white font-semibold text-sm w-[160px]" numberOfLines={1}>
+                      {similarEvent.title}
+                    </Text>
+                    <Text className="text-[#A1A1AA] text-xs mt-0.5">
+                      {new Date(similarEvent.start_date).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short'
+                      })}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+            </ScrollView>
           </View>
         </View>
 
-        {/* Bottom spacing */}
-        <View className="h-24" />
+        <View className="h-20" />
       </ScrollView>
-
-      {/* Fixed Bottom CTA */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
-        <CTAButton
-          title="Participer"
-          variant="primary"
-          onPress={() => console.log('Participate in event')}
-        />
-        <View className="flex-row items-center justify-center mt-2 gap-1">
-          <Icon library="ionicons" name="people" size={16} color="#A1A1AA" />
-          <Text className="text-[#A1A1AA] text-sm">
-            {event.participants_count.toLocaleString()} participants
-          </Text>
-        </View>
-      </View>
     </View>
   );
 }

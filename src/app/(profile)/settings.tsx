@@ -52,19 +52,19 @@ export default function SettingsScreen() {
           <View className="bg-[#161616] rounded-xl overflow-hidden">
             <SettingsItem
               icon="person-outline"
-              label="Informations personnelles"
-              onPress={() => Alert.alert('Informations personnelles', 'Fonctionnalité à venir')}
-            />
-            <SettingsItem
-              icon="lock-closed-outline"
-              label="Mot de passe"
-              onPress={() => Alert.alert('Mot de passe', 'Fonctionnalité à venir')}
-              showBorder
+              label="Modifier le profil"
+              onPress={() => router.push('/(profile)/edit-profile')}
             />
             <SettingsItem
               icon="shield-checkmark-outline"
               label="Confidentialité"
-              onPress={() => Alert.alert('Confidentialité', 'Fonctionnalité à venir')}
+              onPress={() => router.push('/(profile)/privacy')}
+              showBorder
+            />
+            <SettingsItem
+              icon="lock-closed-outline"
+              label="Sécurité du compte"
+              onPress={() => router.push('/(profile)/security')}
               showBorder
             />
           </View>
@@ -77,9 +77,9 @@ export default function SettingsScreen() {
           <View className="bg-[#161616] rounded-xl overflow-hidden">
             <SettingsItem
               icon="language-outline"
-              label="Langue"
+              label="Langue & Préférences"
               value={language}
-              onPress={() => Alert.alert('Langue', 'Sélection de langue à venir')}
+              onPress={() => router.push('/(profile)/preferences')}
             />
             
             {/* Notifications Push */}
@@ -97,21 +97,6 @@ export default function SettingsScreen() {
                 thumbColor="#FFFFFF"
               />
             </View>
-
-            <SettingsItem
-              icon="contrast-outline"
-              label="Thème"
-              value="Sombre"
-              onPress={() => Alert.alert('Thème', 'Sélection de thème à venir')}
-              showBorder
-            />
-            
-            <SettingsItem
-              icon="accessibility-outline"
-              label="Accessibilité"
-              onPress={() => Alert.alert('Accessibilité', 'Fonctionnalité à venir')}
-              showBorder
-            />
           </View>
         </View>
 
@@ -143,6 +128,21 @@ export default function SettingsScreen() {
               value="v1.0.0"
               onPress={() => Alert.alert('À propos', 'Yeyamo - Version 1.0.0')}
               showBorder
+            />
+          </View>
+        </View>
+
+        {/* Gestion du compte */}
+        <View className="mt-6 px-4">
+          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
+            Gestion du compte
+          </Text>
+          <View className="bg-[#161616] rounded-xl overflow-hidden">
+            <SettingsItem
+              icon="trash-outline"
+              label="Désactiver / Supprimer le compte"
+              onPress={() => router.push('/(profile)/delete-account')}
+              destructive
             />
           </View>
         </View>

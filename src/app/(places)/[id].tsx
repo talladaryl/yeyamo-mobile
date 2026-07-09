@@ -1,25 +1,18 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
-import { Icon } from '@/components/ui/Icon';
-import { InfoItem } from '@/components/ui/InfoItem';
-import { CTAButton } from '@/components/ui/CTAButton';
+import { Ionicons } from '@expo/vector-icons';
 import { mockPlaces } from '@/features/places/mockData';
+import { useState } from 'react';
+
+const { width } = Dimensions.get('window');
 
 export default function PlaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const [isSaved, setIsSaved] = useState(false);
   
-  // Pour la démo, on prend le premier lieu
-  const place = mockPlaces[0];
-
-  if (!place) {
-    return (
-      <View className="flex-1 bg-[#0A0A0A] items-center justify-center px-6">
-        <Text className="text-[#EF4444] text-center">Lieu introuvable.</Text>
-      </View>
-    );
-  }
+  const place = mockPlaces.find(p => p.id === Number(id)) || mockPlaces[0];
 
   return (
     <View className="flex-1 bg-[#0A0A0A]">
@@ -33,18 +26,21 @@ export default function PlaceDetailScreen() {
           headerLeft: () => (
             <TouchableOpacity 
               onPress={() => router.back()} 
-              className="ml-4 bg-black/60 w-10 h-10 rounded-full items-center justify-center"
+              className="ml-4 bg-black/50 w-10 h-10 rounded-full items-center justify-center"
             >
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <View className="flex-row gap-3 mr-4">
-              <TouchableOpacity className="bg-black/60 w-10 h-10 rounded-full items-center justify-center">
-                <Icon library="ionicons" name={place.is_saved ? 'bookmark' : 'bookmark-outline'} size={22} color="#FFFFFF" />
+            <View className="flex-row gap-2 mr-4">
+              <TouchableOpacity 
+                onPress={() => setIsSaved(!isSaved)}
+                className="bg-black/50 w-10 h-10 rounded-full items-center justify-center"
+              >
+                <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity className="bg-black/60 w-10 h-10 rounded-full items-center justify-center">
-                <Icon library="ionicons" name="share-outline" size={22} color="#FFFFFF" />
+              <TouchableOpacity className="bg-black/50 w-10 h-10 rounded-full items-center justify-center">
+                <Ionicons name="share-outline" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           ),
@@ -52,127 +48,182 @@ export default function PlaceDetailScreen() {
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Hero Image */}
+        {/* Hero Image with Gallery Counter */}
         <View className="relative">
-          {place.cover_image_url ? (
-            <Image
-              source={{ uri: place.cover_image_url }}
-              style={{ width: '100%', height: 400 }}
-              contentFit="cover"
-            />
-          ) : (
-            <View className="w-full h-96 bg-[#161616] items-center justify-center">
-              <Icon library="ionicons" name="location" size={64} color="#52525B" />
-            </View>
-          )}
-          
-          {/* Image counter overlay */}
-          <View className="absolute bottom-4 right-4 bg-black/70 px-3 py-1.5 rounded-full">
-            <Text className="text-white text-sm font-medium">1/18</Text>
+          <Image
+            source={{ uri: place.cover_image_url || '' }}
+            style={{ width, height: 300 }}
+            contentFit="cover"
+          />
+          <View className="absolute bottom-3 right-3 bg-black/70 px-3 py-1.5 rounded-full">
+            <Text className="text-white text-xs font-medium">1/{place.photos?.length || 1}</Text>
           </View>
         </View>
 
-        {/* Place Info */}
-        <View className="px-4 pt-5">
-          {/* Title & Rating */}
-          <View className="flex-row items-start justify-between mb-3">
-            <View className="flex-1 pr-3">
+        <View className="px-4">
+          {/* Title & Location */}
+          <View className="flex-row items-start justify-between mt-4 mb-3">
+            <View className="flex-1">
               <Text className="text-white text-2xl font-bold mb-1">{place.name}</Text>
-              <View className="flex-row items-center gap-1">
-                <Icon library="ionicons" name="star" size={16} color="#F59E0B" />
-                <Text className="text-white text-sm font-medium">
-                  {place.rating?.toFixed(1)}
-                </Text>
-                <Text className="text-[#A1A1AA] text-sm">({place.reviews_count} avis)</Text>
-              </View>
+              <Text className="text-[#A1A1AA] text-sm">{place.category} • {place.city}</Text>
             </View>
-            
-            <TouchableOpacity className="bg-[#EF4444] w-10 h-10 rounded-full items-center justify-center">
-              <Icon library="ionicons" name="location" size={20} color="#FFFFFF" />
+          </View>
+
+          {/* Rating */}
+          <View className="flex-row items-center gap-1 mb-4">
+            <Ionicons name="star" size={18} color="#F59E0B" />
+            <Text className="text-white text-base font-semibold">{place.rating?.toFixed(1)}</Text>
+            <Text className="text-[#A1A1AA] text-sm">({place.reviews_count} avis)</Text>
+          </View>
+
+          {/* Address */}
+          <View className="flex-row items-start gap-2 mb-4">
+            <Ionicons name="location-outline" size={20} color="#A1A1AA" />
+            <Text className="text-white text-sm flex-1">{place.address}</Text>
+          </View>
+
+          {/* Opening Hours */}
+          <View className="flex-row items-center gap-2 mb-5">
+            <Ionicons name="time-outline" size={20} color="#A1A1AA" />
+            <Text className="text-white text-sm">Ouvert • {place.opening_hours}</Text>
+          </View>
+
+          {/* Price Range */}
+          <View className="bg-[#161616] rounded-2xl p-4 mb-5">
+            <Text className="text-[#A1A1AA] text-xs mb-1">Prix par nuit</Text>
+            <Text className="text-white text-xl font-bold">
+              {place.price_from?.toLocaleString()} - {place.price_to?.toLocaleString()} {place.currency}
+              <Text className="text-sm font-normal text-[#A1A1AA]"> / nuit</Text>
+            </Text>
+          </View>
+
+          {/* Action Buttons */}
+          <View className="flex-row gap-3 mb-6">
+            <TouchableOpacity className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
+              <Text className="text-white font-semibold text-base">Réserver</Text>
+            </TouchableOpacity>
+            <TouchableOpacity className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center">
+              <Ionicons name="navigate-outline" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center">
+              <Ionicons name="share-social-outline" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
-          {/* À propos */}
+          {/* Avis récents Section */}
           <View className="mb-5">
-            <Text className="text-white text-lg font-bold mb-3">À propos</Text>
-            <Text className="text-white text-sm leading-6">
-              {place.description}
-            </Text>
-            <TouchableOpacity className="mt-2">
-              <Text className="text-[#EF4444] text-sm font-semibold">Voir plus</Text>
-            </TouchableOpacity>
-          </View>
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-white text-lg font-bold">Avis récents</Text>
+              <TouchableOpacity>
+                <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Équipements */}
-          {place.equipment && place.equipment.length > 0 && (
-            <View className="mb-5">
-              <Text className="text-white text-lg font-bold mb-4">Équipements</Text>
-              <View className="flex-row flex-wrap">
-                {place.equipment.map((item) => (
-                  <View key={item.id} className="w-1/4 items-center mb-4">
-                    <View className="w-14 h-14 bg-[#161616] rounded-2xl items-center justify-center mb-2">
-                      <Icon 
-                        library={item.iconLibrary} 
-                        name={item.icon} 
-                        size={24} 
-                        color="#EF4444" 
-                      />
+            {place.recent_reviews?.map((review) => (
+              <View key={review.id} className="mb-4">
+                <View className="flex-row items-start gap-3">
+                  <Image
+                    source={{ uri: review.user_avatar }}
+                    style={{ width: 40, height: 40 }}
+                    className="rounded-full"
+                  />
+                  <View className="flex-1">
+                    <View className="flex-row items-center justify-between mb-1">
+                      <Text className="text-white font-semibold">{review.user_name}</Text>
+                      <Text className="text-[#A1A1AA] text-xs">{review.date}</Text>
                     </View>
-                    <Text className="text-white text-xs text-center">{item.label}</Text>
+                    <View className="flex-row items-center gap-1 mb-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Ionicons
+                          key={i}
+                          name={i < review.rating ? 'star' : 'star-outline'}
+                          size={12}
+                          color={i < review.rating ? '#F59E0B' : '#52525B'}
+                        />
+                      ))}
+                    </View>
+                    <Text className="text-[#A1A1AA] text-sm leading-5">{review.comment}</Text>
+                    {review.photos && review.photos.length > 0 && (
+                      <View className="flex-row gap-2 mt-2">
+                        {review.photos.map((photo, idx) => (
+                          <Image
+                            key={idx}
+                            source={{ uri: photo }}
+                            style={{ width: 80, height: 80 }}
+                            className="rounded-lg"
+                          />
+                        ))}
+                      </View>
+                    )}
                   </View>
-                ))}
+                </View>
               </View>
-            </View>
-          )}
-
-          {/* Objectif Section */}
-          <View className="border-t border-[#27272A] pt-5 mb-5">
-            <Text className="text-white text-lg font-bold mb-3">OBJECTIF</Text>
-            <Text className="text-white text-sm leading-6 mb-2">
-              Proposer toutes les informations d'un lieu
-            </Text>
-            <Text className="text-white text-sm leading-6 mb-3">
-              Pour aider l'utilisateur à décider.
-            </Text>
-            
-            <Text className="text-white text-sm font-semibold mb-2">LIENS SUIVANTS :</Text>
-            <View className="space-y-1">
-              <Text className="text-[#A1A1AA] text-sm">• Carte (détails lieux)</Text>
-              <Text className="text-[#A1A1AA] text-sm">• Photos / Gallerie</Text>
-              <Text className="text-[#A1A1AA] text-sm">• Avis utilisateurs</Text>
-              <Text className="text-[#A1A1AA] text-sm">• Tarifs détaillés</Text>
-              <Text className="text-[#A1A1AA] text-sm">• Réservation</Text>
-              <Text className="text-[#A1A1AA] text-sm">• Événements associés</Text>
-            </View>
+            ))}
           </View>
 
-          {/* Links Variants */}
-          <View className="border-t border-[#27272A] pt-5 mb-5">
-            <Text className="text-white text-lg font-bold mb-3">LIENS SUIVANTS</Text>
-            <View className="space-y-1">
-              <Text className="text-[#A1A1AA] text-sm">Détail événement : Sws, Événements, Lieux</Text>
-              <Text className="text-[#A1A1AA] text-sm">Réservation : Avis, Llieux (Prix)</Text>
+          {/* Événements liés Section */}
+          <View className="mb-5">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-white text-lg font-bold">Événements liés</Text>
+              <TouchableOpacity>
+                <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
+              </TouchableOpacity>
             </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 px-4">
+              {place.related_events?.map((event) => (
+                <TouchableOpacity
+                  key={event.id}
+                  onPress={() => router.push(`/(events)/${event.id}`)}
+                  className="mr-3"
+                >
+                  <Image
+                    source={{ uri: event.image_url }}
+                    style={{ width: 160, height: 120 }}
+                    className="rounded-xl mb-2"
+                  />
+                  <Text className="text-white font-semibold text-sm" numberOfLines={1}>
+                    {event.title}
+                  </Text>
+                  <Text className="text-[#A1A1AA] text-xs mt-0.5">{event.date} • {event.time}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Événements similaires Section */}
+          <View className="mb-5">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-white text-lg font-bold">Événements similaires</Text>
+              <TouchableOpacity>
+                <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 px-4">
+              {place.similar_events?.map((event) => (
+                <TouchableOpacity
+                  key={event.id}
+                  onPress={() => router.push(`/(events)/${event.id}`)}
+                  className="mr-3"
+                >
+                  <Image
+                    source={{ uri: event.image_url }}
+                    style={{ width: 160, height: 120 }}
+                    className="rounded-xl mb-2"
+                  />
+                  <Text className="text-white font-semibold text-sm" numberOfLines={1}>
+                    {event.title}
+                  </Text>
+                  <Text className="text-[#A1A1AA] text-xs mt-0.5">{event.date}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         </View>
 
-        {/* Bottom spacing */}
-        <View className="h-24" />
+        <View className="h-20" />
       </ScrollView>
-
-      {/* Fixed Bottom CTA */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
-        <CTAButton
-          title="Réserver"
-          variant="primary"
-          onPress={() => console.log('Book place')}
-        />
-        <View className="flex-row items-center justify-center mt-3 gap-4">
-          <Text className="text-[#A1A1AA] text-sm">
-            À partir de <Text className="text-white font-bold">{place.price_from?.toLocaleString()} {place.currency}</Text>
-          </Text>
-        </View>
-      </View>
     </View>
   );
 }

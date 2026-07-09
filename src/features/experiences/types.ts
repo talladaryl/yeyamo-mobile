@@ -16,6 +16,9 @@ export interface Experience {
   duration_hours: number;
   duration_days?: number;
   difficulty: 'facile' | 'modérée' | 'difficile';
+  difficulty_label?: string;
+  distance_km?: number;
+  required_deposit?: number;
   group_size_min: number;
   group_size_max: number;
   languages: string[];
@@ -23,6 +26,9 @@ export interface Experience {
   category: 'adventure' | 'culture' | 'nature' | 'relaxation';
   included_items: ExperienceIncludedItem[];
   equipment_provided: string[];
+  highlights?: ExperienceHighlight[];
+  reviews?: ExperienceReview[];
+  similar_experiences?: Experience[];
   is_saved: boolean;
   created_at: string;
 }
@@ -32,6 +38,21 @@ export interface ExperienceIncludedItem {
   label: string;
   icon: string;
   iconLibrary: 'ionicons' | 'material' | 'material-community';
+}
+
+export interface ExperienceHighlight {
+  id: string;
+  icon: string;
+  label: string;
+}
+
+export interface ExperienceReview {
+  id: string;
+  user_name: string;
+  user_avatar: string;
+  rating: number;
+  comment: string;
+  date: string;
 }
 
 export interface ExperiencesFilters {

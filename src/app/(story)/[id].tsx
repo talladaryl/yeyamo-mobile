@@ -1,152 +1,194 @@
-import { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { View, Text, TouchableOpacity, Dimensions, StatusBar, Pressable } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { useVideoPlayer, VideoView } from 'expo-video';
-import { SafeAreaView } from 'react-native';
-import { Avatar } from '@/components/ui/Avatar';
-import { useStoryDetail, useMarkStoryViewed } from '@/features/story/useStory';
-import { timeAgo } from '@/utils/format';
+import { Ionicons } from '@expo/vector-icons';
+import { mockStories } from '@/features/story/mockData';
+import { useState, useEffect, useRef } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const STORY_DURATION_MS = 5000;
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-export default function StoryScreen() {
+export default function StoryViewerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const storyId = Number(id);
-
-  const { data: story, isLoading } = useStoryDetail(storyId);
-  const { mutate: markViewed } = useMarkStoryViewed();
-
-  const progress = useRef(new Animated.Value(0)).current;
+  const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const animRef = useRef<Animated.CompositeAnimation | null>(null);
+  const [showReply, setShowReply] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const story = mockStories.find(s => s.id === Number(id)) || mockStories[0];
+  const STORY_DURATION = 5000; // 5 seconds
 
-  const videoUri = story?.media.type === 'video' ? story.media.url : '';
-  const player = useVideoPlayer(story?.media.type === 'video' ? videoUri : null, (p) => {
-    p.loop = false;
-    p.play();
-  });
-
-  // Mark viewed once loaded
   useEffect(() => {
-    if (story) {
-      markViewed(storyId);
+    if (!isPaused) {
+      intervalRef.current = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(intervalRef.current!);
+            router.back();
+            return 100;
+          }
+          return prev + (100 / (STORY_DURATION / 100));
+        });
+      }, 100);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
     }
-  }, [story, storyId, markViewed]);
 
-  // Progress bar animation
-  useEffect(() => {
-    if (!story || isLoading) return;
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isPaused]);
 
-    progress.setValue(0);
-    animRef.current = Animated.timing(progress, {
-      toValue: 1,
-      duration: STORY_DURATION_MS,
-      useNativeDriver: false,
-    });
-
-    animRef.current.start(({ finished }) => {
-      if (finished) router.back();
-    });
-
-    return () => animRef.current?.stop();
-  }, [story, isLoading, progress, router]);
-
-  // Pause / resume on press hold
   const handlePressIn = () => {
     setIsPaused(true);
-    animRef.current?.stop();
-    if (story?.media.type === 'video') player.pause();
   };
 
   const handlePressOut = () => {
     setIsPaused(false);
-    animRef.current?.start(({ finished }) => {
-      if (finished) router.back();
-    });
-    if (story?.media.type === 'video') player.play();
   };
 
-  if (isLoading || !story) {
-    return (
-      <View className="flex-1 bg-black" />
-    );
-  }
+  const handleTapLeft = () => {
+    // Go to previous story
+    router.back();
+  };
+
+  const handleTapRight = () => {
+    // Go to next story
+    router.back();
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
-      <Stack.Screen options={{ headerShown: false }} />
+    <View className="flex-1 bg-black">
+      <StatusBar hidden />
+      
+      {/* Background Image */}
+      <Image
+        source={{ uri: story.media.url }}
+        style={{ width, height }}
+        contentFit="cover"
+      />
 
-      {/* Media */}
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        className="absolute inset-0"
-      >
-        {story.media.type === 'video' ? (
-          <VideoView
-            player={player}
-            style={{ width: SCREEN_WIDTH, flex: 1 }}
-            contentFit="cover"
-            nativeControls={false}
+      {/* Gradient Overlays */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.6)', 'transparent']}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 150,
+        }}
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.4)']}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 200,
+        }}
+      />
+
+      {/* Progress Bar */}
+      <View className="absolute top-12 left-4 right-4">
+        <View className="h-0.5 bg-white/30 rounded-full overflow-hidden">
+          <View 
+            className="h-full bg-white rounded-full"
+            style={{ width: `${progress}%` }}
           />
-        ) : (
+        </View>
+      </View>
+
+      {/* Header */}
+      <View className="absolute top-16 left-4 right-4 flex-row items-center justify-between">
+        <View className="flex-row items-center gap-3 flex-1">
           <Image
-            source={{ uri: story.media.url }}
-            style={{ flex: 1 }}
-            contentFit="cover"
+            source={{ uri: story.author.avatar_url || '' }}
+            style={{ width: 36, height: 36 }}
+            className="rounded-full border-2 border-white"
           />
-        )}
-      </TouchableOpacity>
-
-      {/* Dark top gradient hint */}
-      <View className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-
-      {/* Progress bar */}
-      <View className="absolute top-12 left-3 right-3 h-1 bg-white/30 rounded-full overflow-hidden">
-        <Animated.View
-          className="h-full bg-white rounded-full"
-          style={{
-            width: progress.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['0%', '100%'],
-            }),
-          }}
-        />
-      </View>
-
-      {/* Author header */}
-      <View className="absolute top-16 left-4 right-12 flex-row items-center gap-2 mt-2">
-        <Avatar
-          uri={story.author.avatar_url}
-          displayName={story.author.display_name}
-          size={36}
-        />
-        <Text className="text-white font-semibold text-sm">
-          @{story.author.username}
-        </Text>
-        <Text className="text-white/60 text-xs">{timeAgo(story.created_at)}</Text>
-      </View>
-
-      {/* Close button */}
-      <TouchableOpacity
-        onPress={() => router.back()}
-        className="absolute top-16 right-4 mt-2 w-8 h-8 items-center justify-center"
-      >
-        <Text className="text-white text-lg">✕</Text>
-      </TouchableOpacity>
-
-      {/* Paused indicator */}
-      {isPaused ? (
-        <View className="absolute inset-0 items-center justify-center pointer-events-none">
-          <View className="bg-black/50 rounded-full w-14 h-14 items-center justify-center">
-            <Text className="text-white text-xl">⏸</Text>
+          <View className="flex-1">
+            <View className="flex-row items-center gap-1">
+              <Text className="text-white font-semibold text-base">
+                {story.author.display_name}
+              </Text>
+              {story.author.is_verified && (
+                <Ionicons name="checkmark-circle" size={14} color="#3B82F6" />
+              )}
+            </View>
+            <Text className="text-white/80 text-xs">Il y a 45 min</Text>
           </View>
         </View>
-      ) : null}
-    </SafeAreaView>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="close" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Tap Areas for Navigation */}
+      <View className="absolute inset-0 flex-row">
+        <Pressable 
+          className="flex-1"
+          onPress={handleTapLeft}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+        />
+        <Pressable 
+          className="flex-1"
+          onPress={handleTapRight}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+        />
+      </View>
+
+      {/* Story Text Content */}
+      {story.text && (
+        <View className="absolute left-6 right-6" style={{ bottom: height * 0.25 }}>
+          <Text className="text-white text-xl font-bold text-center leading-7 shadow-lg">
+            {story.text}
+          </Text>
+        </View>
+      )}
+
+      {/* Location Tag */}
+      {story.location_tag && (
+        <View className="absolute left-6 right-6" style={{ bottom: height * 0.18 }}>
+          <View className="flex-row items-center justify-center gap-1 bg-black/40 px-4 py-2 rounded-full self-center">
+            <Ionicons name="location" size={14} color="#FFFFFF" />
+            <Text className="text-white text-sm font-medium">
+              {story.location_tag.name}, {story.location_tag.city}
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* Bottom Actions */}
+      <View className="absolute bottom-8 left-4 right-4">
+        <View className="flex-row items-center justify-between">
+          {/* Reply Input */}
+          <TouchableOpacity 
+            onPress={() => setShowReply(true)}
+            className="flex-1 mr-3 bg-white/20 backdrop-blur-lg border border-white/30 rounded-full px-5 py-3"
+          >
+            <Text className="text-white/80 text-sm">Répondre à cette story</Text>
+          </TouchableOpacity>
+
+          {/* Action Buttons */}
+          <View className="flex-row items-center gap-3">
+            <TouchableOpacity>
+              <Ionicons name="heart-outline" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons name="paper-plane-outline" size={26} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </View>
   );
 }

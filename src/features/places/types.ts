@@ -18,7 +18,14 @@ export interface Place {
   phone?: string;
   website?: string;
   price_from?: number;
+  price_to?: number;
   currency?: string;
+  photos?: string[];
+  open_time?: string;
+  close_time?: string;
+  recent_reviews?: PlaceReview[];
+  related_events?: PlaceEvent[];
+  similar_events?: PlaceEvent[];
 }
 
 export interface PlaceEquipment {
@@ -26,6 +33,24 @@ export interface PlaceEquipment {
   label: string;
   icon: string;
   iconLibrary: 'ionicons' | 'material' | 'material-community';
+}
+
+export interface PlaceReview {
+  id: string;
+  user_name: string;
+  user_avatar: string;
+  rating: number;
+  comment: string;
+  photos?: string[];
+  date: string;
+}
+
+export interface PlaceEvent {
+  id: number;
+  title: string;
+  image_url: string;
+  date: string;
+  time: string;
 }
 
 export interface PlacesQuery {

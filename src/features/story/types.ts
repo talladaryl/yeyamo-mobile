@@ -4,8 +4,15 @@ export interface Story {
   id: number;
   author: UserSummary;
   media: MediaAttachment;
+  text?: string;
+  location_tag?: {
+    id: number;
+    name: string;
+    city: string;
+  };
+  views_count: number;
   viewed: boolean;
-  expires_at: string; // ISO — backend handles 24h lifecycle
+  expires_at: string;
   created_at: string;
 }
 
