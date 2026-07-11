@@ -143,6 +143,7 @@ export const MOCK_STORIES: Story[] = [
       height: 1920,
       duration_seconds: null,
     },
+    views_count: 128,
     viewed: false,
     expires_at: new Date(Date.now() + 1000 * 60 * 60 * 18).toISOString(),
     created_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),

@@ -1,2 +1,1 @@
-export { default as i18n, saveLanguage } from './i18n.config';
-export { useTranslation } from 'react-i18next';
+export { default as i18n, getCurrentLanguage, saveLanguage } from './i18n.config';

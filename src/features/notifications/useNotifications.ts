@@ -1,5 +1,6 @@
 // Hooks personnalisés pour les notifications
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import ENV from '@/config/env';
 import { notificationsApi } from './notifications.api';
 import { MOCK_NOTIFICATIONS } from './mockData';
 
@@ -9,7 +10,8 @@ import { MOCK_NOTIFICATIONS } from './mockData';
 export function useNotifications() {
   return useQuery({
     queryKey: ['notifications'],
-    queryFn: notificationsApi.getNotifications,
+    queryFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve(MOCK_NOTIFICATIONS) : notificationsApi.getNotifications(),
     staleTime: 1000 * 60, // 1 minute
     placeholderData: MOCK_NOTIFICATIONS,
   });
@@ -21,7 +23,10 @@ export function useNotifications() {
 export function useUnreadNotifications() {
   return useQuery({
     queryKey: ['notifications', 'unread'],
-    queryFn: notificationsApi.getUnreadNotifications,
+    queryFn: () =>
+      ENV.USE_MOCKS
+        ? Promise.resolve(MOCK_NOTIFICATIONS.filter((n) => !n.is_read))
+        : notificationsApi.getUnreadNotifications(),
     staleTime: 1000 * 60,
     placeholderData: MOCK_NOTIFICATIONS.filter((n) => !n.is_read),
   });
@@ -33,7 +38,10 @@ export function useUnreadNotifications() {
 export function useUnreadCount() {
   return useQuery({
     queryKey: ['notifications', 'unread', 'count'],
-    queryFn: notificationsApi.getUnreadCount,
+    queryFn: () =>
+      ENV.USE_MOCKS
+        ? Promise.resolve(MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length)
+        : notificationsApi.getUnreadCount(),
     staleTime: 1000 * 30, // 30 secondes
     placeholderData: MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length,
   });
@@ -46,7 +54,8 @@ export function useMarkAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => notificationsApi.markAsRead(id),
+    mutationFn: (id: number) =>
+      ENV.USE_MOCKS ? Promise.resolve() : notificationsApi.markAsRead(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
@@ -60,7 +69,8 @@ export function useMarkAllAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => notificationsApi.markAllAsRead(),
+    mutationFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve() : notificationsApi.markAllAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
@@ -74,7 +84,8 @@ export function useDeleteNotification() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => notificationsApi.deleteNotification(id),
+    mutationFn: (id: number) =>
+      ENV.USE_MOCKS ? Promise.resolve() : notificationsApi.deleteNotification(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },

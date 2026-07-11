@@ -14,7 +14,7 @@ export default function StoryViewerScreen() {
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showReply, setShowReply] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   const story = mockStories.find(s => s.id === Number(id)) || mockStories[0];
   const STORY_DURATION = 5000; // 5 seconds

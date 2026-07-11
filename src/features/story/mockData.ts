@@ -18,6 +18,7 @@ export const mockStories: Story[] = [
       thumbnail_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
       width: 1080,
       height: 1920,
+      duration_seconds: null,
     },
     text: 'Matin paradisiaque à Kribi #3\nBien né vaut sa célébration',
     location_tag: {

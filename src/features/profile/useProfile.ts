@@ -1,5 +1,6 @@
 // Hooks personnalisés pour le profil utilisateur
 import { useQuery } from '@tanstack/react-query';
+import ENV from '@/config/env';
 import { profileApi } from './profile.api';
 import { MOCK_USER_PUBLICATIONS, MOCK_USER_FAVORITES, MOCK_USER_EVENTS, MOCK_USER_RESERVATIONS, MOCK_USER_REVIEWS } from './mockData';
 
@@ -9,7 +10,8 @@ import { MOCK_USER_PUBLICATIONS, MOCK_USER_FAVORITES, MOCK_USER_EVENTS, MOCK_USE
 export function useUserPublications() {
   return useQuery({
     queryKey: ['profile', 'publications'],
-    queryFn: profileApi.getUserPublications,
+    queryFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_PUBLICATIONS) : profileApi.getUserPublications(),
     staleTime: 1000 * 60 * 5,
     placeholderData: MOCK_USER_PUBLICATIONS,
   });
@@ -21,7 +23,8 @@ export function useUserPublications() {
 export function useUserFavorites() {
   return useQuery({
     queryKey: ['profile', 'favorites'],
-    queryFn: profileApi.getUserFavorites,
+    queryFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_FAVORITES) : profileApi.getUserFavorites(),
     staleTime: 1000 * 60 * 5,
     placeholderData: MOCK_USER_FAVORITES,
   });
@@ -33,7 +36,8 @@ export function useUserFavorites() {
 export function useUserEvents() {
   return useQuery({
     queryKey: ['profile', 'events'],
-    queryFn: profileApi.getUserEvents,
+    queryFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_EVENTS) : profileApi.getUserEvents(),
     staleTime: 1000 * 60 * 5,
     placeholderData: MOCK_USER_EVENTS,
   });
@@ -45,7 +49,8 @@ export function useUserEvents() {
 export function useUserReservations() {
   return useQuery({
     queryKey: ['profile', 'reservations'],
-    queryFn: profileApi.getUserReservations,
+    queryFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_RESERVATIONS) : profileApi.getUserReservations(),
     staleTime: 1000 * 60 * 5,
     placeholderData: MOCK_USER_RESERVATIONS,
   });
@@ -57,7 +62,8 @@ export function useUserReservations() {
 export function useUserReviews() {
   return useQuery({
     queryKey: ['profile', 'reviews'],
-    queryFn: profileApi.getUserReviews,
+    queryFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_REVIEWS) : profileApi.getUserReviews(),
     staleTime: 1000 * 60 * 5,
     placeholderData: MOCK_USER_REVIEWS,
   });
@@ -69,7 +75,14 @@ export function useUserReviews() {
 export function useProfileStats() {
   return useQuery({
     queryKey: ['profile', 'stats'],
-    queryFn: profileApi.getProfileStats,
+    queryFn: () =>
+      ENV.USE_MOCKS
+        ? Promise.resolve({
+            publications_count: 128,
+            followers_count: 2300,
+            following_count: 340,
+          })
+        : profileApi.getProfileStats(),
     staleTime: 1000 * 60 * 2,
     placeholderData: {
       publications_count: 128,

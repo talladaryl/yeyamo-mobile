@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { i18n } from '@/i18n';
 import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
 import { AVAILABLE_CONTENT_CATEGORIES } from '@/features/settings/types';
 import { RadioItem } from '@/components/settings/RadioItem';
@@ -14,7 +14,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 
 export default function PreferencesScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const t = i18n.t;
   const { currentLanguage, changeLanguage } = useLanguage();
   const [settings, setSettings] = useState(MOCK_USER_SETTINGS.preferences);
 

@@ -1,5 +1,6 @@
 // Hook personnalisé pour la gestion des badges
 import { useQuery } from '@tanstack/react-query';
+import ENV from '@/config/env';
 import { badgesApi } from './badges.api';
 import { MOCK_BADGES, MOCK_USER_STATS } from './mockData';
 
@@ -9,7 +10,8 @@ import { MOCK_BADGES, MOCK_USER_STATS } from './mockData';
 export function useUserBadges() {
   return useQuery({
     queryKey: ['badges', 'user'],
-    queryFn: badgesApi.getUserBadges,
+    queryFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve(MOCK_BADGES) : badgesApi.getUserBadges(),
     staleTime: 1000 * 60 * 5, // 5 minutes
     // En développement, utiliser les mock data
     placeholderData: MOCK_BADGES,
@@ -22,7 +24,10 @@ export function useUserBadges() {
 export function useBadgeDetails(badgeId: number) {
   return useQuery({
     queryKey: ['badges', badgeId],
-    queryFn: () => badgesApi.getBadgeDetails(badgeId),
+    queryFn: () =>
+      ENV.USE_MOCKS
+        ? Promise.resolve(MOCK_BADGES.find((b) => b.id === badgeId) ?? MOCK_BADGES[0])
+        : badgesApi.getBadgeDetails(badgeId),
     enabled: !!badgeId,
     staleTime: 1000 * 60 * 5,
     // En développement, utiliser les mock data
@@ -36,7 +41,8 @@ export function useBadgeDetails(badgeId: number) {
 export function useUserBadgeStats() {
   return useQuery({
     queryKey: ['badges', 'stats'],
-    queryFn: badgesApi.getUserBadgeStats,
+    queryFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_STATS) : badgesApi.getUserBadgeStats(),
     staleTime: 1000 * 60 * 5,
     // En développement, utiliser les mock data
     placeholderData: MOCK_USER_STATS,
@@ -49,7 +55,8 @@ export function useUserBadgeStats() {
 export function useAllBadges() {
   return useQuery({
     queryKey: ['badges', 'all'],
-    queryFn: badgesApi.getAllBadges,
+    queryFn: () =>
+      ENV.USE_MOCKS ? Promise.resolve(MOCK_BADGES) : badgesApi.getAllBadges(),
     staleTime: 1000 * 60 * 10, // 10 minutes
     placeholderData: MOCK_BADGES,
   });

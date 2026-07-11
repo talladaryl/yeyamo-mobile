@@ -1,19 +1,18 @@
-import { useTranslation } from 'react-i18next';
-import { saveLanguage } from '@/i18n';
+import { useState } from 'react';
+import { getCurrentLanguage, saveLanguage } from '@/i18n';
 
 /**
  * Hook personnalisé pour gérer la langue de l'application
  */
 export function useLanguage() {
-  const { i18n } = useTranslation();
-
-  const currentLanguage = i18n.language as 'fr' | 'en';
+  const [currentLanguage, setCurrentLanguage] = useState<'fr' | 'en'>(getCurrentLanguage());
 
   const changeLanguage = async (language: 'fr' | 'en') => {
     await saveLanguage(language);
+    setCurrentLanguage(language);
   };
 
-  const isRTL = i18n.dir() === 'rtl';
+  const isRTL = false;
 
   return {
     currentLanguage,
