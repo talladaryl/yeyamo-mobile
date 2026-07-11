@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import { VisibilityPicker } from '@/components/collections/VisibilityPicker';
 import { useCreateCollection } from '@/features/collections/useCollections';
 import type { Collection } from '@/features/collections/types';
@@ -19,8 +20,16 @@ export default function CreateCollectionScreen() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePickImage = () => {
-    Alert.alert('Ajouter une photo', 'Fonctionnalité de sélection de photo à venir');
+  const handlePickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+      allowsEditing: true,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setCoverImage(result.assets[0].uri);
+    }
   };
 
   const handleCreate = async () => {

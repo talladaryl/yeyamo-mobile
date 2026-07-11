@@ -18,6 +18,8 @@ export default function SuggestPlaceStep1Screen() {
   const [type, setType] = useState(placeForm.type || 'Événementiel');
   const [description, setDescription] = useState(placeForm.description || '');
   const [region, setRegion] = useState(placeForm.region || 'Littoral');
+  const categories = ['Nature', 'Restaurant', 'Hôtel', 'Culture', 'Loisir'];
+  const placeTypes = ['Événementiel', 'Naturel', 'Commercial', 'Public'];
 
   const handleContinue = () => {
     setPlaceForm({
@@ -129,6 +131,7 @@ export default function SuggestPlaceStep1Screen() {
               Catégorie <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TouchableOpacity
+              onPress={() => setCategory(categories[(categories.indexOf(category) + 1) % categories.length] || categories[0])}
               className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
               activeOpacity={0.7}
             >
@@ -145,6 +148,7 @@ export default function SuggestPlaceStep1Screen() {
               Type de lieu <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TouchableOpacity
+              onPress={() => setType(placeTypes[(placeTypes.indexOf(type) + 1) % placeTypes.length] || placeTypes[0])}
               className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
               activeOpacity={0.7}
             >
@@ -197,7 +201,7 @@ export default function SuggestPlaceStep1Screen() {
           title="Continuer"
           variant="primary"
           onPress={handleContinue}
-          disabled={!name || !address || !description}
+          disabled={!name || !address || !category || !type || !description}
         />
       </View>
     </View>

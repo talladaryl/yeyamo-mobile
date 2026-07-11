@@ -3,6 +3,7 @@ import { View, Text, Image, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { OnboardingLayout } from '@/components/onboarding/OnboardingLayout';
 import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
+import { Icon } from '@/components/ui/Icon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -46,7 +47,7 @@ export default function Step1Screen() {
           <View className="flex-1 bg-gradient-to-b from-blue-400 to-green-500 items-center justify-center">
             {/* Simulation d'une cascade avec du texte pour le moment */}
             <View className="bg-white/20 rounded-2xl p-6 items-center">
-              <Text className="text-white text-6xl mb-2">🏞️</Text>
+              <Icon name="trail-sign-outline" size={64} color="#FFFFFF" />
               <Text className="text-white text-lg font-semibold">
                 Cascade d'Ekom
               </Text>

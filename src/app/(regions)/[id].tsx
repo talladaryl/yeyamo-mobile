@@ -101,7 +101,10 @@ export default function RegionDetailScreen() {
             <Text className="text-white text-lg font-bold">
               À ne pas manquer
             </Text>
-            <TouchableOpacity activeOpacity={0.7}>
+            <TouchableOpacity
+              onPress={() => router.push('/(explore)/places')}
+              activeOpacity={0.7}
+            >
               <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
             </TouchableOpacity>
           </View>
@@ -127,7 +130,10 @@ export default function RegionDetailScreen() {
             <Text className="text-white text-lg font-bold">
               Prochains événements
             </Text>
-            <TouchableOpacity activeOpacity={0.7}>
+            <TouchableOpacity
+              onPress={() => router.push('/(explore)/events')}
+              activeOpacity={0.7}
+            >
               <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
             </TouchableOpacity>
           </View>

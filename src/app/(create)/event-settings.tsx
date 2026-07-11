@@ -12,6 +12,9 @@ const mockParticipants = [
   { id: '1', name: 'Laura Wang', avatar_url: null },
   { id: '2', name: 'Norni Legrand', avatar_url: null },
   { id: '3', name: 'Dina Eboa', avatar_url: null },
+  { id: '4', name: 'Patrick Mballa', avatar_url: null },
+  { id: '5', name: 'Sophie Kamdem', avatar_url: null },
+  { id: '6', name: 'Henri Talla', avatar_url: null },
 ];
 
 export default function EventSettingsScreen() {
@@ -23,6 +26,7 @@ export default function EventSettingsScreen() {
   const [allowCommentsParticipants, setAllowCommentsParticipants] = useState(false);
   const [showParticipantsList, setShowParticipantsList] = useState(true);
   const [allowShareOutside, setAllowShareOutside] = useState(false);
+  const [showAllParticipants, setShowAllParticipants] = useState(false);
   const [enableWaitlist, setEnableWaitlist] = useState(false);
   const [invitedUsers, setInvitedUsers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -180,25 +184,31 @@ export default function EventSettingsScreen() {
 
             {/* Participants List */}
             <View className="bg-[#161616] rounded-xl px-4">
-              {mockParticipants.map((participant, index) => (
+              {(showAllParticipants ? mockParticipants : mockParticipants.slice(0, 3)).map((participant, index) => (
                 <View key={participant.id}>
                   <ParticipantItem
                     {...participant}
                     isInvited={invitedUsers.includes(participant.id)}
                     onInviteToggle={() => handleInviteToggle(participant.id)}
                   />
-                  {index < mockParticipants.length - 1 && (
+                  {index < (showAllParticipants ? mockParticipants : mockParticipants.slice(0, 3)).length - 1 && (
                     <View className="h-px bg-[#27272A]" />
                   )}
                 </View>
               ))}
             </View>
 
-            <TouchableOpacity className="mt-3" activeOpacity={0.7}>
-              <Text className="text-[#EF4444] text-sm font-semibold text-center">
-                Voir plus
-              </Text>
-            </TouchableOpacity>
+            {mockParticipants.length > 3 ? (
+              <TouchableOpacity
+                onPress={() => setShowAllParticipants((value) => !value)}
+                className="mt-3"
+                activeOpacity={0.7}
+              >
+                <Text className="text-[#EF4444] text-sm font-semibold text-center">
+                  {showAllParticipants ? 'Voir moins' : 'Voir plus'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
 

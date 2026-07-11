@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
 import { forgotPasswordSchema, type ForgotPasswordForm } from '@/utils/validation';
 
@@ -44,7 +45,7 @@ export default function ForgotPasswordScreen() {
           {/* Header avec bouton retour */}
           <View className="flex-row items-center mb-8 absolute top-8 left-6">
             <TouchableOpacity onPress={() => router.back()}>
-              <Text className="text-white text-2xl">←</Text>
+              <Icon name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
@@ -53,7 +54,7 @@ export default function ForgotPasswordScreen() {
             <View className="items-center mb-12">
               <View className="w-24 h-24 bg-[#EF4444]/20 rounded-full items-center justify-center mb-6">
                 <View className="w-12 h-12 bg-[#EF4444] rounded-full items-center justify-center">
-                  <Text className="text-white text-xl">🔒</Text>
+                  <Icon name="lock-closed" size={22} color="#FFFFFF" />
                 </View>
               </View>
 

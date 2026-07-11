@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Alert, View, Text, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import { Icon } from '@/components/ui/Icon';
@@ -9,7 +9,7 @@ import { useCreateStore } from '@/features/create/create.store';
 
 export default function SuggestPlaceStep2Screen() {
   const router = useRouter();
-  const { placeForm, setPlaceForm, setPlaceStep } = useCreateStore();
+  const { placeForm, setPlaceForm, setPlaceStep, resetPlaceForm } = useCreateStore();
   
   const [selectedCoordinates, setSelectedCoordinates] = useState({
     latitude: placeForm.coordinates?.latitude || 4.0511,
@@ -28,10 +28,15 @@ export default function SuggestPlaceStep2Screen() {
       route_details: 'La ville, Détails d\'itinéraire',
     });
     setPlaceStep(3);
-    // TODO: Navigate to step 3 when created
-    console.log('Place form:', placeForm);
-    router.back();
-    router.back();
+    Alert.alert('Lieu suggéré', 'Votre suggestion est enregistrée en mode démo.', [
+      {
+        text: 'OK',
+        onPress: () => {
+          resetPlaceForm();
+          router.replace('/(tabs)/explore');
+        },
+      },
+    ]);
   };
 
   return (

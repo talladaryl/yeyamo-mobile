@@ -20,6 +20,36 @@ export const colors = {
   success: '#22C55E',
 } as const;
 
+export type ThemePreference = 'light' | 'dark' | 'system';
+export type ResolvedTheme = 'light' | 'dark';
+
+export const themeColors = {
+  light: {
+    primary: '#EF4444',
+    background: '#FFFFFF',
+    surface: '#F7F7F8',
+    card: '#FFFFFF',
+    elevated: '#F1F1F2',
+    text: '#18181B',
+    textSecondary: '#52525B',
+    textMuted: '#71717A',
+    border: '#E4E4E7',
+    tabBar: '#FFFFFF',
+  },
+  dark: {
+    primary: '#EF4444',
+    background: '#0A0A0A',
+    surface: '#111111',
+    card: '#161616',
+    elevated: '#1F1F1F',
+    text: '#FAFAFA',
+    textSecondary: '#A1A1AA',
+    textMuted: '#71717A',
+    border: '#27272A',
+    tabBar: '#0A0A0A',
+  },
+} as const;
+
 export const spacing = {
   xs: 4,
   sm: 8,

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
 import { AVAILABLE_INTERESTS, REGIONS } from '@/features/settings/types';
 import { InterestTag } from '@/components/settings/InterestTag';
@@ -23,6 +24,19 @@ export default function EditProfileScreen() {
   const handleSave = () => {
     Alert.alert('Succès', 'Votre profil a été mis à jour');
     router.back();
+  };
+
+  const handlePickAvatar = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setSettings({ ...settings, avatar_url: result.assets[0].uri });
+    }
   };
 
   const handleAddInterest = () => {
@@ -82,7 +96,7 @@ export default function EditProfileScreen() {
             <TouchableOpacity
               className="absolute bottom-0 right-0 w-8 h-8 bg-[#EF4444] rounded-full items-center justify-center"
               activeOpacity={0.7}
-              onPress={() => Alert.alert('Photo', 'Sélection de photo à venir')}
+              onPress={handlePickAvatar}
             >
               <Ionicons name="camera" size={16} color="#FFFFFF" />
             </TouchableOpacity>

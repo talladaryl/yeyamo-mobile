@@ -12,8 +12,8 @@ export default function PartnerStoryScreen() {
   const router = useRouter();
   const { storyData, setStoryData } = usePartnerStore();
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
-  const [textOverlay, setTextOverlay] = useState('Nouveau menu\npour aujourd\'hui 🔥');
-  const [locationTag, setLocationTag] = useState('📍 La Falaise Yaounde');
+  const [textOverlay, setTextOverlay] = useState('Nouveau menu\npour aujourd\'hui');
+  const [locationTag, setLocationTag] = useState('La Falaise Yaounde');
   const [duration, setDuration] = useState(5);
   const [showTextEditor, setShowTextEditor] = useState(false);
 
@@ -80,7 +80,8 @@ export default function PartnerStoryScreen() {
           </TouchableOpacity>
 
           {/* Location Tag */}
-          <View className="mt-4 self-center bg-black/60 px-4 py-2 rounded-full">
+          <View className="mt-4 self-center bg-black/60 px-4 py-2 rounded-full flex-row items-center gap-1">
+            <Icon library="ionicons" name="location" size={14} color="#FFFFFF" />
             <Text className="text-white text-sm font-medium">{locationTag}</Text>
           </View>
         </View>

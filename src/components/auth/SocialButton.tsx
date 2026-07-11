@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, View } from 'react-native';
+import { Icon } from '@/components/ui/Icon';
 
 interface SocialButtonProps {
   provider: 'google' | 'apple';
@@ -12,7 +13,7 @@ export function SocialButton({ provider, onPress, disabled = false }: SocialButt
     switch (provider) {
       case 'google':
         return {
-          icon: '🔍', // Google icon placeholder
+          icon: 'logo-google',
           text: 'Google',
           bgColor: '#FFFFFF',
           textColor: '#1F1F1F',
@@ -20,7 +21,7 @@ export function SocialButton({ provider, onPress, disabled = false }: SocialButt
         };
       case 'apple':
         return {
-          icon: '🍎', // Apple icon placeholder
+          icon: 'logo-apple',
           text: 'Apple',
           bgColor: '#000000',
           textColor: '#FFFFFF',
@@ -42,7 +43,9 @@ export function SocialButton({ provider, onPress, disabled = false }: SocialButt
         borderWidth: 1,
       }}
     >
-      <Text style={{ fontSize: 18, marginRight: 8 }}>{icon}</Text>
+      <View className="mr-2">
+        <Icon name={icon} size={18} color={textColor} />
+      </View>
       <Text
         className="font-medium text-base"
         style={{ color: textColor }}

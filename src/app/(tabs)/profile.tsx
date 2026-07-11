@@ -25,10 +25,16 @@ export default function ProfileScreen() {
           <Text className="text-white text-2xl font-bold mt-4">{user.display_name}</Text>
           <Text className="text-[#A1A1AA] text-sm">@{user.username}</Text>
           {user.city ? (
-            <Text className="text-[#A1A1AA] text-xs mt-1">📍 {user.city}</Text>
+            <View className="flex-row items-center gap-1 mt-1">
+              <Icon name="location-outline" size={12} color="#A1A1AA" />
+              <Text className="text-[#A1A1AA] text-xs">{user.city}</Text>
+            </View>
           ) : null}
           {user.is_verified ? (
-            <Text className="text-[#EF4444] text-xs mt-1 font-semibold">✓ Verified</Text>
+            <View className="flex-row items-center gap-1 mt-1">
+              <Icon name="checkmark-circle" size={12} color="#EF4444" />
+              <Text className="text-[#EF4444] text-xs font-semibold">Verified</Text>
+            </View>
           ) : null}
         </View>
 

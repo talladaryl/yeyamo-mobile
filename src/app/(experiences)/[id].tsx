@@ -137,7 +137,7 @@ export default function ExperienceDetailScreen() {
               <Text className="text-white text-lg font-bold">
                 Avis ({experience.reviews_count})
               </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(profile)/reviews')}>
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
             </View>

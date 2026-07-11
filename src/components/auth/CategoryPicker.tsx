@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { Icon } from '@/components/ui/Icon';
 
 interface CategoryPickerProps {
   value: string;
@@ -10,15 +11,15 @@ interface CategoryPickerProps {
 }
 
 const CATEGORIES = [
-  { id: 'restaurant', label: 'Restaurant', icon: '🍽️' },
-  { id: 'hotel', label: 'Hôtel', icon: '🏨' },
-  { id: 'transport', label: 'Transport', icon: '🚗' },
-  { id: 'tourisme', label: 'Tourisme', icon: '🗺️' },
-  { id: 'evenement', label: 'Événement', icon: '🎉' },
-  { id: 'commerce', label: 'Commerce', icon: '🛍️' },
-  { id: 'sante', label: 'Santé', icon: '🏥' },
-  { id: 'education', label: 'Éducation', icon: '🎓' },
-  { id: 'autre', label: 'Autre', icon: '📋' },
+  { id: 'restaurant', label: 'Restaurant', icon: 'restaurant-outline' },
+  { id: 'hotel', label: 'Hôtel', icon: 'bed-outline' },
+  { id: 'transport', label: 'Transport', icon: 'car-outline' },
+  { id: 'tourisme', label: 'Tourisme', icon: 'map-outline' },
+  { id: 'evenement', label: 'Événement', icon: 'calendar-outline' },
+  { id: 'commerce', label: 'Commerce', icon: 'storefront-outline' },
+  { id: 'sante', label: 'Santé', icon: 'medkit-outline' },
+  { id: 'education', label: 'Éducation', icon: 'school-outline' },
+  { id: 'autre', label: 'Autre', icon: 'list-outline' },
 ];
 
 export function CategoryPicker({
@@ -50,7 +51,9 @@ export function CategoryPicker({
         <View className="flex-row items-center">
           {selectedCategory ? (
             <>
-              <Text className="text-base mr-3">{selectedCategory.icon}</Text>
+              <View className="mr-3">
+                <Icon name={selectedCategory.icon} size={20} color="#18181B" />
+              </View>
               <Text className="text-[#18181B] text-base">
                 {selectedCategory.label}
               </Text>
@@ -61,9 +64,7 @@ export function CategoryPicker({
             </Text>
           )}
         </View>
-        <Text className="text-[#A1A1AA]">
-          {showPicker ? '▲' : '▼'}
-        </Text>
+        <Icon name={showPicker ? 'chevron-up' : 'chevron-down'} size={18} color="#A1A1AA" />
       </TouchableOpacity>
 
       {showPicker && (
@@ -80,14 +81,18 @@ export function CategoryPicker({
                   value === category.id ? 'bg-[#EF4444]/10' : ''
                 }`}
               >
-                <Text className="text-base mr-3">{category.icon}</Text>
+                <View className="mr-3">
+                  <Icon name={category.icon} size={20} color={value === category.id ? '#EF4444' : '#18181B'} />
+                </View>
                 <Text className={`text-base ${
                   value === category.id ? 'text-[#EF4444] font-medium' : 'text-[#18181B]'
                 }`}>
                   {category.label}
                 </Text>
                 {value === category.id && (
-                  <Text className="text-[#EF4444] ml-auto">✓</Text>
+                  <View className="ml-auto">
+                    <Icon name="checkmark" size={18} color="#EF4444" />
+                  </View>
                 )}
               </TouchableOpacity>
             ))}

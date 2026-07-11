@@ -80,7 +80,16 @@ export default function ExploreHomeScreen() {
                 <CategoryCard
                   category={category}
                   onPress={() => {
-                    console.log('Navigate to category:', category.id);
+                    if (category.id === 'events') {
+                      router.push('/(explore)/events');
+                    } else if (category.id === 'experiences') {
+                      router.push('/(explore)/experiences');
+                    } else {
+                      router.push({
+                        pathname: '/(explore)/places',
+                        params: { category: category.id },
+                      });
+                    }
                   }}
                 />
               </View>
@@ -95,6 +104,7 @@ export default function ExploreHomeScreen() {
               Tendances près de vous
             </Text>
             <TouchableOpacity
+              onPress={() => router.push('/(explore)/places')}
               activeOpacity={0.7}
             >
               <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
@@ -104,7 +114,7 @@ export default function ExploreHomeScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}
           >
             {trendingPlaces.map((place) => (
               <TrendingPlaceCard

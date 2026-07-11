@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { Alert, View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -148,7 +148,14 @@ export default function EventDetailScreen() {
               <Text className="text-white text-lg font-bold">
                 Participants ({event.participants_count})
               </Text>
-              <TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  Alert.alert(
+                    'Participants',
+                    'Liste complète disponible en mode démo lors du branchement backend.'
+                  )
+                }
+              >
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
             </View>
@@ -182,7 +189,7 @@ export default function EventDetailScreen() {
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-white text-lg font-bold">Événements similaires</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(explore)/events')}>
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
             </View>

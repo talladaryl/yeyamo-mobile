@@ -10,7 +10,7 @@ type CommentInputProps = {
 
 export function CommentInput({
   onSubmit,
-  placeholder = 'Réserver un commentaire...',
+  placeholder = 'Écrire un commentaire...',
   autoFocus = false,
 }: CommentInputProps) {
   const [text, setText] = useState('');

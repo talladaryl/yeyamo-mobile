@@ -12,21 +12,26 @@ export function TrendingPlaceCard({ place, onPress }: TrendingPlaceCardProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="w-40 mr-3"
+      className="w-56 mr-4"
       activeOpacity={0.9}
     >
-      <Image
-        source={{ uri: place.image_url }}
-        style={{ width: 160, height: 120, borderRadius: 12 }}
-        contentFit="cover"
-      />
+      <View className="bg-[#161616] rounded-2xl overflow-hidden">
+        <Image
+          source={{ uri: place.image_url }}
+          style={{ width: '100%', height: 148 }}
+          contentFit="cover"
+        />
+      </View>
       
-      <View className="mt-2">
+      <View className="mt-3 px-1">
         <Text className="text-white font-semibold text-sm" numberOfLines={1}>
           {place.name}
         </Text>
+        <Text className="text-[#A1A1AA] text-xs mt-0.5" numberOfLines={1}>
+          {place.city}
+        </Text>
         
-        <View className="flex-row items-center justify-between mt-1">
+        <View className="flex-row items-center justify-between mt-2">
           <View className="flex-row items-center gap-1">
             <Icon library="ionicons" name="star" size={14} color="#F59E0B" />
             <Text className="text-white text-xs">{place.rating}</Text>

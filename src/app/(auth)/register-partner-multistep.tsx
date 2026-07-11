@@ -11,6 +11,7 @@ import { CityPicker } from '@/components/auth/CityPicker';
 import { DocumentPicker } from '@/components/auth/DocumentPicker';
 import { GalleryPicker } from '@/components/auth/GalleryPicker';
 import { Logo } from '@/components/ui/Logo';
+import { Icon } from '@/components/ui/Icon';
 
 interface FormData {
   // Step 1
@@ -117,7 +118,7 @@ export default function RegisterPartnerMultiStepScreen() {
         <View className="px-6 pt-4 pb-2">
           <View className="flex-row items-center justify-between mb-3">
             <TouchableOpacity onPress={handlePrevious}>
-              <Text className="text-white text-2xl">←</Text>
+              <Icon name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <Text className="text-[#A1A1AA] text-sm">Étape {currentStep} sur 4</Text>
           </View>
@@ -187,7 +188,7 @@ function Step1({ formData, updateFormData, countryCode, setCountryCode }: any) {
   return (
     <View>
       <View className="items-center mb-8">
-        <Text className="text-6xl mb-4">🏪</Text>
+        <Icon name="storefront-outline" size={64} color="#EF4444" />
         <Text className="text-white text-2xl font-bold mb-2 text-center">
           Informations de base
         </Text>
@@ -242,7 +243,7 @@ function Step2({ formData, updateFormData }: any) {
   return (
     <View>
       <View className="items-center mb-8">
-        <Text className="text-6xl mb-4">🏨</Text>
+        <Icon name="business-outline" size={64} color="#EF4444" />
         <Text className="text-white text-2xl font-bold mb-2 text-center">
           Détails de l'établissement
         </Text>
@@ -299,7 +300,7 @@ function Step3({ formData, updateFormData }: any) {
   return (
     <View>
       <View className="items-center mb-8">
-        <Text className="text-6xl mb-4">📸</Text>
+        <Icon name="images-outline" size={64} color="#EF4444" />
         <Text className="text-white text-2xl font-bold mb-2 text-center">
           Documents & Médias
         </Text>
@@ -357,7 +358,7 @@ function Step4({ formData, updateFormData }: any) {
   return (
     <View>
       <View className="items-center mb-8">
-        <Text className="text-6xl mb-4">✅</Text>
+        <Icon name="checkmark-circle-outline" size={64} color="#10B981" />
         <Text className="text-white text-2xl font-bold mb-2 text-center">
           Vérification & Finalisation
         </Text>
@@ -368,16 +369,16 @@ function Step4({ formData, updateFormData }: any) {
 
       <View className="gap-4">
         <View className="bg-[#1F1F1F] rounded-xl p-4 border border-[#27272A]">
-          <SummaryRow icon="🏷️" label="Catégorie" value={formData.category} />
-          <SummaryRow icon="🏢" label="Nom" value={formData.company_name} />
-          <SummaryRow icon="👤" label="Responsable" value={formData.responsible_name} />
-          <SummaryRow icon="📞" label="Téléphone" value={formData.phone} />
-          <SummaryRow icon="📧" label="Email" value={formData.email} />
-          <SummaryRow icon="📍" label="Adresse" value={formData.address} />
-          <SummaryRow icon="🗺️" label="Région" value={formData.region} />
-          <SummaryRow icon="🏙️" label="Ville" value={formData.city} />
-          <SummaryRow icon="📄" label="Documents" value={`${formData.commerce_register ? '✓' : '✗'} Registre • ${formData.id_document ? '✓' : '✗'} Pièce ID`} />
-          <SummaryRow icon="📸" label="Médias" value={`${formData.gallery_photos.length} photos`} isLast />
+          <SummaryRow icon="pricetag-outline" label="Catégorie" value={formData.category} />
+          <SummaryRow icon="business-outline" label="Nom" value={formData.company_name} />
+          <SummaryRow icon="person-outline" label="Responsable" value={formData.responsible_name} />
+          <SummaryRow icon="call-outline" label="Téléphone" value={formData.phone} />
+          <SummaryRow icon="mail-outline" label="Email" value={formData.email} />
+          <SummaryRow icon="location-outline" label="Adresse" value={formData.address} />
+          <SummaryRow icon="map-outline" label="Région" value={formData.region} />
+          <SummaryRow icon="business-outline" label="Ville" value={formData.city} />
+          <SummaryRow icon="documents-outline" label="Documents" value={`${formData.commerce_register ? 'OK' : 'Manquant'} Registre • ${formData.id_document ? 'OK' : 'Manquant'} Pièce ID`} />
+          <SummaryRow icon="images-outline" label="Médias" value={`${formData.gallery_photos.length} photos`} isLast />
         </View>
 
         <TouchableOpacity
@@ -388,7 +389,7 @@ function Step4({ formData, updateFormData }: any) {
             formData.accept_terms ? 'bg-[#EF4444] border-[#EF4444]' : 'border-[#A1A1AA]'
           }`}>
             {formData.accept_terms && (
-              <Text className="text-white text-xs">✓</Text>
+              <Icon name="checkmark" size={14} color="#FFFFFF" />
             )}
           </View>
           <Text className="text-[#A1A1AA] text-sm flex-1 leading-5">
@@ -406,13 +407,15 @@ function Step4({ formData, updateFormData }: any) {
 function SummaryRow({ icon, label, value, isLast = false }: any) {
   return (
     <View className={`flex-row items-center py-3 ${!isLast ? 'border-b border-[#27272A]' : ''}`}>
-      <Text className="text-lg mr-3">{icon}</Text>
+      <View className="mr-3">
+        <Icon name={icon} size={20} color="#A1A1AA" />
+      </View>
       <View className="flex-1">
         <Text className="text-[#A1A1AA] text-xs mb-1">{label}</Text>
         <Text className="text-white text-sm">{value}</Text>
       </View>
       <TouchableOpacity className="w-8 h-8 items-center justify-center">
-        <Text className="text-[#A1A1AA]">✎</Text>
+        <Icon name="create-outline" size={18} color="#A1A1AA" />
       </TouchableOpacity>
     </View>
   );

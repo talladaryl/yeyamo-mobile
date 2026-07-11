@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,13 @@ export default function PlaceDetailScreen() {
   const [isSaved, setIsSaved] = useState(false);
   
   const place = mockPlaces.find(p => p.id === Number(id)) || mockPlaces[0];
+  const openDirections = () => router.push(`/(places)/route/${place.id}`);
+
+  const sharePlace = async () => {
+    await Share.share({
+      message: `${place.name} - ${place.address || place.city}`,
+    });
+  };
 
   return (
     <View className="flex-1 bg-[#0A0A0A]">
@@ -39,7 +46,10 @@ export default function PlaceDetailScreen() {
               >
                 <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity className="bg-black/50 w-10 h-10 rounded-full items-center justify-center">
+              <TouchableOpacity
+                onPress={sharePlace}
+                className="bg-black/50 w-10 h-10 rounded-full items-center justify-center"
+              >
                 <Ionicons name="share-outline" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
@@ -102,10 +112,18 @@ export default function PlaceDetailScreen() {
             <TouchableOpacity className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
               <Text className="text-white font-semibold text-base">Réserver</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center">
+            <TouchableOpacity
+              onPress={openDirections}
+              className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center"
+              activeOpacity={0.8}
+            >
               <Ionicons name="navigate-outline" size={20} color="#FFFFFF" />
             </TouchableOpacity>
-            <TouchableOpacity className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center">
+            <TouchableOpacity
+              onPress={sharePlace}
+              className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center"
+              activeOpacity={0.8}
+            >
               <Ionicons name="share-social-outline" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -114,7 +132,7 @@ export default function PlaceDetailScreen() {
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-white text-lg font-bold">Avis récents</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(profile)/reviews')}>
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
             </View>
@@ -165,7 +183,7 @@ export default function PlaceDetailScreen() {
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-white text-lg font-bold">Événements liés</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(explore)/events')}>
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
             </View>
@@ -195,7 +213,7 @@ export default function PlaceDetailScreen() {
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-white text-lg font-bold">Événements similaires</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(explore)/events')}>
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
             </View>

@@ -135,7 +135,7 @@ export default function LoginScreen() {
           {/* Inscription */}
           <View className="flex-row justify-center items-center mb-6 gap-1">
             <Text className="text-[#A1A1AA] text-sm">Vous n'avez pas de compte ?</Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+            <TouchableOpacity onPress={() => router.push('/(auth)/account-type')}>
               <Text className="text-[#EF4444] text-sm font-semibold">Créer un compte</Text>
             </TouchableOpacity>
           </View>
@@ -163,7 +163,7 @@ export default function LoginScreen() {
 
           {/* Lien inscription partenaire */}
           <TouchableOpacity 
-            onPress={() => router.push('/(auth)/register-partner')}
+            onPress={() => router.push('/(auth)/register-partner-multistep')}
             className="items-center mt-6"
           >
             <Text className="text-[#A1A1AA] text-sm">

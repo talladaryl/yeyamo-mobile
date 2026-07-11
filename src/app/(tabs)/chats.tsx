@@ -5,7 +5,6 @@ import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
 import { ChatListItem } from '@/components/chat/ChatListItem';
 import { ChatTabs } from '@/components/chat/ChatTabs';
-import { PinnedChats } from '@/components/chat/PinnedChats';
 import { useConversations } from '@/features/chat/useChat';
 import type { ChatTab } from '@/features/chat/types';
 
@@ -36,6 +35,10 @@ export default function ChatsScreen() {
     return conversations?.filter(c => c.is_pinned) ?? [];
   }, [conversations]);
 
+  const regularConversations = useMemo(() => {
+    return filteredConversations.filter((conversation) => !conversation.is_pinned);
+  }, [filteredConversations]);
+
   const counts = useMemo(() => {
     if (!conversations) return { recent: 0, main: 0, unread: 0, groups: 0 };
     return {
@@ -59,12 +62,6 @@ export default function ChatsScreen() {
       {/* Tabs */}
       <ChatTabs activeTab={activeTab} onTabChange={setActiveTab} counts={counts} />
 
-      {/* Pinned Chats */}
-      <PinnedChats
-        conversations={pinnedConversations}
-        onPress={(id) => router.push(`/(chat)/${id}`)}
-      />
-
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#EF4444" />
@@ -75,7 +72,7 @@ export default function ChatsScreen() {
         </View>
       ) : filteredConversations.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6 gap-2">
-          <Text style={{ fontSize: 48 }}>💬</Text>
+          <Icon name="chatbubble-ellipses-outline" size={48} color="#52525B" />
           <Text className="text-white text-lg font-semibold">
             {activeTab === 'unread' ? 'Aucun message non lu' : 'Aucun message'}
           </Text>
@@ -87,8 +84,33 @@ export default function ChatsScreen() {
         </View>
       ) : (
         <FlatList
-          data={filteredConversations}
+          data={regularConversations}
           keyExtractor={(item) => String(item.id)}
+          ListHeaderComponent={
+            pinnedConversations.length > 0 && activeTab === 'recent' ? (
+              <View className="px-4 pt-3 pb-2">
+                <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+                  Épinglées
+                </Text>
+                <View className="bg-[#161616] rounded-xl overflow-hidden">
+                  {pinnedConversations.map((conversation, index) => (
+                    <View key={conversation.id}>
+                      <ChatListItem
+                        conversation={conversation}
+                        onPress={() => router.push(`/(chat)/${conversation.id}`)}
+                      />
+                      {index < pinnedConversations.length - 1 ? (
+                        <View className="h-px bg-[#27272A] mx-4" />
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
+                <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mt-5 mb-2">
+                  Conversations
+                </Text>
+              </View>
+            ) : null
+          }
           renderItem={({ item }) => (
             <ChatListItem
               conversation={item}

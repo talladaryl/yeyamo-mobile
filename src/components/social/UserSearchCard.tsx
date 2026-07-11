@@ -32,7 +32,10 @@ export function UserSearchCard({ user, onPress, onFollowPress }: UserSearchCardP
         )}
         <View className="flex-row items-center gap-2 mt-1">
           {user.city && (
-            <Text className="text-[#52525B] text-xs">📍 {user.city}</Text>
+            <View className="flex-row items-center gap-1">
+              <Icon name="location-outline" size={12} color="#52525B" />
+              <Text className="text-[#52525B] text-xs">{user.city}</Text>
+            </View>
           )}
           {user.mutual_friends_count > 0 && (
             <Text className="text-[#52525B] text-xs">• {user.mutual_friends_count} amis en commun</Text>

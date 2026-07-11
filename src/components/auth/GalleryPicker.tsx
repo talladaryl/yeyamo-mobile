@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Icon } from '@/components/ui/Icon';
 
 interface GalleryPickerProps {
   value?: string[];
@@ -72,7 +73,7 @@ export function GalleryPicker({
           </Text>
         </View>
         <View className="ml-3">
-          <Text className="text-2xl">📷</Text>
+          <Icon name="camera-outline" size={24} color="#A1A1AA" />
         </View>
       </TouchableOpacity>
 
@@ -93,7 +94,7 @@ export function GalleryPicker({
                 onPress={() => removePhoto(index)}
                 className="absolute -top-2 -right-2 w-6 h-6 bg-[#EF4444] rounded-full items-center justify-center"
               >
-                <Text className="text-white text-xs font-bold">✕</Text>
+                <Icon name="close" size={14} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           ))}

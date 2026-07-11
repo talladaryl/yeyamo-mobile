@@ -1,6 +1,7 @@
 import '../../global.css';
 import '@/i18n'; // Initialiser i18n
 import { useEffect } from 'react';
+import { Appearance, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
@@ -8,6 +9,7 @@ import { registerUnauthenticatedHandler } from '@/services/api/client';
 import { authService } from '@/features/auth/auth.service';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +32,12 @@ export default function RootLayout() {
 function RootNavigator() {
   const router = useRouter();
   const segments = useSegments();
+  const {
+    colors,
+    resolvedTheme,
+    hydrateTheme,
+    syncSystemTheme,
+  } = useThemeStore();
   const { isAuthenticated, isHydrated, clearAuth } = useAuthStore();
   const {
     hasSeenOnboarding,
@@ -49,7 +57,16 @@ function RootNavigator() {
   useEffect(() => {
     authService.hydrate();
     checkOnboardingStatus();
+    hydrateTheme();
   }, []);
+
+  useEffect(() => {
+    const subscription = Appearance.addChangeListener(() => {
+      syncSystemTheme();
+    });
+
+    return () => subscription.remove();
+  }, [syncSystemTheme]);
 
   // Route guard — runs after hydration
   useEffect(() => {
@@ -81,8 +98,9 @@ function RootNavigator() {
 
   return (
     <>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+      <StatusBar style={resolvedTheme === 'dark' ? 'light' : 'dark'} />
+      <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
@@ -91,7 +109,19 @@ function RootNavigator() {
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
         <Stack.Screen
+          name="(post)/[id]/comments"
+          options={{
+            presentation: 'transparentModal',
+            animation: 'slide_from_bottom',
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+        <Stack.Screen
           name="(chat)/[id]"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="(chat)/info/[id]"
           options={{ headerShown: false, animation: 'slide_from_right' }}
         />
         <Stack.Screen
@@ -99,6 +129,7 @@ function RootNavigator() {
           options={{ presentation: 'fullScreenModal', animation: 'fade' }}
         />
         <Stack.Screen name="(places)/[id]" />
+        <Stack.Screen name="(places)/route/[id]" />
         <Stack.Screen name="(events)/[id]" />
         <Stack.Screen name="(experiences)/[id]" />
         <Stack.Screen name="(explore)/events" />
@@ -140,6 +171,7 @@ function RootNavigator() {
         <Stack.Screen name="(profile)/settings" />
         <Stack.Screen name="+not-found" />
       </Stack>
+      </View>
     </>
   );
 }

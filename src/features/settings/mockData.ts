@@ -36,7 +36,7 @@ export const MOCK_USER_SETTINGS: UserSettings = {
     avatar_url: 'https://i.pravatar.cc/300?img=1',
     display_name: 'Marie Kasan',
     username: 'mariekasan',
-    bio: 'Passionnée de voyage et de découvertes 🌍✨',
+    bio: 'Passionnée de voyage et de découvertes',
     city: 'Douala',
     region: 'Littoral',
     gender: 'female',

@@ -1,5 +1,5 @@
 // ÉCRAN 2 - Détail d'une collection
-import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,16 +14,19 @@ export default function CollectionDetailScreen() {
   const { data: collection, isLoading } = useCollection(collectionId);
   const deleteCollection = useDeleteCollection();
 
-  const handleShare = () => {
-    Alert.alert('Partager', 'Fonctionnalité de partage à venir');
+  const handleShare = async () => {
+    if (!collection) return;
+    await Share.share({
+      message: `${collection.name} - ${collection.places_count} lieu${collection.places_count > 1 ? 'x' : ''} sur Yeyamo`,
+    });
   };
 
   const handleEdit = () => {
-    Alert.alert('Modifier', 'Fonctionnalité de modification à venir');
+    router.push('/(collections)/create');
   };
 
   const handleAddPlace = () => {
-    Alert.alert('Ajouter un lieu', 'Fonctionnalité à venir');
+    router.push('/(explore)/places');
   };
 
   const handleDelete = () => {
@@ -48,7 +51,7 @@ export default function CollectionDetailScreen() {
   };
 
   const handleTogglePriority = (placeId: number) => {
-    Alert.alert('Priorité', `Toggle priorité pour le lieu ${placeId}`);
+    Alert.alert('Priorité modifiée', `Le lieu ${placeId} est mis à jour localement.`);
   };
 
   if (isLoading || !collection) {

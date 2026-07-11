@@ -13,9 +13,9 @@ export default function CreatePublicationScreen() {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [caption, setCaption] = useState('');
 
-  const pickImage = async () => {
+  const pickImage = async (mediaTypes: Array<'images' | 'videos'> = ['images']) => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes,
       allowsMultipleSelection: true,
       quality: 1,
     });
@@ -23,7 +23,24 @@ export default function CreatePublicationScreen() {
     if (!result.canceled && result.assets) {
       const uris = result.assets.map(asset => asset.uri);
       setSelectedImages(uris);
-      setPublicationData({ media_urls: uris });
+      setPublicationData({
+        media_urls: uris,
+        media_type: result.assets[0]?.type === 'video' ? 'video' : 'image',
+      });
+    }
+  };
+
+  const takePhoto = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const uri = result.assets[0].uri;
+      setSelectedImages([uri]);
+      setPublicationData({ media_urls: [uri], media_type: 'image' });
     }
   };
 
@@ -54,7 +71,7 @@ export default function CreatePublicationScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Main Image Area */}
         <TouchableOpacity
-          onPress={pickImage}
+          onPress={() => pickImage(['images'])}
           activeOpacity={0.9}
           className="relative"
         >
@@ -112,7 +129,7 @@ export default function CreatePublicationScreen() {
         <View className="px-4 pb-6">
           <View className="flex-row justify-around py-4 bg-[#161616] rounded-xl">
             <TouchableOpacity
-              onPress={pickImage}
+              onPress={() => pickImage(['images', 'videos'])}
               className="items-center flex-1"
               activeOpacity={0.7}
             >
@@ -122,21 +139,21 @@ export default function CreatePublicationScreen() {
               <Text className="text-white text-xs">Média</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="items-center flex-1" activeOpacity={0.7}>
+            <TouchableOpacity onPress={takePhoto} className="items-center flex-1" activeOpacity={0.7}>
               <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
                 <Icon library="ionicons" name="camera" size={24} color="#EF4444" />
               </View>
               <Text className="text-white text-xs">Photo</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="items-center flex-1" activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => pickImage(['videos'])} className="items-center flex-1" activeOpacity={0.7}>
               <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
                 <Icon library="ionicons" name="videocam" size={24} color="#EF4444" />
               </View>
               <Text className="text-white text-xs">Vidéo</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="items-center flex-1" activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => pickImage(['images'])} className="items-center flex-1" activeOpacity={0.7}>
               <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
                 <Icon library="ionicons" name="albums" size={24} color="#EF4444" />
               </View>

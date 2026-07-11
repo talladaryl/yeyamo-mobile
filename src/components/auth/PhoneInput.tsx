@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { Icon } from '@/components/ui/Icon';
 
 interface PhoneInputProps {
   value: string;
@@ -13,9 +14,9 @@ interface PhoneInputProps {
 }
 
 const COUNTRIES = [
-  { code: '+237', flag: '🇨🇲', name: 'Cameroon' },
-  { code: '+33', flag: '🇫🇷', name: 'France' },
-  { code: '+1', flag: '🇺🇸', name: 'USA' },
+  { code: '+237', name: 'Cameroon' },
+  { code: '+33', name: 'France' },
+  { code: '+1', name: 'USA' },
 ];
 
 export function PhoneInput({
@@ -55,9 +56,13 @@ export function PhoneInput({
             error ? 'border-red-500' : 'border-[#E4E4E7]'
           } bg-[#F4F4F5]`}
         >
-          <Text className="text-base mr-1">{selectedCountry.flag}</Text>
+          <View className="mr-1">
+            <Icon name="globe-outline" size={16} color="#71717A" />
+          </View>
           <Text className="text-[#18181B] font-medium">{countryCode}</Text>
-          <Text className="text-[#A1A1AA] ml-1">▼</Text>
+          <View className="ml-1">
+            <Icon name="chevron-down" size={14} color="#A1A1AA" />
+          </View>
         </TouchableOpacity>
 
         {/* Phone Number Input */}
@@ -86,7 +91,9 @@ export function PhoneInput({
               }}
               className="flex-row items-center px-4 py-3 border-b border-[#F4F4F5] last:border-b-0"
             >
-              <Text className="text-base mr-3">{country.flag}</Text>
+              <View className="mr-3">
+                <Icon name="globe-outline" size={16} color="#71717A" />
+              </View>
               <Text className="text-[#18181B] font-medium mr-2">{country.code}</Text>
               <Text className="text-[#71717A] flex-1">{country.name}</Text>
             </TouchableOpacity>

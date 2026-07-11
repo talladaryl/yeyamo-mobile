@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
@@ -8,6 +9,7 @@ import { usePartnerStore } from '@/features/partner/partner.store';
 export default function AddEventStep4Screen() {
   const router = useRouter();
   const { eventForm, resetEventForm } = usePartnerStore();
+  const [showFullPreview, setShowFullPreview] = useState(false);
 
   const handlePublish = () => {
     // TODO: API call to create event
@@ -104,7 +106,7 @@ export default function AddEventStep4Screen() {
                 </View>
 
                 {/* Capacity */}
-                {eventForm.max_seats && (
+                {showFullPreview && eventForm.max_seats && (
                   <View>
                     <Text className="text-[#A1A1AA] text-xs font-medium mb-1">Capacité</Text>
                     <Text className="text-white text-sm">{eventForm.max_seats} personnes</Text>
@@ -113,8 +115,17 @@ export default function AddEventStep4Screen() {
               </View>
 
               {/* Voir plus button */}
-              <TouchableOpacity className="mt-4">
-                <Text className="text-[#EF4444] text-sm font-medium">Voir plus</Text>
+              {showFullPreview ? (
+                <View className="mt-3">
+                  <Text className="text-[#A1A1AA] text-xs font-medium mb-1">Statut</Text>
+                  <Text className="text-white text-sm">Brouillon prêt pour validation</Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity className="mt-4" onPress={() => setShowFullPreview((value) => !value)}>
+                <Text className="text-[#EF4444] text-sm font-medium">
+                  {showFullPreview ? 'Voir moins' : 'Voir plus'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

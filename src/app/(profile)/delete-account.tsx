@@ -231,7 +231,7 @@ export default function DeleteAccountScreen() {
                 </Text>
               </View>
               <TouchableOpacity
-                onPress={() => Alert.alert('Support', 'Contact support à venir')}
+                onPress={() => Alert.alert('Support Yeyamo', 'Contact demo : support@yeyamo.local')}
                 activeOpacity={0.7}
               >
                 <Ionicons name="chevron-forward" size={20} color="#52525B" />

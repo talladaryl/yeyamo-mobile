@@ -77,7 +77,7 @@ export default function BadgesScreen() {
                 <Text className="text-white/90 text-lg">Niv. {mainBadge.current_level}</Text>
               </View>
               <View className="w-20 h-20 bg-white/20 rounded-full items-center justify-center">
-                <Text className="text-5xl">🗺️</Text>
+                <Ionicons name="map-outline" size={48} color="#FFFFFF" />
               </View>
             </View>
             <View className="bg-white/20 rounded-full h-2 overflow-hidden">

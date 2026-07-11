@@ -22,7 +22,10 @@ export default function SecurityScreen() {
   };
 
   const handleChangePassword = () => {
-    Alert.alert('Changement de mot de passe', 'Fonctionnalité à venir');
+    Alert.alert(
+      'Changement de mot de passe',
+      'En mode démo, utilisez le parcours Mot de passe oublié depuis la page de connexion.'
+    );
   };
 
   const handleManageSessions = () => {

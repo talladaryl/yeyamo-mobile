@@ -89,7 +89,7 @@ export default function PartnerChoiceScreen() {
         {/* Header */}
         <View className="pt-4 pb-6">
           <Text className="text-white text-2xl font-bold mb-2">
-            Bonjour 👋
+            Bonjour
           </Text>
           <Text className="text-white text-2xl font-bold">
             Que souhaitez-vous créer aujourd'hui ?

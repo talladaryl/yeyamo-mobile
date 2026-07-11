@@ -3,6 +3,7 @@ import { timeAgo } from '@/utils/format';
 import { MessageAttachment } from './MessageAttachment';
 import { EventMessageCard } from './EventMessageCard';
 import { SystemMessage } from './SystemMessage';
+import { Icon } from '@/components/ui/Icon';
 import type { ChatMessage } from '@/features/chat/types';
 
 interface MessageBubbleProps {
@@ -53,14 +54,16 @@ export function MessageBubble({ message, isOwnMessage }: MessageBubbleProps) {
           </View>
         )}
       </View>
-      <Text
-        className={`text-[#52525B] text-xs mt-1 ${
-          isOwnMessage ? 'text-right' : 'text-left'
+      <View
+        className={`flex-row items-center gap-1 mt-1 ${
+          isOwnMessage ? 'justify-end' : 'justify-start'
         }`}
       >
-        {timeAgo(message.created_at)}
-        {isOwnMessage && message.read_at ? '  ✓✓' : ''}
-      </Text>
+        <Text className="text-[#52525B] text-xs">{timeAgo(message.created_at)}</Text>
+        {isOwnMessage && message.read_at ? (
+          <Icon name="checkmark-done" size={14} color="#52525B" />
+        ) : null}
+      </View>
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
-import { FlatList, View } from 'react-native';
+import { Alert, FlatList, Share, View } from 'react-native';
 import { VerticalFeedItem } from './VerticalFeedItem';
 import { useLikePost } from '@/features/feed/useFeed';
 import { useRouter } from 'expo-router';
@@ -14,6 +14,7 @@ type VerticalFeedListProps = {
 export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps) {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [savedPostIds, setSavedPostIds] = useState<Set<number>>(new Set());
   const { mutate: toggleLike } = useLikePost();
 
   const onViewableItemsChanged = useCallback(
@@ -39,11 +40,32 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
           isActive={index === activeIndex}
           onLike={() => toggleLike({ postId: item.id, isLiked: item.is_liked })}
           onComment={() => router.push(`/(post)/${item.id}/comments`)}
-          onShare={() => {
-            // TODO: Implement share
+          onShare={async () => {
+            const postUrl = `https://yeyamo.app/posts/${item.id}`;
+            const place = item.place_tag?.name ? `\nLieu : ${item.place_tag.name}` : '';
+
+            try {
+              await Share.share({
+                title: 'Yeyamo',
+                message: `Découvre cette publication sur Yeyamo\n${postUrl}${place}`,
+                url: postUrl,
+              });
+            } catch {
+              Alert.alert('Partage impossible', 'Le menu de partage du téléphone n’a pas pu être ouvert.');
+            }
           }}
           onSave={() => {
-            // TODO: Implement save
+            setSavedPostIds((current) => {
+              const next = new Set(current);
+              if (next.has(item.id)) {
+                next.delete(item.id);
+                Alert.alert('Retiré', 'Publication retirée des favoris locaux.');
+              } else {
+                next.add(item.id);
+                Alert.alert('Enregistré', 'Publication ajoutée aux favoris locaux.');
+              }
+              return next;
+            });
           }}
         />
       )}

@@ -86,6 +86,10 @@ export default function SplashScreen() {
         nativeControls={false}
       />
 
+      <View style={styles.centerBrand}>
+        <Logo size="large" />
+      </View>
+
       {/* Overlay avec bouton skip */}
       {canSkip && (
         <View style={styles.overlay}>
@@ -112,11 +116,21 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EF4444',
+    backgroundColor: '#0A0A0A',
   },
   video: {
     width: width,
     height: height,
+    backgroundColor: '#0A0A0A',
+  },
+  centerBrand: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   overlay: {
     position: 'absolute',

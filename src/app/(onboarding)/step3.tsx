@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-nati
 import { useRouter } from 'expo-router';
 import { OnboardingLayout } from '@/components/onboarding/OnboardingLayout';
 import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
+import { Icon } from '@/components/ui/Icon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -49,7 +50,7 @@ export default function Step3Screen() {
           <View className="bg-[#161616] rounded-2xl p-4 mb-4">
             <View className="flex-row items-center mb-3">
               <View className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 items-center justify-center mr-3">
-                <Text className="text-white text-lg">🏨</Text>
+                <Icon name="bed-outline" size={22} color="#FFFFFF" />
               </View>
               <View className="flex-1">
                 <Text className="text-white font-semibold text-base">
@@ -64,7 +65,8 @@ export default function Step3Screen() {
               </TouchableOpacity>
             </View>
             <View className="flex-row items-center">
-              <Text className="text-[#A1A1AA] text-xs">⭐ 4.8 • </Text>
+              <Icon name="star" size={12} color="#F59E0B" />
+              <Text className="text-[#A1A1AA] text-xs"> 4.8 • </Text>
               <Text className="text-[#A1A1AA] text-xs">2.5km • </Text>
               <Text className="text-[#A1A1AA] text-xs">À partir de 25,000 FCFA</Text>
             </View>
@@ -74,7 +76,7 @@ export default function Step3Screen() {
           <View className="bg-[#161616] rounded-2xl p-4 mb-4">
             <View className="flex-row items-center mb-3">
               <View className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 items-center justify-center mr-3">
-                <Text className="text-white text-lg">🎭</Text>
+                <Icon name="musical-notes-outline" size={22} color="#FFFFFF" />
               </View>
               <View className="flex-1">
                 <Text className="text-white font-semibold text-base">
@@ -89,7 +91,8 @@ export default function Step3Screen() {
               </View>
             </View>
             <View className="flex-row items-center">
-              <Text className="text-[#A1A1AA] text-xs">🎪 Culturel • </Text>
+              <Icon name="sparkles-outline" size={12} color="#A1A1AA" />
+              <Text className="text-[#A1A1AA] text-xs"> Culturel • </Text>
               <Text className="text-[#A1A1AA] text-xs">15-17 Déc • </Text>
               <Text className="text-[#A1A1AA] text-xs">Gratuit</Text>
             </View>
@@ -99,7 +102,7 @@ export default function Step3Screen() {
           <View className="bg-[#161616] rounded-2xl p-4 mb-6">
             <View className="flex-row items-center mb-3">
               <View className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 items-center justify-center mr-3">
-                <Text className="text-white text-lg">🏃‍♀️</Text>
+                <Icon name="walk-outline" size={22} color="#FFFFFF" />
               </View>
               <View className="flex-1">
                 <Text className="text-white font-semibold text-base">
@@ -111,13 +114,14 @@ export default function Step3Screen() {
               </View>
               <View className="flex-row items-center">
                 <View className="w-6 h-6 rounded-full bg-[#EF4444] items-center justify-center mr-1">
-                  <Text className="text-white text-xs">👤</Text>
+                  <Icon name="person" size={12} color="#FFFFFF" />
                 </View>
                 <Text className="text-[#A1A1AA] text-xs">+3 autres</Text>
               </View>
             </View>
             <View className="flex-row items-center">
-              <Text className="text-[#A1A1AA] text-xs">⏰ Demain 14h • </Text>
+              <Icon name="time-outline" size={12} color="#A1A1AA" />
+              <Text className="text-[#A1A1AA] text-xs"> Demain 14h • </Text>
               <Text className="text-[#A1A1AA] text-xs">4 participants • </Text>
               <Text className="text-[#A1A1AA] text-xs">Transport partagé</Text>
             </View>

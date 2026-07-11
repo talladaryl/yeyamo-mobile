@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Icon } from '@/components/ui/Icon';
 
 interface DocumentPickerProps {
   value: string | null;
@@ -70,7 +71,7 @@ export function DocumentPicker({
           )}
         </View>
         <View className="ml-3">
-          <Text className="text-2xl">📤</Text>
+          <Icon name="cloud-upload-outline" size={24} color="#A1A1AA" />
         </View>
       </TouchableOpacity>
 

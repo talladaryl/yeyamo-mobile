@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-nati
 import { useRouter } from 'expo-router';
 import { OnboardingLayout } from '@/components/onboarding/OnboardingLayout';
 import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
+import { Icon } from '@/components/ui/Icon';
 
 const { width, height } = Dimensions.get('window');
 
@@ -54,7 +55,7 @@ export default function Step2Screen() {
           {/* Header du post */}
           <View className="flex-row items-center p-4 border-b border-[#27272A]">
             <View className="w-10 h-10 rounded-full bg-[#EF4444] items-center justify-center mr-3">
-              <Text className="text-white font-semibold">👤</Text>
+              <Icon name="person" size={20} color="#FFFFFF" />
             </View>
             <View>
               <Text className="text-white font-semibold">Sarah M.</Text>
@@ -64,12 +65,13 @@ export default function Step2Screen() {
 
           {/* Contenu vidéo vertical */}
           <View className="flex-1 bg-gradient-to-b from-orange-400 to-pink-500 items-center justify-center">
-            <View className="absolute top-4 right-4 bg-black/50 rounded-full px-2 py-1">
-              <Text className="text-white text-xs">▶️ 0:45</Text>
+            <View className="absolute top-4 right-4 bg-black/50 rounded-full px-2 py-1 flex-row items-center gap-1">
+              <Icon name="play" size={10} color="#FFFFFF" />
+              <Text className="text-white text-xs">0:45</Text>
             </View>
             
             <View className="bg-white/20 rounded-xl p-4 items-center">
-              <Text className="text-white text-4xl mb-2">🎥</Text>
+              <Icon name="videocam-outline" size={40} color="#FFFFFF" />
               <Text className="text-white font-semibold text-center">
                 Festival Ngoun Yaoundé
               </Text>
@@ -82,15 +84,15 @@ export default function Step2Screen() {
           {/* Actions */}
           <View className="flex-row items-center justify-around py-3 border-t border-[#27272A]">
             <TouchableOpacity className="flex-row items-center">
-              <Text className="text-white mr-1">❤️</Text>
+              <Icon name="heart" size={16} color="#FFFFFF" />
               <Text className="text-[#A1A1AA] text-sm">124</Text>
             </TouchableOpacity>
             <TouchableOpacity className="flex-row items-center">
-              <Text className="text-white mr-1">💬</Text>
+              <Icon name="chatbubble-outline" size={16} color="#FFFFFF" />
               <Text className="text-[#A1A1AA] text-sm">32</Text>
             </TouchableOpacity>
             <TouchableOpacity className="flex-row items-center">
-              <Text className="text-white mr-1">📤</Text>
+              <Icon name="paper-plane-outline" size={16} color="#FFFFFF" />
               <Text className="text-[#A1A1AA] text-sm">Partager</Text>
             </TouchableOpacity>
           </View>

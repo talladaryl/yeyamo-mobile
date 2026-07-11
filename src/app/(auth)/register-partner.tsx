@@ -11,6 +11,7 @@ import { CityPicker } from '@/components/auth/CityPicker';
 import { DocumentPicker } from '@/components/auth/DocumentPicker';
 import { GalleryPicker } from '@/components/auth/GalleryPicker';
 import { Logo } from '@/components/ui/Logo';
+import { Icon } from '@/components/ui/Icon';
 
 interface FormData {
   // Step 1
@@ -112,7 +113,7 @@ export default function RegisterPartnerScreen() {
           <>
             {/* Illustration */}
             <View className="items-center mb-6">
-              <Text className="text-6xl mb-3">🏪</Text>
+              <Icon name="storefront-outline" size={64} color="#EF4444" />
               <Text className="text-white text-xl font-bold mb-2">Informations de base</Text>
               <Text className="text-[#A1A1AA] text-sm text-center">
                 Commencez par les informations essentielles{'\n'}de votre activité.
@@ -164,7 +165,7 @@ export default function RegisterPartnerScreen() {
           <>
             {/* Illustration */}
             <View className="items-center mb-6">
-              <Text className="text-6xl mb-3">🏨</Text>
+              <Icon name="business-outline" size={64} color="#EF4444" />
               <Text className="text-white text-xl font-bold mb-2">Détails de l'établissement</Text>
               <Text className="text-[#A1A1AA] text-sm text-center">
                 Parlez-nous davantage de votre emplacement{'\n'}et de vos services.
@@ -219,7 +220,7 @@ export default function RegisterPartnerScreen() {
           <>
             {/* Illustration */}
             <View className="items-center mb-6">
-              <Text className="text-6xl mb-3">📄</Text>
+              <Icon name="documents-outline" size={64} color="#EF4444" />
               <Text className="text-white text-xl font-bold mb-2">Documents & Médias</Text>
               <Text className="text-[#A1A1AA] text-sm text-center">
                 Ajoutez vos documents officiels et visuels{'\n'}de votre établissement.
@@ -262,7 +263,7 @@ export default function RegisterPartnerScreen() {
           <>
             {/* Illustration */}
             <View className="items-center mb-6">
-              <Text className="text-6xl mb-3">✅</Text>
+              <Icon name="checkmark-circle-outline" size={64} color="#10B981" />
               <Text className="text-white text-xl font-bold mb-2">Vérification & Finalisation</Text>
               <Text className="text-[#A1A1AA] text-sm text-center">
                 Vérifiez vos informations avant de{'\n'}finaliser votre demande.
@@ -274,32 +275,32 @@ export default function RegisterPartnerScreen() {
               <Text className="text-white font-semibold mb-3">Récapitulatif</Text>
               
               <View className="mb-3">
-                <Text className="text-[#A1A1AA] text-xs mb-1">🏪 Nom</Text>
+                <InfoLabel icon="storefront-outline" label="Nom" />
                 <Text className="text-white">{formData.company_name}</Text>
               </View>
 
               <View className="mb-3">
-                <Text className="text-[#A1A1AA] text-xs mb-1">👤 Responsable</Text>
+                <InfoLabel icon="person-outline" label="Responsable" />
                 <Text className="text-white">{formData.responsible_name}</Text>
               </View>
 
               <View className="mb-3">
-                <Text className="text-[#A1A1AA] text-xs mb-1">📞 Téléphone</Text>
+                <InfoLabel icon="call-outline" label="Téléphone" />
                 <Text className="text-white">{countryCode} {formData.phone}</Text>
               </View>
 
               <View className="mb-3">
-                <Text className="text-[#A1A1AA] text-xs mb-1">📧 Email</Text>
+                <InfoLabel icon="mail-outline" label="Email" />
                 <Text className="text-white">{formData.email}</Text>
               </View>
 
               <View className="mb-3">
-                <Text className="text-[#A1A1AA] text-xs mb-1">📍 Adresse</Text>
+                <InfoLabel icon="location-outline" label="Adresse" />
                 <Text className="text-white">{formData.address}</Text>
               </View>
 
               <View>
-                <Text className="text-[#A1A1AA] text-xs mb-1">📄 Documents & Médias</Text>
+                <InfoLabel icon="documents-outline" label="Documents & Médias" />
                 <Text className="text-white">
                   {formData.gallery_photos.length} photos • 2 documents
                 </Text>
@@ -315,7 +316,7 @@ export default function RegisterPartnerScreen() {
                 formData.accept_terms ? 'bg-[#EF4444] border-[#EF4444]' : 'border-[#A1A1AA]'
               }`}>
                 {formData.accept_terms && (
-                  <Text className="text-white text-xs">✓</Text>
+                  <Icon name="checkmark" size={14} color="#FFFFFF" />
                 )}
               </View>
               <Text className="text-[#A1A1AA] text-sm flex-1 leading-5">
@@ -340,7 +341,7 @@ export default function RegisterPartnerScreen() {
         <View className="px-6 pt-4 pb-3 border-b border-[#27272A]">
           <View className="flex-row items-center justify-between mb-3">
             <TouchableOpacity onPress={handleBack}>
-              <Text className="text-white text-2xl">←</Text>
+              <Icon name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <Text className="text-[#A1A1AA] text-sm">Étape {currentStep} sur 4</Text>
           </View>
@@ -379,5 +380,14 @@ export default function RegisterPartnerScreen() {
         </KeyboardAvoidingView>
       </View>
     </SafeScreen>
+  );
+}
+
+function InfoLabel({ icon, label }: { icon: string; label: string }) {
+  return (
+    <View className="flex-row items-center gap-1 mb-1">
+      <Icon name={icon} size={12} color="#A1A1AA" />
+      <Text className="text-[#A1A1AA] text-xs">{label}</Text>
+    </View>
   );
 }

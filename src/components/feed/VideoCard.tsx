@@ -4,6 +4,7 @@ import { useEvent } from 'expo';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Image } from 'expo-image';
 import { Avatar } from '@/components/ui/Avatar';
+import { Icon } from '@/components/ui/Icon';
 import { formatCount } from '@/utils/format';
 import { useLikePost } from '@/features/feed/useFeed';
 import type { FeedPost } from '@/features/feed/types';
@@ -82,14 +83,15 @@ export function VideoCard({ post, isActive }: VideoCardProps) {
       {/* Right action bar */}
       <View className="absolute right-3 bottom-28 gap-6 items-center">
         <ActionButton
-          icon={post.is_liked ? '❤️' : '🤍'}
+          icon={post.is_liked ? 'heart' : 'heart-outline'}
+          color={post.is_liked ? '#EF4444' : '#FFFFFF'}
           count={formatCount(post.likes_count)}
           onPress={handleLike}
         />
-        <ActionButton icon="💬" count={formatCount(post.comments_count)} onPress={() => {}} />
-        <ActionButton icon="↗️" count={formatCount(post.shares_count)} onPress={() => {}} />
+        <ActionButton icon="chatbubble-outline" count={formatCount(post.comments_count)} onPress={() => {}} />
+        <ActionButton icon="paper-plane-outline" count={formatCount(post.shares_count)} onPress={() => {}} />
         {isVideo && (
-          <ActionButton icon={muted ? '🔇' : '🔊'} onPress={handleMute} />
+          <ActionButton icon={muted ? 'volume-mute-outline' : 'volume-high-outline'} onPress={handleMute} />
         )}
       </View>
 
@@ -111,7 +113,10 @@ export function VideoCard({ post, isActive }: VideoCardProps) {
           </Text>
         ) : null}
         {post.place_tag ? (
-          <Text className="text-[#A1A1AA] text-xs">📍 {post.place_tag.name}</Text>
+          <View className="flex-row items-center gap-1">
+            <Icon name="location-outline" size={12} color="#A1A1AA" />
+            <Text className="text-[#A1A1AA] text-xs">{post.place_tag.name}</Text>
+          </View>
         ) : null}
       </View>
     </View>
@@ -120,16 +125,18 @@ export function VideoCard({ post, isActive }: VideoCardProps) {
 
 function ActionButton({
   icon,
+  color = '#FFFFFF',
   count,
   onPress,
 }: {
   icon: string;
+  color?: string;
   count?: string;
   onPress: () => void;
 }) {
   return (
     <TouchableOpacity onPress={onPress} className="items-center gap-1" activeOpacity={0.7}>
-      <Text style={{ fontSize: 28 }}>{icon}</Text>
+      <Icon name={icon} size={28} color={color} />
       {count ? (
         <Text className="text-white text-xs font-medium">{count}</Text>
       ) : null}

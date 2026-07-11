@@ -11,11 +11,13 @@ import { RadioItem } from '@/components/settings/RadioItem';
 import { ThemeSelector } from '@/components/settings/ThemeSelector';
 import { ToggleItem } from '@/components/settings/ToggleItem';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function PreferencesScreen() {
   const router = useRouter();
   const t = i18n.t;
   const { currentLanguage, changeLanguage } = useLanguage();
+  const { preference, setThemePreference } = useThemeStore();
   const [settings, setSettings] = useState(MOCK_USER_SETTINGS.preferences);
 
   return (
@@ -66,8 +68,11 @@ export default function PreferencesScreen() {
           </View>
           <View className="bg-[#161616] rounded-xl mx-4 overflow-hidden">
             <ThemeSelector
-              value={settings.theme}
-              onChange={(value) => setSettings({ ...settings, theme: value })}
+              value={preference}
+              onChange={(value) => {
+                setThemePreference(value);
+                setSettings({ ...settings, theme: value });
+              }}
             />
           </View>
         </View>

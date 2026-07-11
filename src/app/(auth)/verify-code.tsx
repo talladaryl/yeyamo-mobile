@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Button } from '@/components/ui/Button';
 import { CodeInput } from '@/components/auth/CodeInput';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
 import { verifyCodeSchema, type VerifyCodeForm } from '@/utils/validation';
 
@@ -81,7 +82,7 @@ export default function VerifyCodeScreen() {
           {/* Header avec bouton retour */}
           <View className="flex-row items-center mb-8">
             <TouchableOpacity onPress={() => router.back()}>
-              <Text className="text-white text-2xl">←</Text>
+              <Icon name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
@@ -89,7 +90,7 @@ export default function VerifyCodeScreen() {
           <View className="items-center mb-12">
             <View className="w-24 h-24 bg-[#EF4444]/20 rounded-full items-center justify-center mb-6">
               <View className="w-12 h-12 bg-[#EF4444] rounded-full items-center justify-center">
-                <Text className="text-white text-xl">🔒</Text>
+                <Icon name="lock-closed" size={22} color="#FFFFFF" />
               </View>
             </View>
 

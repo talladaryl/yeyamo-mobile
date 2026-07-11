@@ -36,7 +36,10 @@ export function UserListItem({
         </View>
         <Text className="text-[#A1A1AA] text-sm">@{user.username}</Text>
         {user.city && (
-          <Text className="text-[#52525B] text-xs mt-1">📍 {user.city}</Text>
+          <View className="flex-row items-center gap-1 mt-1">
+            <Icon name="location-outline" size={12} color="#52525B" />
+            <Text className="text-[#52525B] text-xs">{user.city}</Text>
+          </View>
         )}
       </View>
 

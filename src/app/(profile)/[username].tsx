@@ -13,7 +13,7 @@ const mockProfile = {
   display_name: 'Explore Cameroon',
   avatar_url: null,
   cover_url: null,
-  bio: 'Un peu de tourisme à découvrir 🇨🇲\nPartagez-nous vos expériences !',
+  bio: 'Un peu de tourisme à découvrir\nPartagez-nous vos expériences !',
   city: 'Yaoundé, Cameroun',
   is_verified: true,
   is_partner: true,
