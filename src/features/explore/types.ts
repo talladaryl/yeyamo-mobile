@@ -19,6 +19,7 @@ export interface TrendingPlace {
   id: number;
   name: string;
   city: string;
+  region_id: number;
   rating: number;
   reviews_count: number;
   distance_km: number;

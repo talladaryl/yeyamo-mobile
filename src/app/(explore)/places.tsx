@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
@@ -11,6 +11,9 @@ export default function PlacesListScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const regionId = typeof params.regionId === 'string' ? Number(params.regionId) : null;
+  const regionName = typeof params.region === 'string' ? params.region : null;
+  const category = typeof params.category === 'string' ? params.category : null;
 
   const filters: { id: FilterTab; label: string }[] = [
     { id: 'all', label: 'Tous' },
@@ -19,8 +22,16 @@ export default function PlacesListScreen() {
     { id: 'nearby', label: 'Près de moi' },
   ];
 
-  // Mock filter logic
-  const filteredPlaces = trendingPlaces;
+  const filteredPlaces = useMemo(
+    () =>
+      trendingPlaces.filter((place) => {
+        const matchesRegion = regionId ? place.region_id === regionId : true;
+        const matchesCategory = category ? place.category === category : true;
+
+        return matchesRegion && matchesCategory;
+      }),
+    [category, regionId]
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0A]">
@@ -29,7 +40,7 @@ export default function PlacesListScreen() {
           headerShown: true,
           headerStyle: { backgroundColor: '#0A0A0A' },
           headerTintColor: '#FFFFFF',
-          headerTitle: 'Lieux',
+          headerTitle: regionName ? `Lieux - ${regionName}` : 'Lieux',
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="pl-4">
               <Icon library="ionicons" name="arrow-back" size={28} color="#FFFFFF" />
@@ -86,6 +97,7 @@ export default function PlacesListScreen() {
         ListHeaderComponent={
           <Text className="text-[#A1A1AA] text-sm mb-4">
             {filteredPlaces.length} lieu{filteredPlaces.length > 1 ? 'x' : ''}
+            {regionName ? ` dans ${regionName}` : ''}
           </Text>
         }
       />

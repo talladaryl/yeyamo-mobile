@@ -65,72 +65,70 @@ export default function ChatScreen() {
   const isGroup = conversation?.type === 'group';
   const displayName = isGroup ? conversation?.group_name : conversation?.participant?.display_name;
   const avatarUrl = isGroup ? conversation?.participants[0]?.avatar_url : conversation?.participant?.avatar_url ?? null;
+  const screenOptions = useMemo(
+    () => ({
+      headerShown: true,
+      headerStyle: { backgroundColor: '#0A0A0A' },
+      headerTintColor: '#FFFFFF',
+      headerTitle: () =>
+        conversation ? (
+          <TouchableOpacity
+            onPress={() => router.push(`/(chat)/info/${conversationId}`)}
+            className="flex-row items-center gap-2"
+            activeOpacity={0.7}
+          >
+            {isGroup && conversation.participants.length > 1 ? (
+              <View className="relative w-8 h-8">
+                <Avatar
+                  uri={conversation.participants[0]?.avatar_url}
+                  displayName={conversation.participants[0]?.display_name}
+                  size={24}
+                  className="absolute top-0 left-0"
+                />
+                <Avatar
+                  uri={conversation.participants[1]?.avatar_url}
+                  displayName={conversation.participants[1]?.display_name}
+                  size={24}
+                  className="absolute bottom-0 right-0"
+                />
+              </View>
+            ) : (
+              <Avatar uri={avatarUrl} displayName={displayName || ''} size={32} />
+            )}
+            <View>
+              <Text className="text-white font-semibold text-sm">
+                {displayName}
+              </Text>
+              {isGroup && (
+                <Text className="text-[#A1A1AA] text-xs">
+                  {conversation.participants.length} participants
+                </Text>
+              )}
+            </View>
+          </TouchableOpacity>
+        ) : null,
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => router.back()} className="pr-4">
+          <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      ),
+      headerRight: () => (
+        <View className="flex-row gap-4">
+          <TouchableOpacity>
+            <Icon library="ionicons" name="call-outline" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push(`/(chat)/info/${conversationId}`)}>
+            <Icon library="ionicons" name="ellipsis-vertical" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      ),
+    }),
+    [avatarUrl, conversation, conversationId, displayName, isGroup, router],
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0A]">
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
-          headerTitle: () =>
-            conversation ? (
-              <TouchableOpacity
-                onPress={() => router.push(`/(chat)/info/${conversationId}`)}
-                className="flex-row items-center gap-2"
-                activeOpacity={0.7}
-              >
-                {isGroup && conversation.participants.length > 1 ? (
-                  <View className="relative w-8 h-8">
-                    <Avatar
-                      uri={conversation.participants[0]?.avatar_url}
-                      displayName={conversation.participants[0]?.display_name}
-                      size={24}
-                      className="absolute top-0 left-0"
-                    />
-                    <Avatar
-                      uri={conversation.participants[1]?.avatar_url}
-                      displayName={conversation.participants[1]?.display_name}
-                      size={24}
-                      className="absolute bottom-0 right-0"
-                    />
-                  </View>
-                ) : (
-                  <Avatar
-                    uri={avatarUrl}
-                    displayName={displayName || ''}
-                    size={32}
-                  />
-                )}
-                <View>
-                  <Text className="text-white font-semibold text-sm">
-                    {displayName}
-                  </Text>
-                  {isGroup && (
-                    <Text className="text-[#A1A1AA] text-xs">
-                      {conversation.participants.length} participants
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ) : null,
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="pr-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          ),
-          headerRight: () => (
-            <View className="flex-row gap-4">
-              <TouchableOpacity>
-                <Icon library="ionicons" name="call-outline" size={22} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push(`/(chat)/info/${conversationId}`)}>
-                <Icon library="ionicons" name="ellipsis-vertical" size={22} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-          ),
-        }}
-      />
+      <Stack.Screen options={screenOptions} />
 
       <KeyboardAvoidingView
         className="flex-1"

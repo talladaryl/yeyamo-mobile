@@ -156,12 +156,8 @@ function RootNavigator() {
         <Stack.Screen name="(partner-dashboard)/statistics" />
         <Stack.Screen name="(partner-dashboard)/notifications" />
         <Stack.Screen name="(partner-dashboard)/settings" />
-        <Stack.Screen name="(social-graph)/badges" />
-        <Stack.Screen name="(social-graph)/badges/[id]" />
+        <Stack.Screen name="(social-graph)" />
         <Stack.Screen name="(collections)" />
-        <Stack.Screen name="(collections)/[id]" />
-        <Stack.Screen name="(collections)/create" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="(collections)/add-to-collection" options={{ presentation: 'modal' }} />
         <Stack.Screen name="(profile)/publications" />
         <Stack.Screen name="(profile)/favorites" />
         <Stack.Screen name="(profile)/events" />
