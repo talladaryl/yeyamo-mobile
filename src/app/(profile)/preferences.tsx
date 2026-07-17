@@ -28,7 +28,7 @@ export default function PreferencesScreen() {
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold ml-2">{t('settings.preferences')}</Text>
+          <Text className="text-white text-xl font-bold ml-2">Préférences</Text>
         </View>
       </View>
 
@@ -36,23 +36,23 @@ export default function PreferencesScreen() {
         {/* Langue */}
         <View className="mt-6 px-4">
           <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
-            {t('settings.language')}
+            Langue
           </Text>
           <View className="bg-[#161616] rounded-xl overflow-hidden">
             <RadioItem
               label="Français"
-              selected={currentLanguage === 'fr'}
+              selected={settings.language === 'fr'}
               onPress={() => {
-                changeLanguage('fr');
+                // changeLanguage('fr');
                 setSettings({ ...settings, language: 'fr' });
               }}
               showBorder={false}
             />
             <RadioItem
               label="English"
-              selected={currentLanguage === 'en'}
+              selected={settings.language === 'en'}
               onPress={() => {
-                changeLanguage('en');
+                // changeLanguage('en');
                 setSettings({ ...settings, language: 'en' });
               }}
             />
