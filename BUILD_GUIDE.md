@@ -1,12 +1,12 @@
 # 📱 GUIDE DE BUILD - YEYAMO MOBILE
 
-> Comment builder l'app avec Expo 56 et EAS
+> Comment builder l'app avec Expo SDK 54 et EAS
 
 ---
 
 ## 🎯 PROBLÈME
 
-L'app Expo Go sur l'App Store est en version 54, mais votre projet utilise Expo 56.
+Le projet utilise Expo SDK 54, React Native 0.81 et la New Architecture.
 
 **Solution** : Utiliser **EAS Build** avec **expo-dev-client** (Development Build custom).
 
@@ -347,14 +347,14 @@ eas credentials
 - [EAS Build Documentation](https://docs.expo.dev/build/introduction/)
 - [Development Builds](https://docs.expo.dev/develop/development-builds/introduction/)
 - [EAS Submit](https://docs.expo.dev/submit/introduction/)
-- [Expo SDK 56 Changelog](https://docs.expo.dev/versions/v56.0.0/)
+- [Expo SDK 54](https://docs.expo.dev/versions/v54.0.0/)
 
 ---
 
 ## ✅ CONCLUSION
 
 Avec **EAS Build**, vous pouvez :
-- ✅ Utiliser Expo 56 sans problème de compatibilité
+- ✅ Utiliser Expo SDK 54 avec des dépendances alignées
 - ✅ Tester sur votre iPhone avec hot reload
 - ✅ Builder pour production facilement
 - ✅ Gérer les certificats automatiquement
