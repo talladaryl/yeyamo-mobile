@@ -33,11 +33,7 @@ export default function AccountTypeScreen() {
 
     setAccountType(type);
     await completeOnboarding();
-    router.replace(
-      type === 'explorer'
-        ? '/(auth)/register'
-        : '/(auth)/register-partner-multistep'
-    );
+    router.replace('/(auth)/login');
   };
 
   const goBack = () => {
