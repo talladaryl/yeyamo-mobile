@@ -1,192 +1,78 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useEventListener } from 'expo';
-import { VideoView, useVideoPlayer } from 'expo-video';
-import { Logo } from '@/components/ui/Logo';
-
-const { width, height } = Dimensions.get('window');
 
 export default function SplashScreen() {
   const router = useRouter();
+  const scale = useRef(new Animated.Value(0.82)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(16)).current;
   const hasNavigated = useRef(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const [canSkip, setCanSkip] = useState(false);
 
-  const goToStep1 = () => {
+  const continueToOnboarding = () => {
     if (hasNavigated.current) return;
     hasNavigated.current = true;
     router.replace('/(onboarding)/step1');
   };
 
-  const player = useVideoPlayer(
-    require('../../../assets/intro-video.mp4'),
-    (player) => {
-      player.loop = false;
-      player.play();
-    }
-  );
-
-  useEventListener(player, 'statusChange', ({ status }) => {
-    if (status === 'readyToPlay') {
-      setVideoLoaded(true);
-    } else if (status === 'error') {
-      handleVideoError();
-    }
-  });
-
-  useEventListener(player, 'playToEnd', () => {
-    goToStep1();
-  });
-
   useEffect(() => {
-    // Permettre de skip aprÃ¨s 2 secondes
-    const skipTimer = setTimeout(() => {
-      setCanSkip(true);
-    }, 2000);
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1, damping: 10, stiffness: 90, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 750, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: 0, duration: 750, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+    ]).start(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scale, { toValue: 1.035, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        ]),
+      ).start();
+    });
 
-    return () => clearTimeout(skipTimer);
-  }, []);
-
-  const handleSkip = () => {
-    goToStep1();
-  };
-
-  const handleVideoError = () => {
-    setVideoError(true);
-    // Fallback vers animation statique aprÃ¨s 2 secondes
-    setTimeout(() => {
-      goToStep1();
-    }, 2000);
-  };
-
-  if (videoError) {
-    // Fallback vers logo statique
-    return (
-      <View style={styles.container}>
-        <View style={styles.logoContainer}>
-          <Logo size="xlarge" />
-          <Text style={styles.title}>Yeyamo</Text>
-          <Text style={styles.subtitle}>
-            Yeyamo, je dÃ©couvre{'\n'}mon pays
-          </Text>
-        </View>
-      </View>
-    );
-  }
+    const timer = setTimeout(continueToOnboarding, 3000);
+    return () => clearTimeout(timer);
+  }, [opacity, scale, translateY]);
 
   return (
-    <View style={styles.container}>
-      {/* VidÃ©o d'intro */}
-      <VideoView
-        player={player}
-        style={styles.video}
-        contentFit="cover"
-        nativeControls={false}
+    <View className="flex-1 bg-white">
+      <LinearGradient
+        colors={['#FFFFFF', '#FFFFFF', '#FFF1F2']}
+        locations={[0, 0.62, 1]}
+        className="absolute inset-0"
       />
+      <View className="absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-[#EF4444]/10" />
+      <View className="absolute -bottom-40 right-[-70px] h-80 w-80 rounded-full bg-[#EF4444]/15" />
+      <View className="absolute left-8 top-20 h-3 w-3 rounded-full bg-[#EF4444]/20" />
+      <View className="absolute right-12 top-32 h-5 w-5 rounded-full bg-[#EF4444]/10" />
 
-      <View style={styles.centerBrand}>
-        <Logo size="large" />
-      </View>
-
-      {/* Overlay avec bouton skip */}
-      {canSkip && (
-        <View style={styles.overlay}>
-          <TouchableOpacity 
-            onPress={handleSkip}
-            style={styles.skipButton}
+      <SafeAreaView className="flex-1 items-center justify-center px-8">
+        <TouchableOpacity onPress={continueToOnboarding} activeOpacity={0.9} accessibilityLabel="Commencer l’onboarding">
+          <Animated.View
+            className="items-center"
+            style={{ opacity, transform: [{ scale }, { translateY }] }}
           >
-            <Text style={styles.skipText}>Passer</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+            <Image
+              source={require('../../../assets/logo.png')}
+              style={{ width: 230, height: 180 }}
+              contentFit="contain"
+              transition={250}
+            />
+            <Text className="mt-2 text-center text-[15px] font-medium leading-6 text-[#52525B]">
+              Yeyamo, je découvre{`\n`}mon pays
+            </Text>
+          </Animated.View>
+        </TouchableOpacity>
 
-      {/* Loading indicator si vidÃ©o pas encore chargÃ©e */}
-      {!videoLoaded && !videoError && (
-        <View style={styles.loadingContainer}>
-          <Logo size="large" />
-          <Text style={styles.loadingText}>Chargement...</Text>
+        <View className="absolute bottom-10 items-center">
+          <View className="h-1 w-12 overflow-hidden rounded-full bg-[#E4E4E7]">
+            <Animated.View className="h-full w-full rounded-full bg-[#EF4444]" style={{ opacity }} />
+          </View>
+          <Text className="mt-3 text-xs text-[#A1A1AA]">Touchez pour continuer</Text>
         </View>
-      )}
+      </SafeAreaView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0A0A0A',
-  },
-  video: {
-    width: width,
-    height: height,
-    backgroundColor: '#0A0A0A',
-  },
-  centerBrand: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-    paddingTop: 50,
-    paddingRight: 20,
-  },
-  skipButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  skipText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  logoContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 36,
-    fontWeight: '800',
-    marginTop: 24,
-    letterSpacing: 2,
-  },
-  subtitle: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 18,
-    textAlign: 'center',
-    marginTop: 16,
-    lineHeight: 24,
-  },
-  loadingContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#EF4444',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginTop: 16,
-  },
-});
-

@@ -1,176 +1,143 @@
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { SocialButton } from '@/components/auth/SocialButton';
 import { Logo } from '@/components/ui/Logo';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
+import { useThemeStore } from '@/features/theme/theme.store';
 import { loginSchema, type LoginForm } from '@/utils/validation';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, isLoading, error } = useAuth();
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginForm>({
+  const colors = useThemeStore((state) => state.colors);
+  const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
-  const onSubmit = async (data: LoginForm) => {
+  const signIn = async (data: LoginForm) => {
     try {
       await login(data);
-      // Navigation handled by root layout guard
+      router.replace('/interests');
     } catch {
-      // error displayed via useAuth state
+      // The request error is exposed by useAuth.
     }
   };
 
-  const handleDemoLogin = async () => {
+  const demoLogin = async () => {
     try {
       await login({ email: 'demo@yeyamo.com', password: 'password123' });
+      router.replace('/interests');
     } catch {
-      // error displayed via useAuth state
+      // The request error is exposed by useAuth.
     }
-  };
-
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
-    // TODO: Implement social login
-    console.log(`${provider} login not implemented yet`);
   };
 
   return (
     <SafeScreen>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
-        <ScrollView
-          contentContainerClassName="flex-1 justify-center px-6 py-12"
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Logo et Header */}
-          <View className="items-center mb-10">
-            <Logo size="large" />
-            <Text className="text-white text-4xl font-extrabold tracking-tight mt-4 mb-2">
-              YEYAMO
-            </Text>
-            <Text className="text-[#A1A1AA] text-base text-center">
-              Connectez-vous à votre{'\n'}compte YEYAMO
-            </Text>
-          </View>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+          <LinearGradient colors={['#EF4444', '#DC2626', '#991B1B']} className="h-48 overflow-hidden px-6 pt-3">
+            <View className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10" />
+            <View className="absolute -bottom-24 -left-12 h-48 w-48 rounded-full bg-white/10" />
+            <View className="mt-4 flex-row items-center justify-between">
+              <Text className="text-sm font-semibold text-white/90">Bienvenue sur Yeyamo</Text>
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-white/15">
+                <Icon name="compass-outline" size={20} color="#FFFFFF" />
+              </View>
+            </View>
+          </LinearGradient>
 
-          {/* Formulaire */}
-          <View className="gap-4 mb-6">
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <Input
-                  label="Email ou numéro de téléphone"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="nom.utilisateur"
-                  keyboardType="email-address"
-                  textContentType="emailAddress"
-                  autoComplete="email"
-                  error={errors.email?.message}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <Input
-                  label="Mot de passe"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="••••••••"
-                  secureTextEntry
-                  textContentType="password"
-                  autoComplete="current-password"
-                  error={errors.password?.message}
-                />
-              )}
-            />
-
-            {error ? (
-              <Text className="text-[#EF4444] text-sm text-center">{error}</Text>
-            ) : null}
-
-            <Button
-              label="Se connecter"
-              onPress={handleSubmit(onSubmit)}
-              isLoading={isLoading}
-              className="mt-2"
-            />
-            <TouchableOpacity
-              onPress={handleDemoLogin}
-              disabled={isLoading}
-              className="bg-[#27272A] rounded-xl py-3 items-center"
-              activeOpacity={0.8}
-            >
-              <Text className="text-white font-semibold">Entrer en mode demo</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Lien mot de passe oublié */}
-          <TouchableOpacity 
-            onPress={() => router.push('/(auth)/forgot-password')}
-            className="items-center mb-6"
+          <View
+            className="-mt-9 flex-1 rounded-t-[34px] px-6 pb-8 pt-5"
+            style={{ backgroundColor: colors.background }}
           >
-            <Text className="text-[#EF4444] text-sm">Mot de passe oublié ?</Text>
-          </TouchableOpacity>
+            <View className="items-center">
+              <View className="h-20 w-20 items-center justify-center rounded-full border-4 shadow-sm" style={{ backgroundColor: colors.card, borderColor: colors.background }}>
+                <Logo size="medium" />
+              </View>
+              <Text className="mt-3 text-2xl font-extrabold" style={{ color: colors.text }}>Bon retour sur Yeyamo !</Text>
+              <Text className="mt-2 text-center text-sm leading-5" style={{ color: colors.textSecondary }}>
+                Continuez à découvrir, partager et vivre des expériences.
+              </Text>
+            </View>
 
-          {/* Inscription */}
-          <View className="flex-row justify-center items-center mb-6 gap-1">
-            <Text className="text-[#A1A1AA] text-sm">Vous n'avez pas de compte ?</Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/account-type')}>
-              <Text className="text-[#EF4444] text-sm font-semibold">Créer un compte</Text>
-            </TouchableOpacity>
+            <View className="mt-7 gap-4">
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { value, onChange, onBlur } }) => (
+                  <Input
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="Email ou numéro de téléphone"
+                    keyboardType="email-address"
+                    textContentType="emailAddress"
+                    autoComplete="email"
+                    leftIcon={<Icon name="person-outline" size={19} color={colors.textMuted} />}
+                    error={errors.email?.message}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { value, onChange, onBlur } }) => (
+                  <Input
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="Mot de passe"
+                    secureTextEntry
+                    textContentType="password"
+                    autoComplete="current-password"
+                    leftIcon={<Icon name="lock-closed-outline" size={19} color={colors.textMuted} />}
+                    error={errors.password?.message}
+                  />
+                )}
+              />
+
+              <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')} className="self-end">
+                <Text className="text-sm font-semibold" style={{ color: colors.primary }}>Mot de passe oublié ?</Text>
+              </TouchableOpacity>
+              {error ? <Text className="text-center text-sm" style={{ color: colors.primary }}>{error}</Text> : null}
+              <Button label="Se connecter" onPress={handleSubmit(signIn)} isLoading={isLoading} />
+              <TouchableOpacity
+                onPress={demoLogin}
+                disabled={isLoading}
+                activeOpacity={0.8}
+                className="items-center rounded-xl border py-3"
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+              >
+                <Text className="font-semibold" style={{ color: colors.text }}>Entrer en mode démo</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="my-6 flex-row items-center">
+              <View className="h-px flex-1" style={{ backgroundColor: colors.border }} />
+              <Text className="mx-4 text-xs" style={{ color: colors.textSecondary }}>ou continuer avec</Text>
+              <View className="h-px flex-1" style={{ backgroundColor: colors.border }} />
+            </View>
+            <View className="gap-3">
+              <SocialButton provider="google" onPress={() => undefined} disabled={isLoading} />
+              <SocialButton provider="apple" onPress={() => undefined} disabled={isLoading} />
+            </View>
+
+            <View className="mt-7 flex-row items-center justify-center">
+              <Text className="text-sm" style={{ color: colors.textSecondary }}>Pas encore de compte ? </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/account-type')}>
+                <Text className="text-sm font-bold" style={{ color: colors.primary }}>Créer un compte</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          {/* Séparateur */}
-          <View className="flex-row items-center mb-6">
-            <View className="flex-1 h-px bg-[#27272A]" />
-            <Text className="text-[#A1A1AA] text-sm mx-4">ou</Text>
-            <View className="flex-1 h-px bg-[#27272A]" />
-          </View>
-
-          {/* Connexion sociale */}
-          <View className="gap-3">
-            <SocialButton
-              provider="google"
-              onPress={() => handleSocialLogin('google')}
-              disabled={isLoading}
-            />
-            <SocialButton
-              provider="apple"
-              onPress={() => handleSocialLogin('apple')}
-              disabled={isLoading}
-            />
-          </View>
-
-          {/* Lien inscription partenaire */}
-          <TouchableOpacity 
-            onPress={() => router.push('/(auth)/register-partner-multistep')}
-            className="items-center mt-6"
-          >
-            <Text className="text-[#A1A1AA] text-sm">
-              Vous êtes un partenaire ?{' '}
-              <Text className="text-[#EF4444]">Créer un compte partenaire</Text>
-            </Text>
-          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeScreen>

@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
+import { useThemeStore } from '@/features/theme/theme.store';
 import { forgotPasswordSchema, type ForgotPasswordForm } from '@/utils/validation';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { forgotPassword, isLoading, error } = useAuth();
+  const colors = useThemeStore((state) => state.colors);
 
   const {
     control,
@@ -45,7 +47,7 @@ export default function ForgotPasswordScreen() {
           {/* Header avec bouton retour */}
           <View className="flex-row items-center mb-8 absolute top-8 left-6">
             <TouchableOpacity onPress={() => router.back()}>
-              <Icon name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -58,11 +60,11 @@ export default function ForgotPasswordScreen() {
                 </View>
               </View>
 
-              <Text className="text-white text-2xl font-bold mb-3">
+              <Text className="mb-3 text-2xl font-bold" style={{ color: colors.text }}>
                 Mot de passe oublié ?
               </Text>
               
-              <Text className="text-[#A1A1AA] text-base text-center leading-6 px-4">
+              <Text className="px-4 text-center text-base leading-6" style={{ color: colors.textSecondary }}>
                 Entrez votre adresse e-mail ou votre{'\n'}numéro de téléphone. Nous vous{'\n'}enverrons un lien pour réinitialiser votre{'\n'}mot de passe. Nous vous enverrons{'\n'}un code pour vérifier votre identité et{'\n'}réinitialiser votre mot de passe.
               </Text>
             </View>
@@ -104,7 +106,7 @@ export default function ForgotPasswordScreen() {
           {/* Lien vers connexion */}
           <View className="items-center pb-8">
             <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-              <Text className="text-[#A1A1AA] text-sm">
+              <Text className="text-sm" style={{ color: colors.textSecondary }}>
                 Retour à la connexion
               </Text>
             </TouchableOpacity>

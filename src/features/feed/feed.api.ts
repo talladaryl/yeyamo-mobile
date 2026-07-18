@@ -3,10 +3,17 @@ import type { PaginatedResponse } from '@/types/api.types';
 import type { FeedPost } from './types';
 
 export const feedApi = {
-  getFeed: (cursor?: string) =>
+  getFeed: (cursor?: string, interests: string[] = []) => {
+    const params = [
+      cursor ? `cursor=${encodeURIComponent(cursor)}` : null,
+      interests.length ? `interests=${encodeURIComponent(interests.join(','))}` : null,
+    ].filter(Boolean);
+
+    return (
     apiGet<PaginatedResponse<FeedPost>>(
-      `/feed${cursor ? `?cursor=${cursor}` : ''}`,
-    ),
+      `/feed${params.length ? `?${params.join('&')}` : ''}`,
+    ));
+  },
 
   likePost: (postId: number) =>
     apiPost<void>(`/posts/${postId}/like`),

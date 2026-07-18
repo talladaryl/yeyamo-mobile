@@ -5,18 +5,41 @@ import { feedApi } from './feed.api';
 import { feedService } from './feed.service';
 import type { FeedPost } from './types';
 import type { PaginatedResponse } from '@/types/api.types';
+import { useInterestsStore } from '@/features/interests/interests.store';
 
 export const FEED_QUERY_KEY = ['feed'] as const;
 
 export function useFeed() {
+  const selectedInterestIds = useInterestsStore((state) => state.selectedInterestIds);
+
   return useInfiniteQuery({
-    queryKey: FEED_QUERY_KEY,
+    queryKey: [...FEED_QUERY_KEY, selectedInterestIds.join(',')],
     queryFn: ({ pageParam }) =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_FEED_PAGE) : feedApi.getFeed(pageParam as string | undefined),
+      ENV.USE_MOCKS
+        ? Promise.resolve(personalizeMockFeed(selectedInterestIds))
+        : feedApi.getFeed(pageParam as string | undefined, selectedInterestIds),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage: PaginatedResponse<FeedPost>) =>
       lastPage.links.next ? lastPage.meta.current_page.toString() : undefined,
   });
+}
+
+const MOCK_POST_INTERESTS: Record<number, string[]> = {
+  101: ['voyage', 'nature', 'photographie', 'sorties'],
+  102: ['gastronomie', 'sorties', 'photographie'],
+  103: ['culture', 'art', 'mode', 'histoire'],
+};
+
+function personalizeMockFeed(selectedInterestIds: string[]): PaginatedResponse<FeedPost> {
+  if (!selectedInterestIds.length) return MOCK_FEED_PAGE;
+
+  const score = (post: FeedPost) =>
+    (MOCK_POST_INTERESTS[post.id] ?? []).filter((interest) => selectedInterestIds.includes(interest)).length;
+
+  return {
+    ...MOCK_FEED_PAGE,
+    data: [...MOCK_FEED_PAGE.data].sort((left, right) => score(right) - score(left)),
+  };
 }
 
 export function useLikePost() {

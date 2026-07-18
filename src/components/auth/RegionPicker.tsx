@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface RegionPickerProps {
   value: string;
@@ -29,6 +31,7 @@ export function RegionPicker({
   error,
   disabled = false,
 }: RegionPickerProps) {
+  const colors = useThemeStore((state) => state.colors);
   const [showPicker, setShowPicker] = useState(false);
 
   const selectedRegion = REGIONS.find(region => region.id === value);
@@ -36,7 +39,7 @@ export function RegionPicker({
   return (
     <View className="mb-4">
       {label && (
-        <Text className="text-sm text-[#A1A1AA] font-medium mb-1">
+        <Text className="mb-1 text-sm font-medium" style={{ color: colors.textSecondary }}>
           {label}
         </Text>
       )}
@@ -44,20 +47,17 @@ export function RegionPicker({
       <TouchableOpacity
         onPress={() => setShowPicker(!showPicker)}
         disabled={disabled}
-        className={`flex-row items-center justify-between px-4 py-3 rounded-xl ${
-          error ? 'border-2 border-[#EF4444]' : 'border border-[#27272A]'
-        } bg-[#1F1F1F]`}
+        className="flex-row items-center justify-between rounded-xl border px-4 py-3"
+        style={{ backgroundColor: colors.elevated, borderColor: error ? colors.primary : colors.border, borderWidth: error ? 2 : 1 }}
       >
-        <Text className={selectedRegion ? 'text-white text-base' : 'text-[#52525B] text-base'}>
+        <Text className="text-base" style={{ color: selectedRegion ? colors.text : colors.textMuted }}>
           {selectedRegion ? selectedRegion.label : 'Sélectionnez la région'}
         </Text>
-        <Text className="text-[#A1A1AA]">
-          {showPicker ? '▲' : '▼'}
-        </Text>
+        <Icon name={showPicker ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSecondary} />
       </TouchableOpacity>
 
       {showPicker && (
-        <View className="mt-2 bg-[#1F1F1F] border border-[#27272A] rounded-xl max-h-48">
+        <View className="mt-2 max-h-48 rounded-xl border" style={{ backgroundColor: colors.elevated, borderColor: colors.border }}>
           <ScrollView showsVerticalScrollIndicator={false}>
             {REGIONS.map((region) => (
               <TouchableOpacity
@@ -66,13 +66,10 @@ export function RegionPicker({
                   onValueChange(region.id);
                   setShowPicker(false);
                 }}
-                className={`px-4 py-3 border-b border-[#27272A] last:border-b-0 ${
-                  value === region.id ? 'bg-[#EF4444]/10' : ''
-                }`}
+                className="border-b px-4 py-3 last:border-b-0"
+                style={{ backgroundColor: value === region.id ? `${colors.primary}15` : 'transparent', borderColor: colors.border }}
               >
-                <Text className={`text-base ${
-                  value === region.id ? 'text-[#EF4444] font-medium' : 'text-white'
-                }`}>
+                <Text className="text-base" style={{ color: value === region.id ? colors.primary : colors.text, fontWeight: value === region.id ? '500' : '400' }}>
                   {region.label}
                 </Text>
               </TouchableOpacity>

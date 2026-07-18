@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, TextInput, Text } from 'react-native';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface CodeInputProps {
   length?: number;
@@ -16,6 +17,7 @@ export function CodeInput({
   error,
   disabled = false 
 }: CodeInputProps) {
+  const colors = useThemeStore((state) => state.colors);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const inputRefs = useRef<(TextInput | null)[]>(Array(length).fill(null));
 
@@ -59,15 +61,11 @@ export function CodeInput({
             keyboardType="numeric"
             maxLength={1}
             editable={!disabled}
-            className={`w-12 h-14 border-2 rounded-xl text-center text-xl font-bold ${
-              focusedIndex === index
-                ? 'border-[#EF4444] bg-white'
-                : error
-                ? 'border-red-500 bg-red-50'
-                : 'border-[#E4E4E7] bg-[#F4F4F5]'
-            }`}
+            className="h-14 w-12 rounded-xl border-2 text-center text-xl font-bold"
             style={{
-              color: '#18181B',
+              color: colors.text,
+              backgroundColor: error ? '#FEF2F2' : focusedIndex === index ? colors.card : colors.elevated,
+              borderColor: error ? colors.primary : focusedIndex === index ? colors.primary : colors.border,
             }}
           />
         ))}

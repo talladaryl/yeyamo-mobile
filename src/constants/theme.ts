@@ -8,14 +8,14 @@ export const colors = {
   primary: '#EF4444',  // Couleur principale = YEYAMO rouge
   primaryLight: '#FEE2E2',
   accent: '#F59E0B',
-  background: '#0A0A0A',
-  card: '#161616',
-  elevated: '#1F1F1F',
+  background: '#FFFFFF',
+  card: '#FFFFFF',
+  elevated: '#F4F4F5',
   white: '#FFFFFF',
-  textPrimary: '#FAFAFA',
-  textSecondary: '#A1A1AA',
-  textMuted: '#52525B',
-  border: '#27272A',
+  textPrimary: '#18181B',
+  textSecondary: '#52525B',
+  textMuted: '#71717A',
+  border: '#E4E4E7',
   danger: '#EF4444',  // Danger = YEYAMO rouge aussi
   success: '#22C55E',
 } as const;

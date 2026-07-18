@@ -1,77 +1,84 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+import { useAuthStore } from '@/features/auth/auth.store';
+import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
 
 type AccountType = 'explorer' | 'developer';
 
 export default function AccountTypeScreen() {
   const router = useRouter();
-  const { selectedAccountType, setAccountType, completeOnboarding, setCurrentStep } = useOnboardingStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { setAccountType, completeOnboarding, setCurrentStep } = useOnboardingStore();
+  const [submittingType, setSubmittingType] = useState<AccountType | null>(null);
 
-  const handleAccountTypeSelect = async (type: AccountType) => {
+  useEffect(() => setCurrentStep(4), [setCurrentStep]);
+
+  const selectAccountType = async (type: AccountType) => {
+    if (submittingType) return;
+    setSubmittingType(type);
     setAccountType(type);
     await completeOnboarding();
-    router.replace('/(auth)/login');
+    router.replace(isAuthenticated ? '/interests' : '/(auth)/login');
   };
 
-  React.useEffect(() => {
-    setCurrentStep(4);
-  }, []);
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(onboarding)/step3');
+  };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
-      <SafeAreaView className="flex-1">
-        <View className="flex-row items-center justify-between px-5 py-3">
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-[#161616] items-center justify-center"
-            activeOpacity={0.7}
-          >
-            <Icon name="arrow-back" size={22} color="#FFFFFF" />
+    <View className="flex-1 bg-[#FAFAFA]">
+      <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
+        <View className="h-14 flex-row items-center px-5">
+          <TouchableOpacity onPress={goBack} className="h-10 w-10 items-center justify-center rounded-full bg-white">
+            <Icon name="chevron-back" size={24} color="#18181B" />
           </TouchableOpacity>
-          <Text className="text-[#A1A1AA] text-sm">Étape 4/4</Text>
+          <View className="ml-3 h-1.5 flex-1 overflow-hidden rounded-full bg-[#E4E4E7]">
+            <View className="h-full w-full rounded-full bg-[#EF4444]" />
+          </View>
+          <Text className="ml-3 text-xs font-semibold text-[#71717A]">4/4</Text>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerClassName="px-5 pt-4 pb-8"
-        >
-          <View className="mb-7">
-            <Text className="text-white text-3xl font-bold leading-9 mb-3">
-              Choisissez votre profil
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}>
+          <View className="mb-6 mt-5 items-center px-4">
+            <Text className="text-center text-[28px] font-extrabold leading-8 text-[#18181B]">
+              Choisissez votre{`\n`}expérience Yeyamo
             </Text>
-            <Text className="text-[#A1A1AA] text-base leading-6">
-              Nous adaptons l'expérience selon votre objectif. Vous pourrez toujours modifier ce choix plus tard.
+            <Text className="mt-3 text-center text-sm leading-5 text-[#71717A]">
+              Deux façons de profiter de tout ce que notre communauté vous offre.
             </Text>
           </View>
 
-          <View className="gap-4">
-            <AccountChoiceCard
-              title="Explorateur"
-              subtitle="Découvrir des lieux, suivre des tendances, enregistrer des favoris et partager vos expériences."
-              icon="map-outline"
-              accent="#EF4444"
-              selected={selectedAccountType === 'explorer'}
-              benefits={['Feed découverte', 'Favoris et collections', 'Messages et communauté']}
-              onPress={() => handleAccountTypeSelect('explorer')}
-            />
+          <AccountChoiceCard
+            type="explorer"
+            title="Explorer Yeyamo"
+            subtitle="Découvrez des lieux, rejoignez des activités et partagez vos expériences."
+            icon="compass-outline"
+            colors={['#FFF1F2', '#FFE4E6']}
+            accent="#EF4444"
+            isLoading={submittingType === 'explorer'}
+            disabled={Boolean(submittingType)}
+            onPress={() => selectAccountType('explorer')}
+          />
 
-            <AccountChoiceCard
-              title="Partenaire"
-              subtitle="Présenter votre établissement, publier du contenu et accéder aux outils de gestion."
-              icon="business-outline"
-              accent="#7C3AED"
-              selected={selectedAccountType === 'developer'}
-              benefits={['Profil professionnel', 'Tableau de bord', 'Lieux, événements et statistiques']}
-              onPress={() => handleAccountTypeSelect('developer')}
-            />
-          </View>
+          <AccountChoiceCard
+            type="developer"
+            title="Développer mon activité"
+            subtitle="Présentez votre établissement, publiez du contenu et trouvez de nouveaux clients."
+            icon="business-outline"
+            colors={['#EFF6FF', '#DBEAFE']}
+            accent="#2563EB"
+            isLoading={submittingType === 'developer'}
+            disabled={Boolean(submittingType)}
+            onPress={() => selectAccountType('developer')}
+          />
 
-          <Text className="text-[#71717A] text-xs leading-5 text-center mt-6">
-            Ce choix sert uniquement à préparer l'expérience frontend. Aucune donnée backend n'est encore envoyée.
+          <Text className="mt-5 text-center text-xs leading-5 text-[#A1A1AA]">
+            Vous pourrez modifier votre type de compte plus tard dans les paramètres.
           </Text>
         </ScrollView>
       </SafeAreaView>
@@ -83,64 +90,51 @@ function AccountChoiceCard({
   title,
   subtitle,
   icon,
+  colors,
   accent,
-  selected,
-  benefits,
+  isLoading,
+  disabled,
   onPress,
 }: {
+  type: AccountType;
   title: string;
   subtitle: string;
   icon: string;
+  colors: readonly [string, string];
   accent: string;
-  selected: boolean;
-  benefits: string[];
+  isLoading: boolean;
+  disabled: boolean;
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      className={`rounded-2xl p-5 border ${selected ? 'bg-[#1F1F1F]' : 'bg-[#161616]'}`}
-      style={{ borderColor: selected ? accent : '#27272A' }}
-      activeOpacity={0.85}
-    >
-      <View className="flex-row items-start gap-4">
-        <View
-          className="w-14 h-14 rounded-2xl items-center justify-center"
-          style={{ backgroundColor: `${accent}22` }}
-        >
-          <Icon name={icon} size={28} color={accent} />
-        </View>
-
-        <View className="flex-1">
-          <View className="flex-row items-center justify-between gap-3">
-            <Text className="text-white text-xl font-bold">{title}</Text>
-            <View
-              className="w-6 h-6 rounded-full border items-center justify-center"
-              style={{ borderColor: selected ? accent : '#52525B' }}
-            >
-              {selected ? <Icon name="checkmark" size={14} color={accent} /> : null}
-            </View>
+    <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={0.85} className="mb-4 overflow-hidden rounded-[26px] border border-white">
+      <LinearGradient colors={colors} className="min-h-52 p-5">
+        <View className="flex-row items-start justify-between">
+          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-white/80">
+            <Icon name={icon} size={28} color={accent} />
           </View>
-
-          <Text className="text-[#A1A1AA] text-sm leading-5 mt-2">{subtitle}</Text>
-
-          <View className="gap-2 mt-4">
-            {benefits.map((benefit) => (
-              <View key={benefit} className="flex-row items-center gap-2">
-                <Icon name="checkmark-circle" size={15} color="#22C55E" />
-                <Text className="text-[#D4D4D8] text-xs flex-1">{benefit}</Text>
-              </View>
-            ))}
+          <View className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: accent }}>
+            {isLoading ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Icon name="arrow-forward" size={20} color="#FFFFFF" />}
           </View>
         </View>
-      </View>
-
-      <View className="flex-row items-center justify-between mt-5 pt-4 border-t border-[#27272A]">
-        <Text className="text-[#A1A1AA] text-xs">
-          Continuer comme {title.toLowerCase()}
-        </Text>
-        <Icon name="arrow-forward" size={18} color={accent} />
-      </View>
+        <View className="mt-auto pt-8">
+          <Text className="text-xl font-extrabold" style={{ color: accent }}>{title}</Text>
+          <Text className="mt-2 max-w-[86%] text-sm leading-5 text-[#52525B]">{subtitle}</Text>
+          <View className="mt-4 flex-row items-center gap-4">
+            <MiniBenefit icon="checkmark-circle" label="Profil personnalisé" color={accent} />
+            <MiniBenefit icon="sparkles" label="Contenu adapté" color={accent} />
+          </View>
+        </View>
+      </LinearGradient>
     </TouchableOpacity>
+  );
+}
+
+function MiniBenefit({ icon, label, color }: { icon: string; label: string; color: string }) {
+  return (
+    <View className="flex-row items-center">
+      <Icon name={icon} size={14} color={color} />
+      <Text className="ml-1 text-[10px] font-medium text-[#71717A]">{label}</Text>
+    </View>
   );
 }

@@ -5,6 +5,7 @@ import { MOCK_TOKEN, MOCK_USER } from '@/features/mock/mockData';
 import { useAuthStore } from './auth.store';
 import { authApi } from './auth.api';
 import type { LoginCredentials, RegisterCredentials } from './types';
+import { useInterestsStore } from '@/features/interests/interests.store';
 
 export const authService = {
   /**
@@ -76,6 +77,7 @@ export const authService = {
     if (ENV.USE_MOCKS) {
       await secureStore.clearAll();
       useAuthStore.getState().clearAuth();
+      useInterestsStore.getState().reset();
       return;
     }
 
@@ -87,6 +89,7 @@ export const authService = {
       reverbClient.disconnect();
       await secureStore.clearAll();
       useAuthStore.getState().clearAuth();
+      useInterestsStore.getState().reset();
     }
   },
 };

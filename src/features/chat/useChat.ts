@@ -12,6 +12,8 @@ import { useChatStore } from './chat.store';
 import type { PaginatedResponse } from '@/types/api.types';
 import type { ChatMessage, SendMessagePayload } from './types';
 
+const EMPTY_MESSAGES: ChatMessage[] = [];
+
 export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
@@ -34,7 +36,7 @@ export function useConversations() {
 
 export function useChatMessages(conversationId: number) {
   const realtimeMessages = useChatStore(
-    (s) => s.messages[conversationId] ?? [],
+    (s) => s.messages[conversationId] ?? EMPTY_MESSAGES,
   );
 
   // Subscribe to Reverb channel

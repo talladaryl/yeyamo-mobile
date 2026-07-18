@@ -12,6 +12,7 @@ import { DocumentPicker } from '@/components/auth/DocumentPicker';
 import { GalleryPicker } from '@/components/auth/GalleryPicker';
 import { Logo } from '@/components/ui/Logo';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface FormData {
   // Step 1
@@ -36,6 +37,7 @@ interface FormData {
 
 export default function RegisterPartnerMultiStepScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [currentStep, setCurrentStep] = useState(1);
   const [countryCode, setCountryCode] = useState('+237');
   const [isLoading, setIsLoading] = useState(false);
@@ -118,13 +120,13 @@ export default function RegisterPartnerMultiStepScreen() {
         <View className="px-6 pt-4 pb-2">
           <View className="flex-row items-center justify-between mb-3">
             <TouchableOpacity onPress={handlePrevious}>
-              <Icon name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
-            <Text className="text-[#A1A1AA] text-sm">Étape {currentStep} sur 4</Text>
+            <Text className="text-sm" style={{ color: colors.textSecondary }}>Étape {currentStep} sur 4</Text>
           </View>
 
           {/* Progress bar */}
-          <View className="h-1 bg-[#27272A] rounded-full overflow-hidden">
+          <View className="h-1 overflow-hidden rounded-full" style={{ backgroundColor: colors.border }}>
             <View 
               className="h-full bg-[#EF4444] rounded-full"
               style={{ width: `${(currentStep / 4) * 100}%` }}
@@ -170,7 +172,7 @@ export default function RegisterPartnerMultiStepScreen() {
         </ScrollView>
 
         {/* Button fixed at bottom */}
-        <View className="px-6 pb-6 pt-2 border-t border-[#27272A]">
+        <View className="border-t px-6 pb-6 pt-2" style={{ borderColor: colors.border, backgroundColor: colors.background }}>
           <Button
             label={currentStep === 4 ? "Créer mon compte" : "Continuer"}
             onPress={handleNext}
@@ -185,14 +187,15 @@ export default function RegisterPartnerMultiStepScreen() {
 
 // STEP 1
 function Step1({ formData, updateFormData, countryCode, setCountryCode }: any) {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <View>
       <View className="items-center mb-8">
         <Icon name="storefront-outline" size={64} color="#EF4444" />
-        <Text className="text-white text-2xl font-bold mb-2 text-center">
+        <Text className="mb-2 text-center text-2xl font-bold" style={{ color: colors.text }}>
           Informations de base
         </Text>
-        <Text className="text-[#A1A1AA] text-sm text-center">
+        <Text className="text-center text-sm" style={{ color: colors.textSecondary }}>
           Commencez par les informations essentielles{'\n'}de votre activité.
         </Text>
       </View>
@@ -240,14 +243,15 @@ function Step1({ formData, updateFormData, countryCode, setCountryCode }: any) {
 
 // STEP 2
 function Step2({ formData, updateFormData }: any) {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <View>
       <View className="items-center mb-8">
         <Icon name="business-outline" size={64} color="#EF4444" />
-        <Text className="text-white text-2xl font-bold mb-2 text-center">
+        <Text className="mb-2 text-center text-2xl font-bold" style={{ color: colors.text }}>
           Détails de l'établissement
         </Text>
-        <Text className="text-[#A1A1AA] text-sm text-center">
+        <Text className="text-center text-sm" style={{ color: colors.textSecondary }}>
           Parlez-nous davantage de votre entreprise{'\n'}et de ses services.
         </Text>
       </View>
@@ -272,21 +276,22 @@ function Step2({ formData, updateFormData }: any) {
         />
 
         <View className="gap-1">
-          <Text className="text-sm text-[#A1A1AA] font-medium">
+          <Text className="text-sm font-medium" style={{ color: colors.textSecondary }}>
             Description de votre activité
           </Text>
           <TextInput
             value={formData.description}
             onChangeText={(value) => updateFormData('description', value)}
             placeholder="Présentez votre établissement, vos services, votre histoire..."
-            placeholderTextColor="#52525B"
+            placeholderTextColor={colors.textMuted}
             multiline
             numberOfLines={5}
             maxLength={500}
             textAlignVertical="top"
-            className="bg-[#1F1F1F] text-white rounded-xl px-4 py-3 text-base border border-[#27272A] min-h-[120px]"
+            className="min-h-[120px] rounded-xl border px-4 py-3 text-base"
+            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
           />
-          <Text className="text-xs text-[#52525B] text-right">
+          <Text className="text-right text-xs" style={{ color: colors.textMuted }}>
             {formData.description.length}/500
           </Text>
         </View>
@@ -297,20 +302,21 @@ function Step2({ formData, updateFormData }: any) {
 
 // STEP 3
 function Step3({ formData, updateFormData }: any) {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <View>
       <View className="items-center mb-8">
         <Icon name="images-outline" size={64} color="#EF4444" />
-        <Text className="text-white text-2xl font-bold mb-2 text-center">
+        <Text className="mb-2 text-center text-2xl font-bold" style={{ color: colors.text }}>
           Documents & Médias
         </Text>
-        <Text className="text-[#A1A1AA] text-sm text-center">
+        <Text className="text-center text-sm" style={{ color: colors.textSecondary }}>
           Ajoutez vos documents et visuels{'\n'}de votre établissement.
         </Text>
       </View>
 
       <View className="gap-4">
-        <Text className="text-white text-lg font-semibold mb-2">
+        <Text className="mb-2 text-lg font-semibold" style={{ color: colors.text }}>
           Documents obligatoires
         </Text>
 
@@ -330,7 +336,7 @@ function Step3({ formData, updateFormData }: any) {
           maxSize="5 Mo"
         />
 
-        <Text className="text-white text-lg font-semibold mb-2 mt-4">
+        <Text className="mb-2 mt-4 text-lg font-semibold" style={{ color: colors.text }}>
           Médias de votre établissement
         </Text>
 
@@ -355,20 +361,21 @@ function Step3({ formData, updateFormData }: any) {
 
 // STEP 4
 function Step4({ formData, updateFormData }: any) {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <View>
       <View className="items-center mb-8">
         <Icon name="checkmark-circle-outline" size={64} color="#10B981" />
-        <Text className="text-white text-2xl font-bold mb-2 text-center">
+        <Text className="mb-2 text-center text-2xl font-bold" style={{ color: colors.text }}>
           Vérification & Finalisation
         </Text>
-        <Text className="text-[#A1A1AA] text-sm text-center">
+        <Text className="text-center text-sm" style={{ color: colors.textSecondary }}>
           Vérifiez vos informations avant la création{'\n'}de votre demande.
         </Text>
       </View>
 
       <View className="gap-4">
-        <View className="bg-[#1F1F1F] rounded-xl p-4 border border-[#27272A]">
+        <View className="rounded-xl border p-4" style={{ backgroundColor: colors.elevated, borderColor: colors.border }}>
           <SummaryRow icon="pricetag-outline" label="Catégorie" value={formData.category} />
           <SummaryRow icon="business-outline" label="Nom" value={formData.company_name} />
           <SummaryRow icon="person-outline" label="Responsable" value={formData.responsible_name} />
@@ -392,7 +399,7 @@ function Step4({ formData, updateFormData }: any) {
               <Icon name="checkmark" size={14} color="#FFFFFF" />
             )}
           </View>
-          <Text className="text-[#A1A1AA] text-sm flex-1 leading-5">
+          <Text className="flex-1 text-sm leading-5" style={{ color: colors.textSecondary }}>
             En créant votre compte partenaire, vous acceptez les{' '}
             <Text className="text-[#EF4444]">Conditions d'utilisation</Text>
             {' '}et la{' '}
@@ -405,17 +412,18 @@ function Step4({ formData, updateFormData }: any) {
 }
 
 function SummaryRow({ icon, label, value, isLast = false }: any) {
+  const colors = useThemeStore((state) => state.colors);
   return (
-    <View className={`flex-row items-center py-3 ${!isLast ? 'border-b border-[#27272A]' : ''}`}>
+    <View className="flex-row items-center py-3" style={{ borderBottomWidth: isLast ? 0 : 1, borderColor: colors.border }}>
       <View className="mr-3">
-        <Icon name={icon} size={20} color="#A1A1AA" />
+        <Icon name={icon} size={20} color={colors.textSecondary} />
       </View>
       <View className="flex-1">
-        <Text className="text-[#A1A1AA] text-xs mb-1">{label}</Text>
-        <Text className="text-white text-sm">{value}</Text>
+        <Text className="mb-1 text-xs" style={{ color: colors.textSecondary }}>{label}</Text>
+        <Text className="text-sm" style={{ color: colors.text }}>{value}</Text>
       </View>
       <TouchableOpacity className="w-8 h-8 items-center justify-center">
-        <Icon name="create-outline" size={18} color="#A1A1AA" />
+        <Icon name="create-outline" size={18} color={colors.textSecondary} />
       </TouchableOpacity>
     </View>
   );

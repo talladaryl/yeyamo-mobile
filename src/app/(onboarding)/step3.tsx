@@ -1,132 +1,75 @@
-import React from 'react';
-import { View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { useEffect } from 'react';
+import { Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { OnboardingLayout } from '@/components/onboarding/OnboardingLayout';
-import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
 import { Icon } from '@/components/ui/Icon';
+import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
 
-const { width, height } = Dimensions.get('window');
+const experiences = [
+  { title: 'Sortie à la plage de Kribi', meta: 'Sam. 18 mai · 15h00', icon: 'people', color: '#38BDF8' },
+  { title: 'Festival Ngouon', meta: '24–26 mai · Foumban', icon: 'musical-notes', color: '#A78BFA' },
+  { title: 'Hôtel La Falaise', meta: 'À partir de 25 000 FCFA', icon: 'bed', color: '#EF4444' },
+] as const;
 
 export default function Step3Screen() {
   const router = useRouter();
   const { nextStep, previousStep, setCurrentStep, completeOnboarding } = useOnboardingStore();
 
-  const handleNext = () => {
-    nextStep();
-    router.push('/(onboarding)/account-type');
-  };
-
-  const handlePrevious = () => {
-    previousStep();
-    router.back();
-  };
+  useEffect(() => setCurrentStep(3), [setCurrentStep]);
 
   const handleSkip = async () => {
     await completeOnboarding();
     router.replace('/(auth)/login');
   };
 
-  React.useEffect(() => {
-    setCurrentStep(3);
-  }, []);
-
   return (
     <OnboardingLayout
       currentStep={3}
       totalSteps={4}
-      onNext={handleNext}
-      onPrevious={handlePrevious}
+      onPrevious={() => {
+        previousStep();
+        router.back();
+      }}
+      onNext={() => {
+        nextStep();
+        router.push('/(onboarding)/account-type');
+      }}
       onSkip={handleSkip}
       title="Vivez des expériences ensemble"
-      subtitle="Partagez plus des activités, découvrez des événements et rencontrez en toute sécurité."
-      backgroundColor="#0A0A0A"
+      subtitle="Rejoignez des activités, rencontrez la communauté et réservez vos prochaines expériences en toute simplicité."
     >
-      <View className="flex-1 px-6">
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          style={{ marginTop: 20 }}
-        >
-          {/* Carte d'activité 1 - Hôtel */}
-          <View className="bg-[#161616] rounded-2xl p-4 mb-4">
-            <View className="flex-row items-center mb-3">
-              <View className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 items-center justify-center mr-3">
-                <Icon name="bed-outline" size={22} color="#FFFFFF" />
+      <View className="mx-4 flex-1 overflow-hidden rounded-[28px] bg-[#FFEDD5]">
+        <Image
+          source="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200"
+          style={{ width: '100%', height: '100%' }}
+          contentFit="cover"
+          transition={500}
+        />
+        <LinearGradient colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.58)']} className="absolute inset-0" />
+        <View className="absolute inset-x-4 top-5 gap-3">
+          {experiences.map((experience, index) => (
+            <View
+              key={experience.title}
+              className="flex-row items-center rounded-2xl border border-white/40 bg-white/90 p-3"
+              style={{ marginLeft: index === 1 ? 28 : index === 2 ? 12 : 0 }}
+            >
+              <View className="h-11 w-11 items-center justify-center rounded-xl" style={{ backgroundColor: `${experience.color}20` }}>
+                <Icon name={experience.icon} size={21} color={experience.color} />
               </View>
-              <View className="flex-1">
-                <Text className="text-white font-semibold text-base">
-                  Hôtel à Foumban
-                </Text>
-                <Text className="text-[#A1A1AA] text-sm">
-                  Douala
-                </Text>
+              <View className="ml-3 flex-1">
+                <Text className="text-sm font-bold text-[#18181B]">{experience.title}</Text>
+                <Text className="mt-1 text-[11px] text-[#71717A]">{experience.meta}</Text>
               </View>
-              <TouchableOpacity className="bg-[#EF4444] rounded-full px-4 py-2">
-                <Text className="text-white text-sm font-semibold">Réserver</Text>
-              </TouchableOpacity>
+              <Icon name={index === 2 ? 'arrow-forward-circle' : 'bookmark-outline'} size={20} color="#EF4444" />
             </View>
-            <View className="flex-row items-center">
-              <Icon name="star" size={12} color="#F59E0B" />
-              <Text className="text-[#A1A1AA] text-xs"> 4.8 • </Text>
-              <Text className="text-[#A1A1AA] text-xs">2.5km • </Text>
-              <Text className="text-[#A1A1AA] text-xs">À partir de 25,000 FCFA</Text>
-            </View>
-          </View>
-
-          {/* Carte d'activité 2 - Événement */}
-          <View className="bg-[#161616] rounded-2xl p-4 mb-4">
-            <View className="flex-row items-center mb-3">
-              <View className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 items-center justify-center mr-3">
-                <Icon name="musical-notes-outline" size={22} color="#FFFFFF" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white font-semibold text-base">
-                  Festival Ngoun Yaoundé
-                </Text>
-                <Text className="text-[#A1A1AA] text-sm">
-                  Yaoundé
-                </Text>
-              </View>
-              <View className="bg-[#EF4444]/20 rounded-full px-3 py-1">
-                <Text className="text-[#EF4444] text-xs font-semibold">2j restants</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center">
-              <Icon name="sparkles-outline" size={12} color="#A1A1AA" />
-              <Text className="text-[#A1A1AA] text-xs"> Culturel • </Text>
-              <Text className="text-[#A1A1AA] text-xs">15-17 Déc • </Text>
-              <Text className="text-[#A1A1AA] text-xs">Gratuit</Text>
-            </View>
-          </View>
-
-          {/* Carte d'activité 3 - Sortie */}
-          <View className="bg-[#161616] rounded-2xl p-4 mb-6">
-            <View className="flex-row items-center mb-3">
-              <View className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 items-center justify-center mr-3">
-                <Icon name="walk-outline" size={22} color="#FFFFFF" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white font-semibold text-base">
-                  Sortie la plage
-                </Text>
-                <Text className="text-[#A1A1AA] text-sm">
-                  de Kribi
-                </Text>
-              </View>
-              <View className="flex-row items-center">
-                <View className="w-6 h-6 rounded-full bg-[#EF4444] items-center justify-center mr-1">
-                  <Icon name="person" size={12} color="#FFFFFF" />
-                </View>
-                <Text className="text-[#A1A1AA] text-xs">+3 autres</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center">
-              <Icon name="time-outline" size={12} color="#A1A1AA" />
-              <Text className="text-[#A1A1AA] text-xs"> Demain 14h • </Text>
-              <Text className="text-[#A1A1AA] text-xs">4 participants • </Text>
-              <Text className="text-[#A1A1AA] text-xs">Transport partagé</Text>
-            </View>
-          </View>
-        </ScrollView>
+          ))}
+        </View>
+        <View className="absolute bottom-5 left-5 right-5 rounded-2xl bg-black/35 p-4">
+          <Text className="text-xs font-semibold text-white/75">À plusieurs, c’est encore mieux</Text>
+          <Text className="mt-1 text-base font-bold text-white">Sortez, rencontrez, réservez.</Text>
+        </View>
       </View>
     </OnboardingLayout>
   );

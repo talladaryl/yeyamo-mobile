@@ -18,12 +18,17 @@ export default function CollectionsScreen() {
   const collections = activeTab === 'saved' ? userCollections : publicCollections;
   const isLoading = activeTab === 'saved' ? loadingUser : loadingPublic;
 
+  const handleBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/profile');
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
       <View className="px-4 py-3 border-b border-[#27272A]">
         <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+          <TouchableOpacity onPress={handleBack} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text className="text-white text-xl font-bold">Mes collections</Text>

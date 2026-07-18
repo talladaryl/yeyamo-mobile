@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/Button';
 import { CodeInput } from '@/components/auth/CodeInput';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
+import { useThemeStore } from '@/features/theme/theme.store';
 import { verifyCodeSchema, type VerifyCodeForm } from '@/utils/validation';
 
 export default function VerifyCodeScreen() {
   const router = useRouter();
   const { verifyCode, isLoading, error } = useAuth();
+  const colors = useThemeStore((state) => state.colors);
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
@@ -46,7 +48,7 @@ export default function VerifyCodeScreen() {
       console.log('Verifying code:', data.code);
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      router.replace('/(tabs)');
+      router.replace('/interests');
     } catch {
       // error displayed via useAuth state
     }
@@ -82,7 +84,7 @@ export default function VerifyCodeScreen() {
           {/* Header avec bouton retour */}
           <View className="flex-row items-center mb-8">
             <TouchableOpacity onPress={() => router.back()}>
-              <Icon name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -94,11 +96,11 @@ export default function VerifyCodeScreen() {
               </View>
             </View>
 
-            <Text className="text-white text-2xl font-bold mb-3">
+            <Text className="mb-3 text-2xl font-bold" style={{ color: colors.text }}>
               Vérifiez votre identité
             </Text>
             
-            <Text className="text-[#A1A1AA] text-base text-center leading-6">
+            <Text className="text-center text-base leading-6" style={{ color: colors.textSecondary }}>
               Nous avons envoyé un code de{'\n'}vérification à votre adresse e-mail{'\n'}ou numéro de téléphone.
             </Text>
             
@@ -142,7 +144,7 @@ export default function VerifyCodeScreen() {
           {/* Timer et renvoi */}
           <View className="items-center">
             {!canResend ? (
-              <Text className="text-[#A1A1AA] text-base mb-4">
+              <Text className="mb-4 text-base" style={{ color: colors.textSecondary }}>
                 Renvoyer le code dans {formatTime(timer)}
               </Text>
             ) : (
@@ -154,7 +156,7 @@ export default function VerifyCodeScreen() {
             )}
 
             <TouchableOpacity onPress={() => router.back()}>
-              <Text className="text-[#A1A1AA] text-sm">
+              <Text className="text-sm" style={{ color: colors.textSecondary }}>
                 Modifier le numéro
               </Text>
             </TouchableOpacity>

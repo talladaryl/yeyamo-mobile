@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface PhoneInputProps {
   value: string;
@@ -29,6 +30,7 @@ export function PhoneInput({
   placeholder = '6XX XX XX XX',
   disabled = false,
 }: PhoneInputProps) {
+  const colors = useThemeStore((state) => state.colors);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
 
   const selectedCountry = COUNTRIES.find(c => c.code === countryCode) || COUNTRIES[0];
@@ -42,7 +44,7 @@ export function PhoneInput({
   return (
     <View className="mb-4">
       {label && (
-        <Text className="text-[#374151] text-sm font-medium mb-2">
+        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textSecondary }}>
           {label}
         </Text>
       )}
@@ -52,16 +54,15 @@ export function PhoneInput({
         <TouchableOpacity
           onPress={() => setShowCountryPicker(!showCountryPicker)}
           disabled={disabled}
-          className={`flex-row items-center px-3 py-3 border-2 border-r-0 rounded-l-xl ${
-            error ? 'border-red-500' : 'border-[#E4E4E7]'
-          } bg-[#F4F4F5]`}
+          className="flex-row items-center rounded-l-xl border-2 border-r-0 px-3 py-3"
+          style={{ backgroundColor: colors.elevated, borderColor: error ? colors.primary : colors.border }}
         >
           <View className="mr-1">
-            <Icon name="globe-outline" size={16} color="#71717A" />
+            <Icon name="globe-outline" size={16} color={colors.textMuted} />
           </View>
-          <Text className="text-[#18181B] font-medium">{countryCode}</Text>
+          <Text className="font-medium" style={{ color: colors.text }}>{countryCode}</Text>
           <View className="ml-1">
-            <Icon name="chevron-down" size={14} color="#A1A1AA" />
+            <Icon name="chevron-down" size={14} color={colors.textSecondary} />
           </View>
         </TouchableOpacity>
 
@@ -72,16 +73,15 @@ export function PhoneInput({
           placeholder={placeholder}
           keyboardType="phone-pad"
           editable={!disabled}
-          className={`flex-1 px-4 py-3 border-2 border-l-0 rounded-r-xl text-base ${
-            error ? 'border-red-500' : 'border-[#E4E4E7]'
-          } bg-white text-[#18181B]`}
-          placeholderTextColor="#A1A1AA"
+          className="flex-1 rounded-r-xl border-2 border-l-0 px-4 py-3 text-base"
+          style={{ backgroundColor: colors.card, borderColor: error ? colors.primary : colors.border, color: colors.text }}
+          placeholderTextColor={colors.textSecondary}
         />
       </View>
 
       {/* Simple Country Picker */}
       {showCountryPicker && (
-        <View className="absolute top-16 left-0 right-0 z-10 bg-white border border-[#E4E4E7] rounded-xl shadow-lg">
+        <View className="absolute left-0 right-0 top-16 z-10 rounded-xl border shadow-lg" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
           {COUNTRIES.map((country) => (
             <TouchableOpacity
               key={country.code}
@@ -89,13 +89,14 @@ export function PhoneInput({
                 onCountryCodeChange(country.code);
                 setShowCountryPicker(false);
               }}
-              className="flex-row items-center px-4 py-3 border-b border-[#F4F4F5] last:border-b-0"
+              className="flex-row items-center border-b px-4 py-3 last:border-b-0"
+              style={{ borderColor: colors.border }}
             >
               <View className="mr-3">
-                <Icon name="globe-outline" size={16} color="#71717A" />
+                <Icon name="globe-outline" size={16} color={colors.textMuted} />
               </View>
-              <Text className="text-[#18181B] font-medium mr-2">{country.code}</Text>
-              <Text className="text-[#71717A] flex-1">{country.name}</Text>
+              <Text className="mr-2 font-medium" style={{ color: colors.text }}>{country.code}</Text>
+              <Text className="flex-1" style={{ color: colors.textSecondary }}>{country.name}</Text>
             </TouchableOpacity>
           ))}
         </View>

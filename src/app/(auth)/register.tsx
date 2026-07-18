@@ -10,11 +10,13 @@ import { PhoneInput } from '@/components/auth/PhoneInput';
 import { SocialButton } from '@/components/auth/SocialButton';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/features/auth/useAuth';
+import { useThemeStore } from '@/features/theme/theme.store';
 import { registerSchema, type RegisterForm } from '@/utils/validation';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { register: registerUser, isLoading, error } = useAuth();
+  const colors = useThemeStore((state) => state.colors);
   const [countryCode, setCountryCode] = useState('+237');
 
   const {
@@ -71,15 +73,11 @@ export default function RegisterScreen() {
           {/* Logo et Header */}
           <View className="items-center mb-8">
             <Logo size="medium" />
-            <Text className="text-white text-2xl font-bold mb-1 mt-3">
-              Rejoignez la
-              Rejoignez la
+            <Text className="mb-2 mt-3 text-center text-2xl font-extrabold" style={{ color: colors.text }}>
+              Rejoignez la{`\n`}communauté Yeyamo ✨
             </Text>
-            <Text className="text-white text-2xl font-bold mb-2">
-              communauté YEYAMO
-            </Text>
-            <Text className="text-[#A1A1AA] text-sm text-center">
-              Découvrez tous les lieux avec les{'\n'}meilleures offres et nouveautés de{'\n'}la communauté
+            <Text className="text-center text-sm leading-5" style={{ color: colors.textSecondary }}>
+              Découvrez votre pays, partagez vos expériences et rencontrez de nouvelles personnes.
             </Text>
           </View>
 
@@ -199,8 +197,8 @@ export default function RegisterScreen() {
 
             {/* CGU/Politique */}
             <View className="flex-row items-start mb-2">
-              <View className="w-4 h-4 border border-[#A1A1AA] rounded mr-3 mt-0.5" />
-              <Text className="text-[#A1A1AA] text-xs flex-1 leading-4">
+              <View className="mr-3 mt-0.5 h-4 w-4 rounded border" style={{ borderColor: colors.textSecondary }} />
+              <Text className="flex-1 text-xs leading-4" style={{ color: colors.textSecondary }}>
                 J'accepte les{' '}
                 <Text className="text-[#EF4444]">Conditions Générales d'Utilisation</Text>
                 {' '}et la{' '}
@@ -218,7 +216,7 @@ export default function RegisterScreen() {
 
           {/* Connexion */}
           <View className="flex-row justify-center items-center mb-6 gap-1">
-            <Text className="text-[#A1A1AA] text-sm">Vous avez déjà un compte ?</Text>
+            <Text className="text-sm" style={{ color: colors.textSecondary }}>Vous avez déjà un compte ?</Text>
             <TouchableOpacity onPress={() => router.back()}>
               <Text className="text-[#EF4444] text-sm font-semibold">Se connecter</Text>
             </TouchableOpacity>
@@ -226,9 +224,9 @@ export default function RegisterScreen() {
 
           {/* Séparateur */}
           <View className="flex-row items-center mb-6">
-            <View className="flex-1 h-px bg-[#27272A]" />
-            <Text className="text-[#A1A1AA] text-sm mx-4">ou</Text>
-            <View className="flex-1 h-px bg-[#27272A]" />
+            <View className="h-px flex-1" style={{ backgroundColor: colors.border }} />
+            <Text className="mx-4 text-sm" style={{ color: colors.textSecondary }}>ou continuer avec</Text>
+            <View className="h-px flex-1" style={{ backgroundColor: colors.border }} />
           </View>
 
           {/* Connexion sociale */}

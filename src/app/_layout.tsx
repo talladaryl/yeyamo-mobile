@@ -10,6 +10,7 @@ import { authService } from '@/features/auth/auth.service';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useInterestsStore } from '@/features/interests/interests.store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +21,10 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+export const unstable_settings = {
+  initialRouteName: 'index',
+};
 
 export default function RootLayout() {
   return (
@@ -40,7 +45,12 @@ function RootNavigator() {
   } = useThemeStore();
   const { isAuthenticated, isHydrated, clearAuth } = useAuthStore();
   const {
-    hasSeenOnboarding,
+    hasCompletedInterestSelection,
+    isHydrated: areInterestsHydrated,
+    hydrate: hydrateInterests,
+  } = useInterestsStore();
+  const {
+    hasCompletedLaunchFlow,
     isHydrated: isOnboardingHydrated,
     checkOnboardingStatus,
   } = useOnboardingStore();
@@ -58,6 +68,7 @@ function RootNavigator() {
     authService.hydrate();
     checkOnboardingStatus();
     hydrateTheme();
+    hydrateInterests();
   }, []);
 
   useEffect(() => {
@@ -70,28 +81,49 @@ function RootNavigator() {
 
   // Route guard — runs after hydration
   useEffect(() => {
-    if (!isHydrated || !isOnboardingHydrated) return;
+    if (!isHydrated || !isOnboardingHydrated || !areInterestsHydrated) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
+    const inInterests = segments[0] === 'interests';
 
-    if (!hasSeenOnboarding && !inOnboardingGroup) {
-      router.replace('/(onboarding)/splash');
-    } else if (!isAuthenticated && !inAuthGroup && hasSeenOnboarding) {
+    // Every cold launch starts with the animated logo and keeps the full
+    // onboarding group accessible until the user finishes or skips it.
+    if (!hasCompletedLaunchFlow) {
+      if (!inOnboardingGroup) {
+        router.replace('/(onboarding)/splash');
+      }
+      return;
+    }
+
+    if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && (inAuthGroup || inOnboardingGroup)) {
+    } else if (
+      isAuthenticated
+      && !hasCompletedInterestSelection
+      && !inInterests
+      && !inAuthGroup
+    ) {
+      router.replace('/interests');
+    } else if (
+      isAuthenticated
+      && hasCompletedInterestSelection
+      && (inAuthGroup || inOnboardingGroup || inInterests)
+    ) {
       router.replace('/(tabs)');
     }
   }, [
     isAuthenticated,
     isHydrated,
     isOnboardingHydrated,
-    hasSeenOnboarding,
+    areInterestsHydrated,
+    hasCompletedLaunchFlow,
+    hasCompletedInterestSelection,
     segments,
     router,
   ]);
 
-  if (!isHydrated || !isOnboardingHydrated) {
+  if (!isHydrated || !isOnboardingHydrated || !areInterestsHydrated) {
     // Splash is shown by Expo while JS loads — nothing to render here
     return null;
   }
@@ -100,10 +132,12 @@ function RootNavigator() {
     <>
       <StatusBar style={resolvedTheme === 'dark' ? 'light' : 'dark'} />
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.background } }}>
+      <Stack initialRouteName="index" screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.background } }}>
+        <Stack.Screen name="index" />
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="interests" />
         <Stack.Screen
           name="(post)/[id]"
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}

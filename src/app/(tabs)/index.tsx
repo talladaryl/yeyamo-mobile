@@ -1,9 +1,10 @@
-import { View, Text, ActivityIndicator, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { VerticalFeedList } from '@/components/feed/VerticalFeedList';
 import { StoriesList } from '@/components/story/StoriesList';
 import { Icon } from '@/components/ui/Icon';
-import { Logo } from '@/components/ui/Logo';
 import { useFeed } from '@/features/feed/useFeed';
 import type { FeedPost } from '@/features/feed/types';
 
@@ -22,6 +23,7 @@ const mockStories = [
 ];
 
 export default function FeedScreen() {
+  const router = useRouter();
   const { data, isLoading, isError, fetchNextPage, hasNextPage } = useFeed();
 
   const posts = useMemo<FeedPost[]>(
@@ -49,25 +51,29 @@ export default function FeedScreen() {
 
   return (
     <View className="flex-1 bg-[#0A0A0A]">
-      {/* Header fixe */}
-      <SafeAreaView className="bg-[#0A0A0A] border-b border-[#27272A]">
-        <View className="flex-row items-center justify-between px-4 py-3">
-          <Logo size="small" />
-          
-          <View className="flex-row items-center gap-4">
-            <TouchableOpacity
-              className="flex-row items-center gap-2 bg-[#161616] px-3 py-2 rounded-full"
-              activeOpacity={0.8}
-            >
-              <Icon library="ionicons" name="location-outline" size={16} color="#EF4444" />
-              <Text className="text-white text-sm font-medium">Départements</Text>
-              <Icon library="ionicons" name="chevron-down" size={16} color="#A1A1AA" />
-            </TouchableOpacity>
+      {/* Compact feed controls: region + search, without a brand header. */}
+      <SafeAreaView edges={['top']} className="border-b border-[#27272A] bg-[#0A0A0A]">
+        <View className="flex-row items-center justify-between px-4 py-1.5">
+          <TouchableOpacity
+            className="h-8 flex-row items-center gap-1.5 rounded-full bg-[#161616] px-3"
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Filtrer par département"
+          >
+            <Icon library="ionicons" name="location" size={15} color="#EF4444" />
+            <Text className="text-xs font-semibold text-white">Départements</Text>
+            <Icon library="ionicons" name="chevron-down" size={14} color="#A1A1AA" />
+          </TouchableOpacity>
 
-            <TouchableOpacity activeOpacity={0.8}>
-              <Icon library="ionicons" name="search-outline" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => router.push('/(explore)/search')}
+            activeOpacity={0.8}
+            className="h-8 w-8 items-center justify-center rounded-full bg-[#161616]"
+            accessibilityRole="button"
+            accessibilityLabel="Rechercher"
+          >
+            <Icon library="ionicons" name="search" size={19} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
 

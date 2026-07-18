@@ -1,103 +1,77 @@
-import React from 'react';
-import { View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { useEffect } from 'react';
+import { Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { OnboardingLayout } from '@/components/onboarding/OnboardingLayout';
-import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
+import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
-
-const { width, height } = Dimensions.get('window');
+import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
 
 export default function Step2Screen() {
   const router = useRouter();
   const { nextStep, previousStep, setCurrentStep, completeOnboarding } = useOnboardingStore();
 
-  const handleNext = () => {
-    nextStep();
-    router.push('/(onboarding)/step3');
-  };
-
-  const handlePrevious = () => {
-    previousStep();
-    router.back();
-  };
+  useEffect(() => setCurrentStep(2), [setCurrentStep]);
 
   const handleSkip = async () => {
     await completeOnboarding();
     router.replace('/(auth)/login');
   };
 
-  React.useEffect(() => {
-    setCurrentStep(2);
-  }, []);
-
   return (
     <OnboardingLayout
       currentStep={2}
       totalSteps={4}
-      onNext={handleNext}
-      onPrevious={handlePrevious}
+      onPrevious={() => {
+        previousStep();
+        router.back();
+      }}
+      onNext={() => {
+        nextStep();
+        router.push('/(onboarding)/step3');
+      }}
       onSkip={handleSkip}
       title="Partagez vos découvertes"
-      subtitle="Publiez, inspirez, échangez et faites grandir la communauté YEYAMO."
-      backgroundColor="#0A0A0A"
+      subtitle="Publiez, inspirez, échangez et faites grandir une communauté passionnée par le Cameroun."
     >
-      <View className="flex-1 px-6">
-        {/* Interface type réseau social */}
-        <View 
-          className="bg-[#161616] rounded-2xl overflow-hidden"
-          style={{ 
-            width: width * 0.85, 
-            height: height * 0.55,
-            alignSelf: 'center',
-            marginTop: 20
-          }}
-        >
-          {/* Header du post */}
-          <View className="flex-row items-center p-4 border-b border-[#27272A]">
-            <View className="w-10 h-10 rounded-full bg-[#EF4444] items-center justify-center mr-3">
-              <Icon name="person" size={20} color="#FFFFFF" />
-            </View>
-            <View>
-              <Text className="text-white font-semibold">Sarah M.</Text>
-              <Text className="text-[#A1A1AA] text-xs">Il y a 2h • Douala</Text>
-            </View>
+      <View className="mx-4 flex-1 overflow-hidden rounded-[28px] bg-[#DBEAFE]">
+        <Image
+          source="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1200"
+          style={{ width: '100%', height: '100%' }}
+          contentFit="cover"
+          transition={500}
+        />
+        <LinearGradient colors={['rgba(0,0,0,0.12)', 'transparent', 'rgba(0,0,0,0.5)']} className="absolute inset-0" />
+        <View className="absolute left-4 top-4 flex-row items-center rounded-full bg-black/35 py-2 pl-2 pr-4">
+          <Avatar uri="https://i.pravatar.cc/150?img=47" displayName="Sarah M." size={34} />
+          <View className="ml-2">
+            <Text className="text-xs font-bold text-white">Sarah M.</Text>
+            <Text className="text-[10px] text-white/75">Kribi · il y a 2 h</Text>
           </View>
-
-          {/* Contenu vidéo vertical */}
-          <View className="flex-1 bg-gradient-to-b from-orange-400 to-pink-500 items-center justify-center">
-            <View className="absolute top-4 right-4 bg-black/50 rounded-full px-2 py-1 flex-row items-center gap-1">
-              <Icon name="play" size={10} color="#FFFFFF" />
-              <Text className="text-white text-xs">0:45</Text>
-            </View>
-            
-            <View className="bg-white/20 rounded-xl p-4 items-center">
-              <Icon name="videocam-outline" size={40} color="#FFFFFF" />
-              <Text className="text-white font-semibold text-center">
-                Festival Ngoun Yaoundé
-              </Text>
-              <Text className="text-white/80 text-sm text-center mt-1">
-                Ambiance incroyable !
-              </Text>
-            </View>
-          </View>
-
-          {/* Actions */}
-          <View className="flex-row items-center justify-around py-3 border-t border-[#27272A]">
-            <TouchableOpacity className="flex-row items-center">
-              <Icon name="heart" size={16} color="#FFFFFF" />
-              <Text className="text-[#A1A1AA] text-sm">124</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="flex-row items-center">
-              <Icon name="chatbubble-outline" size={16} color="#FFFFFF" />
-              <Text className="text-[#A1A1AA] text-sm">32</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="flex-row items-center">
-              <Icon name="paper-plane-outline" size={16} color="#FFFFFF" />
-              <Text className="text-[#A1A1AA] text-sm">Partager</Text>
-            </TouchableOpacity>
-          </View>
+        </View>
+        <View className="absolute bottom-5 right-4 items-center gap-4">
+          <SocialMetric icon="heart" value="12,5K" />
+          <SocialMetric icon="chatbubble" value="487" />
+          <SocialMetric icon="paper-plane" value="302" />
+          <SocialMetric icon="bookmark" value="" />
+        </View>
+        <View className="absolute bottom-5 left-5 right-20">
+          <Text className="text-sm font-bold text-white">Un week-end inoubliable à Kribi 🌊</Text>
+          <Text className="mt-1 text-xs leading-5 text-white/80">Découvrez, filmez et partagez les plus beaux endroits de votre pays.</Text>
         </View>
       </View>
     </OnboardingLayout>
+  );
+}
+
+function SocialMetric({ icon, value }: { icon: string; value: string }) {
+  return (
+    <View className="items-center">
+      <View className="h-10 w-10 items-center justify-center rounded-full bg-black/35">
+        <Icon name={icon} size={20} color="#FFFFFF" />
+      </View>
+      {value ? <Text className="mt-1 text-[10px] font-semibold text-white">{value}</Text> : null}
+    </View>
   );
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface GalleryPickerProps {
   value?: string[];
@@ -24,6 +25,7 @@ export function GalleryPicker({
   disabled = false,
   minPhotos = 3,
 }: GalleryPickerProps) {
+  const colors = useThemeStore((state) => state.colors);
   const selectedValues = value ?? values ?? [];
   const handleValueChange = onValueChange ?? onValuesChange;
 
@@ -52,7 +54,7 @@ export function GalleryPicker({
   return (
     <View className="mb-4">
       {label && (
-        <Text className="text-sm text-[#A1A1AA] font-medium mb-1">
+        <Text className="mb-1 text-sm font-medium" style={{ color: colors.textSecondary }}>
           {label} (min. {minPhotos})
         </Text>
       )}
@@ -60,20 +62,19 @@ export function GalleryPicker({
       <TouchableOpacity
         onPress={pickPhotos}
         disabled={disabled}
-        className={`flex-row items-center justify-between px-4 py-4 rounded-xl ${
-          error ? 'border-2 border-[#EF4444]' : 'border border-[#27272A]'
-        } bg-[#1F1F1F] mb-3`}
+        className="mb-3 flex-row items-center justify-between rounded-xl border px-4 py-4"
+        style={{ backgroundColor: colors.elevated, borderColor: error ? colors.primary : colors.border, borderWidth: error ? 2 : 1 }}
       >
         <View className="flex-1">
-          <Text className="text-[#52525B] text-base mb-1">
+          <Text className="mb-1 text-base" style={{ color: colors.textMuted }}>
             Sélectionner plusieurs photos
           </Text>
-          <Text className="text-[#A1A1AA] text-xs">
+          <Text className="text-xs" style={{ color: colors.textSecondary }}>
             JPG ou PNG - Max 5 Mo
           </Text>
         </View>
         <View className="ml-3">
-          <Icon name="camera-outline" size={24} color="#A1A1AA" />
+          <Icon name="camera-outline" size={24} color={colors.textSecondary} />
         </View>
       </TouchableOpacity>
 

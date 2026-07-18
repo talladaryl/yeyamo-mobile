@@ -1,270 +1,194 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
+import { ConversationAvatar } from '@/components/chat/ConversationAvatar';
 import { Avatar } from '@/components/ui/Avatar';
 import { useConversations } from '@/features/chat/useChat';
+import { useThemeStore } from '@/features/theme/theme.store';
+
+type ActionButtonProps = {
+  icon: string;
+  label: string;
+};
+
+function ActionButton({ icon, label }: ActionButtonProps) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <TouchableOpacity className="flex-1 items-center" activeOpacity={0.75}>
+      <View className="h-14 w-14 items-center justify-center rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+        <Icon name={icon} size={22} color={colors.text} />
+      </View>
+      <Text className="mt-2 text-[11px] font-medium" style={{ color: colors.text }}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+type SettingRowProps = {
+  icon: string;
+  iconColor: string;
+  title: string;
+  subtitle?: string;
+  destructive?: boolean;
+  onPress?: () => void;
+};
+
+function SettingRow({ icon, iconColor, title, subtitle, destructive, onPress }: SettingRowProps) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.75} className="min-h-14 flex-row items-center px-4 py-3">
+      <View className="h-9 w-9 items-center justify-center rounded-xl" style={{ backgroundColor: `${iconColor}1A` }}>
+        <Icon name={icon} size={19} color={iconColor} />
+      </View>
+      <View className="ml-3 flex-1">
+        <Text className="text-sm font-medium" style={{ color: destructive ? colors.primary : colors.text }}>{title}</Text>
+        {subtitle ? <Text className="mt-0.5 text-xs" style={{ color: colors.textSecondary }}>{subtitle}</Text> : null}
+      </View>
+      {!destructive ? <Icon name="chevron-forward" size={18} color={colors.textMuted} /> : null}
+    </TouchableOpacity>
+  );
+}
 
 export default function ChatInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const conversationId = Number(id);
+  const { data: conversations = [], isLoading } = useConversations();
+  const conversation = conversations.find((item) => item.id === conversationId);
 
-  const { data: conversations } = useConversations();
-  const conversation = conversations?.find((c) => c.id === conversationId);
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace(`/(chat)/${conversationId}`);
+  };
 
   if (!conversation) {
     return (
-      <View className="flex-1 bg-[#0A0A0A] items-center justify-center">
-        <Text className="text-[#A1A1AA]">Conversation introuvable</Text>
-      </View>
+      <SafeScreen style={{ backgroundColor: colors.background }}>
+        <View className="flex-1 items-center justify-center">
+          <Text style={{ color: colors.textSecondary }}>{isLoading ? 'Chargement...' : 'Conversation introuvable'}</Text>
+        </View>
+      </SafeScreen>
     );
   }
 
   const isGroup = conversation.type === 'group';
   const isPartner = conversation.type === 'partner';
   const displayName = isGroup ? conversation.group_name : conversation.participant?.display_name;
+  const subtitle = isGroup
+    ? `Groupe · ${conversation.participants.length} membres`
+    : isPartner
+      ? 'Partenaire · En ligne'
+      : 'En ligne';
 
-  const handleBlock = () => {
-    Alert.alert(
-      'Bloquer ce partenaire',
-      'Vous ne recevrez plus de messages de ce partenaire.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Bloquer', 
-          style: 'destructive',
-          onPress: () => {
-            // TODO: API call
-            console.log('Block partner');
-          }
-        },
-      ]
-    );
-  };
-
-  const handleReport = () => {
-    Alert.alert(
-      'Signaler ce partenaire',
-      'Voulez-vous signaler un comportement inapproprié ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Signaler', 
-          style: 'destructive',
-          onPress: () => {
-            // TODO: API call
-            console.log('Report partner');
-          }
-        },
-      ]
-    );
-  };
-
-  const handleDelete = () => {
-    Alert.alert(
-      'Supprimer la conversation',
-      'Cette action est irréversible. Tous les messages seront supprimés.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Supprimer', 
-          style: 'destructive',
-          onPress: () => {
-            // TODO: API call
-            console.log('Delete conversation');
-            router.back();
-          }
-        },
-      ]
-    );
+  const confirmAction = (title: string, message: string, action: string, onConfirm?: () => void) => {
+    Alert.alert(title, message, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: action, style: 'destructive', onPress: onConfirm },
+    ]);
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
-          headerTitle: 'Infos conversation',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+    <SafeScreen style={{ backgroundColor: colors.background }}>
+      <View className="h-16 flex-row items-center border-b px-3" style={{ borderColor: colors.border }}>
+        <TouchableOpacity onPress={goBack} className="h-11 w-11 items-center justify-center" accessibilityLabel="Retour">
+          <Icon name="chevron-back" size={26} color={colors.text} />
+        </TouchableOpacity>
+        <Text className="flex-1 text-center text-base font-bold" style={{ color: colors.text }}>Infos conversation</Text>
+        <View className="w-11" />
+      </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Header Avatar & Name */}
-        <View className="items-center py-6 border-b border-[#27272A]">
-          {isGroup && conversation.participants.length > 1 ? (
-            <View className="relative w-20 h-20 mb-3">
-              <Avatar
-                uri={conversation.participants[0]?.avatar_url}
-                displayName={conversation.participants[0]?.display_name}
-                size={56}
-                className="absolute top-0 left-0"
-              />
-              <Avatar
-                uri={conversation.participants[1]?.avatar_url}
-                displayName={conversation.participants[1]?.display_name}
-                size={56}
-                className="absolute bottom-0 right-0 border-2 border-[#0A0A0A]"
-              />
-            </View>
-          ) : (
-            <Avatar
-              uri={conversation.participant?.avatar_url}
-              displayName={displayName || ''}
-              size={80}
-            />
-          )}
-          
-          <Text className="text-white text-xl font-bold mt-3">{displayName}</Text>
-          <Text className="text-[#A1A1AA] text-sm mt-1">
-            {isGroup 
-              ? `Groupe • ${conversation.participants.length} participants`
-              : isPartner 
-                ? 'Partenaire • En ligne'
-                : 'En ligne'}
-          </Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+        <View className="items-center px-4 pb-6 pt-7">
+          <ConversationAvatar conversation={conversation} size={88} />
+          <Text className="mt-4 text-xl font-extrabold" style={{ color: colors.text }}>{displayName}</Text>
+          <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{subtitle}</Text>
         </View>
 
-        {/* Action Buttons */}
-        <View className="flex-row justify-around py-6 px-4 border-b border-[#27272A]">
-          <TouchableOpacity className="items-center">
-            <View className="w-14 h-14 bg-[#27272A] rounded-full items-center justify-center mb-2">
-              <Icon library="ionicons" name="call" size={24} color="#FFFFFF" />
-            </View>
-            <Text className="text-white text-xs">Audio</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="items-center">
-            <View className="w-14 h-14 bg-[#27272A] rounded-full items-center justify-center mb-2">
-              <Icon library="ionicons" name="videocam" size={24} color="#FFFFFF" />
-            </View>
-            <Text className="text-white text-xs">Vidéo</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="items-center">
-            <View className="w-14 h-14 bg-[#27272A] rounded-full items-center justify-center mb-2">
-              <Icon library="ionicons" name="search" size={24} color="#FFFFFF" />
-            </View>
-            <Text className="text-white text-xs">Rechercher</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="items-center">
-            <View className="w-14 h-14 bg-[#27272A] rounded-full items-center justify-center mb-2">
-              <Icon library="ionicons" name="ellipsis-horizontal" size={24} color="#FFFFFF" />
-            </View>
-            <Text className="text-white text-xs">Plus</Text>
-          </TouchableOpacity>
+        <View className="mb-6 flex-row px-3">
+          <ActionButton icon="call-outline" label="Audio" />
+          <ActionButton icon="videocam-outline" label="Vidéo" />
+          <ActionButton icon="search-outline" label="Rechercher" />
+          <ActionButton icon="ellipsis-horizontal" label="Plus" />
         </View>
 
-        {/* Sections with chevrons */}
-        <View className="py-2">
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4">
-            <View className="flex-row items-center gap-3">
-              <Icon library="ionicons" name="document-text-outline" size={22} color="#FFFFFF" />
-              <View>
-                <Text className="text-white text-sm font-medium">
-                  Médias, liens et documents
-                </Text>
-                <Text className="text-[#A1A1AA] text-xs mt-0.5">2 éléments</Text>
+        <View className="mx-4 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+          <SettingRow icon="images-outline" iconColor="#38BDF8" title="Médias, liens et documents" subtitle="127 éléments" />
+          <View className="ml-16 h-px" style={{ backgroundColor: colors.border }} />
+          <SettingRow icon="pin-outline" iconColor="#F59E0B" title="Messages épinglés" subtitle="2 messages" />
+          <View className="ml-16 h-px" style={{ backgroundColor: colors.border }} />
+          <SettingRow icon="notifications-outline" iconColor="#F59E0B" title="Notifications" subtitle="Personnalisées" />
+          <View className="ml-16 h-px" style={{ backgroundColor: colors.border }} />
+          <SettingRow icon="color-palette-outline" iconColor="#A78BFA" title="Fond d’écran" />
+        </View>
+
+        {isGroup ? (
+          <View className="mx-4 mt-5 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            <View className="flex-row items-center justify-between px-4 py-4">
+              <Text className="text-sm font-bold" style={{ color: colors.text }}>Membres</Text>
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>{conversation.participants.length}</Text>
+            </View>
+            {conversation.participants.map((participant, index) => (
+              <View key={participant.id}>
+                {index ? <View className="ml-16 h-px" style={{ backgroundColor: colors.border }} /> : null}
+                <View className="flex-row items-center px-4 py-3">
+                  <Avatar uri={participant.avatar_url} displayName={participant.display_name} size={38} />
+                  <View className="ml-3 flex-1">
+                    <Text className="text-sm font-semibold" style={{ color: colors.text }}>{participant.display_name}</Text>
+                    <Text className="text-xs" style={{ color: colors.textSecondary }}>@{participant.username}</Text>
+                  </View>
+                </View>
               </View>
-            </View>
-            <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-          </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
 
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4">
-            <View className="flex-row items-center gap-3">
-              <Icon library="ionicons" name="pin-outline" size={22} color="#FFFFFF" />
-              <Text className="text-white text-sm font-medium">Messages épinglés</Text>
+        {isPartner ? (
+          <View className="mx-4 mt-5 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            <Text className="mb-4 text-sm font-bold" style={{ color: colors.text }}>Informations du partenaire</Text>
+            <View className="flex-row justify-between gap-4">
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>Catégorie</Text>
+              <Text className="flex-1 text-right text-xs font-medium" style={{ color: colors.text }}>Hôtel & Resort</Text>
             </View>
-            <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-          </TouchableOpacity>
-
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4">
-            <View className="flex-row items-center gap-3">
-              <Icon library="ionicons" name="notifications-outline" size={22} color="#FFFFFF" />
-              <View>
-                <Text className="text-white text-sm font-medium">Notifications</Text>
-                <Text className="text-[#A1A1AA] text-xs mt-0.5">Personnalisées</Text>
-              </View>
-            </View>
-            <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-          </TouchableOpacity>
-
-          <TouchableOpacity className="flex-row items-center justify-between px-4 py-4">
-            <View className="flex-row items-center gap-3">
-              <Icon library="ionicons" name="image-outline" size={22} color="#FFFFFF" />
-              <Text className="text-white text-sm font-medium">Fond d'écran</Text>
-            </View>
-            <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Partner Info (only for partners) */}
-        {isPartner && (
-          <View className="mx-4 my-4 bg-[#161616] rounded-2xl p-4 border border-[#27272A]">
-            <Text className="text-white text-sm font-semibold mb-3">
-              Information du partenaire
-            </Text>
-            
-            <View className="mb-3">
-              <Text className="text-[#A1A1AA] text-xs mb-1">Catégorie</Text>
-              <Text className="text-white text-sm">Hôtel & Resort</Text>
-            </View>
-
-            <View>
-              <Text className="text-[#A1A1AA] text-xs mb-1">Adresse</Text>
-              <Text className="text-white text-sm">Bonapriso, Douala, Littoral</Text>
+            <View className="my-3 h-px" style={{ backgroundColor: colors.border }} />
+            <View className="flex-row justify-between gap-4">
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>Adresse</Text>
+              <Text className="flex-1 text-right text-xs font-medium" style={{ color: colors.text }}>Bonapriso, Douala</Text>
             </View>
           </View>
-        )}
+        ) : null}
 
-        {/* Danger Actions */}
-        {isPartner && (
-          <View className="py-2 border-t border-[#27272A] mt-2">
-            <TouchableOpacity
-              onPress={handleBlock}
-              className="flex-row items-center gap-3 px-4 py-4"
-            >
-              <Icon library="ionicons" name="ban-outline" size={22} color="#EF4444" />
-              <Text className="text-[#EF4444] text-sm font-medium">
-                Bloquer le partenaire
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleReport}
-              className="flex-row items-center gap-3 px-4 py-4"
-            >
-              <Icon library="ionicons" name="flag-outline" size={22} color="#EF4444" />
-              <Text className="text-[#EF4444] text-sm font-medium">
-                Signaler le partenaire
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Delete Conversation */}
-        <View className="py-2 border-t border-[#27272A]">
-          <TouchableOpacity
-            onPress={handleDelete}
-            className="flex-row items-center gap-3 px-4 py-4"
-          >
-            <Icon library="ionicons" name="trash-outline" size={22} color="#EF4444" />
-            <Text className="text-[#EF4444] text-sm font-medium">
-              Supprimer la conversation
-            </Text>
-          </TouchableOpacity>
+        <View className="mx-4 mt-5 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+          <SettingRow
+            icon="ban-outline"
+            iconColor={colors.primary}
+            title={isGroup ? 'Quitter le groupe' : isPartner ? 'Bloquer le partenaire' : 'Bloquer ce contact'}
+            destructive
+            onPress={() => confirmAction('Confirmer cette action', 'Vous pourrez modifier ce choix plus tard dans les paramètres.', 'Confirmer')}
+          />
+          <View className="ml-16 h-px" style={{ backgroundColor: colors.border }} />
+          <SettingRow
+            icon="flag-outline"
+            iconColor={colors.primary}
+            title={isGroup ? 'Signaler le groupe' : 'Signaler ce contact'}
+            destructive
+            onPress={() => confirmAction('Signaler', 'Voulez-vous signaler un comportement inapproprié ?', 'Signaler')}
+          />
+          <View className="ml-16 h-px" style={{ backgroundColor: colors.border }} />
+          <SettingRow
+            icon="trash-outline"
+            iconColor={colors.primary}
+            title="Supprimer la conversation"
+            destructive
+            onPress={() => confirmAction(
+              'Supprimer la conversation',
+              'Cette action est irréversible.',
+              'Supprimer',
+              () => router.replace('/(tabs)/chats'),
+            )}
+          />
         </View>
-
-        <View className="h-8" />
       </ScrollView>
-    </View>
+    </SafeScreen>
   );
 }

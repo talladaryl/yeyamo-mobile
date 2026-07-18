@@ -4,6 +4,8 @@ const KEYS = {
   AUTH_TOKEN: 'yeyamo_auth_token',
   USER_ID: 'yeyamo_user_id',
   HAS_SEEN_ONBOARDING: 'yeyamo_has_seen_onboarding',
+  INTERESTS: 'yeyamo_interests',
+  HAS_SELECTED_INTERESTS: 'yeyamo_has_selected_interests',
 } as const;
 
 type StoreKey = (typeof KEYS)[keyof typeof KEYS];

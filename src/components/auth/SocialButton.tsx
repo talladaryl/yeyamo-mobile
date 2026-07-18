@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface SocialButtonProps {
   provider: 'google' | 'apple';
@@ -9,23 +10,24 @@ interface SocialButtonProps {
 }
 
 export function SocialButton({ provider, onPress, disabled = false }: SocialButtonProps) {
+  const colors = useThemeStore((state) => state.colors);
   const getProviderDetails = () => {
     switch (provider) {
       case 'google':
         return {
           icon: 'logo-google',
           text: 'Google',
-          bgColor: '#FFFFFF',
-          textColor: '#1F1F1F',
-          borderColor: '#E4E4E7'
+          bgColor: colors.card,
+          textColor: colors.text,
+          borderColor: colors.border,
         };
       case 'apple':
         return {
           icon: 'logo-apple',
           text: 'Apple',
-          bgColor: '#000000',
-          textColor: '#FFFFFF',
-          borderColor: '#000000'
+          bgColor: colors.card,
+          textColor: colors.text,
+          borderColor: colors.border,
         };
     }
   };
