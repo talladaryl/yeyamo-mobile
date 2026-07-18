@@ -37,7 +37,7 @@ export default function AddEventStep2Screen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -66,13 +66,13 @@ export default function AddEventStep2Screen() {
           </View>
 
           {/* Section Title */}
-          <Text className="text-white text-lg font-bold mb-4">
+          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">
             Date & Billetterie
           </Text>
 
           {/* Cover Image */}
           <View className="mb-6">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Image de couverture
             </Text>
             <TouchableOpacity
@@ -88,9 +88,9 @@ export default function AddEventStep2Screen() {
                   contentFit="cover"
                 />
               ) : (
-                <View className="w-full h-48 bg-[#161616] rounded-2xl items-center justify-center border border-[#27272A]">
+                <View className="w-full h-48 bg-white dark:bg-[#161616] rounded-2xl items-center justify-center border border-[#E4E4E7] dark:border-[#27272A]">
                   <Icon library="ionicons" name="image" size={48} color="#52525B" />
-                  <Text className="text-[#A1A1AA] text-sm mt-2">
+                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-2">
                     Ajouter une image
                   </Text>
                 </View>
@@ -100,13 +100,13 @@ export default function AddEventStep2Screen() {
 
           {/* Description */}
           <View className="mb-6">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Date de fin (optionnel)
             </Text>
-            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+            <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-3 border border-[#E4E4E7] dark:border-[#27272A]">
               <Icon library="ionicons" name="calendar-outline" size={20} color="#A1A1AA" />
               <TextInput
-                className="flex-1 text-white text-sm ml-3"
+                className="flex-1 text-[#18181B] dark:text-white text-sm ml-3"
                 placeholder="25 Déc 2025"
                 placeholderTextColor="#A1A1AA"
                 value={endDate}
@@ -117,14 +117,14 @@ export default function AddEventStep2Screen() {
 
           {/* Prix du billet */}
           <View className="mb-6">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Heure de fin (optionnel)
             </Text>
             
-            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+            <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-3 border border-[#E4E4E7] dark:border-[#27272A]">
               <Icon library="ionicons" name="time-outline" size={20} color="#A1A1AA" />
               <TextInput
-                className="flex-1 text-white text-sm ml-3"
+                className="flex-1 text-[#18181B] dark:text-white text-sm ml-3"
                 placeholder="22:00"
                 placeholderTextColor="#A1A1AA"
                 value={endTime}
@@ -135,14 +135,14 @@ export default function AddEventStep2Screen() {
 
           {/* Nombre de places */}
           <View className="mb-6">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Lieu de l'événement
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#E4E4E7] dark:border-[#27272A]"
               activeOpacity={0.7}
             >
-              <Text className="text-[#A1A1AA] text-sm">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">
                 Sélectionner un lieu
               </Text>
               <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
@@ -154,7 +154,7 @@ export default function AddEventStep2Screen() {
       </ScrollView>
 
       {/* Bottom Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
         <CTAButton
           title="Continuer"
           variant="primary"

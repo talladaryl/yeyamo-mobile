@@ -23,38 +23,38 @@ export function EventCard({ event, onPress }: EventCardProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-[#161616] rounded-xl p-4 mb-3 flex-row"
+      className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-3 flex-row"
       activeOpacity={0.8}
     >
       {/* Date Badge */}
       <View className="bg-[#EF4444] rounded-lg w-14 h-14 items-center justify-center mr-3">
-        <Text className="text-white text-xl font-bold">
+        <Text className="text-xl font-bold text-white">
           {event.date.split(' ')[0]}
         </Text>
-        <Text className="text-white text-[10px] uppercase">
+        <Text className="text-[10px] uppercase text-white">
           {event.date.split(' ')[1]}
         </Text>
       </View>
 
       {/* Event Info */}
       <View className="flex-1">
-        <Text className="text-white font-semibold text-base mb-1">
+        <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-1">
           {event.name}
         </Text>
         <View className="flex-row items-center gap-1 mb-1">
           <Icon library="ionicons" name="time-outline" size={14} color="#A1A1AA" />
-          <Text className="text-[#A1A1AA] text-xs">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
             {event.time}
           </Text>
         </View>
         <View className="flex-row items-center gap-1 mb-2">
           <Icon library="ionicons" name="location-outline" size={14} color="#A1A1AA" />
-          <Text className="text-[#A1A1AA] text-xs">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
             {event.location}
           </Text>
         </View>
         <View className="flex-row items-center justify-between">
-          <Text className="text-[#A1A1AA] text-xs">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
             {event.participants} participants
           </Text>
           <View

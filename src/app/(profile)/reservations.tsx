@@ -17,14 +17,14 @@ export default function ReservationsScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold">Mes réservations</Text>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold">Mes réservations</Text>
           <TouchableOpacity className="p-2">
             <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
           </TouchableOpacity>
@@ -32,7 +32,7 @@ export default function ReservationsScreen() {
       </View>
 
       {/* Onglets */}
-      <View className="flex-row px-4 pt-4 pb-2 border-b border-[#27272A]">
+      <View className="flex-row px-4 pt-4 pb-2 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <TouchableOpacity
           onPress={() => setActiveTab('confirmed')}
           className={`flex-1 pb-3 border-b-2 ${
@@ -41,7 +41,7 @@ export default function ReservationsScreen() {
         >
           <Text
             className={`text-center font-semibold ${
-              activeTab === 'confirmed' ? 'text-[#EF4444]' : 'text-[#A1A1AA]'
+              activeTab === 'confirmed' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
             }`}
           >
             Confirmées
@@ -56,7 +56,7 @@ export default function ReservationsScreen() {
         >
           <Text
             className={`text-center font-semibold ${
-              activeTab === 'pending' ? 'text-[#EF4444]' : 'text-[#A1A1AA]'
+              activeTab === 'pending' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
             }`}
           >
             En attente
@@ -67,7 +67,7 @@ export default function ReservationsScreen() {
       {/* Liste des réservations */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <Text className="text-[#A1A1AA]">Chargement...</Text>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA]">Chargement...</Text>
         </View>
       ) : filteredReservations && filteredReservations.length > 0 ? (
         <FlatList
@@ -84,10 +84,10 @@ export default function ReservationsScreen() {
       ) : (
         <View className="flex-1 items-center justify-center px-8">
           <Ionicons name="calendar-outline" size={64} color="#52525B" />
-          <Text className="text-white text-lg font-semibold mt-4 text-center">
+          <Text className="text-[#18181B] dark:text-white text-lg font-semibold mt-4 text-center">
             {activeTab === 'confirmed' ? 'Aucune réservation confirmée' : 'Aucune réservation en attente'}
           </Text>
-          <Text className="text-[#A1A1AA] text-center mt-2">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center mt-2">
             Réservez des lieux pour qu'ils apparaissent ici
           </Text>
         </View>

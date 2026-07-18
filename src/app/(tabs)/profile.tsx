@@ -1,335 +1,134 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
+import { useThemeStore } from '@/features/theme/theme.store';
+
+const QUICK_LINKS = [
+  ['images', 'Mes publications', '/(profile)/publications'],
+  ['heart', 'Mes favoris', '/(profile)/favorites'],
+  ['calendar', 'Mes sorties', '/(profile)/events'],
+  ['ticket', 'Mes réservations', '/(profile)/reservations'],
+  ['star', 'Mes avis', '/(profile)/reviews'],
+  ['notifications', 'Notifications', '/(profile)/notifications', '2'],
+  ['settings', 'Paramètres', '/(profile)/settings'],
+] as const;
+
+const SOCIAL_LINKS = [
+  ['search', 'Rechercher des utilisateurs', '/(profile)/search'],
+  ['people', 'Suggestions à suivre', '/(profile)/suggestions'],
+  ['person-add', 'Trouver des amis', '/(profile)/find-friends'],
+  ['notifications', 'Activité du réseau', '/(profile)/activity'],
+  ['settings', 'Paramètres du réseau social', '/(profile)/social-settings'],
+  ['trophy', 'Mes badges', '/(social-graph)/badges', '3'],
+  ['albums', 'Mes collections', '/(collections)', '6'],
+] as const;
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const colors = useThemeStore((state) => state.colors);
 
   if (!user) return null;
 
   return (
     <SafeScreen>
-      <ScrollView contentContainerClassName="pb-10">
-        {/* Header */}
-        <View className="items-center pt-10 pb-6 px-6">
-          <Avatar
-            uri={user.avatar_url}
-            displayName={user.display_name}
-            size={90}
-          />
-          <Text className="text-white text-2xl font-bold mt-4">{user.display_name}</Text>
-          <Text className="text-[#A1A1AA] text-sm">@{user.username}</Text>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <View className="items-center px-6 pb-6 pt-8">
+          <Avatar uri={user.avatar_url} displayName={user.display_name} size={90} />
+          <Text className="mt-4 text-2xl font-bold" style={{ color: colors.text }}>{user.display_name}</Text>
+          <Text className="text-sm" style={{ color: colors.textSecondary }}>@{user.username}</Text>
           {user.city ? (
-            <View className="flex-row items-center gap-1 mt-1">
-              <Icon name="location-outline" size={12} color="#A1A1AA" />
-              <Text className="text-[#A1A1AA] text-xs">{user.city}</Text>
+            <View className="mt-1 flex-row items-center gap-1">
+              <Icon name="location-outline" size={12} color={colors.textSecondary} />
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>{user.city}</Text>
             </View>
           ) : null}
           {user.is_verified ? (
-            <View className="flex-row items-center gap-1 mt-1">
-              <Icon name="checkmark-circle" size={12} color="#EF4444" />
-              <Text className="text-[#EF4444] text-xs font-semibold">Verified</Text>
+            <View className="mt-1 flex-row items-center gap-1">
+              <Icon name="checkmark-circle" size={13} color={colors.primary} />
+              <Text className="text-xs font-semibold" style={{ color: colors.primary }}>Profil vérifié</Text>
             </View>
           ) : null}
         </View>
 
-        {/* Stats - Cliquables pour accéder aux listes */}
-        <View className="flex-row justify-around px-6 py-4 border-y border-[#27272A]">
-          <TouchableOpacity
-            onPress={() => router.push('/(profile)/publications')}
-            className="items-center"
-            activeOpacity={0.7}
-          >
-            <Text className="text-white text-xl font-bold">128</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-0.5">Publications</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.push('/(profile)/followers')}
-            className="items-center"
-            activeOpacity={0.7}
-          >
-            <Text className="text-white text-xl font-bold">2.3K</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-0.5">Abonnements</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.push('/(profile)/following')}
-            className="items-center"
-            activeOpacity={0.7}
-          >
-            <Text className="text-white text-xl font-bold">340</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-0.5">Abonnés</Text>
-          </TouchableOpacity>
+        <View className="flex-row justify-around border-y px-6 py-4" style={{ borderColor: colors.border }}>
+          <Stat value="128" label="Publications" onPress={() => router.push('/(profile)/publications')} />
+          <Stat value="2.3K" label="Abonnements" onPress={() => router.push('/(profile)/followers')} />
+          <Stat value="340" label="Abonnés" onPress={() => router.push('/(profile)/following')} />
         </View>
 
-        {/* Bouton Modifier le profil */}
         <View className="px-6 pt-4">
-          <Button label="Modifier le profil" onPress={() => {}} variant="outline" />
+          <Button label="Modifier le profil" onPress={() => router.push('/(profile)/edit-profile')} variant="outline" />
         </View>
 
-        {/* Section Accès rapide */}
-        <View className="px-6 pt-6">
-          <Text className="text-white font-bold text-base mb-3">Accès rapide</Text>
-          
-          <View className="bg-[#161616] rounded-xl overflow-hidden mb-3">
-            {/* Mes publications */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/publications')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="images" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Mes publications
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
+        <ProfileSection title="Accès rapide">
+          {QUICK_LINKS.map(([icon, label, route, badge], index) => (
+            <ProfileLink key={route} icon={icon} label={label} badge={badge} isLast={index === QUICK_LINKS.length - 1} onPress={() => router.push(route as Href)} />
+          ))}
+        </ProfileSection>
 
-            {/* Mes favoris */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/favorites')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="heart" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Mes favoris
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
+        <ProfileSection title="Réseau social">
+          {SOCIAL_LINKS.map(([icon, label, route, badge], index) => (
+            <ProfileLink key={route} icon={icon} label={label} badge={badge} isLast={index === SOCIAL_LINKS.length - 1} onPress={() => router.push(route as Href)} />
+          ))}
+        </ProfileSection>
 
-            {/* Mes sorties */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/events')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="calendar" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Mes sorties
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Mes réservations */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/reservations')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="ticket" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Mes réservations
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Mes avis */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/reviews')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="star" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Mes avis
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Notifications */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/notifications')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="notifications" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Notifications
-              </Text>
-              <View className="bg-[#EF4444] px-2 py-0.5 rounded-full mr-2">
-                <Text className="text-white text-xs font-bold">2</Text>
-              </View>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Paramètres */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/settings')}
-              className="flex-row items-center p-4"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="settings" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Paramètres
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Social Graph Section */}
-        <View className="px-6 pt-6">
-          <Text className="text-white font-bold text-base mb-3">Réseau social</Text>
-          
-          <View className="bg-[#161616] rounded-xl overflow-hidden mb-3">
-            {/* Recherche utilisateurs */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/search')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="search" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Rechercher utilisateurs
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Suggestions */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/suggestions')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="people" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Suggestions à suivre
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Trouver des amis */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/find-friends')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="person-add" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Trouver des amis
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Activité */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/activity')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="notifications" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Activité du réseau
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Paramètres Social */}
-            <TouchableOpacity
-              onPress={() => router.push('/(profile)/social-settings')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="settings" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Paramètres réseau social
-              </Text>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Mes Badges */}
-            <TouchableOpacity
-              onPress={() => router.push('/(social-graph)/badges')}
-              className="flex-row items-center p-4 border-b border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="trophy" size={20} color="#F59E0B" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Mes badges
-              </Text>
-              <View className="bg-[#EF4444] px-2 py-0.5 rounded-full mr-2">
-                <Text className="text-white text-xs font-bold">3</Text>
-              </View>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-
-            {/* Mes Collections */}
-            <TouchableOpacity
-              onPress={() => router.push('/(collections)')}
-              className="flex-row items-center p-4"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="albums" size={20} color="#7C3AED" />
-              </View>
-              <Text className="flex-1 text-white font-semibold text-sm ml-3">
-                Mes collections
-              </Text>
-              <View className="bg-[#7C3AED] px-2 py-0.5 rounded-full mr-2">
-                <Text className="text-white text-xs font-bold">6</Text>
-              </View>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Actions */}
-        <View className="px-6 pt-3 gap-3">
-          {user.user_type === 'partner' && (
-            <TouchableOpacity
-              onPress={() => router.push('/(partner-dashboard)/dashboard')}
-              className="bg-[#EF4444] rounded-xl p-4 flex-row items-center justify-between"
-              activeOpacity={0.8}
-            >
+        <View className="gap-3 px-6 pt-3">
+          {user.user_type === 'partner' ? (
+            <TouchableOpacity onPress={() => router.push('/(partner-dashboard)/dashboard')} activeOpacity={0.8} className="flex-row items-center justify-between rounded-xl bg-[#EF4444] p-4">
               <View className="flex-row items-center gap-3">
-                <View className="w-10 h-10 bg-white/20 rounded-full items-center justify-center">
-                  <Icon library="ionicons" name="stats-chart" size={20} color="#FFFFFF" />
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                  <Icon name="stats-chart" size={20} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text className="text-white font-bold text-base">Tableau de bord</Text>
-                  <Text className="text-white/80 text-xs">Gérez votre activité</Text>
+                  <Text className="text-base font-bold text-white">Tableau de bord</Text>
+                  <Text className="text-xs text-white/80">Gérez votre activité</Text>
                 </View>
               </View>
-              <Icon library="ionicons" name="chevron-forward" size={20} color="#FFFFFF" />
+              <Icon name="chevron-forward" size={20} color="#FFFFFF" />
             </TouchableOpacity>
-          )}
-          <Button label="Edit Profile" onPress={() => {}} variant="outline" />
-          <Button label="Sign Out" onPress={logout} variant="ghost" />
+          ) : null}
+          <Button label="Se déconnecter" onPress={logout} variant="ghost" />
         </View>
       </ScrollView>
     </SafeScreen>
+  );
+}
+
+function Stat({ value, label, onPress }: { value: string; label: string; onPress: () => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <TouchableOpacity onPress={onPress} className="items-center" activeOpacity={0.7}>
+      <Text className="text-xl font-bold" style={{ color: colors.text }}>{value}</Text>
+      <Text className="mt-0.5 text-xs" style={{ color: colors.textSecondary }}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function ProfileSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <View className="px-6 pt-6">
+      <Text className="mb-3 text-base font-bold" style={{ color: colors.text }}>{title}</Text>
+      <View className="mb-3 overflow-hidden rounded-xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>{children}</View>
+    </View>
+  );
+}
+
+function ProfileLink({ icon, label, badge, isLast, onPress }: { icon: string; label: string; badge?: string; isLast: boolean; onPress: () => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7} className="flex-row items-center p-4" style={{ borderBottomWidth: isLast ? 0 : 1, borderColor: colors.border }}>
+      <View className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
+        <Icon name={icon} size={20} color={colors.primary} />
+      </View>
+      <Text className="ml-3 flex-1 text-sm font-semibold" style={{ color: colors.text }}>{label}</Text>
+      {badge ? <View className="mr-2 rounded-full bg-[#EF4444] px-2 py-0.5"><Text className="text-xs font-bold text-white">{badge}</Text></View> : null}
+      <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
+    </TouchableOpacity>
   );
 }

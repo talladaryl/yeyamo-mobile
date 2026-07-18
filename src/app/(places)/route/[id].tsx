@@ -5,6 +5,7 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { mockPlaces } from '@/features/places/mockData';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type Coordinate = {
   latitude: number;
@@ -19,6 +20,7 @@ const DEFAULT_ORIGIN: Coordinate = {
 export default function PlaceRouteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const place = mockPlaces.find((item) => item.id === Number(id)) || mockPlaces[0];
   const destination = useMemo(
     () => ({ latitude: place.lat, longitude: place.lng }),
@@ -95,7 +97,7 @@ export default function PlaceRouteScreen() {
   }, [destination.latitude, destination.longitude]);
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <MapView
@@ -127,20 +129,20 @@ export default function PlaceRouteScreen() {
         </View>
       </View>
 
-      <View className="absolute left-4 right-4 bottom-8 bg-[#0A0A0A] rounded-2xl border border-[#27272A] p-4">
-        <Text className="text-white text-xl font-bold">{place.name}</Text>
-        <Text className="text-[#A1A1AA] text-sm mt-1">{place.address}</Text>
+      <View className="absolute left-4 right-4 bottom-8 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+        <Text className="text-xl font-bold" style={{ color: colors.text }}>{place.name}</Text>
+        <Text className="text-sm mt-1" style={{ color: colors.textSecondary }}>{place.address}</Text>
 
         <View className="flex-row gap-3 mt-4">
-          <View className="flex-1 bg-[#161616] rounded-xl p-3">
-            <Text className="text-[#A1A1AA] text-xs">Distance</Text>
-            <Text className="text-white font-bold mt-1">
+          <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: colors.elevated }}>
+            <Text className="text-xs" style={{ color: colors.textSecondary }}>Distance</Text>
+            <Text className="font-bold mt-1" style={{ color: colors.text }}>
               {distanceKm ? `${distanceKm.toFixed(1)} km` : usedFallback ? 'Estimation' : '--'}
             </Text>
           </View>
-          <View className="flex-1 bg-[#161616] rounded-xl p-3">
-            <Text className="text-[#A1A1AA] text-xs">Durée</Text>
-            <Text className="text-white font-bold mt-1">
+          <View className="flex-1 rounded-xl p-3" style={{ backgroundColor: colors.elevated }}>
+            <Text className="text-xs" style={{ color: colors.textSecondary }}>Durée</Text>
+            <Text className="font-bold mt-1" style={{ color: colors.text }}>
               {durationMin ? `${Math.round(durationMin)} min` : usedFallback ? 'Non calculée' : '--'}
             </Text>
           </View>

@@ -32,7 +32,7 @@ export default function AddPlaceStep1Screen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -58,17 +58,17 @@ export default function AddPlaceStep1Screen() {
           </View>
 
           {/* Section: Informations de base */}
-          <Text className="text-white text-lg font-bold mb-4">
+          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">
             Informations de base
           </Text>
 
           {/* Nom de l'établissement */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Nom de l'établissement <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="Ex: La Falaise Hotel"
               placeholderTextColor="#A1A1AA"
               value={name}
@@ -78,11 +78,11 @@ export default function AddPlaceStep1Screen() {
 
           {/* Email */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Email <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="Ex: info@lafalaisehotel.com"
               placeholderTextColor="#A1A1AA"
               value={email}
@@ -94,14 +94,14 @@ export default function AddPlaceStep1Screen() {
 
           {/* Catégorie */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Catégorie <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#E4E4E7] dark:border-[#27272A]"
               activeOpacity={0.7}
             >
-              <Text className={category ? 'text-white text-sm' : 'text-[#A1A1AA] text-sm'}>
+              <Text className={category ? 'text-[#18181B] dark:text-white text-sm' : 'text-[#52525B] dark:text-[#A1A1AA] text-sm'}>
                 {category || 'Hôtels'}
               </Text>
               <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
@@ -110,11 +110,11 @@ export default function AddPlaceStep1Screen() {
 
           {/* Sous-catégorie */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Sous-catégorie
             </Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="Ex: Hôtel 4 étoiles"
               placeholderTextColor="#A1A1AA"
               value={subcategory}
@@ -124,25 +124,25 @@ export default function AddPlaceStep1Screen() {
 
           {/* Type de lieu */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Type de lieu <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#E4E4E7] dark:border-[#27272A]"
               activeOpacity={0.7}
             >
-              <Text className="text-white text-sm">{type}</Text>
+              <Text className="text-[#18181B] dark:text-white text-sm">{type}</Text>
               <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
             </TouchableOpacity>
           </View>
 
           {/* Localisation */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Localisation
             </Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="Ex: Douala, Cameroun"
               placeholderTextColor="#A1A1AA"
               value={location}
@@ -152,11 +152,11 @@ export default function AddPlaceStep1Screen() {
 
           {/* Email (contact) */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Email
             </Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="contact@exemple.com"
               placeholderTextColor="#A1A1AA"
               value={contactEmail}
@@ -171,7 +171,7 @@ export default function AddPlaceStep1Screen() {
       </ScrollView>
 
       {/* Bottom Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
         <CTAButton
           title="Continuer"
           variant="primary"

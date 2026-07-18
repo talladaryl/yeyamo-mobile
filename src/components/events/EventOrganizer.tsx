@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge';
 import type { UserSummary } from '@/types/api.types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type EventOrganizerProps = {
   organizer: UserSummary;
@@ -16,9 +17,10 @@ export function EventOrganizer({
   onFollowPress,
   isFollowing = false,
 }: EventOrganizerProps) {
+  const colors = useThemeStore((state) => state.colors);
   return (
-    <View className="px-4 py-4 border-t border-[#27272A]">
-      <Text className="text-white text-lg font-bold mb-3">Organisateur</Text>
+    <View className="border-t px-4 py-4" style={{ borderColor: colors.border }}>
+      <Text className="mb-3 text-lg font-bold" style={{ color: colors.text }}>Organisateur</Text>
 
       <View className="flex-row items-center gap-3">
         <TouchableOpacity onPress={onProfilePress} activeOpacity={0.8}>
@@ -35,20 +37,21 @@ export function EventOrganizer({
           activeOpacity={0.8}
         >
           <View className="flex-row items-center gap-1">
-            <Text className="text-white font-semibold text-base">
+            <Text className="text-base font-semibold" style={{ color: colors.text }}>
               {organizer.display_name}
             </Text>
             {organizer.is_verified && <VerifiedBadge size={16} />}
           </View>
-          <Text className="text-[#A1A1AA] text-sm">@{organizer.username}</Text>
+          <Text className="text-sm" style={{ color: colors.textSecondary }}>@{organizer.username}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={onFollowPress}
-          className={`${isFollowing ? 'bg-[#27272A]' : 'bg-[#EF4444]'} px-6 py-2 rounded-full`}
+          className="rounded-full px-6 py-2"
+          style={{ backgroundColor: isFollowing ? colors.elevated : colors.primary }}
           activeOpacity={0.8}
         >
-          <Text className="text-white text-sm font-semibold">
+          <Text className="text-sm font-semibold" style={{ color: isFollowing ? colors.text : '#FFFFFF' }}>
             {isFollowing ? 'Abonné' : 'Suivre'}
           </Text>
         </TouchableOpacity>

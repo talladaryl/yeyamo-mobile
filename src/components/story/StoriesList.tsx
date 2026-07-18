@@ -1,6 +1,7 @@
 import { FlatList, View, Text } from 'react-native';
 import { StoryRing } from './StoryRing';
 import { useRouter } from 'expo-router';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type Story = {
   id: number;
@@ -20,9 +21,10 @@ type StoriesListProps = {
 
 export function StoriesList({ stories, currentUserId }: StoriesListProps) {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
 
   return (
-    <View className="bg-[#0A0A0A] border-b border-[#27272A]">
+    <View className="border-b" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
       <FlatList
         horizontal
         data={stories}
@@ -39,7 +41,7 @@ export function StoriesList({ stories, currentUserId }: StoriesListProps) {
               onPress={() => router.push(`/(story)/${item.id}`)}
               size={64}
             />
-            <Text className="text-white text-xs mt-1 max-w-[68px]" numberOfLines={1}>
+            <Text className="mt-1 max-w-[68px] text-xs" style={{ color: colors.text }} numberOfLines={1}>
               {item.author.id === currentUserId ? 'Votre story' : item.author.username}
             </Text>
           </View>

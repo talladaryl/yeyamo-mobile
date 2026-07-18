@@ -18,7 +18,7 @@ export function CreationOptionCard({ option, onPress }: CreationOptionCardProps)
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
-      className="bg-[#161616] rounded-2xl p-4 mb-3 flex-row items-center"
+      className="bg-white dark:bg-[#161616] rounded-2xl p-4 mb-3 flex-row items-center"
     >
       <View 
         className="w-12 h-12 rounded-full items-center justify-center mr-4"
@@ -33,10 +33,10 @@ export function CreationOptionCard({ option, onPress }: CreationOptionCardProps)
       </View>
       
       <View className="flex-1">
-        <Text className="text-white text-base font-semibold mb-1">
+        <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-1">
           {option.title}
         </Text>
-        <Text className="text-[#A1A1AA] text-xs">
+        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
           {option.description}
         </Text>
       </View>

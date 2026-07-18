@@ -12,6 +12,7 @@ import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { loginSchema, type LoginForm } from '@/utils/validation';
+import { useInterestsStore } from '@/features/interests/interests.store';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -35,6 +36,20 @@ export default function LoginScreen() {
     try {
       await login({ email: 'demo@yeyamo.com', password: 'password123' });
       router.replace('/interests');
+    } catch {
+      // The request error is exposed by useAuth.
+    }
+  };
+
+  const partnerDemoLogin = async () => {
+    try {
+      const interests = useInterestsStore.getState();
+      if (!interests.selectedInterestIds.length) {
+        ['sorties', 'gastronomie', 'voyage'].forEach(interests.toggleInterest);
+      }
+      await useInterestsStore.getState().saveInterests();
+      await login({ email: 'partner.demo@yeyamo.com', password: 'partner-demo' });
+      router.replace('/(partner-dashboard)/dashboard');
     } catch {
       // The request error is exposed by useAuth.
     }
@@ -118,6 +133,18 @@ export default function LoginScreen() {
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
               >
                 <Text className="font-semibold" style={{ color: colors.text }}>Entrer en mode démo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={partnerDemoLogin}
+                disabled={isLoading}
+                activeOpacity={0.8}
+                className="flex-row items-center justify-center gap-2 rounded-xl border py-3"
+                style={{ backgroundColor: '#7C3AED14', borderColor: '#7C3AED55' }}
+              >
+                <Icon name="business" size={19} color="#7C3AED" />
+                <Text className="font-semibold" style={{ color: colors.text }}>
+                  Se connecter en tant que partenaire démo
+                </Text>
               </TouchableOpacity>
             </View>
 

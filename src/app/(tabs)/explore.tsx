@@ -6,10 +6,12 @@ import { CategoryCard } from '@/components/explore/CategoryCard';
 import { TrendingPlaceCard } from '@/components/explore/TrendingPlaceCard';
 import { categories, regions, trendingPlaces } from '@/features/explore/mockData';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function ExploreHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const colors = useThemeStore((state) => state.colors);
   const [selectedRegionId, setSelectedRegionId] = useState(1);
   const [isRegionPickerOpen, setIsRegionPickerOpen] = useState(false);
 
@@ -32,7 +34,7 @@ export default function ExploreHomeScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <View style={{ paddingTop: insets.top, zIndex: 20 }} className="px-4 pt-3 pb-2 flex-row items-center justify-between">
         <TouchableOpacity
           onPress={() => setIsRegionPickerOpen((value) => !value)}
@@ -41,26 +43,26 @@ export default function ExploreHomeScreen() {
         >
           <Icon library="ionicons" name="location" size={20} color="#EF4444" />
           <View>
-            <Text className="text-white font-semibold text-base">{selectedLocationLabel}</Text>
-            <Text className="text-[#A1A1AA] text-xs">{selectedRegion.name}</Text>
+            <Text className="text-base font-semibold" style={{ color: colors.text }}>{selectedLocationLabel}</Text>
+            <Text className="text-xs" style={{ color: colors.textSecondary }}>{selectedRegion.name}</Text>
           </View>
           <Icon
             library="ionicons"
             name={isRegionPickerOpen ? 'chevron-up' : 'chevron-down'}
             size={16}
-            color="#A1A1AA"
+            color={colors.textSecondary}
           />
         </TouchableOpacity>
 
         <TouchableOpacity activeOpacity={0.7}>
-          <Icon library="ionicons" name="notifications-outline" size={24} color="#FFFFFF" />
+          <Icon library="ionicons" name="notifications-outline" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
       {isRegionPickerOpen && (
         <View
-          className="absolute left-4 right-4 bg-[#161616] border border-[#27272A] rounded-xl overflow-hidden"
-          style={{ top: insets.top + 58, zIndex: 30, maxHeight: 360 }}
+          className="absolute left-4 right-4 overflow-hidden rounded-xl border"
+          style={{ top: insets.top + 58, zIndex: 30, maxHeight: 360, backgroundColor: colors.card, borderColor: colors.border }}
         >
           <ScrollView showsVerticalScrollIndicator={false}>
             {regions.map((region) => {
@@ -73,14 +75,13 @@ export default function ExploreHomeScreen() {
                     setSelectedRegionId(region.id);
                     setIsRegionPickerOpen(false);
                   }}
-                  className={`px-4 py-3 flex-row items-center justify-between border-b border-[#27272A] ${
-                    isSelected ? 'bg-[#231314]' : ''
-                  }`}
+                  className="flex-row items-center justify-between border-b px-4 py-3"
+                  style={{ borderColor: colors.border, backgroundColor: isSelected ? `${colors.primary}12` : 'transparent' }}
                   activeOpacity={0.8}
                 >
                   <View className="flex-1 pr-3">
-                    <Text className="text-white font-semibold">{region.name}</Text>
-                    <Text className="text-[#A1A1AA] text-xs mt-1" numberOfLines={1}>
+                    <Text className="font-semibold" style={{ color: colors.text }}>{region.name}</Text>
+                    <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }} numberOfLines={1}>
                       {region.places_count} lieux disponibles
                     </Text>
                   </View>
@@ -94,45 +95,48 @@ export default function ExploreHomeScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-4 pb-4">
-          <Text className="text-white text-2xl font-bold">Bonjour,</Text>
-          <Text className="text-white text-2xl font-bold mt-1">
+          <Text className="text-2xl font-bold" style={{ color: colors.text }}>Bonjour,</Text>
+          <Text className="mt-1 text-2xl font-bold" style={{ color: colors.text }}>
             Que souhaitez-vous{`\n`}decouvrir aujourd'hui ?
           </Text>
         </View>
 
         <TouchableOpacity
           onPress={() => router.push('/(explore)/search')}
-          className="mx-4 mb-6 bg-[#161616] rounded-xl px-4 py-3.5 flex-row items-center gap-3"
+          className="mx-4 mb-6 flex-row items-center gap-3 rounded-xl border px-4 py-3.5"
+          style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
           activeOpacity={0.8}
         >
-          <Icon library="ionicons" name="search" size={20} color="#A1A1AA" />
-          <Text className="text-[#A1A1AA] text-sm flex-1">Recherchez un lieu, evenement...</Text>
+          <Icon library="ionicons" name="search" size={20} color={colors.textSecondary} />
+          <Text className="flex-1 text-sm" style={{ color: colors.textSecondary }}>Recherchez un lieu, événement...</Text>
         </TouchableOpacity>
 
         <View className="px-4 mb-6">
           <View className="flex-row gap-3">
             <TouchableOpacity
               onPress={() => router.push({ pathname: '/(explore)/events', params: { region: selectedRegion.name } })}
-              className="flex-1 bg-[#161616] rounded-xl p-4"
+              className="flex-1 rounded-xl border p-4"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
               activeOpacity={0.8}
             >
               <Icon library="ionicons" name="calendar" size={24} color="#EF4444" />
-              <Text className="text-white font-semibold mt-2">Evenements</Text>
+              <Text className="mt-2 font-semibold" style={{ color: colors.text }}>Événements</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => router.push({ pathname: '/(explore)/experiences', params: { region: selectedRegion.name } })}
-              className="flex-1 bg-[#161616] rounded-xl p-4"
+              className="flex-1 rounded-xl border p-4"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
               activeOpacity={0.8}
             >
               <Icon library="ionicons" name="compass" size={24} color="#EF4444" />
-              <Text className="text-white font-semibold mt-2">Experiences</Text>
+              <Text className="mt-2 font-semibold" style={{ color: colors.text }}>Expériences</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View className="px-4 mb-6">
-          <Text className="text-white text-lg font-bold mb-4">Categories</Text>
+          <Text className="mb-4 text-lg font-bold" style={{ color: colors.text }}>Catégories</Text>
           <View className="flex-row flex-wrap gap-y-4">
             {categories.map((category) => (
               <View key={category.id} style={{ width: '33.33%' }}>
@@ -156,8 +160,8 @@ export default function ExploreHomeScreen() {
         <View className="mb-6">
           <View className="px-4 flex-row items-center justify-between mb-3">
             <View className="flex-1 pr-3">
-              <Text className="text-white text-lg font-bold">Tendances pres de vous</Text>
-              <Text className="text-[#A1A1AA] text-xs mt-1">Suggestions pour {selectedRegion.name}</Text>
+              <Text className="text-lg font-bold" style={{ color: colors.text }}>Tendances près de vous</Text>
+              <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Suggestions pour {selectedRegion.name}</Text>
             </View>
             <TouchableOpacity onPress={() => openPlacesForRegion()} activeOpacity={0.7}>
               <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
@@ -179,10 +183,10 @@ export default function ExploreHomeScreen() {
               ))}
             </ScrollView>
           ) : (
-            <View className="mx-4 bg-[#161616] rounded-xl p-5 items-center">
-              <Icon library="ionicons" name="map-outline" size={28} color="#A1A1AA" />
-              <Text className="text-white font-semibold mt-3 text-center">Aucune suggestion pour cette region</Text>
-              <Text className="text-[#A1A1AA] text-sm mt-1 text-center">
+            <View className="mx-4 items-center rounded-xl border p-5" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              <Icon library="ionicons" name="map-outline" size={28} color={colors.textSecondary} />
+              <Text className="mt-3 text-center font-semibold" style={{ color: colors.text }}>Aucune suggestion pour cette région</Text>
+              <Text className="mt-1 text-center text-sm" style={{ color: colors.textSecondary }}>
                 Les donnees locales seront enrichies avant le branchement backend.
               </Text>
             </View>

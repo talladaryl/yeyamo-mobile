@@ -24,7 +24,7 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-[#161616] rounded-xl p-4 mb-3"
+      className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-3"
       activeOpacity={0.8}
     >
       <View className="flex-row items-start justify-between mb-3">
@@ -35,12 +35,12 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
             size={40}
           />
           <View>
-            <Text className="text-white font-semibold text-base">
+            <Text className="text-[#18181B] dark:text-white font-semibold text-base">
               {reservation.customer_name}
             </Text>
             <View className="flex-row items-center gap-1 mt-0.5">
               <Icon library="ionicons" name="star" size={12} color="#F59E0B" />
-              <Text className="text-[#A1A1AA] text-xs">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
                 {reservation.establishment}
               </Text>
             </View>
@@ -59,28 +59,28 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
         </View>
       </View>
 
-      <View className="flex-row items-center justify-between border-t border-[#27272A] pt-3">
+      <View className="flex-row items-center justify-between border-t border-[#E4E4E7] dark:border-[#27272A] pt-3">
         <View className="flex-row items-center gap-4">
           <View className="flex-row items-center gap-1">
             <Icon library="ionicons" name="calendar-outline" size={14} color="#A1A1AA" />
-            <Text className="text-[#A1A1AA] text-xs">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
               {reservation.date}
             </Text>
           </View>
           <View className="flex-row items-center gap-1">
             <Icon library="ionicons" name="time-outline" size={14} color="#A1A1AA" />
-            <Text className="text-[#A1A1AA] text-xs">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
               {reservation.time}
             </Text>
           </View>
           <View className="flex-row items-center gap-1">
             <Icon library="ionicons" name="people-outline" size={14} color="#A1A1AA" />
-            <Text className="text-[#A1A1AA] text-xs">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
               {reservation.guests}
             </Text>
           </View>
         </View>
-        <Text className="text-white font-bold text-sm">
+        <Text className="text-[#18181B] dark:text-white font-bold text-sm">
           {reservation.amount.toLocaleString()} FCFA
         </Text>
       </View>

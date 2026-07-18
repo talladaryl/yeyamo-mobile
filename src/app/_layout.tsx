@@ -5,6 +5,7 @@ import { Appearance, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { registerUnauthenticatedHandler } from '@/services/api/client';
 import { authService } from '@/features/auth/auth.service';
 import { useAuthStore } from '@/features/auth/auth.store';
@@ -28,9 +29,11 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <RootNavigator />
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <RootNavigator />
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -43,7 +46,7 @@ function RootNavigator() {
     hydrateTheme,
     syncSystemTheme,
   } = useThemeStore();
-  const { isAuthenticated, isHydrated, clearAuth } = useAuthStore();
+  const { user, isAuthenticated, isHydrated, clearAuth } = useAuthStore();
   const {
     hasCompletedInterestSelection,
     isHydrated: areInterestsHydrated,
@@ -96,7 +99,7 @@ function RootNavigator() {
       return;
     }
 
-    if (!isAuthenticated && !inAuthGroup) {
+    if (!isAuthenticated && !inAuthGroup && !inOnboardingGroup) {
       router.replace('/(auth)/login');
     } else if (
       isAuthenticated
@@ -110,7 +113,7 @@ function RootNavigator() {
       && hasCompletedInterestSelection
       && (inAuthGroup || inOnboardingGroup || inInterests)
     ) {
-      router.replace('/(tabs)');
+      router.replace(user?.user_type === 'partner' ? '/(partner-dashboard)/dashboard' : '/(tabs)');
     }
   }, [
     isAuthenticated,
@@ -119,6 +122,7 @@ function RootNavigator() {
     areInterestsHydrated,
     hasCompletedLaunchFlow,
     hasCompletedInterestSelection,
+    user?.user_type,
     segments,
     router,
   ]);
@@ -168,6 +172,9 @@ function RootNavigator() {
         <Stack.Screen name="(experiences)/[id]" />
         <Stack.Screen name="(explore)/events" />
         <Stack.Screen name="(explore)/experiences" />
+        <Stack.Screen name="(explore)/places" />
+        <Stack.Screen name="(explore)/search" />
+        <Stack.Screen name="(explore)/map" />
         <Stack.Screen name="(create)/choice" options={{ presentation: 'modal' }} />
         <Stack.Screen name="(create)/publication" />
         <Stack.Screen name="(create)/story" options={{ presentation: 'fullScreenModal' }} />

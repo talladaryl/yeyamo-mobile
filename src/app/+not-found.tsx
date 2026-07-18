@@ -9,8 +9,8 @@ export default function NotFoundScreen() {
       <Stack.Screen options={{ title: 'Not Found' }} />
       <View className="flex-1 items-center justify-center px-6 gap-4">
         <Icon name="search-outline" size={56} color="#71717A" />
-        <Text className="text-white text-2xl font-bold text-center">Page not found</Text>
-        <Text className="text-[#A1A1AA] text-sm text-center">
+        <Text className="text-[#18181B] dark:text-white text-2xl font-bold text-center">Page not found</Text>
+        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm text-center">
           The screen you're looking for doesn't exist.
         </Text>
         <Link href="/(tabs)" className="mt-4">

@@ -16,8 +16,8 @@ export function StatsRow({ stats }: StatsRowProps) {
       {stats.map((stat, index) => {
         const content = (
           <View className="items-center" key={index}>
-            <Text className="text-white text-lg font-bold">{stat.value}</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-1">{stat.label}</Text>
+            <Text className="text-[#18181B] dark:text-white text-lg font-bold">{stat.value}</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-1">{stat.label}</Text>
           </View>
         );
 

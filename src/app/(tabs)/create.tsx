@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 // TODO: Import user role from auth store
 // import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function CreateScreen() {
   const router = useRouter();
+  const backgroundColor = useThemeStore((state) => state.colors.background);
   // const { user } = useAuthStore();
 
   useEffect(() => {
@@ -22,5 +24,5 @@ export default function CreateScreen() {
     router.push('/(create)/choice');
   }, []);
 
-  return <View className="flex-1 bg-[#0A0A0A]" />;
+  return <View className="flex-1" style={{ backgroundColor }} />;
 }

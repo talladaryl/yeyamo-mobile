@@ -46,14 +46,14 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-[#0A0A0A] items-center justify-center">
+      <View className="flex-1 bg-white dark:bg-[#0A0A0A] items-center justify-center">
         <ActivityIndicator color="#EF4444" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]">
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -81,7 +81,7 @@ export default function ProfileScreen() {
         />
 
         {/* Tabs */}
-        <View className="flex-row border-b border-[#27272A]">
+        <View className="flex-row border-b border-[#E4E4E7] dark:border-[#27272A]">
           <TouchableOpacity
             onPress={() => setActiveTab('posts')}
             className={`flex-1 py-3 items-center border-b-2 ${
@@ -120,7 +120,7 @@ export default function ProfileScreen() {
           <MediaGrid posts={posts} onPostPress={(id) => router.push(`/(post)/${id}`)} />
         ) : (
           <View className="p-6 items-center">
-            <Text className="text-[#A1A1AA] text-center">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center">
               Réservations disponibles bientôt
             </Text>
           </View>

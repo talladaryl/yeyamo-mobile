@@ -1,10 +1,11 @@
 import { useRef, useState, useCallback } from 'react';
-import { Alert, FlatList, Share, View } from 'react-native';
+import { Alert, FlatList, Share, Text, View } from 'react-native';
 import { VerticalFeedItem } from './VerticalFeedItem';
 import { useLikePost } from '@/features/feed/useFeed';
 import { useRouter } from 'expo-router';
 import type { FeedPost } from '@/features/feed/types';
 import type { ViewToken } from 'react-native';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type VerticalFeedListProps = {
   posts: FeedPost[];
@@ -13,6 +14,7 @@ type VerticalFeedListProps = {
 
 export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps) {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [activeIndex, setActiveIndex] = useState(0);
   const [savedPostIds, setSavedPostIds] = useState<Set<number>>(new Set());
   const { mutate: toggleLike } = useLikePost();
@@ -32,6 +34,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
 
   return (
     <FlatList
+      style={{ flex: 1 }}
       data={posts}
       keyExtractor={(item) => String(item.id)}
       renderItem={({ item, index }) => (
@@ -70,16 +73,26 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
         />
       )}
       pagingEnabled
-      snapToInterval={1}
       decelerationRate="fast"
       showsVerticalScrollIndicator={false}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}
-      removeClippedSubviews
+      removeClippedSubviews={false}
+      initialNumToRender={2}
       maxToRenderPerBatch={3}
       windowSize={3}
+      ListEmptyComponent={
+        <View className="flex-1 items-center justify-center px-8 py-20">
+          <Text className="text-center text-base font-semibold" style={{ color: colors.text }}>
+            Aucune publication pour le moment
+          </Text>
+          <Text className="mt-2 text-center text-sm" style={{ color: colors.textSecondary }}>
+            Les nouvelles découvertes apparaîtront ici.
+          </Text>
+        </View>
+      }
     />
   );
 }

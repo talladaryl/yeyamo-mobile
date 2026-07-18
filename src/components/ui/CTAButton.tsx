@@ -1,4 +1,5 @@
 import { TouchableOpacity, Text, ActivityIndicator, type StyleProp, type ViewStyle } from 'react-native';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type CTAButtonProps = {
   title: string;
@@ -19,16 +20,17 @@ export function CTAButton({
   fullWidth = true,
   style,
 }: CTAButtonProps) {
+  const colors = useThemeStore((state) => state.colors);
   const variantClasses = {
     primary: 'bg-[#EF4444]',
-    secondary: 'bg-[#27272A]',
-    outline: 'bg-transparent border border-[#27272A]',
+    secondary: '',
+    outline: 'bg-transparent border',
   };
 
   const textClasses = {
     primary: 'text-white',
-    secondary: 'text-white',
-    outline: 'text-white',
+    secondary: '',
+    outline: '',
   };
 
   return (
@@ -36,13 +38,13 @@ export function CTAButton({
       onPress={onPress}
       disabled={disabled || loading}
       className={`${variantClasses[variant]} ${fullWidth ? 'w-full' : ''} py-4 rounded-2xl items-center justify-center ${disabled ? 'opacity-50' : ''}`}
-      style={style}
+      style={[variant === 'primary' ? undefined : { backgroundColor: variant === 'secondary' ? colors.elevated : 'transparent', borderColor: colors.border }, style]}
       activeOpacity={0.8}
     >
       {loading ? (
         <ActivityIndicator color="#FFFFFF" />
       ) : (
-        <Text className={`${textClasses[variant]} text-base font-semibold`}>
+        <Text className={`${textClasses[variant]} text-base font-semibold`} style={{ color: variant === 'primary' ? '#FFFFFF' : colors.text }}>
           {title}
         </Text>
       )}

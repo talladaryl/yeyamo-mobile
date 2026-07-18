@@ -7,9 +7,11 @@ import { FilterBottomSheet, FilterBottomSheetHandle } from '@/components/explore
 import { TrendingPlaceCard } from '@/components/explore/TrendingPlaceCard';
 import { trendingPlaces } from '@/features/explore/mockData';
 import type { SearchFilters } from '@/features/explore/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function SearchScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const filterSheetRef = useRef<FilterBottomSheetHandle>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,21 +32,21 @@ export default function SearchScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Rechercher',
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="pl-4">
-              <Icon library="ionicons" name="arrow-back" size={28} color="#FFFFFF" />
+              <Icon library="ionicons" name="arrow-back" size={28} color={colors.text} />
             </TouchableOpacity>
           ),
           headerRight: () => (
             <TouchableOpacity className="pr-4">
-              <Icon library="ionicons" name="ellipsis-vertical" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="ellipsis-vertical" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
@@ -57,7 +59,7 @@ export default function SearchScreen() {
             placeholder="Rechercher un lieu, événement..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            leftIcon={<Icon library="ionicons" name="search" size={20} color="#A1A1AA" />}
+            leftIcon={<Icon library="ionicons" name="search" size={20} color={colors.textSecondary} />}
           />
         </View>
 
@@ -74,7 +76,7 @@ export default function SearchScreen() {
       {/* Results */}
       {searchQuery ? (
         <View className="flex-1">
-          <Text className="px-4 text-[#A1A1AA] text-sm mb-3">
+          <Text className="px-4 text-sm mb-3" style={{ color: colors.textSecondary }}>
             {filteredPlaces.length} résultat{filteredPlaces.length > 1 ? 's' : ''}
           </Text>
 
@@ -95,10 +97,10 @@ export default function SearchScreen() {
       ) : (
         <View className="flex-1 items-center justify-center px-6">
           <Icon library="ionicons" name="search" size={64} color="#52525B" />
-          <Text className="text-white text-lg font-semibold mt-4 text-center">
+          <Text className="text-lg font-semibold mt-4 text-center" style={{ color: colors.text }}>
             Recherchez un lieu
           </Text>
-          <Text className="text-[#A1A1AA] text-sm mt-2 text-center">
+          <Text className="text-sm mt-2 text-center" style={{ color: colors.textSecondary }}>
             Explorez des milliers de lieux et événements au Cameroun
           </Text>
         </View>

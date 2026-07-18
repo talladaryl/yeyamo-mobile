@@ -11,8 +11,8 @@ export function NotificationItem({ notification, onPress }: NotificationItemProp
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-row items-start gap-3 p-4 border-b border-[#27272A] ${
-        !notification.read ? 'bg-[#161616]' : 'bg-transparent'
+      className={`flex-row items-start gap-3 p-4 border-b border-[#E4E4E7] dark:border-[#27272A] ${
+        !notification.read ? 'bg-white dark:bg-[#161616]' : 'bg-transparent'
       }`}
       activeOpacity={0.8}
     >
@@ -29,10 +29,10 @@ export function NotificationItem({ notification, onPress }: NotificationItemProp
       </View>
 
       <View className="flex-1">
-        <Text className="text-white font-semibold text-sm mb-0.5">
+        <Text className="text-[#18181B] dark:text-white font-semibold text-sm mb-0.5">
           {notification.title}
         </Text>
-        <Text className="text-[#A1A1AA] text-xs mb-1">
+        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mb-1">
           {notification.subtitle}
         </Text>
         <Text className="text-[#71717A] text-xs">

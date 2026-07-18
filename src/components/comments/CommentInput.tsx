@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, TextInput, TouchableOpacity } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type CommentInputProps = {
   onSubmit: (text: string) => void;
@@ -14,6 +15,7 @@ export function CommentInput({
   autoFocus = false,
 }: CommentInputProps) {
   const [text, setText] = useState('');
+  const colors = useThemeStore((state) => state.colors);
 
   const handleSubmit = () => {
     if (text.trim()) {
@@ -23,25 +25,22 @@ export function CommentInput({
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={100}
-    >
-      <View className="bg-[#161616] border-t border-[#27272A] px-4 py-3 flex-row items-center gap-3">
-        <View className="flex-1 bg-[#0A0A0A] rounded-full px-4 py-2.5 flex-row items-center gap-2">
+    <View className="border-t px-4 py-3 flex-row items-end gap-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+        <View className="flex-1 rounded-[22px] px-4 py-2.5 flex-row items-end gap-2" style={{ backgroundColor: colors.elevated }}>
           <TextInput
             value={text}
             onChangeText={setText}
             placeholder={placeholder}
-            placeholderTextColor="#52525B"
-            className="flex-1 text-white text-sm"
+            placeholderTextColor={colors.textMuted}
+            className="flex-1 text-sm"
+            style={{ color: colors.text, minHeight: 22, maxHeight: 96, paddingVertical: 0 }}
             autoFocus={autoFocus}
             multiline
             maxLength={500}
           />
           
           <TouchableOpacity activeOpacity={0.7}>
-            <Icon library="ionicons" name="happy-outline" size={22} color="#A1A1AA" />
+            <Icon library="ionicons" name="happy-outline" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -57,7 +56,6 @@ export function CommentInput({
             color={text.trim() ? '#EF4444' : '#52525B'}
           />
         </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

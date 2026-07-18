@@ -44,14 +44,14 @@ export default function AddToCollectionScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} disabled={isSubmitting}>
             <Text className="text-[#EF4444] text-base font-semibold">Annuler</Text>
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold">Enregistrer</Text>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold">Enregistrer</Text>
           <TouchableOpacity onPress={() => router.push('/(collections)/create')} disabled={isSubmitting}>
             <Text className="text-[#EF4444] text-base font-semibold">Nouveau</Text>
           </TouchableOpacity>
@@ -60,16 +60,16 @@ export default function AddToCollectionScreen() {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Contexte du lieu */}
-        <View className="px-4 py-4 border-b border-[#27272A]">
-          <View className="flex-row items-center bg-[#161616] rounded-xl p-3">
+        <View className="px-4 py-4 border-b border-[#E4E4E7] dark:border-[#27272A]">
+          <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl p-3">
             <Image source={{ uri: placeImage }} className="w-16 h-16 rounded-lg" />
             <View className="flex-1 ml-3">
-              <Text className="text-white font-semibold text-base">{placeName}</Text>
-              <Text className="text-[#A1A1AA] text-sm">Hôtel & Resort • Kribi</Text>
+              <Text className="text-[#18181B] dark:text-white font-semibold text-base">{placeName}</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">Hôtel & Resort • Kribi</Text>
               <View className="flex-row items-center mt-1">
                 <Ionicons name="star" size={14} color="#F59E0B" />
-                <Text className="text-white text-sm ml-1">4.8</Text>
-                <Text className="text-[#A1A1AA] text-sm ml-1">(208 avis)</Text>
+                <Text className="text-[#18181B] dark:text-white text-sm ml-1">4.8</Text>
+                <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm ml-1">(208 avis)</Text>
               </View>
             </View>
           </View>
@@ -77,18 +77,18 @@ export default function AddToCollectionScreen() {
 
         {/* Liste des collections */}
         <View className="px-4 py-4">
-          <Text className="text-white font-semibold text-lg mb-4">Choisir une collection</Text>
+          <Text className="text-[#18181B] dark:text-white font-semibold text-lg mb-4">Choisir une collection</Text>
 
           {isLoading ? (
             <View className="py-12">
-              <Text className="text-[#A1A1AA] text-center">Chargement...</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center">Chargement...</Text>
             </View>
           ) : collections && collections.length > 0 ? (
             collections.map((collection) => (
               <TouchableOpacity
                 key={collection.id}
                 onPress={() => setSelectedCollectionId(collection.id)}
-                className="flex-row items-center py-4 border-b border-[#27272A]"
+                className="flex-row items-center py-4 border-b border-[#E4E4E7] dark:border-[#27272A]"
                 activeOpacity={0.7}
               >
                 {/* Image de la collection */}
@@ -100,7 +100,7 @@ export default function AddToCollectionScreen() {
                       resizeMode="cover"
                     />
                   ) : (
-                    <View className="w-full h-full bg-[#27272A] items-center justify-center">
+                    <View className="w-full h-full bg-[#F4F4F5] dark:bg-[#27272A] items-center justify-center">
                       <Ionicons name="images-outline" size={20} color="#52525B" />
                     </View>
                   )}
@@ -108,8 +108,8 @@ export default function AddToCollectionScreen() {
 
                 {/* Informations */}
                 <View className="flex-1">
-                  <Text className="text-white font-semibold text-base">{collection.name}</Text>
-                  <Text className="text-[#A1A1AA] text-sm">
+                  <Text className="text-[#18181B] dark:text-white font-semibold text-base">{collection.name}</Text>
+                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">
                     {collection.places_count} {collection.places_count > 1 ? 'lieux' : 'lieu'}
                   </Text>
                 </View>
@@ -131,15 +131,15 @@ export default function AddToCollectionScreen() {
           ) : (
             <View className="items-center py-12">
               <Ionicons name="albums-outline" size={64} color="#52525B" />
-              <Text className="text-white text-lg font-semibold mt-4">Aucune collection</Text>
-              <Text className="text-[#A1A1AA] text-center mt-2 px-8">
+              <Text className="text-[#18181B] dark:text-white text-lg font-semibold mt-4">Aucune collection</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center mt-2 px-8">
                 Créez votre première collection
               </Text>
               <TouchableOpacity
                 onPress={() => router.push('/(collections)/create')}
                 className="bg-[#EF4444] px-6 py-3 rounded-xl mt-6"
               >
-                <Text className="text-white font-semibold">Créer une collection</Text>
+                <Text className="font-semibold text-white">Créer une collection</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -148,15 +148,15 @@ export default function AddToCollectionScreen() {
 
       {/* Bouton Enregistrer fixé en bas */}
       {collections && collections.length > 0 && (
-        <View className="px-4 py-4 border-t border-[#27272A]">
+        <View className="px-4 py-4 border-t border-[#E4E4E7] dark:border-[#27272A]">
           <TouchableOpacity
             onPress={handleSave}
             disabled={!selectedCollectionId || isSubmitting}
             className={`py-4 rounded-xl ${
-              !selectedCollectionId || isSubmitting ? 'bg-[#27272A]' : 'bg-[#EF4444]'
+              !selectedCollectionId || isSubmitting ? 'bg-[#F4F4F5] dark:bg-[#27272A]' : 'bg-[#EF4444]'
             }`}
           >
-            <Text className="text-white text-center font-semibold text-base">
+            <Text className="text-center text-base font-semibold text-white">
               {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
             </Text>
           </TouchableOpacity>

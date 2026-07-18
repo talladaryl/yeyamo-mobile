@@ -56,21 +56,21 @@ export default function CollectionDetailScreen() {
 
   if (isLoading || !collection) {
     return (
-      <SafeAreaView className="flex-1 bg-[#0A0A0A] items-center justify-center">
-        <Text className="text-white">Chargement...</Text>
+      <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A] items-center justify-center">
+        <Text className="text-[#18181B] dark:text-white">Chargement...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold" numberOfLines={1} style={{ flex: 1, marginHorizontal: 16 }}>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold" numberOfLines={1} style={{ flex: 1, marginHorizontal: 16 }}>
             {collection.name}
           </Text>
           <TouchableOpacity onPress={handleDelete} className="p-2">
@@ -88,38 +88,38 @@ export default function CollectionDetailScreen() {
             resizeMode="cover"
           />
         ) : (
-          <View className="w-full h-48 bg-[#27272A] items-center justify-center">
+          <View className="w-full h-48 bg-[#F4F4F5] dark:bg-[#27272A] items-center justify-center">
             <Ionicons name="images-outline" size={64} color="#52525B" />
           </View>
         )}
 
         {/* Informations & Actions */}
-        <View className="px-4 py-4 border-b border-[#27272A]">
-          <Text className="text-white text-2xl font-bold mb-1">{collection.name}</Text>
-          <Text className="text-[#A1A1AA] text-base mb-3">
+        <View className="px-4 py-4 border-b border-[#E4E4E7] dark:border-[#27272A]">
+          <Text className="text-[#18181B] dark:text-white text-2xl font-bold mb-1">{collection.name}</Text>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-base mb-3">
             {collection.places_count} {collection.places_count > 1 ? 'lieux' : 'lieu'}
           </Text>
 
           {collection.description && (
-            <Text className="text-[#A1A1AA] text-sm mb-4">{collection.description}</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mb-4">{collection.description}</Text>
           )}
 
           {/* Boutons d'action */}
           <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={handleShare}
-              className="flex-1 bg-[#161616] py-3 rounded-xl flex-row items-center justify-center"
+              className="flex-1 bg-white dark:bg-[#161616] py-3 rounded-xl flex-row items-center justify-center"
             >
               <Ionicons name="share-outline" size={20} color="#FFFFFF" />
-              <Text className="text-white font-semibold ml-2">Partager</Text>
+              <Text className="text-[#18181B] dark:text-white font-semibold ml-2">Partager</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleEdit}
-              className="flex-1 bg-[#161616] py-3 rounded-xl flex-row items-center justify-center"
+              className="flex-1 bg-white dark:bg-[#161616] py-3 rounded-xl flex-row items-center justify-center"
             >
               <Ionicons name="create-outline" size={20} color="#FFFFFF" />
-              <Text className="text-white font-semibold ml-2">Modifier</Text>
+              <Text className="text-[#18181B] dark:text-white font-semibold ml-2">Modifier</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -127,7 +127,7 @@ export default function CollectionDetailScreen() {
               className="bg-[#EF4444] px-4 py-3 rounded-xl flex-row items-center justify-center"
             >
               <Ionicons name="add" size={20} color="#FFFFFF" />
-              <Text className="text-white font-semibold ml-1">Ajouter</Text>
+              <Text className="ml-1 font-semibold text-white">Ajouter</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -146,15 +146,15 @@ export default function CollectionDetailScreen() {
           ) : (
             <View className="items-center py-12">
               <Ionicons name="location-outline" size={64} color="#52525B" />
-              <Text className="text-white text-lg font-semibold mt-4">Aucun lieu</Text>
-              <Text className="text-[#A1A1AA] text-center mt-2 px-8">
+              <Text className="text-[#18181B] dark:text-white text-lg font-semibold mt-4">Aucun lieu</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center mt-2 px-8">
                 Ajoutez des lieux à cette collection pour les retrouver facilement
               </Text>
               <TouchableOpacity
                 onPress={handleAddPlace}
                 className="bg-[#EF4444] px-6 py-3 rounded-xl mt-6"
               >
-                <Text className="text-white font-semibold">Ajouter un lieu</Text>
+                <Text className="font-semibold text-white">Ajouter un lieu</Text>
               </TouchableOpacity>
             </View>
           )}

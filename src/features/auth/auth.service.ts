@@ -1,7 +1,7 @@
 import { secureStore } from '@/services/storage/secure-store';
 import { reverbClient } from '@/services/socket/reverb.client';
 import ENV from '@/config/env';
-import { MOCK_TOKEN, MOCK_USER } from '@/features/mock/mockData';
+import { MOCK_PARTNER_USER, MOCK_TOKEN, MOCK_USER } from '@/features/mock/mockData';
 import { useAuthStore } from './auth.store';
 import { authApi } from './auth.api';
 import type { LoginCredentials, RegisterCredentials } from './types';
@@ -16,7 +16,9 @@ export const authService = {
       const token = await secureStore.get(secureStore.KEYS.AUTH_TOKEN);
       if (token) {
         if (ENV.USE_MOCKS) {
-          useAuthStore.getState().setAuth(MOCK_USER, token);
+          const storedUserId = await secureStore.get(secureStore.KEYS.USER_ID);
+          const mockUser = storedUserId === String(MOCK_PARTNER_USER.id) ? MOCK_PARTNER_USER : MOCK_USER;
+          useAuthStore.getState().setAuth(mockUser, token);
           return;
         }
 
@@ -34,12 +36,12 @@ export const authService = {
 
   async login(credentials: LoginCredentials): Promise<void> {
     if (ENV.USE_MOCKS) {
+      const mockUser = credentials.email.toLowerCase() === MOCK_PARTNER_USER.email
+        ? MOCK_PARTNER_USER
+        : { ...MOCK_USER, email: credentials.email || MOCK_USER.email };
       await secureStore.set(secureStore.KEYS.AUTH_TOKEN, MOCK_TOKEN);
-      await secureStore.set(secureStore.KEYS.USER_ID, String(MOCK_USER.id));
-      useAuthStore.getState().setAuth(
-        { ...MOCK_USER, email: credentials.email || MOCK_USER.email },
-        MOCK_TOKEN,
-      );
+      await secureStore.set(secureStore.KEYS.USER_ID, String(mockUser.id));
+      useAuthStore.getState().setAuth(mockUser, MOCK_TOKEN);
       return;
     }
 

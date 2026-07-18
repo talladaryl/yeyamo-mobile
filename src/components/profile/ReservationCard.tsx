@@ -1,4 +1,4 @@
-﻿import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Reservation } from '@/features/profile/types';
 
@@ -30,7 +30,7 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-[#161616] rounded-xl p-3 mb-3"
+      className="bg-white dark:bg-[#161616] rounded-xl p-3 mb-3"
       activeOpacity={0.7}
     >
       <View className="flex-row">
@@ -41,16 +41,16 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
         />
 
         <View className="flex-1 ml-3">
-          <Text className="text-white font-semibold text-base" numberOfLines={1}>
+          <Text className="text-[#18181B] dark:text-white font-semibold text-base" numberOfLines={1}>
             {reservation.place.name}
           </Text>
-          <Text className="text-[#A1A1AA] text-sm" numberOfLines={1}>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm" numberOfLines={1}>
             {reservation.place.category.name} - {reservation.place.city}
           </Text>
 
           <View className="flex-row items-center mt-2">
             <Ionicons name="calendar-outline" size={14} color="#A1A1AA" />
-            <Text className="text-[#A1A1AA] text-xs ml-1">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs ml-1">
               {formattedDate} a {formattedTime}
             </Text>
           </View>
@@ -67,7 +67,7 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
 
             <View className="flex-row items-center">
               <Ionicons name="people-outline" size={14} color="#A1A1AA" />
-              <Text className="text-[#A1A1AA] text-xs ml-1">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs ml-1">
                 {reservation.guests_count}
               </Text>
             </View>

@@ -55,7 +55,7 @@ export default function EventSettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -75,7 +75,7 @@ export default function EventSettingsScreen() {
         <View className="px-4 py-6">
           {/* Visibility Section */}
           <View className="mb-6">
-            <Text className="text-white text-base font-semibold mb-4">
+            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-4">
               Qui peut voir votre sortie ?
             </Text>
             
@@ -92,7 +92,7 @@ export default function EventSettingsScreen() {
                     <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
                   )}
                 </View>
-                <Text className="text-white text-sm">Tout le monde</Text>
+                <Text className="text-[#18181B] dark:text-white text-sm">Tout le monde</Text>
               </View>
               {visibility === 'public' && (
                 <Icon library="ionicons" name="checkmark-circle" size={20} color="#EF4444" />
@@ -112,7 +112,7 @@ export default function EventSettingsScreen() {
                     <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
                   )}
                 </View>
-                <Text className="text-white text-sm">Amis</Text>
+                <Text className="text-[#18181B] dark:text-white text-sm">Amis</Text>
               </View>
             </TouchableOpacity>
 
@@ -129,15 +129,15 @@ export default function EventSettingsScreen() {
                     <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
                   )}
                 </View>
-                <Text className="text-white text-sm">Amis proches</Text>
+                <Text className="text-[#18181B] dark:text-white text-sm">Amis proches</Text>
               </View>
             </TouchableOpacity>
           </View>
 
           {/* Options Section */}
           <View className="mb-6">
-            <Text className="text-white text-base font-semibold mb-2">Options</Text>
-            <View className="bg-[#161616] rounded-xl px-4 divide-y divide-[#27272A]">
+            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-2">Options</Text>
+            <View className="bg-white dark:bg-[#161616] rounded-xl px-4 divide-y divide-[#27272A]">
               <Toggle
                 label="Autoriser les participants étrangers"
                 value={allowStrangers}
@@ -168,13 +168,13 @@ export default function EventSettingsScreen() {
 
           {/* Participants Section */}
           <View className="mb-6">
-            <Text className="text-white text-base font-semibold mb-3">Participants</Text>
+            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-3">Participants</Text>
             
             {/* Search */}
-            <View className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center mb-4 border border-[#27272A]">
+            <View className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center mb-4 border border-[#E4E4E7] dark:border-[#27272A]">
               <Icon library="ionicons" name="search" size={18} color="#A1A1AA" />
               <TextInput
-                className="flex-1 text-white text-sm ml-2"
+                className="flex-1 text-[#18181B] dark:text-white text-sm ml-2"
                 placeholder="Rechercher un ami..."
                 placeholderTextColor="#A1A1AA"
                 value={searchQuery}
@@ -183,7 +183,7 @@ export default function EventSettingsScreen() {
             </View>
 
             {/* Participants List */}
-            <View className="bg-[#161616] rounded-xl px-4">
+            <View className="bg-white dark:bg-[#161616] rounded-xl px-4">
               {(showAllParticipants ? mockParticipants : mockParticipants.slice(0, 3)).map((participant, index) => (
                 <View key={participant.id}>
                   <ParticipantItem
@@ -192,7 +192,7 @@ export default function EventSettingsScreen() {
                     onInviteToggle={() => handleInviteToggle(participant.id)}
                   />
                   {index < (showAllParticipants ? mockParticipants : mockParticipants.slice(0, 3)).length - 1 && (
-                    <View className="h-px bg-[#27272A]" />
+                    <View className="h-px bg-[#F4F4F5] dark:bg-[#27272A]" />
                   )}
                 </View>
               ))}
@@ -216,14 +216,14 @@ export default function EventSettingsScreen() {
       </ScrollView>
 
       {/* Bottom Buttons */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
         <View className="flex-row gap-3">
           <TouchableOpacity
             onPress={() => router.back()}
-            className="flex-1 bg-[#27272A] rounded-xl py-4 items-center"
+            className="flex-1 bg-[#F4F4F5] dark:bg-[#27272A] rounded-xl py-4 items-center"
             activeOpacity={0.7}
           >
-            <Text className="text-white text-sm font-semibold">Annuler</Text>
+            <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Annuler</Text>
           </TouchableOpacity>
           
           <View className="flex-1">

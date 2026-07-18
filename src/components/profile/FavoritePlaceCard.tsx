@@ -13,7 +13,7 @@ export function FavoritePlaceCard({ place, onPress, onTogglePriority }: Favorite
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-[#161616] rounded-xl overflow-hidden mb-3"
+      className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden mb-3"
       activeOpacity={0.7}
     >
       {/* Image */}
@@ -27,10 +27,10 @@ export function FavoritePlaceCard({ place, onPress, onTogglePriority }: Favorite
       <View className="p-4">
         <View className="flex-row items-start justify-between mb-2">
           <View className="flex-1">
-            <Text className="text-white font-semibold text-lg" numberOfLines={1}>
+            <Text className="text-[#18181B] dark:text-white font-semibold text-lg" numberOfLines={1}>
               {place.name}
             </Text>
-            <Text className="text-[#A1A1AA] text-sm" numberOfLines={1}>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm" numberOfLines={1}>
               {place.category.name} • {place.city}
             </Text>
           </View>
@@ -50,10 +50,10 @@ export function FavoritePlaceCard({ place, onPress, onTogglePriority }: Favorite
         {/* Note */}
         <View className="flex-row items-center">
           <Ionicons name="star" size={16} color="#F59E0B" />
-          <Text className="text-white text-sm font-semibold ml-1">
+          <Text className="text-[#18181B] dark:text-white text-sm font-semibold ml-1">
             {place.rating.toFixed(1)}
           </Text>
-          <Text className="text-[#A1A1AA] text-sm ml-1">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm ml-1">
             ({place.reviews_count} avis)
           </Text>
         </View>

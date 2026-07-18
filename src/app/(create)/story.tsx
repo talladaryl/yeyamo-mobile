@@ -51,11 +51,11 @@ export default function CreateStoryScreen() {
       ) : (
         <TouchableOpacity
           onPress={pickMedia}
-          className="flex-1 items-center justify-center bg-[#0A0A0A]"
+          className="flex-1 items-center justify-center bg-white dark:bg-[#0A0A0A]"
           activeOpacity={0.9}
         >
           <Icon library="ionicons" name="camera" size={64} color="#A1A1AA" />
-          <Text className="text-white text-base mt-4">Appuyez pour ajouter une photo</Text>
+          <Text className="text-[#18181B] dark:text-white text-base mt-4">Appuyez pour ajouter une photo</Text>
         </TouchableOpacity>
       )}
 
@@ -72,7 +72,7 @@ export default function CreateStoryScreen() {
 
             <View className="flex-row gap-3">
               <TouchableOpacity className="w-10 h-10 bg-black/50 rounded-full items-center justify-center">
-                <Text className="text-white font-bold">Aa</Text>
+                <Text className="text-[#18181B] dark:text-white font-bold">Aa</Text>
               </TouchableOpacity>
 
               <TouchableOpacity className="w-10 h-10 bg-black/50 rounded-full items-center justify-center">
@@ -91,7 +91,7 @@ export default function CreateStoryScreen() {
 
           {/* Timer */}
           <View className="mt-4 self-center bg-black/50 px-3 py-1.5 rounded-full">
-            <Text className="text-white text-sm font-semibold">{duration}s</Text>
+            <Text className="text-[#18181B] dark:text-white text-sm font-semibold">{duration}s</Text>
           </View>
         </View>
       )}
@@ -109,7 +109,7 @@ export default function CreateStoryScreen() {
               <View className="w-8 h-8 bg-[#EF4444] rounded-full items-center justify-center mr-2">
                 <Icon library="ionicons" name="person" size={16} color="#FFFFFF" />
               </View>
-              <Text className="text-white text-sm font-semibold">Ta story</Text>
+              <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Ta story</Text>
             </TouchableOpacity>
 
             {/* Amis proches */}
@@ -120,7 +120,7 @@ export default function CreateStoryScreen() {
               <View className="w-8 h-8 bg-[#10B981] rounded-full items-center justify-center mr-2">
                 <Icon library="ionicons" name="star" size={16} color="#FFFFFF" />
               </View>
-              <Text className="text-white text-sm font-semibold">Amis proches</Text>
+              <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Amis proches</Text>
             </TouchableOpacity>
 
             {/* Publish Button */}

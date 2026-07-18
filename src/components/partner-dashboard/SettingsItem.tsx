@@ -11,7 +11,7 @@ export function SettingsItem({ item, onPress }: SettingsItemProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="flex-row items-center justify-between py-4 px-4 bg-[#161616] mb-2 rounded-xl"
+      className="flex-row items-center justify-between py-4 px-4 bg-white dark:bg-[#161616] mb-2 rounded-xl"
       activeOpacity={0.8}
     >
       <View className="flex-row items-center gap-3 flex-1">
@@ -21,14 +21,14 @@ export function SettingsItem({ item, onPress }: SettingsItemProps) {
           size={22}
           color="#A1A1AA"
         />
-        <Text className="text-white text-sm flex-1">
+        <Text className="text-[#18181B] dark:text-white text-sm flex-1">
           {item.label}
         </Text>
       </View>
 
       <View className="flex-row items-center gap-2">
         {item.value && (
-          <Text className="text-[#A1A1AA] text-sm">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">
             {item.value}
           </Text>
         )}

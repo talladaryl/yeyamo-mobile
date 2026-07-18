@@ -40,7 +40,7 @@ export default function SuggestPlaceStep2Screen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -58,7 +58,7 @@ export default function SuggestPlaceStep2Screen() {
 
       <View className="flex-1">
         {/* Stepper */}
-        <View className="px-4 pt-4 pb-3 bg-[#0A0A0A]">
+        <View className="px-4 pt-4 pb-3 bg-white dark:bg-[#0A0A0A]">
           <Stepper currentStep={2} totalSteps={5} />
         </View>
 
@@ -164,7 +164,7 @@ export default function SuggestPlaceStep2Screen() {
         </View>
 
         {/* Bottom Button */}
-        <View className="bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+        <View className="bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
           <CTAButton
             title="Continuer"
             variant="primary"

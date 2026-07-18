@@ -8,7 +8,7 @@ interface StepperProps {
 export function Stepper({ currentStep, totalSteps }: StepperProps) {
   return (
     <View className="flex-row items-center justify-between mb-4">
-      <Text className="text-white text-sm font-medium">
+      <Text className="text-[#18181B] dark:text-white text-sm font-medium">
         Étape {currentStep} sur {totalSteps}
       </Text>
       
@@ -17,7 +17,7 @@ export function Stepper({ currentStep, totalSteps }: StepperProps) {
           <View
             key={i}
             className={`h-1 rounded-full ${
-              i < currentStep ? 'bg-[#EF4444]' : 'bg-[#27272A]'
+              i < currentStep ? 'bg-[#EF4444]' : 'bg-[#F4F4F5] dark:bg-[#27272A]'
             }`}
             style={{ width: 24 }}
           />

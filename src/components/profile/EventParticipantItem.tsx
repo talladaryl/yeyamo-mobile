@@ -19,7 +19,7 @@ export function EventParticipantItem({ participation, onPress }: EventParticipan
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-[#161616] rounded-xl p-4 mb-3"
+      className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-3"
       activeOpacity={0.7}
     >
       <View className="flex-row">
@@ -31,10 +31,10 @@ export function EventParticipantItem({ participation, onPress }: EventParticipan
 
         {/* Informations */}
         <View className="flex-1">
-          <Text className="text-white font-semibold text-base mb-1" numberOfLines={1}>
+          <Text className="mb-1 text-base font-semibold text-[#18181B] dark:text-white" numberOfLines={1}>
             {event.title}
           </Text>
-          <Text className="text-[#A1A1AA] text-sm mb-2" numberOfLines={1}>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mb-2" numberOfLines={1}>
             {event.place.name} • {eventDate.toLocaleDateString('fr-FR')}
           </Text>
 
@@ -49,7 +49,7 @@ export function EventParticipantItem({ participation, onPress }: EventParticipan
                 />
               ))}
             </View>
-            <Text className="text-[#A1A1AA] text-xs">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
               {totalParticipants}+ participants
             </Text>
           </View>

@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface ToggleItemProps {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -18,28 +19,28 @@ export function ToggleItem({
   onValueChange,
   showBorder = true,
 }: ToggleItemProps) {
-  const borderClass = showBorder ? 'border-t border-[#27272A]' : '';
+  const colors = useThemeStore((state) => state.colors);
 
   return (
-    <View className={`px-4 py-4 ${borderClass}`}>
+    <View className="px-4 py-4" style={{ borderTopWidth: showBorder ? 1 : 0, borderColor: colors.border }}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1">
           {icon && (
-            <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center mr-3">
+            <View className="mr-3 h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
               <Ionicons name={icon} size={20} color="#EF4444" />
             </View>
           )}
           <View className="flex-1">
-            <Text className="text-white font-medium text-sm">{label}</Text>
+            <Text className="text-sm font-medium" style={{ color: colors.text }}>{label}</Text>
             {description && (
-              <Text className="text-[#A1A1AA] text-xs mt-0.5">{description}</Text>
+              <Text className="mt-0.5 text-xs" style={{ color: colors.textSecondary }}>{description}</Text>
             )}
           </View>
         </View>
         <Switch
           value={value}
           onValueChange={onValueChange}
-          trackColor={{ false: '#27272A', true: '#EF4444' }}
+          trackColor={{ false: colors.border, true: colors.primary }}
           thumbColor="#FFFFFF"
         />
       </View>

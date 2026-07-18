@@ -38,7 +38,7 @@ export default function AddPlaceStep2Screen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -78,7 +78,7 @@ export default function AddPlaceStep2Screen() {
 
         <View className="px-4 py-6">
           {/* Section: Localisation */}
-          <Text className="text-white text-lg font-bold mb-4">
+          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">
             Localisation
           </Text>
 
@@ -95,16 +95,16 @@ export default function AddPlaceStep2Screen() {
                 <Icon library="ionicons" name="checkmark" size={14} color="#FFFFFF" />
               )}
             </View>
-            <Text className="text-white text-sm">Utiliser ma position</Text>
+            <Text className="text-[#18181B] dark:text-white text-sm">Utiliser ma position</Text>
           </TouchableOpacity>
 
           {/* Adresse exacte */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Adresse exacte <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="Rue de Rim Arawak, Bonapriso, Douala"
               placeholderTextColor="#A1A1AA"
               value={exactAddress}
@@ -115,14 +115,14 @@ export default function AddPlaceStep2Screen() {
 
           {/* Région */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Région <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#E4E4E7] dark:border-[#27272A]"
               activeOpacity={0.7}
             >
-              <Text className={region ? 'text-white text-sm' : 'text-[#A1A1AA] text-sm'}>
+              <Text className={region ? 'text-[#18181B] dark:text-white text-sm' : 'text-[#52525B] dark:text-[#A1A1AA] text-sm'}>
                 {region || 'Sélectionner une région'}
               </Text>
               <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
@@ -131,14 +131,14 @@ export default function AddPlaceStep2Screen() {
 
           {/* Ville */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Ville <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#E4E4E7] dark:border-[#27272A]"
               activeOpacity={0.7}
             >
-              <Text className={city ? 'text-white text-sm' : 'text-[#A1A1AA] text-sm'}>
+              <Text className={city ? 'text-[#18181B] dark:text-white text-sm' : 'text-[#52525B] dark:text-[#A1A1AA] text-sm'}>
                 {city || 'Sélectionner une ville'}
               </Text>
               <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
@@ -147,11 +147,11 @@ export default function AddPlaceStep2Screen() {
 
           {/* Points de repère */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Points de repère
             </Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="Ex: Près de la pharmacie du carrefour"
               placeholderTextColor="#A1A1AA"
               value={landmarks}
@@ -166,7 +166,7 @@ export default function AddPlaceStep2Screen() {
       </ScrollView>
 
       {/* Bottom Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
         <CTAButton
           title="Continuer"
           variant="primary"

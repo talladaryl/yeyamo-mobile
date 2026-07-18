@@ -10,7 +10,7 @@ export default function StatisticsScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       {/* Header */}
       <View style={{ paddingTop: insets.top }} className="px-4 pt-3 pb-4 flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
@@ -18,8 +18,8 @@ export default function StatisticsScreen() {
             <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <View>
-            <Text className="text-white text-2xl font-bold">STATISTIQUES</Text>
-            <Text className="text-[#A1A1AA] text-sm">Analysez vos performances</Text>
+            <Text className="text-[#18181B] dark:text-white text-2xl font-bold">STATISTIQUES</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">Analysez vos performances</Text>
           </View>
         </View>
       </View>
@@ -33,22 +33,22 @@ export default function StatisticsScreen() {
         </View>
 
         {/* Evolution Chart */}
-        <View className="bg-[#161616] rounded-xl p-4 mb-6">
-          <Text className="text-white font-semibold text-base mb-4">Évolution des vues</Text>
+        <View className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-6">
+          <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-4">Évolution des vues</Text>
           <View className="h-40 items-center justify-center">
             <Icon library="ionicons" name="stats-chart" size={48} color="#EF4444" />
-            <Text className="text-[#A1A1AA] text-xs mt-2">Graphique en évolution</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-2">Graphique en évolution</Text>
           </View>
         </View>
 
         {/* Traffic Sources */}
-        <View className="bg-[#161616] rounded-xl p-4 mb-6">
-          <Text className="text-white font-semibold text-base mb-4">Sources de trafic</Text>
+        <View className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-6">
+          <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-4">Sources de trafic</Text>
           
           {/* Donut Chart Placeholder */}
           <View className="items-center mb-4">
             <View className="w-32 h-32 rounded-full border-8 border-[#EF4444] items-center justify-center">
-              <Text className="text-white text-2xl font-bold">100%</Text>
+              <Text className="text-[#18181B] dark:text-white text-2xl font-bold">100%</Text>
             </View>
           </View>
 
@@ -63,7 +63,7 @@ export default function StatisticsScreen() {
                   />
                   <Text className="text-[#E5E5E5] text-sm">{source.name}</Text>
                 </View>
-                <Text className="text-white font-semibold text-sm">
+                <Text className="text-[#18181B] dark:text-white font-semibold text-sm">
                   {source.percentage}%
                 </Text>
               </View>
@@ -72,7 +72,7 @@ export default function StatisticsScreen() {
         </View>
 
         <TouchableOpacity
-          className="bg-[#161616] rounded-xl p-4 mb-6 items-center"
+          className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-6 items-center"
           activeOpacity={0.8}
         >
           <Text className="text-[#EF4444] font-semibold">Voir rapport complet</Text>

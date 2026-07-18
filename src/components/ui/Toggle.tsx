@@ -9,7 +9,7 @@ interface ToggleProps {
 export function Toggle({ label, value, onValueChange }: ToggleProps) {
   return (
     <View className="flex-row items-center justify-between py-3">
-      <Text className="text-white text-sm flex-1">{label}</Text>
+      <Text className="text-[#18181B] dark:text-white text-sm flex-1">{label}</Text>
       <Switch
         value={value}
         onValueChange={onValueChange}

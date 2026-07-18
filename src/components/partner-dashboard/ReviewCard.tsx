@@ -10,7 +10,7 @@ interface ReviewCardProps {
 
 export function ReviewCard({ review, onReply }: ReviewCardProps) {
   return (
-    <View className="bg-[#161616] rounded-xl p-4 mb-3">
+    <View className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-3">
       <View className="flex-row items-start justify-between mb-2">
         <View className="flex-row items-center gap-3 flex-1">
           <Avatar
@@ -19,7 +19,7 @@ export function ReviewCard({ review, onReply }: ReviewCardProps) {
             size={40}
           />
           <View className="flex-1">
-            <Text className="text-white font-semibold text-base">
+            <Text className="text-[#18181B] dark:text-white font-semibold text-base">
               {review.customer_name}
             </Text>
             <View className="flex-row items-center gap-2 mt-0.5">
@@ -34,7 +34,7 @@ export function ReviewCard({ review, onReply }: ReviewCardProps) {
                   />
                 ))}
               </View>
-              <Text className="text-[#A1A1AA] text-xs">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
                 {review.date}
               </Text>
             </View>
@@ -46,8 +46,8 @@ export function ReviewCard({ review, onReply }: ReviewCardProps) {
         {review.comment}
       </Text>
 
-      <View className="flex-row items-center justify-between border-t border-[#27272A] pt-3">
-        <Text className="text-[#A1A1AA] text-xs">
+      <View className="flex-row items-center justify-between border-t border-[#E4E4E7] dark:border-[#27272A] pt-3">
+        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
           {review.establishment}
         </Text>
         <TouchableOpacity

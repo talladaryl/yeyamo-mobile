@@ -18,7 +18,7 @@ export function ProfileHeader({ profile, onFollowPress, onMessagePress, isOwnPro
   const router = useRouter();
 
   return (
-    <View className="bg-[#0A0A0A]">
+    <View className="bg-white dark:bg-[#0A0A0A]">
       {/* Cover photo */}
       {profile.cover_url ? (
         <Image
@@ -27,7 +27,7 @@ export function ProfileHeader({ profile, onFollowPress, onMessagePress, isOwnPro
           contentFit="cover"
         />
       ) : (
-        <View className="w-full h-40 bg-[#161616]" />
+        <View className="w-full h-40 bg-white dark:bg-[#161616]" />
       )}
 
       {/* Avatar & Info */}
@@ -49,20 +49,20 @@ export function ProfileHeader({ profile, onFollowPress, onMessagePress, isOwnPro
         </View>
 
         {/* Name & Location */}
-        <Text className="text-white text-2xl font-bold">{profile.display_name}</Text>
+        <Text className="text-[#18181B] dark:text-white text-2xl font-bold">{profile.display_name}</Text>
         {profile.city && (
-          <Text className="text-[#A1A1AA] text-sm mt-1">{profile.city}</Text>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-1">{profile.city}</Text>
         )}
 
         {/* Stats - Cliquables */}
-        <View className="flex-row justify-around py-4 -mx-4 border-y border-[#27272A] my-4">
+        <View className="flex-row justify-around py-4 -mx-4 border-y border-[#E4E4E7] dark:border-[#27272A] my-4">
           <TouchableOpacity
             onPress={() => {}}
             className="flex-1 items-center"
             activeOpacity={0.7}
           >
-            <Text className="text-white text-xl font-bold">{profile.posts_count}</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-0.5">Publications</Text>
+            <Text className="text-[#18181B] dark:text-white text-xl font-bold">{profile.posts_count}</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-0.5">Publications</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -70,8 +70,8 @@ export function ProfileHeader({ profile, onFollowPress, onMessagePress, isOwnPro
             className="flex-1 items-center"
             activeOpacity={0.7}
           >
-            <Text className="text-white text-xl font-bold">{profile.followers_count}</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-0.5">Abonnés</Text>
+            <Text className="text-[#18181B] dark:text-white text-xl font-bold">{profile.followers_count}</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-0.5">Abonnés</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -79,14 +79,14 @@ export function ProfileHeader({ profile, onFollowPress, onMessagePress, isOwnPro
             className="flex-1 items-center"
             activeOpacity={0.7}
           >
-            <Text className="text-white text-xl font-bold">{profile.following_count}</Text>
-            <Text className="text-[#A1A1AA] text-xs mt-0.5">Abonnements</Text>
+            <Text className="text-[#18181B] dark:text-white text-xl font-bold">{profile.following_count}</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-0.5">Abonnements</Text>
           </TouchableOpacity>
         </View>
 
         {/* Bio */}
         {profile.bio && (
-          <Text className="text-white text-sm leading-6 mb-4">{profile.bio}</Text>
+          <Text className="text-[#18181B] dark:text-white text-sm leading-6 mb-4">{profile.bio}</Text>
         )}
 
         {/* Action buttons */}

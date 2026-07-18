@@ -1,9 +1,10 @@
 ﻿import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { CommentItem } from '@/components/comments/CommentItem';
 import { CommentInput } from '@/components/comments/CommentInput';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 const initialComments = [
   {
@@ -62,6 +63,7 @@ const initialComments = [
 export default function CommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const postId = Number(id);
   const [comments, setComments] = useState(initialComments);
   const isLoading = false;
@@ -90,19 +92,24 @@ export default function CommentsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-black/45 justify-end">
-      <Stack.Screen options={{ headerShown: false }} />
-      <TouchableOpacity className="flex-1" activeOpacity={1} onPress={() => router.back()} />
+    <KeyboardAvoidingView
+      className="flex-1"
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
+      <View className="flex-1 bg-black/45 justify-end">
+        <Stack.Screen options={{ headerShown: false }} />
+        <TouchableOpacity className="flex-1" activeOpacity={1} onPress={() => router.back()} />
 
-      <View className="h-[58%] bg-[#0A0A0A] rounded-t-3xl overflow-hidden border-t border-[#27272A]">
+        <View className="h-[68%] overflow-hidden rounded-t-3xl border-t" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
         <View className="items-center pt-3 pb-2">
           <View className="w-12 h-1.5 rounded-full bg-[#3F3F46]" />
         </View>
 
-        <View className="px-4 pb-3 flex-row items-center justify-between border-b border-[#27272A]">
-          <Text className="text-white text-lg font-bold">Commentaires</Text>
+        <View className="flex-row items-center justify-between border-b px-4 pb-3" style={{ borderColor: colors.border }}>
+          <Text className="text-lg font-bold" style={{ color: colors.text }}>Commentaires</Text>
           <TouchableOpacity onPress={() => router.back()} className="w-9 h-9 items-center justify-center">
-            <Icon library="ionicons" name="close" size={24} color="#FFFFFF" />
+            <Icon library="ionicons" name="close" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -137,7 +144,7 @@ export default function CommentsScreen() {
                   onShowReplies={() => undefined}
                 />
               )}
-              ItemSeparatorComponent={() => <View className="h-px bg-[#27272A] mx-4" />}
+              ItemSeparatorComponent={() => <View className="mx-4 h-px" style={{ backgroundColor: colors.border }} />}
               contentContainerStyle={{ paddingBottom: 12 }}
               keyboardShouldPersistTaps="handled"
             />
@@ -145,7 +152,8 @@ export default function CommentsScreen() {
             <CommentInput onSubmit={handleSubmitComment} autoFocus />
           </>
         )}
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

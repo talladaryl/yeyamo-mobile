@@ -4,18 +4,20 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { mockEvents } from '@/features/events/mockData';
 import { useState } from 'react';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 const { width } = Dimensions.get('window');
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [isSaved, setIsSaved] = useState(false);
   
   const event = mockEvents.find(e => e.id === Number(id)) || mockEvents[0];
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -57,10 +59,10 @@ export default function EventDetailScreen() {
           />
           {/* Date Badge */}
           <View className="absolute top-4 left-4 bg-[#EF4444] rounded-2xl items-center justify-center px-3 py-2">
-            <Text className="text-white text-2xl font-bold">
+            <Text className="text-2xl font-bold text-white">
               {new Date(event.start_date).getDate()}
             </Text>
-            <Text className="text-white text-xs font-semibold uppercase">
+            <Text className="text-xs font-semibold uppercase text-white">
               {new Date(event.start_date).toLocaleDateString('fr-FR', { month: 'short' })}
             </Text>
           </View>
@@ -68,7 +70,7 @@ export default function EventDetailScreen() {
 
         <View className="px-4">
           {/* Title */}
-          <Text className="text-white text-2xl font-bold mt-4 mb-2">{event.title}</Text>
+          <Text style={{ color: colors.text }} className=" text-2xl font-bold mt-4 mb-2">{event.title}</Text>
           
           {/* Location */}
           <TouchableOpacity 
@@ -76,13 +78,13 @@ export default function EventDetailScreen() {
             className="flex-row items-center gap-2 mb-3"
           >
             <Ionicons name="location-outline" size={18} color="#A1A1AA" />
-            <Text className="text-[#A1A1AA] text-sm">{event.location}</Text>
+            <Text style={{ color: colors.textSecondary }} className=" text-sm">{event.location}</Text>
           </TouchableOpacity>
 
           {/* Date & Time */}
           <View className="flex-row items-center gap-2 mb-4">
             <Ionicons name="time-outline" size={18} color="#A1A1AA" />
-            <Text className="text-white text-sm">
+            <Text style={{ color: colors.text }} className=" text-sm">
               {new Date(event.start_date).toLocaleDateString('fr-FR', { 
                 weekday: 'short', 
                 day: 'numeric', 
@@ -95,14 +97,14 @@ export default function EventDetailScreen() {
           {/* Participants */}
           <View className="flex-row items-center gap-2 mb-5">
             <Ionicons name="people-outline" size={18} color="#A1A1AA" />
-            <Text className="text-white text-sm">
+            <Text style={{ color: colors.text }} className=" text-sm">
               {event.participants_count} participants intéressés
             </Text>
           </View>
 
           {/* Description */}
           <View className="mb-5">
-            <Text className="text-white text-base leading-6">{event.description}</Text>
+            <Text style={{ color: colors.text }} className=" text-base leading-6">{event.description}</Text>
           </View>
 
           {/* Ticket Types */}
@@ -111,16 +113,17 @@ export default function EventDetailScreen() {
               {event.ticket_types.map((ticket) => (
                 <View 
                   key={ticket.id}
-                  className="bg-[#161616] rounded-2xl p-4 mb-3 flex-row items-center justify-between"
+                  className="rounded-2xl border p-4 mb-3 flex-row items-center justify-between"
+                  style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 >
                   <View className="flex-1">
-                    <Text className="text-white font-semibold text-base mb-1">{ticket.label}</Text>
-                    <Text className="text-[#A1A1AA] text-sm">
+                    <Text style={{ color: colors.text }} className=" font-semibold text-base mb-1">{ticket.label}</Text>
+                    <Text style={{ color: colors.textSecondary }} className=" text-sm">
                       {ticket.price.toLocaleString()} {event.currency}
                     </Text>
                   </View>
                   <TouchableOpacity className="bg-[#EF4444] px-6 py-2.5 rounded-xl">
-                    <Text className="text-white font-semibold">Participer</Text>
+                    <Text className="font-semibold text-white">Participer</Text>
                   </TouchableOpacity>
                 </View>
               ))}
@@ -131,13 +134,13 @@ export default function EventDetailScreen() {
           {(!event.ticket_types || event.ticket_types.length === 0) && (
             <View className="flex-row gap-3 mb-5">
               <TouchableOpacity className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
-                <Text className="text-white font-semibold text-base">Participer</Text>
+                <Text className="text-base font-semibold text-white">Participer</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center">
-                <Ionicons name="share-social-outline" size={20} color="#FFFFFF" />
+              <TouchableOpacity className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+                <Ionicons name="share-social-outline" size={20} color={colors.text} />
               </TouchableOpacity>
-              <TouchableOpacity className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center">
-                <Ionicons name="add-outline" size={24} color="#FFFFFF" />
+              <TouchableOpacity className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+                <Ionicons name="add-outline" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
           )}
@@ -145,7 +148,7 @@ export default function EventDetailScreen() {
           {/* Participants Section */}
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-white text-lg font-bold">
+              <Text style={{ color: colors.text }} className=" text-lg font-bold">
                 Participants ({event.participants_count})
               </Text>
               <TouchableOpacity
@@ -171,14 +174,14 @@ export default function EventDetailScreen() {
                       width: 36, 
                       height: 36,
                       borderWidth: 2,
-                      borderColor: '#0A0A0A',
+                      borderColor: colors.background,
                     }}
                     className="rounded-full"
                   />
                 ))}
               </View>
               {event.participants_count > 4 && (
-                <Text className="text-[#A1A1AA] text-sm">
+                <Text style={{ color: colors.textSecondary }} className=" text-sm">
                   +{event.participants_count - 4} autres
                 </Text>
               )}
@@ -188,7 +191,7 @@ export default function EventDetailScreen() {
           {/* Événements similaires Section */}
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-white text-lg font-bold">Événements similaires</Text>
+              <Text style={{ color: colors.text }} className=" text-lg font-bold">Événements similaires</Text>
               <TouchableOpacity onPress={() => router.push('/(explore)/events')}>
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
@@ -209,10 +212,10 @@ export default function EventDetailScreen() {
                       style={{ width: 160, height: 120 }}
                       className="rounded-xl mb-2"
                     />
-                    <Text className="text-white font-semibold text-sm w-[160px]" numberOfLines={1}>
+                    <Text style={{ color: colors.text }} className=" font-semibold text-sm w-[160px]" numberOfLines={1}>
                       {similarEvent.title}
                     </Text>
-                    <Text className="text-[#A1A1AA] text-xs mt-0.5">
+                    <Text style={{ color: colors.textSecondary }} className=" text-xs mt-0.5">
                       {new Date(similarEvent.start_date).toLocaleDateString('fr-FR', {
                         day: 'numeric',
                         month: 'short'

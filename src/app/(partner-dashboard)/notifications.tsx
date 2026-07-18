@@ -12,7 +12,7 @@ export default function NotificationsScreen() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       {/* Header */}
       <View style={{ paddingTop: insets.top }} className="px-4 pt-3 pb-4">
         <View className="flex-row items-center justify-between mb-2">
@@ -21,8 +21,8 @@ export default function NotificationsScreen() {
               <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <View>
-              <Text className="text-white text-2xl font-bold">NOTIFICATIONS</Text>
-              <Text className="text-[#A1A1AA] text-sm">
+              <Text className="text-[#18181B] dark:text-white text-2xl font-bold">NOTIFICATIONS</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">
                 Restez informé des activités
               </Text>
             </View>

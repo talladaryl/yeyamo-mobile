@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface CategoryPickerProps {
   value: string;
@@ -29,6 +30,7 @@ export function CategoryPicker({
   error,
   disabled = false,
 }: CategoryPickerProps) {
+  const colors = useThemeStore((state) => state.colors);
   const [showPicker, setShowPicker] = useState(false);
 
   const selectedCategory = CATEGORIES.find(cat => cat.id === value);
@@ -36,7 +38,7 @@ export function CategoryPicker({
   return (
     <View className="mb-4">
       {label && (
-        <Text className="text-[#374151] text-sm font-medium mb-2">
+        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textSecondary }}>
           {label}
         </Text>
       )}
@@ -44,31 +46,30 @@ export function CategoryPicker({
       <TouchableOpacity
         onPress={() => setShowPicker(!showPicker)}
         disabled={disabled}
-        className={`flex-row items-center justify-between px-4 py-3 border-2 rounded-xl ${
-          error ? 'border-red-500' : 'border-[#E4E4E7]'
-        } bg-white`}
+        className="flex-row items-center justify-between rounded-xl border-2 px-4 py-3"
+        style={{ backgroundColor: colors.card, borderColor: error ? colors.primary : colors.border }}
       >
         <View className="flex-row items-center">
           {selectedCategory ? (
             <>
               <View className="mr-3">
-                <Icon name={selectedCategory.icon} size={20} color="#18181B" />
+                <Icon name={selectedCategory.icon} size={20} color={colors.text} />
               </View>
-              <Text className="text-[#18181B] text-base">
+              <Text className="text-base" style={{ color: colors.text }}>
                 {selectedCategory.label}
               </Text>
             </>
           ) : (
-            <Text className="text-[#A1A1AA] text-base">
+            <Text className="text-base" style={{ color: colors.textSecondary }}>
               Sélectionnez une catégorie
             </Text>
           )}
         </View>
-        <Icon name={showPicker ? 'chevron-up' : 'chevron-down'} size={18} color="#A1A1AA" />
+        <Icon name={showPicker ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSecondary} />
       </TouchableOpacity>
 
       {showPicker && (
-        <View className="mt-2 bg-white border border-[#E4E4E7] rounded-xl shadow-lg max-h-48">
+        <View className="mt-2 max-h-48 rounded-xl border shadow-lg" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
           <ScrollView showsVerticalScrollIndicator={false}>
             {CATEGORIES.map((category) => (
               <TouchableOpacity
@@ -77,16 +78,13 @@ export function CategoryPicker({
                   onValueChange(category.id);
                   setShowPicker(false);
                 }}
-                className={`flex-row items-center px-4 py-3 border-b border-[#F4F4F5] last:border-b-0 ${
-                  value === category.id ? 'bg-[#EF4444]/10' : ''
-                }`}
+                className="flex-row items-center border-b px-4 py-3 last:border-b-0"
+                style={{ borderColor: colors.border, backgroundColor: value === category.id ? `${colors.primary}15` : 'transparent' }}
               >
                 <View className="mr-3">
-                  <Icon name={category.icon} size={20} color={value === category.id ? '#EF4444' : '#18181B'} />
+                  <Icon name={category.icon} size={20} color={value === category.id ? colors.primary : colors.text} />
                 </View>
-                <Text className={`text-base ${
-                  value === category.id ? 'text-[#EF4444] font-medium' : 'text-[#18181B]'
-                }`}>
+                <Text className="text-base" style={{ color: value === category.id ? colors.primary : colors.text, fontWeight: value === category.id ? '500' : '400' }}>
                   {category.label}
                 </Text>
                 {value === category.id && (

@@ -56,14 +56,14 @@ export default function CreateCollectionScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} disabled={isSubmitting}>
             <Text className="text-[#EF4444] text-base font-semibold">Annuler</Text>
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold">Nouvelle collection</Text>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold">Nouvelle collection</Text>
           <TouchableOpacity onPress={handleCreate} disabled={isSubmitting || !name.trim()}>
             <Text
               className={`text-base font-semibold ${
@@ -80,10 +80,10 @@ export default function CreateCollectionScreen() {
         <View className="p-4">
           {/* Photo de couverture */}
           <View className="mb-6">
-            <Text className="text-white font-semibold text-base mb-3">Photo (optionnel)</Text>
+            <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-3">Photo (optionnel)</Text>
             <TouchableOpacity
               onPress={handlePickImage}
-              className="bg-[#161616] rounded-xl h-40 items-center justify-center border-2 border-dashed border-[#27272A]"
+              className="bg-white dark:bg-[#161616] rounded-xl h-40 items-center justify-center border-2 border-dashed border-[#E4E4E7] dark:border-[#27272A]"
               activeOpacity={0.7}
             >
               {coverImage ? (
@@ -91,7 +91,7 @@ export default function CreateCollectionScreen() {
               ) : (
                 <>
                   <Ionicons name="camera" size={40} color="#52525B" />
-                  <Text className="text-[#A1A1AA] text-sm mt-2">Ajoutez une photo</Text>
+                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-2">Ajoutez une photo</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -99,21 +99,21 @@ export default function CreateCollectionScreen() {
 
           {/* Nom de la collection */}
           <View className="mb-6">
-            <Text className="text-white font-semibold text-base mb-3">Nom de la collection</Text>
+            <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-3">Nom de la collection</Text>
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="Ex: Restaurants à tester"
               placeholderTextColor="#52525B"
               maxLength={50}
-              className="bg-[#161616] text-white px-4 py-3 rounded-xl"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white px-4 py-3 rounded-xl"
             />
             <Text className="text-[#52525B] text-xs mt-2 text-right">{name.length}/50</Text>
           </View>
 
           {/* Description */}
           <View className="mb-6">
-            <Text className="text-white font-semibold text-base mb-3">Description (optionnelle)</Text>
+            <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-3">Description (optionnelle)</Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
@@ -123,7 +123,7 @@ export default function CreateCollectionScreen() {
               multiline
               numberOfLines={3}
               textAlignVertical="top"
-              className="bg-[#161616] text-white px-4 py-3 rounded-xl"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white px-4 py-3 rounded-xl"
               style={{ minHeight: 80 }}
             />
             <Text className="text-[#52525B] text-xs mt-2 text-right">{description.length}/120</Text>

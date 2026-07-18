@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import type { UserSummary } from '@/types/api.types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type EventParticipantsProps = {
   participants: UserSummary[];
@@ -13,12 +14,13 @@ export function EventParticipants({
   totalCount,
   onSeeAllPress,
 }: EventParticipantsProps) {
+  const colors = useThemeStore((state) => state.colors);
   const displayParticipants = participants.slice(0, 5);
   const remainingCount = totalCount - displayParticipants.length;
 
   return (
-    <View className="px-4 py-4 border-t border-[#27272A]">
-      <Text className="text-white text-lg font-bold mb-3">
+    <View className="border-t px-4 py-4" style={{ borderColor: colors.border }}>
+      <Text className="mb-3 text-lg font-bold" style={{ color: colors.text }}>
         Participants ({totalCount})
       </Text>
 
@@ -28,8 +30,8 @@ export function EventParticipants({
           {displayParticipants.map((participant, index) => (
             <View
               key={participant.id}
-              style={{ marginLeft: index > 0 ? -12 : 0, zIndex: displayParticipants.length - index }}
-              className="border-2 border-[#0A0A0A] rounded-full"
+              style={{ marginLeft: index > 0 ? -12 : 0, zIndex: displayParticipants.length - index, borderColor: colors.background }}
+              className="rounded-full border-2"
             >
               <Avatar
                 uri={participant.avatar_url}
@@ -43,10 +45,10 @@ export function EventParticipants({
         {/* Remaining count */}
         {remainingCount > 0 && (
           <View
-            className="bg-[#27272A] w-10 h-10 rounded-full items-center justify-center border-2 border-[#0A0A0A]"
-            style={{ marginLeft: -12 }}
+            className="h-10 w-10 items-center justify-center rounded-full border-2"
+            style={{ marginLeft: -12, backgroundColor: colors.elevated, borderColor: colors.background }}
           >
-            <Text className="text-white text-xs font-semibold">+{remainingCount}</Text>
+            <Text className="text-xs font-semibold" style={{ color: colors.text }}>+{remainingCount}</Text>
           </View>
         )}
 

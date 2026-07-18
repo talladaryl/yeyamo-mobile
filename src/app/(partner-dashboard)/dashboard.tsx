@@ -12,16 +12,16 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       {/* Header */}
       <View style={{ paddingTop: insets.top }} className="px-4 pt-3 pb-4">
         <View className="flex-row items-center justify-between">
-          <Text className="text-white text-2xl font-bold">DASHBOARD</Text>
+          <Text className="text-[#18181B] dark:text-white text-2xl font-bold">DASHBOARD</Text>
           <TouchableOpacity activeOpacity={0.7}>
             <Icon library="ionicons" name="notifications-outline" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
-        <Text className="text-[#A1A1AA] text-sm mt-1">
+        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-1">
           Vue d'ensemble de votre activité
         </Text>
       </View>
@@ -32,35 +32,35 @@ export default function DashboardScreen() {
           <View className="flex-row gap-3 mb-3">
             <View className="flex-1 bg-[#EF4444] rounded-xl p-4">
               <Icon library="ionicons" name="document-text" size={24} color="#FFFFFF" />
-              <Text className="text-white text-3xl font-bold mt-2">
+              <Text className="mt-2 text-3xl font-bold text-white">
                 {dashboardMetrics.publications}
               </Text>
-              <Text className="text-white/80 text-xs mt-1">Publications</Text>
+              <Text className="mt-1 text-xs text-white/80">Publications</Text>
             </View>
-            <View className="flex-1 bg-[#161616] rounded-xl p-4">
+            <View className="flex-1 bg-white dark:bg-[#161616] rounded-xl p-4">
               <Icon library="ionicons" name="eye" size={24} color="#EF4444" />
-              <Text className="text-white text-3xl font-bold mt-2">
+              <Text className="text-[#18181B] dark:text-white text-3xl font-bold mt-2">
                 {dashboardMetrics.views}
               </Text>
-              <Text className="text-[#A1A1AA] text-xs mt-1">Vues</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-1">Vues</Text>
             </View>
           </View>
-          <View className="bg-[#161616] rounded-xl p-4">
+          <View className="bg-white dark:bg-[#161616] rounded-xl p-4">
             <Icon library="ionicons" name="business" size={24} color="#EF4444" />
-            <Text className="text-white text-3xl font-bold mt-2">
+            <Text className="text-[#18181B] dark:text-white text-3xl font-bold mt-2">
               {dashboardMetrics.establishments}
             </Text>
-            <Text className="text-[#A1A1AA] text-xs mt-1">Nb établissements</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-1">Nb établissements</Text>
           </View>
         </View>
 
         {/* Recent Activity */}
         <View className="px-4 mb-6">
-          <Text className="text-white text-lg font-bold mb-3">Activité récente</Text>
+          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-3">Activité récente</Text>
           {recentActivities.map((activity) => (
             <TouchableOpacity
               key={activity.id}
-              className="bg-[#161616] rounded-xl p-4 mb-2 flex-row items-center justify-between"
+              className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-2 flex-row items-center justify-between"
               activeOpacity={0.8}
             >
               <View className="flex-row items-center gap-3 flex-1">
@@ -73,10 +73,10 @@ export default function DashboardScreen() {
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-white font-semibold text-sm">
+                  <Text className="text-[#18181B] dark:text-white font-semibold text-sm">
                     {activity.title}
                   </Text>
-                  <Text className="text-[#A1A1AA] text-xs mt-0.5">
+                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-0.5">
                     {activity.subtitle}
                   </Text>
                 </View>
@@ -90,39 +90,39 @@ export default function DashboardScreen() {
 
         {/* Quick Actions */}
         <View className="px-4 mb-6">
-          <Text className="text-white text-lg font-bold mb-3">Voir les activités</Text>
+          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-3">Voir les activités</Text>
           <View className="flex-row flex-wrap gap-3">
             <TouchableOpacity
               onPress={() => router.push('/(partner-dashboard)/establishments')}
-              className="flex-1 bg-[#161616] rounded-xl p-4 min-w-[45%]"
+              className="flex-1 bg-white dark:bg-[#161616] rounded-xl p-4 min-w-[45%]"
               activeOpacity={0.8}
             >
               <Icon library="ionicons" name="business" size={24} color="#EF4444" />
-              <Text className="text-white font-semibold mt-2 text-sm">Établissements</Text>
+              <Text className="text-[#18181B] dark:text-white font-semibold mt-2 text-sm">Établissements</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push('/(partner-dashboard)/events')}
-              className="flex-1 bg-[#161616] rounded-xl p-4 min-w-[45%]"
+              className="flex-1 bg-white dark:bg-[#161616] rounded-xl p-4 min-w-[45%]"
               activeOpacity={0.8}
             >
               <Icon library="ionicons" name="calendar" size={24} color="#EF4444" />
-              <Text className="text-white font-semibold mt-2 text-sm">Événements</Text>
+              <Text className="text-[#18181B] dark:text-white font-semibold mt-2 text-sm">Événements</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push('/(partner-dashboard)/reservations')}
-              className="flex-1 bg-[#161616] rounded-xl p-4 min-w-[45%]"
+              className="flex-1 bg-white dark:bg-[#161616] rounded-xl p-4 min-w-[45%]"
               activeOpacity={0.8}
             >
               <Icon library="ionicons" name="calendar-outline" size={24} color="#EF4444" />
-              <Text className="text-white font-semibold mt-2 text-sm">Réservations</Text>
+              <Text className="text-[#18181B] dark:text-white font-semibold mt-2 text-sm">Réservations</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push('/(partner-dashboard)/reviews')}
-              className="flex-1 bg-[#161616] rounded-xl p-4 min-w-[45%]"
+              className="flex-1 bg-white dark:bg-[#161616] rounded-xl p-4 min-w-[45%]"
               activeOpacity={0.8}
             >
               <Icon library="ionicons" name="star" size={24} color="#EF4444" />
-              <Text className="text-white font-semibold mt-2 text-sm">Avis clients</Text>
+              <Text className="text-[#18181B] dark:text-white font-semibold mt-2 text-sm">Avis clients</Text>
             </TouchableOpacity>
           </View>
         </View>

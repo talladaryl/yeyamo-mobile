@@ -52,7 +52,7 @@ export default function CreatePublicationScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -82,9 +82,9 @@ export default function CreatePublicationScreen() {
               contentFit="cover"
             />
           ) : (
-            <View className="w-full h-96 bg-[#161616] items-center justify-center">
+            <View className="w-full h-96 bg-white dark:bg-[#161616] items-center justify-center">
               <Icon library="ionicons" name="images" size={64} color="#52525B" />
-              <Text className="text-[#A1A1AA] text-sm mt-4">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-4">
                 Appuyez pour ajouter des photos
               </Text>
             </View>
@@ -114,7 +114,7 @@ export default function CreatePublicationScreen() {
         {/* Caption */}
         <View className="px-4 py-4">
           <TextInput
-            className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm"
+            className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm"
             placeholder="Ajoutez une légende..."
             placeholderTextColor="#A1A1AA"
             value={caption}
@@ -127,37 +127,37 @@ export default function CreatePublicationScreen() {
 
         {/* Action Buttons */}
         <View className="px-4 pb-6">
-          <View className="flex-row justify-around py-4 bg-[#161616] rounded-xl">
+          <View className="flex-row justify-around py-4 bg-white dark:bg-[#161616] rounded-xl">
             <TouchableOpacity
               onPress={() => pickImage(['images', 'videos'])}
               className="items-center flex-1"
               activeOpacity={0.7}
             >
-              <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="w-12 h-12 bg-white dark:bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
                 <Icon library="ionicons" name="images" size={24} color="#EF4444" />
               </View>
-              <Text className="text-white text-xs">Média</Text>
+              <Text className="text-[#18181B] dark:text-white text-xs">Média</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={takePhoto} className="items-center flex-1" activeOpacity={0.7}>
-              <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="w-12 h-12 bg-white dark:bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
                 <Icon library="ionicons" name="camera" size={24} color="#EF4444" />
               </View>
-              <Text className="text-white text-xs">Photo</Text>
+              <Text className="text-[#18181B] dark:text-white text-xs">Photo</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => pickImage(['videos'])} className="items-center flex-1" activeOpacity={0.7}>
-              <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="w-12 h-12 bg-white dark:bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
                 <Icon library="ionicons" name="videocam" size={24} color="#EF4444" />
               </View>
-              <Text className="text-white text-xs">Vidéo</Text>
+              <Text className="text-[#18181B] dark:text-white text-xs">Vidéo</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => pickImage(['images'])} className="items-center flex-1" activeOpacity={0.7}>
-              <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="w-12 h-12 bg-white dark:bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
                 <Icon library="ionicons" name="albums" size={24} color="#EF4444" />
               </View>
-              <Text className="text-white text-xs">Carrousel</Text>
+              <Text className="text-[#18181B] dark:text-white text-xs">Carrousel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -166,7 +166,7 @@ export default function CreatePublicationScreen() {
       </ScrollView>
 
       {/* Fixed Bottom Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
         <CTAButton
           title="Publier"
           variant="primary"

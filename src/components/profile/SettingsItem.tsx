@@ -1,4 +1,4 @@
-﻿import { Text, TouchableOpacity, Switch } from 'react-native';
+import { Text, TouchableOpacity, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '@/features/theme/theme.store';
 

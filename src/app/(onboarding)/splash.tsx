@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { AnimatedYeyamoLogo } from '@/components/onboarding/AnimatedYeyamoLogo';
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { colors, resolvedTheme } = useThemeStore();
   const scale = useRef(new Animated.Value(0.82)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(16)).current;
@@ -32,14 +34,14 @@ export default function SplashScreen() {
       ).start();
     });
 
-    const timer = setTimeout(continueToOnboarding, 3000);
+    const timer = setTimeout(continueToOnboarding, 30_000);
     return () => clearTimeout(timer);
   }, [opacity, scale, translateY]);
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <LinearGradient
-        colors={['#FFFFFF', '#FFFFFF', '#FFF1F2']}
+        colors={resolvedTheme === 'dark' ? ['#0A0A0A', '#111111', '#2A1113'] : ['#FFFFFF', '#FFFFFF', '#FFF1F2']}
         locations={[0, 0.62, 1]}
         className="absolute inset-0"
       />
@@ -54,23 +56,15 @@ export default function SplashScreen() {
             className="items-center"
             style={{ opacity, transform: [{ scale }, { translateY }] }}
           >
-            <Image
-              source={require('../../../assets/logo.png')}
-              style={{ width: 230, height: 180 }}
-              contentFit="contain"
-              transition={250}
-            />
-            <Text className="mt-2 text-center text-[15px] font-medium leading-6 text-[#52525B]">
-              Yeyamo, je découvre{`\n`}mon pays
-            </Text>
+            <AnimatedYeyamoLogo />
           </Animated.View>
         </TouchableOpacity>
 
         <View className="absolute bottom-10 items-center">
-          <View className="h-1 w-12 overflow-hidden rounded-full bg-[#E4E4E7]">
+          <View className="h-1 w-12 overflow-hidden rounded-full" style={{ backgroundColor: colors.border }}>
             <Animated.View className="h-full w-full rounded-full bg-[#EF4444]" style={{ opacity }} />
           </View>
-          <Text className="mt-3 text-xs text-[#A1A1AA]">Touchez pour continuer</Text>
+          <Text className="mt-3 text-xs" style={{ color: colors.textSecondary }}>Touchez pour continuer</Text>
         </View>
       </SafeAreaView>
     </View>

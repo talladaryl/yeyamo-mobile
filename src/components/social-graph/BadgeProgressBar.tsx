@@ -12,12 +12,12 @@ export function BadgeProgressBar({ currentXP, nextLevelXP }: BadgeProgressBarPro
   return (
     <View className="mt-4">
       <View className="flex-row justify-between mb-2">
-        <Text className="text-[#A1A1AA] text-sm">Progression</Text>
-        <Text className="text-white font-semibold text-sm">
+        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">Progression</Text>
+        <Text className="text-[#18181B] dark:text-white font-semibold text-sm">
           {currentXP} / {nextLevelXP} XP
         </Text>
       </View>
-      <View className="h-3 bg-[#27272A] rounded-full overflow-hidden">
+      <View className="h-3 bg-[#F4F4F5] dark:bg-[#27272A] rounded-full overflow-hidden">
         <View
           className="h-full bg-gradient-to-r from-[#EF4444] to-[#F87171] rounded-full"
           style={{ width: `${percentage}%` }}

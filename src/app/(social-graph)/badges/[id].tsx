@@ -18,8 +18,8 @@ export default function BadgeDetailScreen() {
 
   if (isLoading || !badge) {
     return (
-      <SafeAreaView className="flex-1 bg-[#0A0A0A] items-center justify-center">
-        <Text className="text-white">Chargement...</Text>
+      <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A] items-center justify-center">
+        <Text className="text-[#18181B] dark:text-white">Chargement...</Text>
       </SafeAreaView>
     );
   }
@@ -27,14 +27,14 @@ export default function BadgeDetailScreen() {
   const currentLevelData = badge.levels.find((l) => l.level === badge.current_level);
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold">{badge.name}</Text>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold">{badge.name}</Text>
           <TouchableOpacity className="p-2">
             <Ionicons name="ellipsis-horizontal" size={24} color="#A1A1AA" />
           </TouchableOpacity>
@@ -51,27 +51,27 @@ export default function BadgeDetailScreen() {
               resizeMode="contain"
             />
           </View>
-          <Text className="text-white text-2xl font-bold mb-2">{badge.name}</Text>
+          <Text className="text-[#18181B] dark:text-white text-2xl font-bold mb-2">{badge.name}</Text>
           {currentLevelData && (
             <View className="bg-[#EF4444] px-4 py-1.5 rounded-full mb-3">
-              <Text className="text-white font-bold">Niveau {badge.current_level} • {currentLevelData.name}</Text>
+              <Text className="font-bold text-white">Niveau {badge.current_level} • {currentLevelData.name}</Text>
             </View>
           )}
-          <Text className="text-[#A1A1AA] text-center text-base px-4">{badge.description}</Text>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center text-base px-4">{badge.description}</Text>
         </View>
 
         {/* Progression */}
         <View className="px-4 mb-8">
-          <Text className="text-white text-lg font-bold mb-4">Votre progression</Text>
-          <View className="bg-[#161616] rounded-xl p-4">
+          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">Votre progression</Text>
+          <View className="bg-white dark:bg-[#161616] rounded-xl p-4">
             <BadgeProgressBar currentXP={badge.current_xp} nextLevelXP={badge.next_level_xp} />
           </View>
         </View>
 
         {/* Niveaux */}
         <View className="px-4 mb-8">
-          <Text className="text-white text-lg font-bold mb-4">Niveaux</Text>
-          <View className="bg-[#161616] rounded-xl p-4">
+          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">Niveaux</Text>
+          <View className="bg-white dark:bg-[#161616] rounded-xl p-4">
             {badge.levels.map((level) => (
               <BadgeLevelItem
                 key={level.level}
@@ -84,8 +84,8 @@ export default function BadgeDetailScreen() {
 
         {/* Comment gagner des XP */}
         <View className="px-4 pb-8">
-          <Text className="text-white text-lg font-bold mb-4">Comment gagner des XP ?</Text>
-          <View className="bg-[#161616] rounded-xl p-4">
+          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">Comment gagner des XP ?</Text>
+          <View className="bg-white dark:bg-[#161616] rounded-xl p-4">
             {XP_ACTIONS.map((action) => (
               <XPActionItem key={action.id} action={action} />
             ))}

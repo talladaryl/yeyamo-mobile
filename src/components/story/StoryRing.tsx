@@ -2,6 +2,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Avatar } from '@/components/ui/Avatar';
 import type { ColorValue } from 'react-native';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type StoryRingProps = {
   uri?: string | null;
@@ -20,6 +21,7 @@ export function StoryRing({
   isViewed = false,
   showAddButton = false,
 }: StoryRingProps) {
+  const colors = useThemeStore((state) => state.colors);
   const gradientColors: readonly [ColorValue, ColorValue, ...ColorValue[]] = isViewed 
     ? ['#52525B', '#52525B'] 
     : ['#EF4444', '#F59E0B', '#EF4444'];
@@ -41,8 +43,8 @@ export function StoryRing({
           }}
         >
           <View
-            className="bg-[#0A0A0A] rounded-full items-center justify-center"
-            style={{ padding: 2 }}
+            className="items-center justify-center rounded-full"
+            style={{ padding: 2, backgroundColor: colors.background }}
           >
             <Avatar uri={uri} displayName={displayName} size={size - 10} />
           </View>
@@ -50,7 +52,7 @@ export function StoryRing({
       </View>
 
       {showAddButton && (
-        <View className="absolute bottom-0 right-0 bg-[#EF4444] rounded-full w-6 h-6 items-center justify-center border-2 border-[#0A0A0A]">
+        <View className="absolute bottom-0 right-0 h-6 w-6 items-center justify-center rounded-full border-2 bg-[#EF4444]" style={{ borderColor: colors.background }}>
           <View className="w-3 h-0.5 bg-white" />
           <View className="w-0.5 h-3 bg-white absolute" />
         </View>

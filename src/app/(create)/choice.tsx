@@ -60,7 +60,7 @@ export default function CreateChoiceScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           presentation: 'modal',
@@ -75,10 +75,10 @@ export default function CreateChoiceScreen() {
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="pt-4 pb-6">
-          <Text className="text-white text-2xl font-bold mb-2">
+          <Text className="text-[#18181B] dark:text-white text-2xl font-bold mb-2">
             Bonjour
           </Text>
-          <Text className="text-white text-2xl font-bold">
+          <Text className="text-[#18181B] dark:text-white text-2xl font-bold">
             Que souhaitez-vous partager aujourd'hui ?
           </Text>
         </View>
@@ -98,7 +98,7 @@ export default function CreateChoiceScreen() {
       {/* Close Button */}
       <TouchableOpacity
         onPress={() => router.back()}
-        className="absolute bottom-8 left-1/2 -ml-6 w-12 h-12 bg-[#27272A] rounded-full items-center justify-center"
+        className="absolute bottom-8 left-1/2 -ml-6 w-12 h-12 bg-[#F4F4F5] dark:bg-[#27272A] rounded-full items-center justify-center"
         activeOpacity={0.7}
       >
         <Icon library="ionicons" name="close" size={24} color="#FFFFFF" />

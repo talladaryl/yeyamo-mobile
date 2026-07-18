@@ -1,6 +1,7 @@
 import { TouchableOpacity, Text, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import type { Category } from '@/features/explore/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type CategoryCardProps = {
   category: Category;
@@ -8,13 +9,14 @@ type CategoryCardProps = {
 };
 
 export function CategoryCard({ category, onPress }: CategoryCardProps) {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <TouchableOpacity
       onPress={onPress}
       className="items-center flex-1 min-w-[100px]"
       activeOpacity={0.7}
     >
-      <View className="bg-[#161616] w-16 h-16 rounded-2xl items-center justify-center mb-2">
+      <View className="mb-2 h-16 w-16 items-center justify-center rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
         <Icon
           library={category.iconLibrary}
           name={category.icon}
@@ -22,7 +24,7 @@ export function CategoryCard({ category, onPress }: CategoryCardProps) {
           color="#EF4444"
         />
       </View>
-      <Text className="text-white text-xs text-center">{category.label}</Text>
+      <Text className="text-center text-xs" style={{ color: colors.text }}>{category.label}</Text>
     </TouchableOpacity>
   );
 }

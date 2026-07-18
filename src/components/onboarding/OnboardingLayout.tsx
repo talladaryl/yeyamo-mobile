@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface OnboardingLayoutProps {
   children: ReactNode;
@@ -30,10 +31,11 @@ export function OnboardingLayout({
   nextButtonText,
   showSkip = true,
   showProgress = true,
-  backgroundColor = '#FFFFFF',
+  backgroundColor,
 }: OnboardingLayoutProps) {
+  const colors = useThemeStore((state) => state.colors);
   return (
-    <View className="flex-1" style={{ backgroundColor }}>
+    <View className="flex-1" style={{ backgroundColor: backgroundColor ?? colors.background }}>
       <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
         <View className="h-14 flex-row items-center justify-between px-5">
           <TouchableOpacity
@@ -42,22 +44,22 @@ export function OnboardingLayout({
             className="h-10 w-10 items-center justify-center rounded-full"
             activeOpacity={0.75}
           >
-            {currentStep > 1 ? <Icon name="chevron-back" size={24} color="#18181B" /> : null}
+            {currentStep > 1 ? <Icon name="chevron-back" size={24} color={colors.text} /> : null}
           </TouchableOpacity>
           {showSkip ? (
-            <TouchableOpacity onPress={onSkip} className="rounded-full bg-white/90 px-4 py-2" activeOpacity={0.75}>
-              <Text className="text-sm font-semibold text-[#52525B]">Passer</Text>
+            <TouchableOpacity onPress={onSkip} className="rounded-full px-4 py-2" style={{ backgroundColor: `${colors.card}E6` }} activeOpacity={0.75}>
+              <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>Passer</Text>
             </TouchableOpacity>
           ) : <View className="w-10" />}
         </View>
 
         <View className="flex-1">{children}</View>
 
-        <View className="rounded-t-[32px] bg-white px-6 pb-3 pt-6">
+        <View className="rounded-t-[32px] px-6 pb-3 pt-6" style={{ backgroundColor: colors.card }}>
           {title ? (
             <>
-              <Text className="text-[28px] font-extrabold leading-8 text-[#18181B]">{title}</Text>
-              {subtitle ? <Text className="mt-3 text-[15px] leading-6 text-[#52525B]">{subtitle}</Text> : null}
+              <Text className="text-[28px] font-extrabold leading-8" style={{ color: colors.text }}>{title}</Text>
+              {subtitle ? <Text className="mt-3 text-[15px] leading-6" style={{ color: colors.textSecondary }}>{subtitle}</Text> : null}
             </>
           ) : null}
 
@@ -70,7 +72,7 @@ export function OnboardingLayout({
                     <View
                       key={index}
                       className="h-2 rounded-full"
-                      style={{ width: active ? 24 : 8, backgroundColor: active ? '#EF4444' : '#D4D4D8' }}
+                      style={{ width: active ? 24 : 8, backgroundColor: active ? colors.primary : colors.border }}
                     />
                   );
                 })}

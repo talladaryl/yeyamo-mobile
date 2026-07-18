@@ -1,6 +1,7 @@
 import { Image as ExpoImage, ImageSource } from 'expo-image';
 import { View, Text } from 'react-native';
 import { useState } from 'react';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface AccessibleImageProps {
   source: ImageSource;
@@ -24,6 +25,7 @@ export function AccessibleImage({
   onLoad,
   onError,
 }: AccessibleImageProps) {
+  const colors = useThemeStore((state) => state.colors);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,12 +43,13 @@ export function AccessibleImage({
   if (hasError) {
     return (
       <View
-        className={`bg-[#27272A] items-center justify-center ${className}`}
+        className={`items-center justify-center ${className}`}
+        style={{ backgroundColor: colors.elevated }}
         accessible={true}
         accessibilityLabel={`Image non disponible: ${alt}`}
         accessibilityRole="image"
       >
-        <Text className="text-[#A1A1AA] text-sm text-center px-4">
+        <Text className="px-4 text-center text-sm" style={{ color: colors.textSecondary }}>
           Image non disponible
         </Text>
       </View>

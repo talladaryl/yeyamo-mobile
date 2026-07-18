@@ -1,5 +1,6 @@
 import { View, TouchableOpacity, Text } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type PlaceActionsProps = {
   onCall?: () => void;
@@ -9,6 +10,7 @@ type PlaceActionsProps = {
 };
 
 export function PlaceActions({ onCall, onDirections, onWebsite, onShare }: PlaceActionsProps) {
+  const colors = useThemeStore((state) => state.colors);
   const actions = [
     { icon: 'call', label: 'Appeler', onPress: onCall },
     { icon: 'navigate', label: 'Itinéraire', onPress: onDirections },
@@ -17,7 +19,7 @@ export function PlaceActions({ onCall, onDirections, onWebsite, onShare }: Place
   ];
 
   return (
-    <View className="flex-row justify-around px-4 py-4 border-t border-b border-[#27272A]">
+    <View className="flex-row justify-around border-y px-4 py-4" style={{ borderColor: colors.border }}>
       {actions.map((action, index) => (
         <TouchableOpacity
           key={index}
@@ -25,10 +27,10 @@ export function PlaceActions({ onCall, onDirections, onWebsite, onShare }: Place
           className="items-center"
           activeOpacity={0.7}
         >
-          <View className="bg-[#161616] w-12 h-12 rounded-full items-center justify-center mb-1">
+          <View className="mb-1 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
             <Icon library="ionicons" name={action.icon} size={22} color="#EF4444" />
           </View>
-          <Text className="text-white text-xs">{action.label}</Text>
+          <Text className="text-xs" style={{ color: colors.text }}>{action.label}</Text>
         </TouchableOpacity>
       ))}
     </View>

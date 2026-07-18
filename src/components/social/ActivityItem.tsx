@@ -67,7 +67,7 @@ export function ActivityItem({ activity, onPress, onUserPress }: ActivityItemPro
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="flex-row items-start px-4 py-3 border-b border-[#27272A]"
+      className="flex-row items-start px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]"
       activeOpacity={0.7}
     >
       <View className="relative">
@@ -83,12 +83,12 @@ export function ActivityItem({ activity, onPress, onUserPress }: ActivityItemPro
       </View>
 
       <View className="flex-1 ml-3">
-        <Text className="text-white text-sm">
+        <Text className="text-[#18181B] dark:text-white text-sm">
           <Text className="font-semibold">{activity.user.display_name}</Text>
-          <Text className="text-[#A1A1AA]"> {activityText}</Text>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA]"> {activityText}</Text>
         </Text>
         {activity.content && (
-          <Text className="text-[#A1A1AA] text-sm mt-1" numberOfLines={2}>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-1" numberOfLines={2}>
             {activity.content}
           </Text>
         )}

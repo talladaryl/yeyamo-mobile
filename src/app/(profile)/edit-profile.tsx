@@ -65,14 +65,14 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A] flex-row items-center justify-between">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A] flex-row items-center justify-between">
         <View className="flex-row items-center flex-1">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold ml-2">Modifier le profil</Text>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold ml-2">Modifier le profil</Text>
         </View>
         <TouchableOpacity onPress={handleSave} activeOpacity={0.7}>
           <Text className="text-[#EF4444] font-semibold text-base">Enregistrer</Text>
@@ -81,7 +81,7 @@ export default function EditProfileScreen() {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Photo de profil */}
-        <View className="items-center py-6 border-b border-[#27272A]">
+        <View className="items-center py-6 border-b border-[#E4E4E7] dark:border-[#27272A]">
           <View className="relative">
             {settings.avatar_url ? (
               <Image
@@ -89,7 +89,7 @@ export default function EditProfileScreen() {
                 className="w-24 h-24 rounded-full"
               />
             ) : (
-              <View className="w-24 h-24 rounded-full bg-[#27272A] items-center justify-center">
+              <View className="w-24 h-24 rounded-full bg-[#F4F4F5] dark:bg-[#27272A] items-center justify-center">
                 <Ionicons name="person" size={40} color="#A1A1AA" />
               </View>
             )}
@@ -101,20 +101,20 @@ export default function EditProfileScreen() {
               <Ionicons name="camera" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          <Text className="text-[#A1A1AA] text-xs mt-2">Modifier la photo</Text>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-2">Modifier la photo</Text>
         </View>
 
         {/* Formulaire */}
         <View className="px-4 pt-6">
           {/* Nom */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Nom
             </Text>
             <TextInput
               value={settings.display_name}
               onChangeText={(text) => setSettings({ ...settings, display_name: text })}
-              className="bg-[#161616] text-white px-4 py-3 rounded-xl"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white px-4 py-3 rounded-xl"
               placeholderTextColor="#52525B"
               placeholder="Votre nom"
             />
@@ -122,13 +122,13 @@ export default function EditProfileScreen() {
 
           {/* Nom d'utilisateur */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Nom d'utilisateur
             </Text>
             <TextInput
               value={settings.username}
               onChangeText={(text) => setSettings({ ...settings, username: text })}
-              className="bg-[#161616] text-white px-4 py-3 rounded-xl"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white px-4 py-3 rounded-xl"
               placeholderTextColor="#52525B"
               placeholder="@username"
               autoCapitalize="none"
@@ -137,13 +137,13 @@ export default function EditProfileScreen() {
 
           {/* Bio */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Bio
             </Text>
             <TextInput
               value={settings.bio || ''}
               onChangeText={(text) => setSettings({ ...settings, bio: text })}
-              className="bg-[#161616] text-white px-4 py-3 rounded-xl"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white px-4 py-3 rounded-xl"
               placeholderTextColor="#52525B"
               placeholder="Parlez de vous..."
               multiline
@@ -154,28 +154,28 @@ export default function EditProfileScreen() {
 
           {/* Ville */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Ville
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] px-4 py-3 rounded-xl flex-row items-center justify-between"
+              className="bg-white dark:bg-[#161616] px-4 py-3 rounded-xl flex-row items-center justify-between"
               activeOpacity={0.7}
               onPress={() =>
                 Alert.alert('Ville', 'Sélecteur de ville à implémenter')
               }
             >
-              <Text className="text-white">{settings.city || 'Sélectionner une ville'}</Text>
+              <Text className="text-[#18181B] dark:text-white">{settings.city || 'Sélectionner une ville'}</Text>
               <Ionicons name="chevron-forward" size={18} color="#52525B" />
             </TouchableOpacity>
           </View>
 
           {/* Région */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Région
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] px-4 py-3 rounded-xl flex-row items-center justify-between"
+              className="bg-white dark:bg-[#161616] px-4 py-3 rounded-xl flex-row items-center justify-between"
               activeOpacity={0.7}
               onPress={() =>
                 Alert.alert(
@@ -188,7 +188,7 @@ export default function EditProfileScreen() {
                 )
               }
             >
-              <Text className="text-white">
+              <Text className="text-[#18181B] dark:text-white">
                 {settings.region || 'Sélectionner une région'}
               </Text>
               <Ionicons name="chevron-forward" size={18} color="#52525B" />
@@ -197,11 +197,11 @@ export default function EditProfileScreen() {
 
           {/* Genre */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Genre
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] px-4 py-3 rounded-xl flex-row items-center justify-between"
+              className="bg-white dark:bg-[#161616] px-4 py-3 rounded-xl flex-row items-center justify-between"
               activeOpacity={0.7}
               onPress={() =>
                 Alert.alert('Genre', 'Sélectionnez votre genre', [
@@ -225,7 +225,7 @@ export default function EditProfileScreen() {
                 ])
               }
             >
-              <Text className="text-white">
+              <Text className="text-[#18181B] dark:text-white">
                 {settings.gender === 'male'
                   ? 'Homme'
                   : settings.gender === 'female'
@@ -243,7 +243,7 @@ export default function EditProfileScreen() {
           {/* Centres d'intérêt */}
           <View className="mb-6">
             <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-[#A1A1AA] text-xs font-semibold uppercase">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase">
                 Centres d'intérêt
               </Text>
               <TouchableOpacity onPress={handleAddInterest} activeOpacity={0.7}>

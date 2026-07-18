@@ -4,11 +4,13 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { PlaceListItem } from '@/components/explore/PlaceListItem';
 import { trendingPlaces } from '@/features/explore/mockData';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type FilterTab = 'all' | 'popular' | 'new' | 'nearby';
 
 export default function PlacesListScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const params = useLocalSearchParams();
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const regionId = typeof params.regionId === 'string' ? Number(params.regionId) : null;
@@ -34,21 +36,21 @@ export default function PlacesListScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: regionName ? `Lieux - ${regionName}` : 'Lieux',
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="pl-4">
-              <Icon library="ionicons" name="arrow-back" size={28} color="#FFFFFF" />
+              <Icon library="ionicons" name="arrow-back" size={28} color={colors.text} />
             </TouchableOpacity>
           ),
           headerRight: () => (
             <TouchableOpacity className="pr-4">
-              <Icon library="ionicons" name="ellipsis-vertical" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="ellipsis-vertical" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
@@ -64,16 +66,18 @@ export default function PlacesListScreen() {
               className={`px-4 py-2 rounded-full ${
                 activeFilter === filter.id
                   ? 'bg-[#EF4444]'
-                  : 'bg-[#161616]'
+                  : ''
               }`}
+              style={activeFilter === filter.id ? undefined : { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }}
               activeOpacity={0.8}
             >
               <Text
                 className={`text-sm font-medium ${
                   activeFilter === filter.id
                     ? 'text-white'
-                    : 'text-[#A1A1AA]'
+                    : ''
                 }`}
+                style={activeFilter === filter.id ? undefined : { color: colors.textSecondary }}
               >
                 {filter.label}
               </Text>
@@ -95,7 +99,7 @@ export default function PlacesListScreen() {
           />
         )}
         ListHeaderComponent={
-          <Text className="text-[#A1A1AA] text-sm mb-4">
+          <Text className="text-sm mb-4" style={{ color: colors.textSecondary }}>
             {filteredPlaces.length} lieu{filteredPlaces.length > 1 ? 'x' : ''}
             {regionName ? ` dans ${regionName}` : ''}
           </Text>

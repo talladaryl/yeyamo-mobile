@@ -16,6 +16,18 @@ export const MOCK_USER: AuthUser = {
   created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 120).toISOString(),
 };
 
+export const MOCK_PARTNER_USER: AuthUser = {
+  id: 900,
+  username: 'lafalaise_demo',
+  display_name: 'La Falaise Resort Démo',
+  email: 'partner.demo@yeyamo.com',
+  avatar_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300',
+  city: 'Douala',
+  is_verified: true,
+  user_type: 'partner',
+  created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 365).toISOString(),
+};
+
 export const MOCK_TOKEN = 'mock-yeyamo-token';
 
 export const MOCK_FEED_POSTS: FeedPost[] = [

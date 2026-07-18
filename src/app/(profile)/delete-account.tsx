@@ -69,33 +69,33 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold ml-2">Gérer le compte</Text>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold ml-2">Gérer le compte</Text>
         </View>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Désactivation temporaire */}
         <View className="mt-6 px-4">
-          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
             Désactivation temporaire
           </Text>
-          <View className="bg-[#161616] rounded-xl p-4">
+          <View className="bg-white dark:bg-[#161616] rounded-xl p-4">
             <View className="flex-row mb-3">
               <View className="w-10 h-10 bg-[#F59E0B]/20 rounded-full items-center justify-center mr-3">
                 <Ionicons name="pause-circle" size={24} color="#F59E0B" />
               </View>
               <View className="flex-1">
-                <Text className="text-white font-bold text-base mb-1">
+                <Text className="text-[#18181B] dark:text-white font-bold text-base mb-1">
                   Désactiver temporairement
                 </Text>
-                <Text className="text-[#A1A1AA] text-sm leading-5">
+                <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm leading-5">
                   Votre profil sera caché et vous pourrez le réactiver à tout moment en
                   vous reconnectant.
                 </Text>
@@ -106,7 +106,7 @@ export default function DeleteAccountScreen() {
               className="bg-[#F59E0B] rounded-xl py-3 items-center mt-2"
               activeOpacity={0.8}
             >
-              <Text className="text-white font-semibold text-base">
+              <Text className="text-[#18181B] dark:text-white font-semibold text-base">
                 Désactiver mon compte
               </Text>
             </TouchableOpacity>
@@ -115,19 +115,19 @@ export default function DeleteAccountScreen() {
 
         {/* Suppression définitive */}
         <View className="mt-6 px-4">
-          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
             Suppression définitive
           </Text>
-          <View className="bg-[#161616] rounded-xl p-4 border border-[#EF4444]/20">
+          <View className="bg-white dark:bg-[#161616] rounded-xl p-4 border border-[#EF4444]/20">
             <View className="flex-row mb-3">
               <View className="w-10 h-10 bg-[#EF4444]/20 rounded-full items-center justify-center mr-3">
                 <Ionicons name="trash" size={24} color="#EF4444" />
               </View>
               <View className="flex-1">
-                <Text className="text-white font-bold text-base mb-1">
+                <Text className="text-[#18181B] dark:text-white font-bold text-base mb-1">
                   Supprimer définitivement
                 </Text>
-                <Text className="text-[#A1A1AA] text-sm leading-5">
+                <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm leading-5">
                   Toutes vos données seront définitivement supprimées. Cette action est
                   irréversible.
                 </Text>
@@ -179,20 +179,20 @@ export default function DeleteAccountScreen() {
                   <Ionicons name="checkmark" size={14} color="#FFFFFF" />
                 )}
               </View>
-              <Text className="text-white text-sm flex-1">
+              <Text className="text-[#18181B] dark:text-white text-sm flex-1">
                 Je comprends que cette action est irréversible
               </Text>
             </TouchableOpacity>
 
             {/* Mot de passe */}
             <View className="mb-4">
-              <Text className="text-white text-sm font-medium mb-2">
+              <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
                 Entrez votre mot de passe pour confirmer
               </Text>
               <TextInput
                 value={password}
                 onChangeText={setPassword}
-                className="bg-[#27272A] text-white px-4 py-3 rounded-xl"
+                className="bg-[#F4F4F5] dark:bg-[#27272A] text-[#18181B] dark:text-white px-4 py-3 rounded-xl"
                 placeholderTextColor="#52525B"
                 placeholder="Mot de passe"
                 secureTextEntry
@@ -210,7 +210,7 @@ export default function DeleteAccountScreen() {
                 opacity: password && confirmDeletion ? 1 : 0.5,
               }}
             >
-              <Text className="text-white font-bold text-base">
+              <Text className="text-[#18181B] dark:text-white font-bold text-base">
                 Supprimer définitivement mon compte
               </Text>
             </TouchableOpacity>
@@ -219,14 +219,14 @@ export default function DeleteAccountScreen() {
 
         {/* Aide */}
         <View className="mt-6 px-4 pb-8">
-          <View className="bg-[#161616] rounded-xl p-4">
+          <View className="bg-white dark:bg-[#161616] rounded-xl p-4">
             <View className="flex-row items-center">
               <Ionicons name="help-circle-outline" size={24} color="#EF4444" />
               <View className="flex-1 ml-3">
-                <Text className="text-white font-medium text-sm mb-1">
+                <Text className="text-[#18181B] dark:text-white font-medium text-sm mb-1">
                   Besoin d'aide ?
                 </Text>
-                <Text className="text-[#A1A1AA] text-xs">
+                <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">
                   Contactez notre support avant de supprimer votre compte
                 </Text>
               </View>

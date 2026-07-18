@@ -114,8 +114,8 @@ export default function RegisterPartnerScreen() {
             {/* Illustration */}
             <View className="items-center mb-6">
               <Icon name="storefront-outline" size={64} color="#EF4444" />
-              <Text className="text-white text-xl font-bold mb-2">Informations de base</Text>
-              <Text className="text-[#A1A1AA] text-sm text-center">
+              <Text className="text-[#18181B] dark:text-white text-xl font-bold mb-2">Informations de base</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm text-center">
                 Commencez par les informations essentielles{'\n'}de votre activité.
               </Text>
             </View>
@@ -166,8 +166,8 @@ export default function RegisterPartnerScreen() {
             {/* Illustration */}
             <View className="items-center mb-6">
               <Icon name="business-outline" size={64} color="#EF4444" />
-              <Text className="text-white text-xl font-bold mb-2">Détails de l'établissement</Text>
-              <Text className="text-[#A1A1AA] text-sm text-center">
+              <Text className="text-[#18181B] dark:text-white text-xl font-bold mb-2">Détails de l'établissement</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm text-center">
                 Parlez-nous davantage de votre emplacement{'\n'}et de vos services.
               </Text>
             </View>
@@ -194,7 +194,7 @@ export default function RegisterPartnerScreen() {
             />
 
             <View className="mb-4">
-              <Text className="text-sm text-[#A1A1AA] font-medium mb-1">
+              <Text className="text-sm text-[#52525B] dark:text-[#A1A1AA] font-medium mb-1">
                 Description de votre activité
               </Text>
               <TextInput
@@ -206,9 +206,9 @@ export default function RegisterPartnerScreen() {
                 numberOfLines={6}
                 maxLength={500}
                 textAlignVertical="top"
-                className="bg-[#1F1F1F] text-white rounded-xl px-4 py-3 text-base border border-[#27272A] min-h-[120px]"
+                className="bg-[#F4F4F5] dark:bg-[#1F1F1F] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-base border border-[#E4E4E7] dark:border-[#27272A] min-h-[120px]"
               />
-              <Text className="text-xs text-[#A1A1AA] mt-1 text-right">
+              <Text className="text-xs text-[#52525B] dark:text-[#A1A1AA] mt-1 text-right">
                 {formData.description.length}/500
               </Text>
             </View>
@@ -221,13 +221,13 @@ export default function RegisterPartnerScreen() {
             {/* Illustration */}
             <View className="items-center mb-6">
               <Icon name="documents-outline" size={64} color="#EF4444" />
-              <Text className="text-white text-xl font-bold mb-2">Documents & Médias</Text>
-              <Text className="text-[#A1A1AA] text-sm text-center">
+              <Text className="text-[#18181B] dark:text-white text-xl font-bold mb-2">Documents & Médias</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm text-center">
                 Ajoutez vos documents officiels et visuels{'\n'}de votre établissement.
               </Text>
             </View>
 
-            <Text className="text-white text-base font-semibold mb-3">Documents obligatoires</Text>
+            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-3">Documents obligatoires</Text>
 
             <DocumentPicker
               label="Registre de commerce"
@@ -241,7 +241,7 @@ export default function RegisterPartnerScreen() {
               onValueChange={(value) => updateField('id_document', value)}
             />
 
-            <Text className="text-white text-base font-semibold mb-3 mt-4">Médias de votre établissement</Text>
+            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-3 mt-4">Médias de votre établissement</Text>
 
             <DocumentPicker
               label="Photo de couverture"
@@ -264,44 +264,44 @@ export default function RegisterPartnerScreen() {
             {/* Illustration */}
             <View className="items-center mb-6">
               <Icon name="checkmark-circle-outline" size={64} color="#10B981" />
-              <Text className="text-white text-xl font-bold mb-2">Vérification & Finalisation</Text>
-              <Text className="text-[#A1A1AA] text-sm text-center">
+              <Text className="text-[#18181B] dark:text-white text-xl font-bold mb-2">Vérification & Finalisation</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm text-center">
                 Vérifiez vos informations avant de{'\n'}finaliser votre demande.
               </Text>
             </View>
 
             {/* Summary */}
-            <View className="bg-[#1F1F1F] rounded-xl p-4 border border-[#27272A] mb-4">
-              <Text className="text-white font-semibold mb-3">Récapitulatif</Text>
+            <View className="bg-[#F4F4F5] dark:bg-[#1F1F1F] rounded-xl p-4 border border-[#E4E4E7] dark:border-[#27272A] mb-4">
+              <Text className="text-[#18181B] dark:text-white font-semibold mb-3">Récapitulatif</Text>
               
               <View className="mb-3">
                 <InfoLabel icon="storefront-outline" label="Nom" />
-                <Text className="text-white">{formData.company_name}</Text>
+                <Text className="text-[#18181B] dark:text-white">{formData.company_name}</Text>
               </View>
 
               <View className="mb-3">
                 <InfoLabel icon="person-outline" label="Responsable" />
-                <Text className="text-white">{formData.responsible_name}</Text>
+                <Text className="text-[#18181B] dark:text-white">{formData.responsible_name}</Text>
               </View>
 
               <View className="mb-3">
                 <InfoLabel icon="call-outline" label="Téléphone" />
-                <Text className="text-white">{countryCode} {formData.phone}</Text>
+                <Text className="text-[#18181B] dark:text-white">{countryCode} {formData.phone}</Text>
               </View>
 
               <View className="mb-3">
                 <InfoLabel icon="mail-outline" label="Email" />
-                <Text className="text-white">{formData.email}</Text>
+                <Text className="text-[#18181B] dark:text-white">{formData.email}</Text>
               </View>
 
               <View className="mb-3">
                 <InfoLabel icon="location-outline" label="Adresse" />
-                <Text className="text-white">{formData.address}</Text>
+                <Text className="text-[#18181B] dark:text-white">{formData.address}</Text>
               </View>
 
               <View>
                 <InfoLabel icon="documents-outline" label="Documents & Médias" />
-                <Text className="text-white">
+                <Text className="text-[#18181B] dark:text-white">
                   {formData.gallery_photos.length} photos • 2 documents
                 </Text>
               </View>
@@ -319,7 +319,7 @@ export default function RegisterPartnerScreen() {
                   <Icon name="checkmark" size={14} color="#FFFFFF" />
                 )}
               </View>
-              <Text className="text-[#A1A1AA] text-sm flex-1 leading-5">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm flex-1 leading-5">
                 En créant votre compte, vous acceptez les{' '}
                 <Text className="text-[#EF4444]">Conditions d'utilisation</Text>
                 {' '}et la{' '}
@@ -338,16 +338,16 @@ export default function RegisterPartnerScreen() {
     <SafeScreen>
       <View className="flex-1">
         {/* Header avec navigation */}
-        <View className="px-6 pt-4 pb-3 border-b border-[#27272A]">
+        <View className="px-6 pt-4 pb-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
           <View className="flex-row items-center justify-between mb-3">
             <TouchableOpacity onPress={handleBack}>
               <Icon name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
-            <Text className="text-[#A1A1AA] text-sm">Étape {currentStep} sur 4</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">Étape {currentStep} sur 4</Text>
           </View>
 
           {/* Progress bar */}
-          <View className="h-1 bg-[#27272A] rounded-full overflow-hidden">
+          <View className="h-1 bg-[#F4F4F5] dark:bg-[#27272A] rounded-full overflow-hidden">
             <View 
               className="h-full bg-[#EF4444] rounded-full"
               style={{ width: `${(currentStep / 4) * 100}%` }}
@@ -369,7 +369,7 @@ export default function RegisterPartnerScreen() {
           </ScrollView>
 
           {/* Fixed button at bottom */}
-          <View className="px-6 py-4 border-t border-[#27272A] bg-[#0A0A0A]">
+          <View className="px-6 py-4 border-t border-[#E4E4E7] dark:border-[#27272A] bg-white dark:bg-[#0A0A0A]">
             <Button
               label={currentStep === 4 ? 'Créer mon compte' : 'Continuer'}
               onPress={handleNext}
@@ -387,7 +387,7 @@ function InfoLabel({ icon, label }: { icon: string; label: string }) {
   return (
     <View className="flex-row items-center gap-1 mb-1">
       <Icon name={icon} size={12} color="#A1A1AA" />
-      <Text className="text-[#A1A1AA] text-xs">{label}</Text>
+      <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs">{label}</Text>
     </View>
   );
 }

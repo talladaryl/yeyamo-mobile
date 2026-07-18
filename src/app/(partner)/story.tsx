@@ -58,11 +58,11 @@ export default function PartnerStoryScreen() {
       ) : (
         <TouchableOpacity
           onPress={pickMedia}
-          className="flex-1 items-center justify-center bg-[#0A0A0A]"
+          className="flex-1 items-center justify-center bg-white dark:bg-[#0A0A0A]"
           activeOpacity={0.9}
         >
           <Icon library="ionicons" name="camera" size={64} color="#A1A1AA" />
-          <Text className="text-white text-base mt-4">Appuyez pour ajouter une photo</Text>
+          <Text className="text-[#18181B] dark:text-white text-base mt-4">Appuyez pour ajouter une photo</Text>
         </TouchableOpacity>
       )}
 
@@ -74,7 +74,7 @@ export default function PartnerStoryScreen() {
             className="bg-black/40 px-6 py-4 rounded-2xl"
             activeOpacity={0.8}
           >
-            <Text className="text-white text-2xl font-bold text-center">
+            <Text className="text-[#18181B] dark:text-white text-2xl font-bold text-center">
               {textOverlay}
             </Text>
           </TouchableOpacity>
@@ -82,7 +82,7 @@ export default function PartnerStoryScreen() {
           {/* Location Tag */}
           <View className="mt-4 self-center bg-black/60 px-4 py-2 rounded-full flex-row items-center gap-1">
             <Icon library="ionicons" name="location" size={14} color="#FFFFFF" />
-            <Text className="text-white text-sm font-medium">{locationTag}</Text>
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium">{locationTag}</Text>
           </View>
         </View>
       )}
@@ -91,7 +91,7 @@ export default function PartnerStoryScreen() {
       {showTextEditor && (
         <View className="absolute inset-0 bg-black/80 items-center justify-center px-6">
           <TextInput
-            className="text-white text-2xl font-bold text-center w-full"
+            className="text-[#18181B] dark:text-white text-2xl font-bold text-center w-full"
             value={textOverlay}
             onChangeText={setTextOverlay}
             multiline
@@ -105,7 +105,7 @@ export default function PartnerStoryScreen() {
             className="mt-6 bg-[#EF4444] px-6 py-3 rounded-full"
             activeOpacity={0.7}
           >
-            <Text className="text-white font-semibold">Terminé</Text>
+            <Text className="font-semibold text-white">Terminé</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -126,7 +126,7 @@ export default function PartnerStoryScreen() {
                 onPress={() => setShowTextEditor(true)}
                 className="w-10 h-10 bg-black/50 rounded-full items-center justify-center"
               >
-                <Text className="text-white font-bold">Aa</Text>
+                <Text className="text-[#18181B] dark:text-white font-bold">Aa</Text>
               </TouchableOpacity>
 
               <TouchableOpacity className="w-10 h-10 bg-black/50 rounded-full items-center justify-center">
@@ -166,7 +166,7 @@ export default function PartnerStoryScreen() {
               <View className="w-8 h-8 bg-[#EF4444] rounded-full items-center justify-center mr-2">
                 <Icon library="ionicons" name="person" size={16} color="#FFFFFF" />
               </View>
-              <Text className="text-white text-sm font-semibold">Ta story</Text>
+              <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Ta story</Text>
             </TouchableOpacity>
 
             {/* Abonnés */}
@@ -177,7 +177,7 @@ export default function PartnerStoryScreen() {
               <View className="w-8 h-8 bg-[#10B981] rounded-full items-center justify-center mr-2">
                 <Icon library="ionicons" name="people" size={16} color="#FFFFFF" />
               </View>
-              <Text className="text-white text-sm font-semibold">Abonnés</Text>
+              <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Abonnés</Text>
             </TouchableOpacity>
 
             {/* Publish Button */}
