@@ -49,7 +49,7 @@ export default function LoginScreen() {
       }
       await useInterestsStore.getState().saveInterests();
       await login({ email: 'partner.demo@yeyamo.com', password: 'partner-demo' });
-      router.replace('/(partner-dashboard)/dashboard');
+      router.replace('/(tabs)');
     } catch {
       // The request error is exposed by useAuth.
     }

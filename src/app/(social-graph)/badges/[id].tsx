@@ -1,97 +1,20 @@
-// ÉCRAN 2 - Détail d'un badge
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useBadgeDetails } from '@/features/social-graph/useBadges';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { SafeScreen } from '@/components/ui/SafeScreen';
+import { Icon } from '@/components/ui/Icon';
 import { BadgeProgressBar } from '@/components/social-graph/BadgeProgressBar';
 import { BadgeLevelItem } from '@/components/social-graph/BadgeLevelItem';
 import { XPActionItem } from '@/components/social-graph/XPActionItem';
+import { categoryLabel } from '@/components/social-graph/BadgeCard';
+import { useBadgeDetails } from '@/features/social-graph/useBadges';
 import { XP_ACTIONS } from '@/features/social-graph/mockData';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { ScrollView } from 'react-native';
 
 export default function BadgeDetailScreen() {
-  const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const badgeId = parseInt(id || '0', 10);
-  
-  const { data: badge, isLoading } = useBadgeDetails(badgeId);
-
-  if (isLoading || !badge) {
-    return (
-      <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A] items-center justify-center">
-        <Text className="text-[#18181B] dark:text-white">Chargement...</Text>
-      </SafeAreaView>
-    );
-  }
-
-  const currentLevelData = badge.levels.find((l) => l.level === badge.current_level);
-
-  return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
-      {/* Header */}
-      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text className="text-[#18181B] dark:text-white text-xl font-bold">{badge.name}</Text>
-          <TouchableOpacity className="p-2">
-            <Ionicons name="ellipsis-horizontal" size={24} color="#A1A1AA" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Badge Icon & Info */}
-        <View className="items-center pt-8 pb-6 px-4">
-          <View className="w-32 h-32 rounded-full bg-[#10B981]/20 items-center justify-center mb-4">
-            <Image
-              source={{ uri: badge.icon_url }}
-              className="w-24 h-24"
-              resizeMode="contain"
-            />
-          </View>
-          <Text className="text-[#18181B] dark:text-white text-2xl font-bold mb-2">{badge.name}</Text>
-          {currentLevelData && (
-            <View className="bg-[#EF4444] px-4 py-1.5 rounded-full mb-3">
-              <Text className="font-bold text-white">Niveau {badge.current_level} • {currentLevelData.name}</Text>
-            </View>
-          )}
-          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center text-base px-4">{badge.description}</Text>
-        </View>
-
-        {/* Progression */}
-        <View className="px-4 mb-8">
-          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">Votre progression</Text>
-          <View className="bg-white dark:bg-[#161616] rounded-xl p-4">
-            <BadgeProgressBar currentXP={badge.current_xp} nextLevelXP={badge.next_level_xp} />
-          </View>
-        </View>
-
-        {/* Niveaux */}
-        <View className="px-4 mb-8">
-          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">Niveaux</Text>
-          <View className="bg-white dark:bg-[#161616] rounded-xl p-4">
-            {badge.levels.map((level) => (
-              <BadgeLevelItem
-                key={level.level}
-                level={level}
-                isActive={level.level === badge.current_level}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Comment gagner des XP */}
-        <View className="px-4 pb-8">
-          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">Comment gagner des XP ?</Text>
-          <View className="bg-white dark:bg-[#161616] rounded-xl p-4">
-            {XP_ACTIONS.map((action) => (
-              <XPActionItem key={action.id} action={action} />
-            ))}
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+  const router = useRouter(); const colors = useThemeStore((state) => state.colors); const { id } = useLocalSearchParams<{ id: string }>();
+  const { data: badge, isLoading } = useBadgeDetails(Number(id));
+  if (isLoading || !badge) return <SafeScreen><View className="flex-1 items-center justify-center"><Text style={{ color: colors.textSecondary }}>Chargement…</Text></View></SafeScreen>;
+  const currentLevel = badge.levels.find((item) => item.level === badge.current_level);
+  return <SafeScreen><View className="flex-row items-center border-b px-4 pb-3 pt-2" style={{ borderColor: colors.border }}><TouchableOpacity onPress={() => router.back()} className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="chevron-back" size={22} color={colors.text} /></TouchableOpacity><Text className="ml-3 flex-1 text-lg font-extrabold" style={{ color: colors.text }}>Détail du badge</Text></View><ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 36 }} showsVerticalScrollIndicator={false}><View className="items-center rounded-3xl border p-6" style={{ backgroundColor: colors.card, borderColor: colors.border }}><View className="h-32 w-32 items-center justify-center rounded-full border-8" style={{ backgroundColor: badge.is_unlocked ? '#FEF2F2' : colors.elevated, borderColor: badge.is_unlocked ? '#FEE2E2' : colors.border }}><Icon name={badge.is_unlocked ? (badge.icon ?? 'trophy') : 'lock-closed'} size={58} color={badge.is_unlocked ? '#EF4444' : colors.textMuted} /></View><Text className="mt-5 text-2xl font-extrabold" style={{ color: colors.text }}>{badge.name}</Text><View className="mt-2 flex-row gap-2"><View className="rounded-full bg-[#FEE2E2] px-3 py-1"><Text className="text-[10px] font-extrabold uppercase text-[#B91C1C]">{categoryLabel(badge.category)}</Text></View><View className="rounded-full px-3 py-1" style={{ backgroundColor: colors.elevated }}><Text className="text-[10px] font-extrabold uppercase" style={{ color: colors.textSecondary }}>{badge.rarity ?? 'commun'}</Text></View></View><Text className="mt-4 text-center text-sm leading-6" style={{ color: colors.textSecondary }}>{badge.description}</Text>{currentLevel ? <Text className="mt-3 font-bold text-[#EF4444]">Niveau {badge.current_level} · {currentLevel.name}</Text> : null}</View><Text className="mb-3 mt-6 text-lg font-extrabold" style={{ color: colors.text }}>Condition d’obtention</Text><View className="flex-row rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Icon name="flag-outline" size={22} color="#EF4444" /><View className="ml-3 flex-1"><Text className="text-sm font-semibold" style={{ color: colors.text }}>{badge.condition ?? 'Progressez dans cette catégorie'}</Text>{badge.unlocked_at ? <Text className="mt-1 text-xs text-[#16A34A]">Obtenu le {new Intl.DateTimeFormat('fr-FR').format(new Date(badge.unlocked_at))}</Text> : <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Badge encore verrouillé</Text>}</View></View><Text className="mb-3 mt-6 text-lg font-extrabold" style={{ color: colors.text }}>Votre progression</Text><View className="rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><BadgeProgressBar currentXP={badge.current_xp} nextLevelXP={badge.next_level_xp} /></View><Text className="mb-3 mt-6 text-lg font-extrabold" style={{ color: colors.text }}>Niveaux</Text><View className="rounded-2xl border px-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>{badge.levels.map((level) => <BadgeLevelItem key={level.level} level={level} isActive={level.level === badge.current_level} />)}</View><Text className="mb-3 mt-6 text-lg font-extrabold" style={{ color: colors.text }}>Comment gagner des XP ?</Text><View className="rounded-2xl border px-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>{XP_ACTIONS.map((action) => <XPActionItem key={action.id} action={action} />)}</View></ScrollView></SafeScreen>;
 }

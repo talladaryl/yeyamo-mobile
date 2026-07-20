@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import type { CustomerReview } from '@/features/partner-dashboard/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface ReviewCardProps {
   review: CustomerReview;
@@ -9,6 +10,7 @@ interface ReviewCardProps {
 }
 
 export function ReviewCard({ review, onReply }: ReviewCardProps) {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <View className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-3">
       <View className="flex-row items-start justify-between mb-2">
@@ -42,7 +44,7 @@ export function ReviewCard({ review, onReply }: ReviewCardProps) {
         </View>
       </View>
 
-      <Text className="text-[#E5E5E5] text-sm mb-2" numberOfLines={3}>
+      <Text className="text-sm mb-2" style={{ color: colors.text }} numberOfLines={3}>
         {review.comment}
       </Text>
 

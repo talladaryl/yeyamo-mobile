@@ -22,7 +22,7 @@ export function StatCard({ stat }: StatCardProps) {
           size={14}
           color="#FFFFFF"
         />
-        <Text className="text-[#18181B] dark:text-white text-sm font-semibold">
+        <Text className="text-sm font-semibold text-white">
           {stat.change}
         </Text>
       </View>

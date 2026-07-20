@@ -113,7 +113,9 @@ function RootNavigator() {
       && hasCompletedInterestSelection
       && (inAuthGroup || inOnboardingGroup || inInterests)
     ) {
-      router.replace(user?.user_type === 'partner' ? '/(partner-dashboard)/dashboard' : '/(tabs)');
+      // A partner keeps the complete consumer experience. Professional tools are
+      // exposed from the Profile tab instead of replacing the main navigation.
+      router.replace('/(tabs)');
     }
   }, [
     isAuthenticated,
@@ -187,8 +189,13 @@ function RootNavigator() {
         <Stack.Screen name="(partner)/story" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="(partner)/add-place-step1" />
         <Stack.Screen name="(partner)/add-place-step2" />
+        <Stack.Screen name="(partner)/add-place-step3" />
+        <Stack.Screen name="(partner)/add-place-step4" />
         <Stack.Screen name="(partner)/add-event-step1" />
         <Stack.Screen name="(partner)/add-event-step2" />
+        <Stack.Screen name="(partner)/add-event-step3" />
+        <Stack.Screen name="(partner)/add-event-step4" />
+        <Stack.Screen name="(partner)/offer" />
         <Stack.Screen name="(partner-dashboard)/dashboard" />
         <Stack.Screen name="(partner-dashboard)/establishments" />
         <Stack.Screen name="(partner-dashboard)/events" />

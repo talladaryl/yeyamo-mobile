@@ -1,54 +1,24 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/Icon';
 import { EstablishmentCard } from '@/components/partner-dashboard/EstablishmentCard';
+import { FilterChips, PartnerPage } from '@/components/partner-dashboard/PartnerPage';
 import { establishments } from '@/features/partner-dashboard/mockData';
+import { useThemeStore } from '@/features/theme/theme.store';
+
+const FILTERS = ['Tous (3)', 'Actifs (2)', 'En attente (1)', 'Inactifs (0)'] as const;
 
 export default function EstablishmentsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-
+  const colors = useThemeStore((state) => state.colors);
+  const [filter, setFilter] = useState<string>(FILTERS[0]);
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
-      {/* Header */}
-      <View style={{ paddingTop: insets.top }} className="px-4 pt-3 pb-4 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-            <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View>
-            <Text className="text-[#18181B] dark:text-white text-2xl font-bold">MES ÉTABLISSEMENTS</Text>
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">Gérez vos établissements</Text>
-          </View>
-        </View>
-        <TouchableOpacity
-          onPress={() => router.push('/(partner)/add-place-step1')}
-          className="w-10 h-10 bg-[#EF4444] rounded-full items-center justify-center"
-          activeOpacity={0.7}
-        >
-          <Icon library="ionicons" name="add" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} className="px-4">
-        {establishments.map((establishment) => (
-          <EstablishmentCard
-            key={establishment.id}
-            establishment={establishment}
-            onPress={() => console.log('View establishment:', establishment.id)}
-          />
-        ))}
-
-        <TouchableOpacity
-          className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-6 items-center"
-          activeOpacity={0.8}
-        >
-          <Text className="text-[#EF4444] font-semibold">Voir tous les établissements</Text>
-        </TouchableOpacity>
-
-        <View className="h-6" />
-      </ScrollView>
-    </View>
+    <PartnerPage title="Mes établissements" subtitle="Gérez tous vos lieux et leurs informations" actionIcon="add" onAction={() => router.push('/(partner)/add-place-step1')}>
+      <FilterChips values={FILTERS} selected={filter} onSelect={setFilter} />
+      {establishments.map((item) => <EstablishmentCard key={item.id} establishment={item} onPress={() => {}} />)}
+      <TouchableOpacity onPress={() => router.push('/(partner)/add-place-step1')} className="items-center rounded-xl border p-4" style={{ borderColor: colors.border }}>
+        <Text className="font-bold text-[#E60012]">Ajouter un établissement</Text>
+      </TouchableOpacity>
+    </PartnerPage>
   );
 }

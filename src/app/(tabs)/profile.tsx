@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { PartnerProfileDashboard } from '@/components/partner-dashboard/PartnerProfileDashboard';
 
 const QUICK_LINKS = [
   ['images', 'Mes publications', '/(profile)/publications'],
@@ -23,7 +24,7 @@ const SOCIAL_LINKS = [
   ['person-add', 'Trouver des amis', '/(profile)/find-friends'],
   ['notifications', 'Activité du réseau', '/(profile)/activity'],
   ['settings', 'Paramètres du réseau social', '/(profile)/social-settings'],
-  ['trophy', 'Mes badges', '/(social-graph)/badges', '3'],
+  ['airplane', 'Passeport YeYamo', '/(social-graph)/passport', '12'],
   ['albums', 'Mes collections', '/(collections)', '6'],
 ] as const;
 
@@ -33,6 +34,10 @@ export default function ProfileScreen() {
   const colors = useThemeStore((state) => state.colors);
 
   if (!user) return null;
+
+  if ((user.user_type as string) === 'partner') {
+    return <PartnerProfileDashboard />;
+  }
 
   return (
     <SafeScreen>

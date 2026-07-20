@@ -1,12 +1,18 @@
 // Types pour le système de badges et graphe social
 
+export type BadgeCategory = 'exploration' | 'culture' | 'gastronomy' | 'nature' | 'events' | 'community' | 'photography' | 'travel' | 'partner' | 'seasonal' | 'creation' | 'social' | 'contribution';
+export type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
 export interface Badge {
   id: number;
   name: string;
   slug: string;
   description: string;
   icon_url: string;
-  category: 'exploration' | 'creation' | 'social' | 'contribution';
+  category: BadgeCategory;
+  rarity?: BadgeRarity;
+  condition?: string;
+  icon?: string;
   current_level: number;
   max_level: number;
   current_xp: number;

@@ -1,85 +1,35 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/Icon';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { PartnerPage } from '@/components/partner-dashboard/PartnerPage';
 import { StatCard } from '@/components/partner-dashboard/StatCard';
 import { statisticCards, trafficSources } from '@/features/partner-dashboard/mockData';
+import { useThemeStore } from '@/features/theme/theme.store';
 
+const BARS = [34, 48, 42, 68, 56, 78, 64, 84];
 export default function StatisticsScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-
+  const colors = useThemeStore((state) => state.colors);
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
-      {/* Header */}
-      <View style={{ paddingTop: insets.top }} className="px-4 pt-3 pb-4 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-            <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View>
-            <Text className="text-[#18181B] dark:text-white text-2xl font-bold">STATISTIQUES</Text>
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">Analysez vos performances</Text>
-          </View>
+    <PartnerPage title="Statistiques" subtitle="Analysez vos performances et votre audience">
+      <View className="mb-4 mt-2 flex-row gap-3">{statisticCards.map((stat) => <StatCard key={stat.label} stat={stat} />)}</View>
+      <View className="mb-4 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+        <View className="flex-row items-center justify-between">
+          <Text className="font-bold" style={{ color: colors.text }}>Évolution des vues</Text>
+          <Text className="text-xs" style={{ color: colors.textSecondary }}>7 derniers jours⌄</Text>
         </View>
+        <View className="mt-6 h-36 flex-row items-end justify-between border-b" style={{ borderColor: colors.border }}>
+          {BARS.map((height, index) => <View key={index} className="w-[8%] rounded-t-md bg-[#EF4444]" style={{ height: `${height}%`, opacity: 0.45 + index * 0.06 }} />)}
+        </View>
+        <View className="mt-2 flex-row justify-between"><Text className="text-[10px]" style={{ color: colors.textMuted }}>Lun</Text><Text className="text-[10px]" style={{ color: colors.textMuted }}>Aujourd’hui</Text></View>
       </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} className="px-4">
-        {/* Stat Cards */}
-        <View className="flex-row gap-3 mb-6">
-          {statisticCards.map((stat, index) => (
-            <StatCard key={index} stat={stat} />
-          ))}
-        </View>
-
-        {/* Evolution Chart */}
-        <View className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-6">
-          <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-4">Évolution des vues</Text>
-          <View className="h-40 items-center justify-center">
-            <Icon library="ionicons" name="stats-chart" size={48} color="#EF4444" />
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-2">Graphique en évolution</Text>
+      <View className="mb-4 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+        <Text className="mb-4 font-bold" style={{ color: colors.text }}>Sources de trafic</Text>
+        {trafficSources.map((source) => (
+          <View key={source.name} className="mb-3">
+            <View className="mb-1.5 flex-row justify-between"><Text className="text-sm" style={{ color: colors.textSecondary }}>{source.name}</Text><Text className="text-sm font-bold" style={{ color: colors.text }}>{source.percentage}%</Text></View>
+            <View className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: colors.elevated }}><View className="h-full rounded-full" style={{ width: `${source.percentage}%`, backgroundColor: source.color }} /></View>
           </View>
-        </View>
-
-        {/* Traffic Sources */}
-        <View className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-6">
-          <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-4">Sources de trafic</Text>
-          
-          {/* Donut Chart Placeholder */}
-          <View className="items-center mb-4">
-            <View className="w-32 h-32 rounded-full border-8 border-[#EF4444] items-center justify-center">
-              <Text className="text-[#18181B] dark:text-white text-2xl font-bold">100%</Text>
-            </View>
-          </View>
-
-          {/* Legend */}
-          <View className="gap-2">
-            {trafficSources.map((source, index) => (
-              <View key={index} className="flex-row items-center justify-between">
-                <View className="flex-row items-center gap-2">
-                  <View
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: source.color }}
-                  />
-                  <Text className="text-[#E5E5E5] text-sm">{source.name}</Text>
-                </View>
-                <Text className="text-[#18181B] dark:text-white font-semibold text-sm">
-                  {source.percentage}%
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <TouchableOpacity
-          className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-6 items-center"
-          activeOpacity={0.8}
-        >
-          <Text className="text-[#EF4444] font-semibold">Voir rapport complet</Text>
-        </TouchableOpacity>
-
-        <View className="h-6" />
-      </ScrollView>
-    </View>
+        ))}
+      </View>
+      <TouchableOpacity className="items-center rounded-xl border p-4" style={{ borderColor: '#EF4444' }}><Text className="font-bold text-[#E60012]">Voir le rapport complet</Text></TouchableOpacity>
+    </PartnerPage>
   );
 }

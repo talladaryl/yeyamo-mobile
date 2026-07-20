@@ -1,54 +1,24 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/Icon';
 import { EventCard } from '@/components/partner-dashboard/EventCard';
+import { FilterChips, PartnerPage } from '@/components/partner-dashboard/PartnerPage';
 import { partnerEvents } from '@/features/partner-dashboard/mockData';
+import { useThemeStore } from '@/features/theme/theme.store';
 
+const FILTERS = ['Tous', 'À venir', 'Brouillons', 'Passés'] as const;
 export default function EventsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-
+  const colors = useThemeStore((state) => state.colors);
+  const [filter, setFilter] = useState<string>('Tous');
+  const data = useMemo(() => filter === 'Brouillons' ? partnerEvents.filter((item) => item.status === 'draft') : partnerEvents, [filter]);
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
-      {/* Header */}
-      <View style={{ paddingTop: insets.top }} className="px-4 pt-3 pb-4 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-            <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View>
-            <Text className="text-[#18181B] dark:text-white text-2xl font-bold">MES ÉVÉNEMENTS</Text>
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">Consultez et gérez vos événements</Text>
-          </View>
-        </View>
-        <TouchableOpacity
-          onPress={() => router.push('/(partner)/add-event-step1')}
-          className="w-10 h-10 bg-[#EF4444] rounded-full items-center justify-center"
-          activeOpacity={0.7}
-        >
-          <Icon library="ionicons" name="add" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} className="px-4">
-        {partnerEvents.map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-            onPress={() => console.log('View event:', event.id)}
-          />
-        ))}
-
-        <TouchableOpacity
-          className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-6 items-center"
-          activeOpacity={0.8}
-        >
-          <Text className="text-[#EF4444] font-semibold">Voir tous les événements</Text>
-        </TouchableOpacity>
-
-        <View className="h-6" />
-      </ScrollView>
-    </View>
+    <PartnerPage title="Mes événements" subtitle="Consultez et gérez vos événements publiés" actionIcon="add" onAction={() => router.push('/(partner)/add-event-step1')}>
+      <FilterChips values={FILTERS} selected={filter} onSelect={setFilter} />
+      {data.map((item) => <EventCard key={item.id} event={item} onPress={() => {}} />)}
+      <TouchableOpacity onPress={() => router.push('/(partner)/add-event-step1')} className="items-center rounded-xl border p-4" style={{ borderColor: colors.border }}>
+        <Text className="font-bold text-[#E60012]">Créer un événement</Text>
+      </TouchableOpacity>
+    </PartnerPage>
   );
 }

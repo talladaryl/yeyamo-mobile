@@ -2,7 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import ENV from '@/config/env';
 import { badgesApi } from './badges.api';
-import { MOCK_BADGES, MOCK_USER_STATS } from './mockData';
+import { MOCK_USER_STATS } from './mockData';
+import { PREMIUM_BADGES } from './passport.badges';
 
 /**
  * Hook pour récupérer tous les badges de l'utilisateur
@@ -11,10 +12,10 @@ export function useUserBadges() {
   return useQuery({
     queryKey: ['badges', 'user'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_BADGES) : badgesApi.getUserBadges(),
+      ENV.USE_MOCKS ? Promise.resolve(PREMIUM_BADGES) : badgesApi.getUserBadges(),
     staleTime: 1000 * 60 * 5, // 5 minutes
     // En développement, utiliser les mock data
-    placeholderData: MOCK_BADGES,
+    placeholderData: PREMIUM_BADGES,
   });
 }
 
@@ -26,12 +27,12 @@ export function useBadgeDetails(badgeId: number) {
     queryKey: ['badges', badgeId],
     queryFn: () =>
       ENV.USE_MOCKS
-        ? Promise.resolve(MOCK_BADGES.find((b) => b.id === badgeId) ?? MOCK_BADGES[0])
+        ? Promise.resolve(PREMIUM_BADGES.find((b) => b.id === badgeId) ?? PREMIUM_BADGES[0])
         : badgesApi.getBadgeDetails(badgeId),
     enabled: !!badgeId,
     staleTime: 1000 * 60 * 5,
     // En développement, utiliser les mock data
-    placeholderData: MOCK_BADGES.find((b) => b.id === badgeId),
+    placeholderData: PREMIUM_BADGES.find((b) => b.id === badgeId),
   });
 }
 
@@ -56,8 +57,8 @@ export function useAllBadges() {
   return useQuery({
     queryKey: ['badges', 'all'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_BADGES) : badgesApi.getAllBadges(),
+      ENV.USE_MOCKS ? Promise.resolve(PREMIUM_BADGES) : badgesApi.getAllBadges(),
     staleTime: 1000 * 60 * 10, // 10 minutes
-    placeholderData: MOCK_BADGES,
+    placeholderData: PREMIUM_BADGES,
   });
 }
