@@ -42,6 +42,11 @@ const creationOptions: CreationOption[] = [
 export default function CreateChoiceScreen() {
   const router = useRouter();
 
+  const close = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)');
+  };
+
   const handleOptionPress = (optionId: string) => {
     switch (optionId) {
       case 'publication':
@@ -97,11 +102,11 @@ export default function CreateChoiceScreen() {
 
       {/* Close Button */}
       <TouchableOpacity
-        onPress={() => router.back()}
+        onPress={close}
         className="absolute bottom-8 left-1/2 -ml-6 w-12 h-12 bg-[#F4F4F5] dark:bg-[#27272A] rounded-full items-center justify-center"
         activeOpacity={0.7}
       >
-        <Icon library="ionicons" name="close" size={24} color="#FFFFFF" />
+        <Icon library="ionicons" name="close" size={24} color="#52525B" />
       </TouchableOpacity>
     </View>
   );

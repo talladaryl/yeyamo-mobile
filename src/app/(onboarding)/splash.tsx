@@ -1,18 +1,16 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Asset } from 'expo-asset';
 import { useRouter } from 'expo-router';
-import { useThemeStore } from '@/features/theme/theme.store';
-import { AnimatedYeyamoLogo } from '@/components/onboarding/AnimatedYeyamoLogo';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
+
+const logoAnimationAsset = require('../../../assets/yeyamo_logo_animation.html');
 
 export default function SplashScreen() {
   const router = useRouter();
-  const { colors, resolvedTheme } = useThemeStore();
-  const scale = useRef(new Animated.Value(0.82)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(16)).current;
   const hasNavigated = useRef(false);
+  const [animationHtml, setAnimationHtml] = useState<string>();
 
   const continueToOnboarding = () => {
     if (hasNavigated.current) return;
@@ -21,52 +19,63 @@ export default function SplashScreen() {
   };
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scale, { toValue: 1, damping: 10, stiffness: 90, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: 1, duration: 750, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 750, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]).start(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(scale, { toValue: 1.035, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-          Animated.timing(scale, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        ]),
-      ).start();
+    let isMounted = true;
+
+    const loadAnimation = async () => {
+      const asset = await Asset.fromModule(logoAnimationAsset).downloadAsync();
+      const response = await fetch(asset.localUri ?? asset.uri);
+      const html = await response.text();
+
+      if (isMounted) setAnimationHtml(html);
+    };
+
+    loadAnimation().catch((error) => {
+      console.error('Unable to load the Yeyamo logo animation.', error);
     });
 
     const timer = setTimeout(continueToOnboarding, 30_000);
-    return () => clearTimeout(timer);
-  }, [opacity, scale, translateY]);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, []);
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <LinearGradient
-        colors={resolvedTheme === 'dark' ? ['#0A0A0A', '#111111', '#2A1113'] : ['#FFFFFF', '#FFFFFF', '#FFF1F2']}
-        locations={[0, 0.62, 1]}
-        className="absolute inset-0"
-      />
-      <View className="absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-[#EF4444]/10" />
-      <View className="absolute -bottom-40 right-[-70px] h-80 w-80 rounded-full bg-[#EF4444]/15" />
-      <View className="absolute left-8 top-20 h-3 w-3 rounded-full bg-[#EF4444]/20" />
-      <View className="absolute right-12 top-32 h-5 w-5 rounded-full bg-[#EF4444]/10" />
+    <View className="flex-1 bg-white">
+      <SafeAreaView className="flex-1 bg-white">
+        <TouchableOpacity
+          className="flex-1"
+          onPress={continueToOnboarding}
+          activeOpacity={1}
+          accessibilityLabel="Commencer l'onboarding"
+        >
+          {animationHtml ? (
+            <WebView
+              pointerEvents="none"
+              originWhitelist={['*']}
+              source={{ html: animationHtml }}
+              javaScriptEnabled
+              scrollEnabled={false}
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
+              style={styles.animation}
+            />
+          ) : (
+            <View className="flex-1 bg-white" />
+          )}
 
-      <SafeAreaView className="flex-1 items-center justify-center px-8">
-        <TouchableOpacity onPress={continueToOnboarding} activeOpacity={0.9} accessibilityLabel="Commencer l’onboarding">
-          <Animated.View
-            className="items-center"
-            style={{ opacity, transform: [{ scale }, { translateY }] }}
-          >
-            <AnimatedYeyamoLogo />
-          </Animated.View>
-        </TouchableOpacity>
-
-        <View className="absolute bottom-10 items-center">
-          <View className="h-1 w-12 overflow-hidden rounded-full" style={{ backgroundColor: colors.border }}>
-            <Animated.View className="h-full w-full rounded-full bg-[#EF4444]" style={{ opacity }} />
+          <View className="absolute bottom-6 left-0 right-0 items-center">
+            <Text className="text-xs text-[#71717A]">Touchez pour continuer</Text>
           </View>
-          <Text className="mt-3 text-xs" style={{ color: colors.textSecondary }}>Touchez pour continuer</Text>
-        </View>
+        </TouchableOpacity>
       </SafeAreaView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  animation: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+});

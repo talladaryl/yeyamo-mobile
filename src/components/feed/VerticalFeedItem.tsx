@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Dimensions, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,11 +9,13 @@ import { formatCount } from '@/utils/format';
 import { useRouter } from 'expo-router';
 import type { FeedPost } from '@/features/feed/types';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 type VerticalFeedItemProps = {
   post: FeedPost;
+  height: number;
   isActive: boolean;
+  isFollowing: boolean;
+  isSaved: boolean;
+  onFollow: () => void;
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
@@ -22,7 +24,11 @@ type VerticalFeedItemProps = {
 
 export function VerticalFeedItem({
   post,
+  height,
   isActive,
+  isFollowing,
+  isSaved,
+  onFollow,
   onLike,
   onComment,
   onShare,
@@ -40,7 +46,7 @@ export function VerticalFeedItem({
   );
 
   return (
-    <View style={{ height: SCREEN_HEIGHT - 110 }} className="bg-[#0A0A0A]">
+    <View style={{ height }} className="bg-[#0A0A0A]">
       {/* Media */}
       {post.type === 'video' ? (
         <VideoView
@@ -101,16 +107,24 @@ export function VerticalFeedItem({
       {/* Right action buttons */}
       <View className="absolute right-3 bottom-20 gap-6">
         {/* Author avatar (clickable) */}
-        <TouchableOpacity
-          onPress={() => router.push(`/(profile)/${post.author.username}`)}
-          activeOpacity={0.8}
-        >
+        <View className="items-center pb-1">
+        <TouchableOpacity onPress={() => router.push(`/(profile)/${post.author.username}`)} activeOpacity={0.8}>
           <Avatar
             uri={post.author.avatar_url}
             displayName={post.author.display_name}
             size={44}
           />
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onFollow}
+          activeOpacity={0.8}
+          className="-mt-2 h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#EF4444]"
+          accessibilityRole="button"
+          accessibilityLabel={isFollowing ? `Ne plus suivre ${post.author.display_name}` : `Suivre ${post.author.display_name}`}
+        >
+          <Icon library="ionicons" name={isFollowing ? 'checkmark' : 'add'} size={16} color="#FFFFFF" />
+        </TouchableOpacity>
+        </View>
 
         {/* Like */}
         <TouchableOpacity
@@ -161,7 +175,7 @@ export function VerticalFeedItem({
         >
           <Icon
             library="ionicons"
-            name={post.is_saved ? 'bookmark' : 'bookmark-outline'}
+            name={isSaved ? 'bookmark' : 'bookmark-outline'}
             size={30}
             color="#FFFFFF"
           />

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { MediaGrid } from '@/components/profile/MediaGrid';
 import { Icon } from '@/components/ui/Icon';

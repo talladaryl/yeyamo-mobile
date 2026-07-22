@@ -1,4 +1,5 @@
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
@@ -6,16 +7,18 @@ import { ConversationAvatar } from '@/components/chat/ConversationAvatar';
 import { Avatar } from '@/components/ui/Avatar';
 import { useConversations } from '@/features/chat/useChat';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useChatStore } from '@/features/chat/chat.store';
 
 type ActionButtonProps = {
   icon: string;
   label: string;
+  onPress: () => void;
 };
 
-function ActionButton({ icon, label }: ActionButtonProps) {
+function ActionButton({ icon, label, onPress }: ActionButtonProps) {
   const colors = useThemeStore((state) => state.colors);
   return (
-    <TouchableOpacity className="flex-1 items-center" activeOpacity={0.75}>
+    <TouchableOpacity onPress={onPress} className="flex-1 items-center" activeOpacity={0.75}>
       <View className="h-14 w-14 items-center justify-center rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
         <Icon name={icon} size={22} color={colors.text} />
       </View>
@@ -55,6 +58,8 @@ export default function ChatInfoScreen() {
   const colors = useThemeStore((state) => state.colors);
   const conversationId = Number(id);
   const { data: conversations = [], isLoading } = useConversations();
+  const [isMoreOpen, setMoreOpen] = useState(false);
+  const preferences = useChatStore((state) => state.preferences[conversationId]);
   const conversation = conversations.find((item) => item.id === conversationId);
 
   const goBack = () => {
@@ -88,6 +93,8 @@ export default function ChatInfoScreen() {
     ]);
   };
 
+  const openTool = (section: string) => router.push({ pathname: '/(chat)/tools/[section]', params: { section, id: String(conversationId) } });
+
   return (
     <SafeScreen style={{ backgroundColor: colors.background }}>
       <View className="h-16 flex-row items-center border-b px-3" style={{ borderColor: colors.border }}>
@@ -106,20 +113,20 @@ export default function ChatInfoScreen() {
         </View>
 
         <View className="mb-6 flex-row px-3">
-          <ActionButton icon="call-outline" label="Audio" />
-          <ActionButton icon="videocam-outline" label="Vidéo" />
-          <ActionButton icon="search-outline" label="Rechercher" />
-          <ActionButton icon="ellipsis-horizontal" label="Plus" />
+          <ActionButton icon="call-outline" label="Audio" onPress={() => openTool('audio')} />
+          <ActionButton icon="videocam-outline" label="Vidéo" onPress={() => openTool('video')} />
+          <ActionButton icon="search-outline" label="Rechercher" onPress={() => openTool('search')} />
+          <ActionButton icon="ellipsis-horizontal" label="Plus" onPress={() => setMoreOpen(true)} />
         </View>
 
         <View className="mx-4 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-          <SettingRow icon="images-outline" iconColor="#38BDF8" title="Médias, liens et documents" subtitle="127 éléments" />
+          <SettingRow icon="images-outline" iconColor="#38BDF8" title="Médias, liens et documents" subtitle="Photos, vidéos et fichiers" onPress={() => openTool('media')} />
           <View className="ml-16 h-px" style={{ backgroundColor: colors.border }} />
-          <SettingRow icon="pin-outline" iconColor="#F59E0B" title="Messages épinglés" subtitle="2 messages" />
+          <SettingRow icon="pin-outline" iconColor="#F59E0B" title="Messages épinglés" subtitle="Retrouvez les messages importants" onPress={() => openTool('pinned')} />
           <View className="ml-16 h-px" style={{ backgroundColor: colors.border }} />
-          <SettingRow icon="notifications-outline" iconColor="#F59E0B" title="Notifications" subtitle="Personnalisées" />
+          <SettingRow icon="notifications-outline" iconColor="#F59E0B" title="Notifications" subtitle={(preferences?.notificationsEnabled ?? true) ? 'Activées' : 'En sourdine'} onPress={() => openTool('notifications')} />
           <View className="ml-16 h-px" style={{ backgroundColor: colors.border }} />
-          <SettingRow icon="color-palette-outline" iconColor="#A78BFA" title="Fond d’écran" />
+          <SettingRow icon="color-palette-outline" iconColor="#A78BFA" title="Fond d’écran" subtitle="Fonds système Yeyamo" onPress={() => openTool('wallpaper')} />
         </View>
 
         {isGroup ? (
@@ -188,6 +195,19 @@ export default function ChatInfoScreen() {
             )}
           />
         </View>
+
+        <Modal visible={isMoreOpen} transparent animationType="fade" onRequestClose={() => setMoreOpen(false)}>
+          <Pressable className="flex-1 justify-end bg-black/45" onPress={() => setMoreOpen(false)}>
+            <Pressable className="rounded-t-[28px] px-4 pb-8 pt-3" style={{ backgroundColor: colors.card }} onPress={(event) => event.stopPropagation()}>
+              <View className="mb-4 h-1 w-10 self-center rounded-full" style={{ backgroundColor: colors.border }} />
+              <Text className="mb-4 text-lg font-extrabold" style={{ color: colors.text }}>Plus d’actions</Text>
+              {!isGroup && conversation.participant ? <SettingRow icon="person-outline" iconColor="#38BDF8" title="Voir le profil" onPress={() => { setMoreOpen(false); router.push(`/(profile)/${conversation.participant?.username}`); }} /> : null}
+              <SettingRow icon="search-outline" iconColor="#A78BFA" title="Rechercher dans la conversation" onPress={() => { setMoreOpen(false); openTool('search'); }} />
+              <SettingRow icon="notifications-off-outline" iconColor="#F59E0B" title="Gérer les notifications" onPress={() => { setMoreOpen(false); openTool('notifications'); }} />
+              <SettingRow icon="share-outline" iconColor="#10B981" title="Exporter la conversation" onPress={() => Alert.alert('Export', 'La préparation de l’export de cette conversation a commencé.')} />
+            </Pressable>
+          </Pressable>
+        </Modal>
       </ScrollView>
     </SafeScreen>
   );

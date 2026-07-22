@@ -10,7 +10,7 @@ import { chatApi } from './chat.api';
 import { chatSocket } from './chat.socket';
 import { useChatStore } from './chat.store';
 import type { PaginatedResponse } from '@/types/api.types';
-import type { ChatMessage, SendMessagePayload } from './types';
+import type { ChatMessage, Conversation, SendMessagePayload } from './types';
 
 const EMPTY_MESSAGES: ChatMessage[] = [];
 
@@ -108,6 +108,25 @@ export function useSendMessage() {
         queryKey: ['messages', variables.conversation_id],
       });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+export function useMarkConversationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (conversationId: number) => ENV.USE_MOCKS ? Promise.resolve() : chatApi.markRead(conversationId),
+    onMutate: async (conversationId) => {
+      await queryClient.cancelQueries({ queryKey: ['conversations'] });
+      const previous = queryClient.getQueryData<PaginatedResponse<Conversation>>(['conversations']);
+      queryClient.setQueryData<PaginatedResponse<Conversation>>(['conversations'], (current) => current ? ({
+        ...current,
+        data: current.data.map((conversation) => conversation.id === conversationId ? { ...conversation, unread_count: 0 } : conversation),
+      }) : current);
+      return { previous };
+    },
+    onError: (_error, _conversationId, context) => {
+      if (context?.previous) queryClient.setQueryData(['conversations'], context.previous);
     },
   });
 }

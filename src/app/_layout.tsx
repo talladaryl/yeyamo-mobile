@@ -165,6 +165,10 @@ function RootNavigator() {
           options={{ headerShown: false, animation: 'slide_from_right' }}
         />
         <Stack.Screen
+          name="(chat)/tools/[section]"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
           name="(story)/[id]"
           options={{ presentation: 'fullScreenModal', animation: 'fade' }}
         />

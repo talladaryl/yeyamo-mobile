@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';

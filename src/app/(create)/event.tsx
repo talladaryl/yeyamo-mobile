@@ -109,10 +109,7 @@ export default function CreateEventScreen() {
               placeholder="Ex: Randonnée au Mont Cameroun"
               placeholderTextColor="#A1A1AA"
               value={title}
-              onChangeText={(value) => {
-                setTitle(value);
-                setEventForm({ title: value });
-              }}
+              onChangeText={setTitle}
               maxLength={100}
             />
           </View>
@@ -125,10 +122,7 @@ export default function CreateEventScreen() {
               placeholder="Décrivez votre sortie..."
               placeholderTextColor="#A1A1AA"
               value={description}
-              onChangeText={(value) => {
-                setDescription(value);
-                setEventForm({ description: value });
-              }}
+              onChangeText={setDescription}
               multiline
               maxLength={500}
               style={{ minHeight: 100, textAlignVertical: 'top' }}
@@ -146,10 +140,7 @@ export default function CreateEventScreen() {
                 placeholder="Lieu"
                 placeholderTextColor="#A1A1AA"
                 value={location}
-                onChangeText={(value) => {
-                  setLocation(value);
-                  setEventForm({ location: value });
-                }}
+                onChangeText={setLocation}
               />
             </View>
           </View>
@@ -162,10 +153,7 @@ export default function CreateEventScreen() {
                 placeholder="JJ/MM/AAAA"
                 placeholderTextColor="#A1A1AA"
                 value={date}
-                onChangeText={(value) => {
-                  setDate(value);
-                  setEventForm({ date: value });
-                }}
+                onChangeText={setDate}
               />
             </View>
 
@@ -176,10 +164,7 @@ export default function CreateEventScreen() {
                 placeholder="HH:MM"
                 placeholderTextColor="#A1A1AA"
                 value={time}
-                onChangeText={(value) => {
-                  setTime(value);
-                  setEventForm({ time: value });
-                }}
+                onChangeText={setTime}
               />
             </View>
           </View>
@@ -194,10 +179,7 @@ export default function CreateEventScreen() {
               placeholder="20"
               placeholderTextColor="#A1A1AA"
               value={maxParticipants}
-              onChangeText={(value) => {
-                setMaxParticipants(value);
-                setEventForm({ max_participants: parseInt(value, 10) || 0 });
-              }}
+              onChangeText={setMaxParticipants}
               keyboardType="number-pad"
             />
           </View>

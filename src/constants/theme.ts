@@ -26,15 +26,15 @@ export type ResolvedTheme = 'light' | 'dark';
 export const themeColors = {
   light: {
     primary: '#EF4444',
-    background: '#FFFFFF',
-    surface: '#F7F7F8',
-    card: '#FFFFFF',
-    elevated: '#F1F1F2',
+    background: '#F3F4F6',
+    surface: '#ECEEF1',
+    card: '#FAFAFB',
+    elevated: '#E7E9ED',
     text: '#18181B',
     textSecondary: '#52525B',
     textMuted: '#71717A',
-    border: '#E4E4E7',
-    tabBar: '#FFFFFF',
+    border: '#D8DBE1',
+    tabBar: '#FAFAFB',
   },
   dark: {
     primary: '#EF4444',

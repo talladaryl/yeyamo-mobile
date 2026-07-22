@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import ENV from '@/config/env';
 import { MOCK_FEED_PAGE } from '@/features/mock/mockData';
 import { feedApi } from './feed.api';
@@ -9,15 +9,15 @@ import { useInterestsStore } from '@/features/interests/interests.store';
 
 export const FEED_QUERY_KEY = ['feed'] as const;
 
-export function useFeed() {
+export function useFeed(regionId?: number) {
   const selectedInterestIds = useInterestsStore((state) => state.selectedInterestIds);
 
   return useInfiniteQuery({
-    queryKey: [...FEED_QUERY_KEY, selectedInterestIds.join(',')],
+    queryKey: [...FEED_QUERY_KEY, selectedInterestIds.join(','), regionId ?? 'all'],
     queryFn: ({ pageParam }) =>
       ENV.USE_MOCKS
-        ? Promise.resolve(personalizeMockFeed(selectedInterestIds))
-        : feedApi.getFeed(pageParam as string | undefined, selectedInterestIds),
+        ? Promise.resolve(personalizeMockFeed(selectedInterestIds, regionId))
+        : feedApi.getFeed(pageParam as string | undefined, selectedInterestIds, regionId),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage: PaginatedResponse<FeedPost>) =>
       lastPage.links.next ? lastPage.meta.current_page.toString() : undefined,
@@ -30,15 +30,18 @@ const MOCK_POST_INTERESTS: Record<number, string[]> = {
   103: ['culture', 'art', 'mode', 'histoire'],
 };
 
-function personalizeMockFeed(selectedInterestIds: string[]): PaginatedResponse<FeedPost> {
-  if (!selectedInterestIds.length) return MOCK_FEED_PAGE;
+function personalizeMockFeed(selectedInterestIds: string[], regionId?: number): PaginatedResponse<FeedPost> {
+  const regionalPosts = regionId
+    ? MOCK_FEED_PAGE.data.filter((post) => post.place_tag?.region_id === regionId)
+    : MOCK_FEED_PAGE.data;
 
   const score = (post: FeedPost) =>
     (MOCK_POST_INTERESTS[post.id] ?? []).filter((interest) => selectedInterestIds.includes(interest)).length;
 
   return {
     ...MOCK_FEED_PAGE,
-    data: [...MOCK_FEED_PAGE.data].sort((left, right) => score(right) - score(left)),
+    data: [...regionalPosts].sort((left, right) => score(right) - score(left)),
+    meta: { ...MOCK_FEED_PAGE.meta, total: regionalPosts.length },
   };
 }
 
@@ -52,11 +55,11 @@ export function useLikePost() {
     // Optimistic update
     onMutate: async ({ postId, isLiked }) => {
       await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
-      const previous = queryClient.getQueryData(FEED_QUERY_KEY);
+      const previous = queryClient.getQueriesData<InfiniteData<PaginatedResponse<FeedPost>>>({ queryKey: FEED_QUERY_KEY });
 
-      queryClient.setQueryData(
-        FEED_QUERY_KEY,
-        (old: { pages: PaginatedResponse<FeedPost>[] } | undefined) => {
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<FeedPost>>>(
+        { queryKey: FEED_QUERY_KEY },
+        (old) => {
           if (!old) return old;
           return {
             ...old,
@@ -80,9 +83,7 @@ export function useLikePost() {
     },
 
     onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(FEED_QUERY_KEY, context.previous);
-      }
+      context?.previous.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
     },
   });
 }

@@ -1,7 +1,10 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useAuth } from '@/features/auth/useAuth';
+import { useConversations } from '@/features/chat/useChat';
+import { useUnreadCount } from '@/features/notifications/useNotifications';
 
 type TabIconKind = 'feed' | 'explore' | 'create' | 'chats' | 'profile';
 
@@ -69,6 +72,12 @@ function TabIcon({
 
 export default function TabsLayout() {
   const { colors } = useThemeStore();
+  const router = useRouter();
+  const { user } = useAuth();
+  const { data: conversations = [] } = useConversations();
+  const { data: unreadNotifications = 0 } = useUnreadCount();
+  const unreadMessages = conversations.reduce((total, conversation) => total + conversation.unread_count, 0);
+  const badgeStyle = { backgroundColor: '#EF4444', color: '#FFFFFF', fontSize: 10 };
 
   return (
     <Tabs
@@ -108,6 +117,12 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="create"
+        listeners={{
+          tabPress: (event) => {
+            event.preventDefault();
+            router.push(user?.user_type === 'partner' ? '/(partner)/choice' : '/(create)/choice');
+          },
+        }}
         options={{
           title: 'Create',
           tabBarIcon: ({ focused }) => <TabIcon kind="create" focused={focused} inactiveColor={colors.textMuted} surfaceColor={colors.tabBar} />,
@@ -120,6 +135,8 @@ export default function TabsLayout() {
           title: 'Chats',
           tabBarIcon: ({ focused }) => <TabIcon kind="chats" focused={focused} inactiveColor={colors.textMuted} surfaceColor={colors.tabBar} />,
           tabBarAccessibilityLabel: 'Chats',
+          tabBarBadge: unreadMessages > 0 ? (unreadMessages > 99 ? '99+' : unreadMessages) : undefined,
+          tabBarBadgeStyle: badgeStyle,
         }}
       />
       <Tabs.Screen
@@ -128,6 +145,8 @@ export default function TabsLayout() {
           title: 'Profile',
           tabBarIcon: ({ focused }) => <TabIcon kind="profile" focused={focused} inactiveColor={colors.textMuted} surfaceColor={colors.tabBar} />,
           tabBarAccessibilityLabel: 'My profile',
+          tabBarBadge: unreadNotifications > 0 ? (unreadNotifications > 99 ? '99+' : unreadNotifications) : undefined,
+          tabBarBadgeStyle: badgeStyle,
         }}
       />
     </Tabs>

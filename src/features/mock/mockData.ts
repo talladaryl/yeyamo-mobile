@@ -59,7 +59,7 @@ export const MOCK_FEED_POSTS: FeedPost[] = [
     shares_count: 91,
     is_liked: false,
     is_saved: false,
-    place_tag: { id: 101, name: 'Kribi Beach' },
+    place_tag: { id: 101, name: 'Kribi Beach', region_id: 9 },
     created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
   },
   {
@@ -90,7 +90,7 @@ export const MOCK_FEED_POSTS: FeedPost[] = [
     shares_count: 33,
     is_liked: true,
     is_saved: true,
-    place_tag: { id: 102, name: 'Bonapriso' },
+    place_tag: { id: 102, name: 'Bonapriso', region_id: 5 },
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
   },
   {
@@ -121,7 +121,7 @@ export const MOCK_FEED_POSTS: FeedPost[] = [
     shares_count: 146,
     is_liked: false,
     is_saved: false,
-    place_tag: { id: 103, name: 'Marche artisanal' },
+    place_tag: { id: 103, name: 'Marche artisanal', region_id: 8 },
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 7).toISOString(),
   },
 ];

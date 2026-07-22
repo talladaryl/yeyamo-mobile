@@ -11,7 +11,7 @@ export interface FeedPost {
   shares_count: number;
   is_liked: boolean;
   is_saved: boolean;
-  place_tag: { id: number; name: string; location?: string } | null;
+  place_tag: { id: number; name: string; location?: string; region_id?: number } | null;
   comments?: PostComment[];
   created_at: string;
 }

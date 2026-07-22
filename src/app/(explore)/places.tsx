@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { PlaceListItem } from '@/components/explore/PlaceListItem';

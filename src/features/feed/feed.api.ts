@@ -3,10 +3,11 @@ import type { PaginatedResponse } from '@/types/api.types';
 import type { FeedPost } from './types';
 
 export const feedApi = {
-  getFeed: (cursor?: string, interests: string[] = []) => {
+  getFeed: (cursor?: string, interests: string[] = [], regionId?: number) => {
     const params = [
       cursor ? `cursor=${encodeURIComponent(cursor)}` : null,
       interests.length ? `interests=${encodeURIComponent(interests.join(','))}` : null,
+      regionId ? `region_id=${regionId}` : null,
     ].filter(Boolean);
 
     return (

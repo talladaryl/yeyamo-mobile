@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -14,9 +14,10 @@ import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
 import { ConversationAvatar } from '@/components/chat/ConversationAvatar';
 import { MessageBubble } from '@/components/chat/MessageBubble';
-import { useChatMessages, useConversations, useSendMessage } from '@/features/chat/useChat';
+import { useChatMessages, useConversations, useMarkConversationRead, useSendMessage } from '@/features/chat/useChat';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useChatStore, type ChatWallpaper } from '@/features/chat/chat.store';
 import type { ChatMessage } from '@/features/chat/types';
 
 export default function ChatScreen() {
@@ -27,11 +28,25 @@ export default function ChatScreen() {
   const conversationId = Number(id);
   const [draft, setDraft] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
+  const wallpaper = useChatStore((state) => state.preferences[conversationId]?.wallpaper ?? 'default');
+  const wallpaperColors: Record<ChatWallpaper, string> = {
+    default: colors.background,
+    sand: '#FFF4DD',
+    ocean: '#DDF3FA',
+    forest: '#E3F1E5',
+    rose: '#FCE7EC',
+    midnight: '#161C2B',
+  };
 
   const { data: conversations = [], isLoading: isConversationLoading } = useConversations();
   const conversation = conversations.find((item) => item.id === conversationId);
   const { query, realtimeMessages } = useChatMessages(conversationId);
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
+  const { mutate: markRead } = useMarkConversationRead();
+
+  useEffect(() => {
+    markRead(conversationId);
+  }, [conversationId, markRead]);
 
   const messages = useMemo<ChatMessage[]>(() => {
     const pagedMessages = query.data?.pages.flatMap((page) => page.data) ?? [];
@@ -99,8 +114,11 @@ export default function ChatScreen() {
             <Text className="mt-0.5 text-[11px]" style={{ color: colors.textSecondary }} numberOfLines={1}>{subtitle}</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity className="h-10 w-10 items-center justify-center" accessibilityLabel="Appeler">
+        <TouchableOpacity onPress={() => router.push({ pathname: '/(chat)/tools/[section]', params: { section: 'audio', id: String(conversationId) } })} className="h-10 w-10 items-center justify-center" accessibilityLabel="Appeler">
           <Icon name="call-outline" size={21} color={colors.text} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push({ pathname: '/(chat)/tools/[section]', params: { section: 'video', id: String(conversationId) } })} className="h-10 w-10 items-center justify-center" accessibilityLabel="Appel vidéo">
+          <Icon name="videocam-outline" size={22} color={colors.text} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => router.push(`/(chat)/info/${conversationId}`)}
@@ -113,6 +131,7 @@ export default function ChatScreen() {
 
       <KeyboardAvoidingView
         className="flex-1"
+        style={{ backgroundColor: wallpaperColors[wallpaper] }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >

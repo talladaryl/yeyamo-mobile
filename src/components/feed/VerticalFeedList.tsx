@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import type { FeedPost } from '@/features/feed/types';
 import type { ViewToken } from 'react-native';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { socialApi } from '@/features/social/social.api';
+import ENV from '@/config/env';
 
 type VerticalFeedListProps = {
   posts: FeedPost[];
@@ -16,7 +18,11 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [savedPostIds, setSavedPostIds] = useState<Set<number>>(new Set());
+  const [itemHeight, setItemHeight] = useState(0);
+  const [savedPostIds, setSavedPostIds] = useState<Set<number>>(
+    () => new Set(posts.filter((post) => post.is_saved).map((post) => post.id)),
+  );
+  const [followedAuthorIds, setFollowedAuthorIds] = useState<Set<number>>(new Set());
   const { mutate: toggleLike } = useLikePost();
 
   const onViewableItemsChanged = useCallback(
@@ -32,15 +38,47 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
     itemVisiblePercentThreshold: 50,
   }).current;
 
+  const handleFollow = async (authorId: number) => {
+    const wasFollowing = followedAuthorIds.has(authorId);
+    setFollowedAuthorIds((current) => {
+      const next = new Set(current);
+      if (wasFollowing) next.delete(authorId);
+      else next.add(authorId);
+      return next;
+    });
+
+    if (ENV.USE_MOCKS) return;
+
+    try {
+      await (wasFollowing ? socialApi.unfollowUser(authorId) : socialApi.followUser(authorId));
+    } catch {
+      setFollowedAuthorIds((current) => {
+        const next = new Set(current);
+        if (wasFollowing) next.add(authorId);
+        else next.delete(authorId);
+        return next;
+      });
+      Alert.alert('Action impossible', 'Votre abonnement n’a pas pu être mis à jour.');
+    }
+  };
+
   return (
-    <FlatList
+    <View
+      className="flex-1"
+      onLayout={(event) => setItemHeight(Math.round(event.nativeEvent.layout.height))}
+    >
+    {itemHeight > 0 ? <FlatList
       style={{ flex: 1 }}
       data={posts}
       keyExtractor={(item) => String(item.id)}
       renderItem={({ item, index }) => (
         <VerticalFeedItem
           post={item}
+          height={itemHeight}
           isActive={index === activeIndex}
+          isFollowing={followedAuthorIds.has(item.author.id)}
+          isSaved={savedPostIds.has(item.id)}
+          onFollow={() => void handleFollow(item.author.id)}
           onLike={() => toggleLike({ postId: item.id, isLiked: item.is_liked })}
           onComment={() => router.push(`/(post)/${item.id}/comments`)}
           onShare={async () => {
@@ -73,12 +111,16 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
         />
       )}
       pagingEnabled
+      snapToInterval={itemHeight}
+      snapToAlignment="start"
+      disableIntervalMomentum
       decelerationRate="fast"
       showsVerticalScrollIndicator={false}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}
+      getItemLayout={(_data, index) => ({ length: itemHeight, offset: itemHeight * index, index })}
       removeClippedSubviews={false}
       initialNumToRender={2}
       maxToRenderPerBatch={3}
@@ -93,6 +135,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
           </Text>
         </View>
       }
-    />
+    /> : null}
+    </View>
   );
 }

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { memo, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import { Icon } from '@/components/ui/Icon';
@@ -7,9 +7,28 @@ import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { useCreateStore } from '@/features/create/create.store';
 
+const StableMapPreview = memo(function StableMapPreview() {
+  return (
+    <View className="rounded-2xl overflow-hidden" style={{ height: 180 }}>
+      <MapView
+        style={{ flex: 1 }}
+        initialRegion={{ latitude: 4.0511, longitude: 9.7679, latitudeDelta: 0.1, longitudeDelta: 0.1 }}
+        scrollEnabled={false}
+        zoomEnabled={false}
+        pitchEnabled={false}
+        rotateEnabled={false}
+      >
+        <Marker coordinate={{ latitude: 4.0511, longitude: 9.7679 }} pinColor="#EF4444" />
+      </MapView>
+    </View>
+  );
+});
+
 export default function SuggestPlaceStep1Screen() {
   const router = useRouter();
-  const { placeForm, setPlaceForm, setPlaceStep } = useCreateStore();
+  const placeForm = useCreateStore((state) => state.placeForm);
+  const setPlaceForm = useCreateStore((state) => state.setPlaceForm);
+  const setPlaceStep = useCreateStore((state) => state.setPlaceStep);
   
   const [name, setName] = useState(placeForm.name || '');
   const [address, setAddress] = useState(placeForm.address || '');
@@ -18,6 +37,7 @@ export default function SuggestPlaceStep1Screen() {
   const [type, setType] = useState(placeForm.type || 'Événementiel');
   const [description, setDescription] = useState(placeForm.description || '');
   const [region, setRegion] = useState(placeForm.region || 'Littoral');
+  const regions = ['Adamaoua', 'Centre', 'Est', 'Extrême-Nord', 'Littoral', 'Nord', 'Nord-Ouest', 'Ouest', 'Sud', 'Sud-Ouest'];
   const categories = ['Nature', 'Restaurant', 'Hôtel', 'Culture', 'Loisir'];
   const placeTypes = ['Événementiel', 'Naturel', 'Commercial', 'Public'];
 
@@ -52,7 +72,8 @@ export default function SuggestPlaceStep1Screen() {
         }}
       />
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}>
         {/* Stepper */}
         <View className="px-4 pt-4">
           <Stepper currentStep={1} totalSteps={5} />
@@ -60,24 +81,7 @@ export default function SuggestPlaceStep1Screen() {
 
         {/* Map Preview */}
         <View className="px-4 mb-4">
-          <View className="rounded-2xl overflow-hidden" style={{ height: 180 }}>
-            <MapView
-              style={{ flex: 1 }}
-              initialRegion={{
-                latitude: 4.0511,
-                longitude: 9.7679,
-                latitudeDelta: 0.1,
-                longitudeDelta: 0.1,
-              }}
-              scrollEnabled={false}
-              zoomEnabled={false}
-            >
-              <Marker
-                coordinate={{ latitude: 4.0511, longitude: 9.7679 }}
-                pinColor="#EF4444"
-              />
-            </MapView>
-          </View>
+          <StableMapPreview />
         </View>
 
         <View className="px-4 pb-6">
@@ -183,6 +187,7 @@ export default function SuggestPlaceStep1Screen() {
               Région <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TouchableOpacity
+              onPress={() => setRegion(regions[(regions.indexOf(region) + 1) % regions.length])}
               className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#E4E4E7] dark:border-[#27272A]"
               activeOpacity={0.7}
             >
@@ -204,6 +209,7 @@ export default function SuggestPlaceStep1Screen() {
           disabled={!name || !address || !category || !type || !description}
         />
       </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
