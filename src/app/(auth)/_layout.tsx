@@ -13,6 +13,7 @@ export default function AuthLayout() {
       <Stack.Screen name="register-partner-multistep" />
       <Stack.Screen name="forgot-password" />
       <Stack.Screen name="verify-code" />
+      <Stack.Screen name="reset-password" />
     </Stack>
   );
 }

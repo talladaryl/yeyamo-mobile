@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Image } from 'expo-image';
 import { Icon } from '@/components/ui/Icon';
-import { mapPlaces, CAMEROON_CENTER } from '@/features/explore/mockData';
+import { CAMEROON_CENTER } from '@/features/explore/mockData';
 import type { MapPlace } from '@/features/explore/types';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { usePlaces } from '@/features/places/usePlaces';
 
 const { height } = Dimensions.get('window');
 
@@ -15,6 +16,23 @@ export default function MapScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
+  const { data } = usePlaces({
+    lat: CAMEROON_CENTER.latitude,
+    lng: CAMEROON_CENTER.longitude,
+    radius_km: 1_000,
+  });
+  const mapPlaces = useMemo<MapPlace[]>(() =>
+    (data?.pages.flatMap((page) => page.data) ?? [])
+      .filter((place) => Number.isFinite(place.lat) && Number.isFinite(place.lng))
+      .map((place) => ({
+        id: place.id,
+        name: place.name,
+        coordinates: { latitude: place.lat, longitude: place.lng },
+        rating: place.rating ?? 0,
+        image_url: place.cover_image_url ?? '',
+        category: place.category,
+      })),
+  [data]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>

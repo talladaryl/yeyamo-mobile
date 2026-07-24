@@ -13,19 +13,44 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
-import { AVAILABLE_INTERESTS, REGIONS } from '@/features/settings/types';
+import { AVAILABLE_INTERESTS, REGIONS, type ProfileSettings } from '@/features/settings/types';
 import { InterestTag } from '@/components/settings/InterestTag';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useProfileSettings, useUpdateProfileSettings } from '@/features/settings/useSettings';
+import { useUploadMedia } from '@/features/post/usePost';
+import { useInterestsStore } from '@/features/interests/interests.store';
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const [settings, setSettings] = useState(MOCK_USER_SETTINGS.profile);
+  const { data } = useProfileSettings();
+  const updateProfile = useUpdateProfileSettings();
+  const uploadMedia = useUploadMedia();
+  const [settings, setSettings] = useState<ProfileSettings | null>(null);
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (data) setSettings(data);
+  }, [data]);
+
+  if (!settings) return null;
+
+  const handleSave = async () => {
+    let avatarUrl = settings.avatar_url;
+    if (avatarUrl?.startsWith('file:') || avatarUrl?.startsWith('content:')) {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: avatarUrl,
+        name: 'avatar.jpg',
+        type: 'image/jpeg',
+      } as unknown as Blob);
+      avatarUrl = (await uploadMedia.mutateAsync(formData)).data.url;
+    }
+    await updateProfile.mutateAsync({ ...settings, avatar_url: avatarUrl });
+    const interests = useInterestsStore.getState();
+    interests.setSelectedInterests(settings.interests);
+    await interests.saveInterests();
     Alert.alert('Succès', 'Votre profil a été mis à jour');
     router.back();
   };

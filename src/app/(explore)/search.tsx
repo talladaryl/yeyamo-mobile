@@ -6,7 +6,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
 import { FilterBottomSheet, FilterBottomSheetHandle } from '@/components/explore/FilterBottomSheet';
 import { TrendingPlaceCard } from '@/components/explore/TrendingPlaceCard';
-import { trendingPlaces } from '@/features/explore/mockData';
+import { useTrendingPlaces } from '@/features/explore/useExplore';
 import type { SearchFilters } from '@/features/explore/types';
 import { useThemeStore } from '@/features/theme/theme.store';
 
@@ -14,6 +14,7 @@ export default function SearchScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const filterSheetRef = useRef<FilterBottomSheetHandle>(null);
+  const { data: trendingPlaces = [] } = useTrendingPlaces();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<SearchFilters>({
@@ -27,7 +28,6 @@ export default function SearchScreen() {
     sort_by: 'popular',
   });
 
-  // Mock filtered results
   const filteredPlaces = trendingPlaces.filter(place => 
     place.name.toLowerCase().includes(searchQuery.toLowerCase())
   );

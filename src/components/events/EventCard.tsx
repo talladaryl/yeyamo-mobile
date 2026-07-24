@@ -2,9 +2,10 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Icon } from '@/components/ui/Icon';
 import { useThemeStore } from '@/features/theme/theme.store';
+import type { EntityId } from '@/types/api.types';
 
 interface EventCardProps {
-  id: number;
+  id: EntityId;
   title: string;
   date: string;
   location: string;

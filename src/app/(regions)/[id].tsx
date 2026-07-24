@@ -6,14 +6,27 @@ import { Icon } from '@/components/ui/Icon';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { TrendingPlaceCard } from '@/components/explore/TrendingPlaceCard';
 import { EventCard } from '@/components/explore/EventCard';
-import { regions, trendingPlaces, upcomingEvents } from '@/features/explore/mockData';
+import { useRegions, useTrendingPlaces } from '@/features/explore/useExplore';
+import { useUpcomingEvents } from '@/features/events/useEvents';
 
 export default function RegionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { data: regions = [] } = useRegions();
+  const { data: trendingPlaces = [] } = useTrendingPlaces();
+  const { data: backendEvents = [] } = useUpcomingEvents();
+  const upcomingEvents = backendEvents.map((event) => ({
+    id: event.id,
+    title: event.title,
+    date_start: event.start_date,
+    date_end: event.end_date,
+    location: event.location,
+    image_url: event.cover_image_url ?? '',
+    attendees_count: event.participants_count,
+  }));
 
-  // Find region (mock)
   const region = regions.find(r => r.id === Number(id)) || regions[0];
+  if (!region) return null;
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0A0A0A]">

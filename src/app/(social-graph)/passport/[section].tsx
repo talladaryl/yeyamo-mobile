@@ -9,6 +9,7 @@ import { MOCK_PASSPORT } from '@/features/social-graph/passport.mockData';
 import { usePassportStore } from '@/features/social-graph/passport.store';
 import type { MissionType, PassportSection } from '@/features/social-graph/passport.types';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 const META: Record<PassportSection, { title: string; subtitle: string }> = {
   titles: { title: 'Titres de voyageur', subtitle: 'Votre identité évolue avec vos aventures' },
@@ -24,6 +25,10 @@ export default function PassportSectionScreen() {
   const { section } = useLocalSearchParams<{ section: string }>();
   const key = (section && section in META ? section : 'statistics') as PassportSection;
   const meta = META[key];
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  if (!isDemo) {
+    return <PassportPage title={meta.title} subtitle={meta.subtitle}><Text className="text-center">Cette vue détaillée n’est pas exposée par le contrat backend actuel.</Text></PassportPage>;
+  }
   return <PassportPage title={meta.title} subtitle={meta.subtitle}>{key === 'titles' ? <Titles /> : key === 'statistics' ? <Statistics /> : key === 'timeline' ? <Timeline /> : key === 'missions' ? <Missions /> : key === 'collections' ? <Collections /> : key === 'leaderboard' ? <Leaderboard /> : <Rewards />}</PassportPage>;
 }
 

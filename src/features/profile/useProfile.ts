@@ -1,6 +1,6 @@
 // Hooks personnalisés pour le profil utilisateur
 import { useQuery } from '@tanstack/react-query';
-import ENV from '@/config/env';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { profileApi } from './profile.api';
 import { MOCK_USER_PUBLICATIONS, MOCK_USER_FAVORITES, MOCK_USER_EVENTS, MOCK_USER_RESERVATIONS, MOCK_USER_REVIEWS } from './mockData';
 
@@ -8,12 +8,13 @@ import { MOCK_USER_PUBLICATIONS, MOCK_USER_FAVORITES, MOCK_USER_EVENTS, MOCK_USE
  * Hook pour récupérer les publications de l'utilisateur
  */
 export function useUserPublications() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['profile', 'publications'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'publications'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_PUBLICATIONS) : profileApi.getUserPublications(),
+      isDemo ? Promise.resolve(MOCK_USER_PUBLICATIONS) : profileApi.getUserPublications(),
     staleTime: 1000 * 60 * 5,
-    placeholderData: MOCK_USER_PUBLICATIONS,
+    placeholderData: isDemo ? MOCK_USER_PUBLICATIONS : undefined,
   });
 }
 
@@ -21,12 +22,13 @@ export function useUserPublications() {
  * Hook pour récupérer les lieux favoris de l'utilisateur
  */
 export function useUserFavorites() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['profile', 'favorites'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'favorites'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_FAVORITES) : profileApi.getUserFavorites(),
+      isDemo ? Promise.resolve(MOCK_USER_FAVORITES) : profileApi.getUserFavorites(),
     staleTime: 1000 * 60 * 5,
-    placeholderData: MOCK_USER_FAVORITES,
+    placeholderData: isDemo ? MOCK_USER_FAVORITES : undefined,
   });
 }
 
@@ -34,12 +36,13 @@ export function useUserFavorites() {
  * Hook pour récupérer les événements de l'utilisateur
  */
 export function useUserEvents() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['profile', 'events'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'events'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_EVENTS) : profileApi.getUserEvents(),
+      isDemo ? Promise.resolve(MOCK_USER_EVENTS) : profileApi.getUserEvents(),
     staleTime: 1000 * 60 * 5,
-    placeholderData: MOCK_USER_EVENTS,
+    placeholderData: isDemo ? MOCK_USER_EVENTS : undefined,
   });
 }
 
@@ -47,12 +50,13 @@ export function useUserEvents() {
  * Hook pour récupérer les réservations de l'utilisateur
  */
 export function useUserReservations() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['profile', 'reservations'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'reservations'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_RESERVATIONS) : profileApi.getUserReservations(),
+      isDemo ? Promise.resolve(MOCK_USER_RESERVATIONS) : profileApi.getUserReservations(),
     staleTime: 1000 * 60 * 5,
-    placeholderData: MOCK_USER_RESERVATIONS,
+    placeholderData: isDemo ? MOCK_USER_RESERVATIONS : undefined,
   });
 }
 
@@ -60,12 +64,13 @@ export function useUserReservations() {
  * Hook pour récupérer les avis de l'utilisateur
  */
 export function useUserReviews() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['profile', 'reviews'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'reviews'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_REVIEWS) : profileApi.getUserReviews(),
+      isDemo ? Promise.resolve(MOCK_USER_REVIEWS) : profileApi.getUserReviews(),
     staleTime: 1000 * 60 * 5,
-    placeholderData: MOCK_USER_REVIEWS,
+    placeholderData: isDemo ? MOCK_USER_REVIEWS : undefined,
   });
 }
 
@@ -73,10 +78,11 @@ export function useUserReviews() {
  * Hook pour récupérer les statistiques du profil
  */
 export function useProfileStats() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['profile', 'stats'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'stats'],
     queryFn: () =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve({
             publications_count: 128,
             followers_count: 2300,
@@ -84,10 +90,10 @@ export function useProfileStats() {
           })
         : profileApi.getProfileStats(),
     staleTime: 1000 * 60 * 2,
-    placeholderData: {
+    placeholderData: isDemo ? {
       publications_count: 128,
       followers_count: 2300,
       following_count: 340,
-    },
+    } : undefined,
   });
 }

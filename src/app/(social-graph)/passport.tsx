@@ -11,6 +11,8 @@ import { MOCK_PASSPORT } from '@/features/social-graph/passport.mockData';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { ScrollView } from 'react-native';
+import { useAuthStore } from '@/features/auth/auth.store';
+import { useUserBadges, useUserBadgeStats } from '@/features/social-graph/useBadges';
 
 const MODULES = [
   { label: 'Badges', icon: 'trophy', color: '#F59E0B', route: '/(social-graph)/badges' },
@@ -27,8 +29,34 @@ export default function PassportScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const colors = useThemeStore((state) => state.colors);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const { data: realStats } = useUserBadgeStats();
+  const { data: realBadges = [] } = useUserBadges();
   const data = MOCK_PASSPORT;
   if (!user) return null;
+
+  if (!isDemo) {
+    return (
+      <SafeScreen>
+        <View className="flex-row items-center px-4 pb-3 pt-2">
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/profile')} className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="chevron-back" size={22} color={colors.text} /></TouchableOpacity>
+          <Text className="ml-4 text-lg font-extrabold" style={{ color: colors.text }}>Passeport YeYamo</Text>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <View className="rounded-3xl p-5" style={{ backgroundColor: colors.card }}>
+            <Text className="text-3xl font-extrabold" style={{ color: colors.text }}>{realStats?.total_xp ?? 0} XP</Text>
+            <Text className="mt-2" style={{ color: colors.textSecondary }}>Niveau {realStats?.level ?? 0} · {realBadges.length} badges obtenus</Text>
+          </View>
+          {realBadges.map((badge) => (
+            <TouchableOpacity key={String(badge.id)} onPress={() => router.push(`/(social-graph)/badges/${badge.id}`)} className="mt-3 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              <Text className="font-bold" style={{ color: colors.text }}>{badge.name}</Text>
+              <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{badge.description}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </SafeScreen>
+    );
+  }
   const levelProgress = (data.currentLevelXP / data.nextLevelXP) * 100;
   const joined = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(user.created_at));
 

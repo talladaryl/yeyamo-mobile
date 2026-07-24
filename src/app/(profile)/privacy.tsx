@@ -7,10 +7,22 @@ import { useState } from 'react';
 import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
 import { ToggleItem } from '@/components/settings/ToggleItem';
 import { RadioItem } from '@/components/settings/RadioItem';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function PrivacyScreen() {
   const router = useRouter();
-  const [settings, setSettings] = useState(MOCK_USER_SETTINGS.privacy);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const [settings, setSettings] = useState(() => isDemo ? MOCK_USER_SETTINGS.privacy : {
+    account_visibility: 'public' as const,
+    show_online_status: false,
+    who_can_message: 'no_one' as const,
+    who_can_see_posts: 'everyone' as const,
+    who_can_tag_me: 'no_one' as const,
+    show_location_in_posts: false,
+    show_city_in_profile: false,
+    show_in_search: true,
+    show_in_suggestions: false,
+  });
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>

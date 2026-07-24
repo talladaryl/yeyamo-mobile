@@ -2,12 +2,15 @@
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { XPAction } from '@/features/social-graph/types';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 interface XPActionItemProps {
   action: XPAction;
 }
 
 export function XPActionItem({ action }: XPActionItemProps) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  if (!isDemo) return null;
   return (
     <View className="flex-row items-center py-4 border-b border-[#E4E4E7] dark:border-[#27272A]">
       {/* Icône */}

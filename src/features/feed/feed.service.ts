@@ -1,7 +1,8 @@
 import { feedApi } from './feed.api';
+import type { EntityId } from '@/types/api.types';
 
 export const feedService = {
-  async toggleLike(postId: number, isLiked: boolean): Promise<void> {
+  async toggleLike(postId: EntityId, isLiked: boolean): Promise<void> {
     if (isLiked) {
       await feedApi.unlikePost(postId);
     } else {
@@ -9,7 +10,7 @@ export const feedService = {
     }
   },
 
-  async toggleSave(postId: number, isSaved: boolean): Promise<void> {
+  async toggleSave(postId: EntityId, isSaved: boolean): Promise<void> {
     if (isSaved) {
       await feedApi.unsavePost(postId);
     } else {

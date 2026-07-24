@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { mockExperiences } from '@/features/experiences/mockData';
 import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 const { width } = Dimensions.get('window');
 
@@ -13,8 +14,21 @@ export default function ExperienceDetailScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [isSaved, setIsSaved] = useState(false);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   
-  const experience = mockExperiences.find(e => e.id === Number(id)) || mockExperiences[0];
+  const experience = isDemo
+    ? mockExperiences.find(e => e.id === Number(id)) || mockExperiences[0]
+    : undefined;
+
+  if (!experience) {
+    return (
+      <View className="flex-1 items-center justify-center px-8" style={{ backgroundColor: colors.background }}>
+        <Text className="text-center text-base" style={{ color: colors.text }}>
+          Le détail métier des expériences n’est pas encore exposé par une API compatible.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>

@@ -1,18 +1,52 @@
 import { apiPost, apiDelete } from '@/services/api/client';
+import { absoluteApiUrl } from '@/services/api/contracts';
+import type { EntityId } from '@/types/api.types';
 import type { CreatePostPayload, UploadedMedia } from './types';
 
+interface BackendMedia {
+  id: string;
+  type: 'IMAGE' | 'VIDEO';
+  contentUrl: string;
+}
+
+interface BackendPost {
+  id: string;
+}
+
 export const postApi = {
-  uploadMedia: (formData: FormData) =>
-    apiPost<{ data: UploadedMedia }>('/media/upload', formData, {
+  uploadMedia: async (formData: FormData): Promise<{ data: UploadedMedia }> => {
+    const media = await apiPost<BackendMedia>('/media', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+    });
+    return {
+      data: {
+        id: media.id,
+        url: absoluteApiUrl(media.contentUrl) ?? media.contentUrl,
+        type: media.type.toLowerCase() as UploadedMedia['type'],
+      },
+    };
+  },
 
-  createPost: (payload: CreatePostPayload) =>
-    apiPost<{ data: { id: number } }>('/posts', payload),
+  createPost: async (payload: CreatePostPayload): Promise<{ data: { id: EntityId } }> => {
+    const draft = await apiPost<BackendPost>('/posts', {
+      caption: payload.caption,
+      visibility: 'PUBLIC',
+      catalogAssetId: payload.place_id ?? null,
+      mediaIds: payload.media_ids,
+      hashtags: [],
+    });
+    const published = await apiPost<BackendPost>(`/posts/${draft.id}/publish`);
+    return { data: { id: published.id } };
+  },
 
-  createStory: (mediaId: number) =>
-    apiPost<{ data: { id: number } }>('/stories', { media_id: mediaId }),
+  createStory: async (mediaId: EntityId): Promise<{ data: { id: EntityId } }> => {
+    const story = await apiPost<{ id: string }>('/stories', {
+      mediaId,
+      durationSeconds: 15,
+    });
+    return { data: { id: story.id } };
+  },
 
-  deletePost: (postId: number) =>
+  deletePost: (postId: EntityId) =>
     apiDelete<void>(`/posts/${postId}`),
 };

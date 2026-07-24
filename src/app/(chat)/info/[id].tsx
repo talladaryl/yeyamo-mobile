@@ -56,11 +56,11 @@ export default function ChatInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const conversationId = Number(id);
+  const conversationId = id;
   const { data: conversations = [], isLoading } = useConversations();
   const [isMoreOpen, setMoreOpen] = useState(false);
   const preferences = useChatStore((state) => state.preferences[conversationId]);
-  const conversation = conversations.find((item) => item.id === conversationId);
+  const conversation = conversations.find((item) => String(item.id) === conversationId);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();

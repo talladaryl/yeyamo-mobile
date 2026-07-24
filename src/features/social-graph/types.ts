@@ -4,7 +4,7 @@ export type BadgeCategory = 'exploration' | 'culture' | 'gastronomy' | 'nature' 
 export type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
 
 export interface Badge {
-  id: number;
+  id: EntityId;
   name: string;
   slug: string;
   description: string;
@@ -58,3 +58,4 @@ export interface BadgeSummary {
   progress_percentage: number;
   is_unlocked: boolean;
 }
+import type { EntityId } from '@/types/api.types';

@@ -2,10 +2,11 @@
 import { View, Text, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { UserPublication } from '@/features/profile/types';
+import type { EntityId } from '@/types/api.types';
 
 interface PublicationGridProps {
   publications: UserPublication[];
-  onPressPublication: (id: number) => void;
+  onPressPublication: (id: EntityId) => void;
 }
 
 export function PublicationGrid({ publications, onPressPublication }: PublicationGridProps) {

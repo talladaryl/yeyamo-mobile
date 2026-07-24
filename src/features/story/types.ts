@@ -1,12 +1,12 @@
-import type { UserSummary, MediaAttachment } from '@/types/api.types';
+import type { EntityId, UserSummary, MediaAttachment } from '@/types/api.types';
 
 export interface Story {
-  id: number;
+  id: EntityId;
   author: UserSummary;
   media: MediaAttachment;
   text?: string;
   location_tag?: {
-    id: number;
+    id: EntityId;
     name: string;
     city: string;
   };
@@ -17,5 +17,5 @@ export interface Story {
 }
 
 export interface StoryViewPayload {
-  story_id: number;
+  story_id: EntityId;
 }

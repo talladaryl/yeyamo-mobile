@@ -1,5 +1,5 @@
 // Types pour le Social Graph
-import type { UserSummary } from '@/types/api.types';
+import type { EntityId, UserSummary } from '@/types/api.types';
 
 export interface SocialStats {
   followers_count: number;
@@ -49,11 +49,11 @@ export interface ActivityItem {
   user: UserSummary;
   target_user?: UserSummary;
   post?: {
-    id: number;
+    id: EntityId;
     thumbnail_url: string;
   };
   event?: {
-    id: number;
+    id: EntityId;
     title: string;
   };
   content?: string;

@@ -5,6 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { MediaGrid } from '@/components/profile/MediaGrid';
 import { Icon } from '@/components/ui/Icon';
+import { useAuthStore } from '@/features/auth/auth.store';
+import { useFollowActions, useUserSearch } from '@/features/social/useSocial';
+import { useCreateConversation } from '@/features/chat/useChat';
 
 // Mock data - replace with real API
 const mockProfile = {
@@ -39,10 +42,30 @@ export default function ProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'posts' | 'bookings'>('posts');
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const { data: users, isLoading } = useUserSearch(username ?? '');
+  const { follow, unfollow } = useFollowActions();
+  const createConversation = useCreateConversation();
 
-  const isLoading = false;
-  const profile = mockProfile;
-  const posts = mockPosts;
+  const result = users?.find((item) => item.username === username) ?? users?.[0];
+  const profile = isDemo ? mockProfile : result ? {
+    id: result.id,
+    username: result.username,
+    display_name: result.display_name,
+    avatar_url: result.avatar_url,
+    cover_url: null,
+    bio: result.bio ?? null,
+    city: null,
+    is_verified: result.is_verified,
+    is_partner: false,
+    followers_count: result.followers_count,
+    following_count: 0,
+    posts_count: 0,
+    is_following: result.is_following,
+    is_followed_by: false,
+    created_at: '',
+  } : null;
+  const posts = isDemo ? mockPosts : [];
 
   if (isLoading) {
     return (
@@ -50,6 +73,10 @@ export default function ProfileScreen() {
         <ActivityIndicator color="#EF4444" />
       </View>
     );
+  }
+
+  if (!profile) {
+    return <View className="flex-1 items-center justify-center"><Text>Profil introuvable</Text></View>;
   }
 
   return (
@@ -76,8 +103,11 @@ export default function ProfileScreen() {
       <ScrollView>
         <ProfileHeader
           profile={profile}
-          onFollowPress={() => console.log('Follow pressed')}
-          onMessagePress={() => console.log('Message pressed')}
+          onFollowPress={() => profile.is_following ? unfollow.mutate(profile.id) : follow.mutate(profile.id)}
+          onMessagePress={async () => {
+            const conversation = await createConversation.mutateAsync(profile.id);
+            router.push(`/(chat)/${conversation.data.id}`);
+          }}
         />
 
         {/* Tabs */}

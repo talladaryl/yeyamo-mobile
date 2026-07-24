@@ -3,11 +3,12 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { SuggestionCard } from '@/components/social/SuggestionCard';
-import { mockSuggestions } from '@/features/social/mockData';
+import { useFollowActions, useFriendSuggestions } from '@/features/social/useSocial';
 
 export default function FindFriendsScreen() {
   const router = useRouter();
-  const friendSuggestions = mockSuggestions;
+  const { data: friendSuggestions = [] } = useFriendSuggestions();
+  const { follow } = useFollowActions();
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
@@ -57,7 +58,7 @@ export default function FindFriendsScreen() {
           <SuggestionCard
             user={item}
             onPress={() => router.push(`/(profile)/${item.username}`)}
-            onFollowPress={() => console.log('Follow', item.username)}
+            onFollowPress={() => follow.mutate(item.id)}
             onDismiss={() => console.log('Dismiss', item.username)}
           />
         )}

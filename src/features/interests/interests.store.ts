@@ -7,6 +7,7 @@ type InterestState = {
   isHydrated: boolean;
   hydrate: () => Promise<void>;
   toggleInterest: (interestId: string) => void;
+  setSelectedInterests: (interestIds: string[]) => void;
   saveInterests: () => Promise<void>;
   reset: () => void;
 };
@@ -46,6 +47,10 @@ export const useInterestsStore = create<InterestState>((set, get) => ({
       ? state.selectedInterestIds.filter((id) => id !== interestId)
       : [...state.selectedInterestIds, interestId],
   })),
+
+  setSelectedInterests: (interestIds) => set({
+    selectedInterestIds: [...new Set(interestIds)],
+  }),
 
   saveInterests: async () => {
     const selectedInterestIds = get().selectedInterestIds;

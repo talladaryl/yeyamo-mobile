@@ -12,8 +12,6 @@ export function CollectionCard({ collection, onPress }: CollectionCardProps) {
   const visibilityIcon =
     collection.visibility === 'private'
       ? 'lock-closed'
-      : collection.visibility === 'friends'
-      ? 'people'
       : 'earth';
 
   return (

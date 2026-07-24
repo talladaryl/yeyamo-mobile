@@ -2,7 +2,9 @@ import * as SecureStore from 'expo-secure-store';
 
 const KEYS = {
   AUTH_TOKEN: 'yeyamo_auth_token',
+  REFRESH_TOKEN: 'yeyamo_refresh_token',
   USER_ID: 'yeyamo_user_id',
+  SESSION_MODE: 'yeyamo_session_mode',
   HAS_SEEN_ONBOARDING: 'yeyamo_has_seen_onboarding',
   INTERESTS: 'yeyamo_interests',
   HAS_SELECTED_INTERESTS: 'yeyamo_has_selected_interests',

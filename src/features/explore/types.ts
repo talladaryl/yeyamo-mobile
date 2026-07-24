@@ -9,17 +9,17 @@ export type ExploreCategory =
   | 'all';
 
 export interface Category {
-  id: ExploreCategory;
+  id: string;
   label: string;
   icon: string;
   iconLibrary: 'ionicons' | 'material' | 'material-community';
 }
 
 export interface TrendingPlace {
-  id: number;
+  id: EntityId;
   name: string;
   city: string;
-  region_id: number;
+  region_id: EntityId;
   rating: number;
   reviews_count: number;
   distance_km: number;
@@ -28,10 +28,10 @@ export interface TrendingPlace {
 }
 
 export interface Place {
-  id: number;
+  id: EntityId;
   name: string;
   category: {
-    id: number;
+    id: EntityId;
     name: string;
     icon?: string;
   };
@@ -80,7 +80,7 @@ export interface SearchFilters {
 }
 
 export interface MapPlace {
-  id: number;
+  id: EntityId;
   name: string;
   coordinates: {
     latitude: number;
@@ -92,7 +92,7 @@ export interface MapPlace {
 }
 
 export interface UpcomingEvent {
-  id: number;
+  id: EntityId;
   title: string;
   date_start: string;
   date_end: string;
@@ -100,3 +100,4 @@ export interface UpcomingEvent {
   image_url: string;
   attendees_count: number;
 }
+import type { EntityId } from '@/types/api.types';

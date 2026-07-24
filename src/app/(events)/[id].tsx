@@ -1,10 +1,10 @@
-import { Alert, View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { mockEvents } from '@/features/events/mockData';
 import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useEventDetail, useEventRegistration, useUpcomingEvents } from '@/features/events/useEvents';
 
 const { width } = Dimensions.get('window');
 
@@ -14,7 +14,17 @@ export default function EventDetailScreen() {
   const colors = useThemeStore((state) => state.colors);
   const [isSaved, setIsSaved] = useState(false);
   
-  const event = mockEvents.find(e => e.id === Number(id)) || mockEvents[0];
+  const { data: event, isLoading } = useEventDetail(id);
+  const { data: upcomingEvents = [] } = useUpcomingEvents();
+  const registration = useEventRegistration(id);
+
+  if (isLoading || !event) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -74,7 +84,7 @@ export default function EventDetailScreen() {
           
           {/* Location */}
           <TouchableOpacity 
-            onPress={() => router.push(`/(places)/1`)}
+            onPress={() => event.place_id && router.push(`/(places)/${event.place_id}`)}
             className="flex-row items-center gap-2 mb-3"
           >
             <Ionicons name="location-outline" size={18} color="#A1A1AA" />
@@ -122,7 +132,11 @@ export default function EventDetailScreen() {
                       {ticket.price.toLocaleString()} {event.currency}
                     </Text>
                   </View>
-                  <TouchableOpacity className="bg-[#EF4444] px-6 py-2.5 rounded-xl">
+                  <TouchableOpacity
+                    onPress={() => registration.mutate(event.is_participating)}
+                    disabled={registration.isPending}
+                    className="bg-[#EF4444] px-6 py-2.5 rounded-xl"
+                  >
                     <Text className="font-semibold text-white">Participer</Text>
                   </TouchableOpacity>
                 </View>
@@ -133,7 +147,11 @@ export default function EventDetailScreen() {
           {/* Action Buttons (if no tickets) */}
           {(!event.ticket_types || event.ticket_types.length === 0) && (
             <View className="flex-row gap-3 mb-5">
-              <TouchableOpacity className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
+              <TouchableOpacity
+                onPress={() => registration.mutate(event.is_participating)}
+                disabled={registration.isPending}
+                className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center"
+              >
                 <Text className="text-base font-semibold text-white">Participer</Text>
               </TouchableOpacity>
               <TouchableOpacity className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
@@ -198,8 +216,8 @@ export default function EventDetailScreen() {
             </View>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 px-4">
-              {mockEvents
-                .filter(e => e.id !== event.id)
+              {upcomingEvents
+                .filter(e => String(e.id) !== String(event.id))
                 .slice(0, 3)
                 .map((similarEvent) => (
                   <TouchableOpacity

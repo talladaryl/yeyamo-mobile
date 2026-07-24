@@ -51,6 +51,25 @@ export interface SocialLoginCredentials {
 }
 
 export interface AuthResponse {
-  token: string;
-  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+  tokenType: 'Bearer';
+  expiresIn: number;
+  user: AuthApiUser;
+}
+
+export interface AuthApiUser {
+  id: number;
+  email: string | null;
+  phone: string | null;
+  status: string;
+  roles: string[];
+  createdAt: string;
+  emailVerifiedAt: string | null;
+}
+
+export interface PasswordResetCredentials {
+  email: string;
+  code: string;
+  newPassword: string;
 }

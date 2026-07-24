@@ -2,10 +2,11 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { ConversationAvatar } from './ConversationAvatar';
 import type { Conversation } from '@/features/chat/types';
+import type { EntityId } from '@/types/api.types';
 
 interface PinnedChatsProps {
   conversations: Conversation[];
-  onPress: (id: number) => void;
+  onPress: (id: EntityId) => void;
 }
 
 export function PinnedChats({ conversations, onPress }: PinnedChatsProps) {

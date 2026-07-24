@@ -1,5 +1,6 @@
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { isAxiosError } from 'axios';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,7 +17,7 @@ import { useInterestsStore } from '@/features/interests/interests.store';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading, error } = useAuth();
+  const { login, loginDemo, isLoading, error } = useAuth();
   const colors = useThemeStore((state) => state.colors);
   const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -27,14 +28,22 @@ export default function LoginScreen() {
     try {
       await login(data);
       router.replace('/interests');
-    } catch {
-      // The request error is exposed by useAuth.
+    } catch (requestError: unknown) {
+      if (
+        isAxiosError<{ code?: string }>(requestError)
+        && requestError.response?.data?.code === 'EMAIL_NOT_VERIFIED'
+      ) {
+        router.push({
+          pathname: '/(auth)/verify-code',
+          params: { email: data.email.trim() },
+        });
+      }
     }
   };
 
   const demoLogin = async () => {
     try {
-      await login({ email: 'demo@yeyamo.com', password: 'password123' });
+      await loginDemo('user');
       router.replace('/interests');
     } catch {
       // The request error is exposed by useAuth.
@@ -48,7 +57,7 @@ export default function LoginScreen() {
         ['sorties', 'gastronomie', 'voyage'].forEach(interests.toggleInterest);
       }
       await useInterestsStore.getState().saveInterests();
-      await login({ email: 'partner.demo@yeyamo.com', password: 'partner-demo' });
+      await loginDemo('partner');
       router.replace('/(tabs)');
     } catch {
       // The request error is exposed by useAuth.

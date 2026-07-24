@@ -7,7 +7,8 @@ import type { FeedPost } from '@/features/feed/types';
 import type { ViewToken } from 'react-native';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { socialApi } from '@/features/social/social.api';
-import ENV from '@/config/env';
+import { useAuthStore } from '@/features/auth/auth.store';
+import type { EntityId } from '@/types/api.types';
 
 type VerticalFeedListProps = {
   posts: FeedPost[];
@@ -17,12 +18,13 @@ type VerticalFeedListProps = {
 export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps) {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [itemHeight, setItemHeight] = useState(0);
-  const [savedPostIds, setSavedPostIds] = useState<Set<number>>(
+  const [savedPostIds, setSavedPostIds] = useState<Set<EntityId>>(
     () => new Set(posts.filter((post) => post.is_saved).map((post) => post.id)),
   );
-  const [followedAuthorIds, setFollowedAuthorIds] = useState<Set<number>>(new Set());
+  const [followedAuthorIds, setFollowedAuthorIds] = useState<Set<EntityId>>(new Set());
   const { mutate: toggleLike } = useLikePost();
 
   const onViewableItemsChanged = useCallback(
@@ -38,7 +40,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
     itemVisiblePercentThreshold: 50,
   }).current;
 
-  const handleFollow = async (authorId: number) => {
+  const handleFollow = async (authorId: EntityId) => {
     const wasFollowing = followedAuthorIds.has(authorId);
     setFollowedAuthorIds((current) => {
       const next = new Set(current);
@@ -47,7 +49,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
       return next;
     });
 
-    if (ENV.USE_MOCKS) return;
+    if (isDemo) return;
 
     try {
       await (wasFollowing ? socialApi.unfollowUser(authorId) : socialApi.followUser(authorId));

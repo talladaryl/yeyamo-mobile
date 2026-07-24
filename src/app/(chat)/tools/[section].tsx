@@ -30,7 +30,7 @@ const TITLES: Record<string, string> = {
 
 export default function ChatToolScreen() {
   const { section, id } = useLocalSearchParams<{ section: string; id: string }>();
-  const conversationId = Number(id);
+  const conversationId = id;
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const preferences = useChatStore((state) => state.preferences[conversationId]);
@@ -41,14 +41,14 @@ export default function ChatToolScreen() {
   const [isMuted, setMuted] = useState(false);
   const [isSpeakerOn, setSpeakerOn] = useState(false);
   const [isCameraOn, setCameraOn] = useState(section === 'video');
-  const conversation = conversations.find((item) => item.id === conversationId);
+  const conversation = conversations.find((item) => String(item.id) === conversationId);
   const messages = useMemo(() => {
     const loaded = query.data?.pages.flatMap((page) => page.data) ?? [];
     return [...loaded, ...realtimeMessages].filter((message, index, all) => all.findIndex((item) => item.id === message.id) === index);
   }, [query.data, realtimeMessages]);
   const filtered = messages.filter((message) => message.body.toLocaleLowerCase('fr').includes(search.trim().toLocaleLowerCase('fr')));
   const media = messages.filter((message) => message.media_url || message.attachments.length > 0);
-  const pinned = messages.filter((message) => message.message_type === 'event' || message.id % 2 === 0).slice(0, 3);
+  const pinned = messages.filter((message, index) => message.message_type === 'event' || index % 2 === 0).slice(0, 3);
 
   const goBack = () => router.canGoBack() ? router.back() : router.replace(`/(chat)/info/${conversationId}`);
 

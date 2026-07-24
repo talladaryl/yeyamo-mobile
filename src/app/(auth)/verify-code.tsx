@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeScreen } from '@/components/ui/SafeScreen';
@@ -9,12 +9,17 @@ import { CodeInput } from '@/components/auth/CodeInput';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { authApi } from '@/features/auth/auth.api';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { verifyCodeSchema, type VerifyCodeForm } from '@/utils/validation';
 
 export default function VerifyCodeScreen() {
   const router = useRouter();
   const { verifyCode, isLoading, error } = useAuth();
   const colors = useThemeStore((state) => state.colors);
+  const params = useLocalSearchParams<{ email?: string }>();
+  const sessionEmail = useAuthStore((state) => state.user?.email);
+  const email = params.email || sessionEmail;
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
@@ -44,10 +49,7 @@ export default function VerifyCodeScreen() {
 
   const onSubmit = async (data: VerifyCodeForm) => {
     try {
-      // TODO: Implement verification API call
-      console.log('Verifying code:', data.code);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await verifyCode({ code: data.code, email });
       router.replace('/interests');
     } catch {
       // error displayed via useAuth state
@@ -58,8 +60,8 @@ export default function VerifyCodeScreen() {
     if (!canResend) return;
     
     try {
-      // TODO: Implement resend code API call
-      console.log('Resending code...');
+      if (!email) throw new Error('Adresse email absente');
+      await authApi.requestEmailVerification(email);
       setTimer(60);
       setCanResend(false);
       setValue('code', '');
@@ -101,12 +103,18 @@ export default function VerifyCodeScreen() {
             </Text>
             
             <Text className="text-center text-base leading-6" style={{ color: colors.textSecondary }}>
-              Nous avons envoyé un code de{'\n'}vérification à votre adresse e-mail{'\n'}ou numéro de téléphone.
+              Nous avons généré un code de vérification pour votre adresse e-mail.
             </Text>
             
-            <Text className="text-[#EF4444] text-base font-semibold mt-2">
-              +237 6XX XXX XX*
+            <Text className="text-[#EF4444] text-base font-semibold mt-2 text-center">
+              {email ?? 'Adresse e-mail indisponible'}
             </Text>
+
+            {__DEV__ && (
+              <Text className="mt-3 text-center text-xs" style={{ color: colors.textSecondary }}>
+                En local, récupérez le code dans les logs Docker de auth-service.
+              </Text>
+            )}
           </View>
 
           {/* Code Input */}
@@ -157,7 +165,7 @@ export default function VerifyCodeScreen() {
 
             <TouchableOpacity onPress={() => router.back()}>
               <Text className="text-sm" style={{ color: colors.textSecondary }}>
-                Modifier le numéro
+                Modifier l&apos;adresse e-mail
               </Text>
             </TouchableOpacity>
           </View>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeScreen } from '@/components/ui/SafeScreen';
@@ -27,11 +27,8 @@ export default function ForgotPasswordScreen() {
 
   const onSubmit = async (data: ForgotPasswordForm) => {
     try {
-      // TODO: Implement forgot password API call
-      console.log('Forgot password for:', data.email);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.push('/(auth)/verify-code');
+      await forgotPassword(data);
+      router.push({ pathname: '/(auth)/reset-password', params: { email: data.email } } as unknown as Href);
     } catch {
       // error displayed via useAuth state
     }

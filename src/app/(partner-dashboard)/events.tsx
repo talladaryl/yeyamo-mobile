@@ -5,13 +5,18 @@ import { EventCard } from '@/components/partner-dashboard/EventCard';
 import { FilterChips, PartnerPage } from '@/components/partner-dashboard/PartnerPage';
 import { partnerEvents } from '@/features/partner-dashboard/mockData';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 const FILTERS = ['Tous', 'À venir', 'Brouillons', 'Passés'] as const;
 export default function EventsScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const isDemo = useAuthStore((state) => state.sessionMode === 'demo-partner');
   const [filter, setFilter] = useState<string>('Tous');
-  const data = useMemo(() => filter === 'Brouillons' ? partnerEvents.filter((item) => item.status === 'draft') : partnerEvents, [filter]);
+  const data = useMemo(() => {
+    const events = isDemo ? partnerEvents : [];
+    return filter === 'Brouillons' ? events.filter((item) => item.status === 'draft') : events;
+  }, [filter, isDemo]);
   return (
     <PartnerPage title="Mes événements" subtitle="Consultez et gérez vos événements publiés" actionIcon="add" onAction={() => router.push('/(partner)/add-event-step1')}>
       <FilterChips values={FILTERS} selected={filter} onSelect={setFilter} />

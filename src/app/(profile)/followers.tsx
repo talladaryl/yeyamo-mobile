@@ -4,13 +4,14 @@ import { View, Text, FlatList, TouchableOpacity, TextInput } from 'react-native'
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { UserListItem } from '@/components/social/UserListItem';
-import { mockFollowers } from '@/features/social/mockData';
+import { useFollowActions, useFollowers } from '@/features/social/useSocial';
 
 export default function FollowersScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const followers = mockFollowers;
+  const { data: followers = [] } = useFollowers();
+  const { follow, removeFollower } = useFollowActions();
 
   const filteredFollowers = searchQuery
     ? followers.filter(
@@ -53,8 +54,8 @@ export default function FollowersScreen() {
           <UserListItem
             user={item}
             onPress={() => router.push(`/(profile)/${item.username}`)}
-            onFollowPress={() => console.log('Follow back', item.username)}
-            onRemovePress={() => console.log('Remove follower', item.username)}
+            onFollowPress={() => follow.mutate(item.id)}
+            onRemovePress={() => removeFollower.mutate(item.id)}
             showFollowButton={!item.is_following}
             showRemoveButton={true}
           />

@@ -25,7 +25,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const currentUser = useAuthStore((state) => state.user);
-  const conversationId = Number(id);
+  const conversationId = id;
   const [draft, setDraft] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const wallpaper = useChatStore((state) => state.preferences[conversationId]?.wallpaper ?? 'default');
@@ -39,7 +39,7 @@ export default function ChatScreen() {
   };
 
   const { data: conversations = [], isLoading: isConversationLoading } = useConversations();
-  const conversation = conversations.find((item) => item.id === conversationId);
+  const conversation = conversations.find((item) => String(item.id) === conversationId);
   const { query, realtimeMessages } = useChatMessages(conversationId);
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
   const { mutate: markRead } = useMarkConversationRead();

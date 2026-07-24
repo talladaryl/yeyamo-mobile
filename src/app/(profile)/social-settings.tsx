@@ -1,35 +1,43 @@
 // ÉCRAN 8 - Paramètres Social Graph
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
-import { mockSettings } from '@/features/social/mockData';
+import { useSocialSettings, useUpdateSocialSettings } from '@/features/social/useSocial';
 import type { SocialSettings } from '@/features/social/types';
 
 export default function SocialSettingsScreen() {
   const router = useRouter();
-  const [settings, setSettings] = useState<SocialSettings>(mockSettings);
+  const { data } = useSocialSettings();
+  const updateSettings = useUpdateSocialSettings();
+  const [settings, setSettings] = useState<SocialSettings | null>(null);
+
+  useEffect(() => {
+    if (data) setSettings(data);
+  }, [data]);
 
   const updatePrivacy = (key: keyof SocialSettings['privacy'], value: any) => {
-    setSettings((prev) => ({
-      ...prev,
-      privacy: { ...prev.privacy, [key]: value },
-    }));
+    if (!settings) return;
+    const next = { ...settings, privacy: { ...settings.privacy, [key]: value } };
+    setSettings(next);
+    updateSettings.mutate({ privacy: next.privacy });
   };
 
   const updateNotifications = (key: keyof SocialSettings['notifications'], value: boolean) => {
-    setSettings((prev) => ({
-      ...prev,
-      notifications: { ...prev.notifications, [key]: value },
-    }));
+    if (!settings) return;
+    const next = { ...settings, notifications: { ...settings.notifications, [key]: value } };
+    setSettings(next);
+    updateSettings.mutate({ notifications: next.notifications });
   };
 
   const updatePreferences = (key: keyof SocialSettings['preferences'], value: boolean) => {
-    setSettings((prev) => ({
-      ...prev,
-      preferences: { ...prev.preferences, [key]: value },
-    }));
+    if (!settings) return;
+    const next = { ...settings, preferences: { ...settings.preferences, [key]: value } };
+    setSettings(next);
+    updateSettings.mutate({ preferences: next.preferences });
   };
+
+  if (!settings) return null;
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0A0A0A]">

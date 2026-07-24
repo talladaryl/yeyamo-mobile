@@ -7,12 +7,24 @@ import { useState } from 'react';
 import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
 import { NavigationItem } from '@/components/settings/NavigationItem';
 import { ToggleItem } from '@/components/settings/ToggleItem';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function SecurityScreen() {
   const router = useRouter();
-  const [settings, setSettings] = useState(MOCK_USER_SETTINGS.security);
+  const user = useAuthStore((state) => state.user);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const [settings, setSettings] = useState(() => isDemo ? MOCK_USER_SETTINGS.security : {
+    password_last_changed: '',
+    email: user?.email ?? '',
+    email_verified: user?.is_verified ?? false,
+    phone: null,
+    phone_verified: false,
+    two_factor_enabled: false,
+    active_sessions: [],
+  });
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Non disponible';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
       day: 'numeric',

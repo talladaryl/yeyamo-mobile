@@ -5,7 +5,7 @@ import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { UserSearchCard } from '@/components/social/UserSearchCard';
-import { mockSearchResults } from '@/features/social/mockData';
+import { useFollowActions, useUserSearch } from '@/features/social/useSocial';
 
 export default function SearchUsersScreen() {
   const router = useRouter();
@@ -13,7 +13,8 @@ export default function SearchUsersScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const results = mockSearchResults;
+  const { data: results = [] } = useUserSearch(searchQuery);
+  const { follow } = useFollowActions();
 
   return (
     <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
@@ -103,7 +104,7 @@ export default function SearchUsersScreen() {
           <UserSearchCard
             user={item}
             onPress={() => router.push(`/(profile)/${item.username}`)}
-            onFollowPress={() => console.log('Follow', item.username)}
+            onFollowPress={() => follow.mutate(item.id)}
           />
         )}
         ListEmptyComponent={

@@ -4,8 +4,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
-import { mockPlaces } from '@/features/places/mockData';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { usePlaceDetail } from '@/features/places/usePlaces';
 
 type Coordinate = {
   latitude: number;
@@ -21,10 +21,13 @@ export default function PlaceRouteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const place = mockPlaces.find((item) => item.id === Number(id)) || mockPlaces[0];
+  const { data: place, isLoading: isPlaceLoading } = usePlaceDetail(id);
   const destination = useMemo(
-    () => ({ latitude: place.lat, longitude: place.lng }),
-    [place.lat, place.lng]
+    () => ({
+      latitude: place?.lat ?? DEFAULT_ORIGIN.latitude,
+      longitude: place?.lng ?? DEFAULT_ORIGIN.longitude,
+    }),
+    [place?.lat, place?.lng]
   );
 
   const [origin, setOrigin] = useState<Coordinate>(DEFAULT_ORIGIN);
@@ -38,6 +41,7 @@ export default function PlaceRouteScreen() {
     let isMounted = true;
 
     const loadRoute = async () => {
+      if (!place) return;
       setIsLoading(true);
       try {
         const permission = await Location.requestForegroundPermissionsAsync();
@@ -94,7 +98,15 @@ export default function PlaceRouteScreen() {
     return () => {
       isMounted = false;
     };
-  }, [destination.latitude, destination.longitude]);
+  }, [destination.latitude, destination.longitude, place]);
+
+  if (isPlaceLoading || !place) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>

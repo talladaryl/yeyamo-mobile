@@ -48,7 +48,10 @@ export default function RegisterScreen() {
         phone: fullPhone,
       });
       // Navigation handled by root layout guard or verification screen
-      router.replace('/(auth)/verify-code');
+      router.replace({
+        pathname: '/(auth)/verify-code',
+        params: { email: data.email.trim() },
+      });
     } catch {
       // error displayed via useAuth state
     }

@@ -1,21 +1,23 @@
 import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import ENV from '@/config/env';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { MOCK_FEED_PAGE } from '@/features/mock/mockData';
 import { feedApi } from './feed.api';
 import { feedService } from './feed.service';
 import type { FeedPost } from './types';
 import type { PaginatedResponse } from '@/types/api.types';
+import type { EntityId } from '@/types/api.types';
 import { useInterestsStore } from '@/features/interests/interests.store';
 
 export const FEED_QUERY_KEY = ['feed'] as const;
 
 export function useFeed(regionId?: number) {
   const selectedInterestIds = useInterestsStore((state) => state.selectedInterestIds);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useInfiniteQuery({
-    queryKey: [...FEED_QUERY_KEY, selectedInterestIds.join(','), regionId ?? 'all'],
+    queryKey: [...FEED_QUERY_KEY, isDemo ? 'demo' : 'backend', selectedInterestIds.join(','), regionId ?? 'all'],
     queryFn: ({ pageParam }) =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve(personalizeMockFeed(selectedInterestIds, regionId))
         : feedApi.getFeed(pageParam as string | undefined, selectedInterestIds, regionId),
     initialPageParam: undefined as string | undefined,
@@ -24,7 +26,7 @@ export function useFeed(regionId?: number) {
   });
 }
 
-const MOCK_POST_INTERESTS: Record<number, string[]> = {
+const MOCK_POST_INTERESTS: Record<string, string[]> = {
   101: ['voyage', 'nature', 'photographie', 'sorties'],
   102: ['gastronomie', 'sorties', 'photographie'],
   103: ['culture', 'art', 'mode', 'histoire'],
@@ -36,7 +38,7 @@ function personalizeMockFeed(selectedInterestIds: string[], regionId?: number): 
     : MOCK_FEED_PAGE.data;
 
   const score = (post: FeedPost) =>
-    (MOCK_POST_INTERESTS[post.id] ?? []).filter((interest) => selectedInterestIds.includes(interest)).length;
+    (MOCK_POST_INTERESTS[String(post.id)] ?? []).filter((interest) => selectedInterestIds.includes(interest)).length;
 
   return {
     ...MOCK_FEED_PAGE,
@@ -47,10 +49,11 @@ function personalizeMockFeed(selectedInterestIds: string[], regionId?: number): 
 
 export function useLikePost() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useMutation({
-    mutationFn: ({ postId, isLiked }: { postId: number; isLiked: boolean }) =>
-      ENV.USE_MOCKS ? Promise.resolve() : feedService.toggleLike(postId, isLiked),
+    mutationFn: ({ postId, isLiked }: { postId: EntityId; isLiked: boolean }) =>
+      isDemo ? Promise.resolve() : feedService.toggleLike(postId, isLiked),
 
     // Optimistic update
     onMutate: async ({ postId, isLiked }) => {

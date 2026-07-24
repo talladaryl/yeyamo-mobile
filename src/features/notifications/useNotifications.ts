@@ -1,19 +1,21 @@
 // Hooks personnalisés pour les notifications
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import ENV from '@/config/env';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { notificationsApi } from './notifications.api';
+import type { EntityId } from '@/types/api.types';
 import { MOCK_NOTIFICATIONS } from './mockData';
 
 /**
  * Hook pour récupérer toutes les notifications
  */
 export function useNotifications() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', isDemo ? 'demo' : 'backend'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_NOTIFICATIONS) : notificationsApi.getNotifications(),
+      isDemo ? Promise.resolve(MOCK_NOTIFICATIONS) : notificationsApi.getNotifications(),
     staleTime: 1000 * 60, // 1 minute
-    placeholderData: MOCK_NOTIFICATIONS,
+    placeholderData: isDemo ? MOCK_NOTIFICATIONS : undefined,
   });
 }
 
@@ -21,14 +23,15 @@ export function useNotifications() {
  * Hook pour récupérer les notifications non lues
  */
 export function useUnreadNotifications() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['notifications', 'unread'],
+    queryKey: ['notifications', isDemo ? 'demo' : 'backend', 'unread'],
     queryFn: () =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve(MOCK_NOTIFICATIONS.filter((n) => !n.is_read))
         : notificationsApi.getUnreadNotifications(),
     staleTime: 1000 * 60,
-    placeholderData: MOCK_NOTIFICATIONS.filter((n) => !n.is_read),
+    placeholderData: isDemo ? MOCK_NOTIFICATIONS.filter((n) => !n.is_read) : undefined,
   });
 }
 
@@ -36,14 +39,15 @@ export function useUnreadNotifications() {
  * Hook pour récupérer le nombre de notifications non lues
  */
 export function useUnreadCount() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['notifications', 'unread', 'count'],
+    queryKey: ['notifications', isDemo ? 'demo' : 'backend', 'unread', 'count'],
     queryFn: () =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve(MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length)
         : notificationsApi.getUnreadCount(),
     staleTime: 1000 * 30, // 30 secondes
-    placeholderData: MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length,
+    placeholderData: isDemo ? MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length : undefined,
   });
 }
 
@@ -52,10 +56,11 @@ export function useUnreadCount() {
  */
 export function useMarkAsRead() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useMutation({
-    mutationFn: (id: number) =>
-      ENV.USE_MOCKS ? Promise.resolve() : notificationsApi.markAsRead(id),
+    mutationFn: (id: EntityId) =>
+      isDemo ? Promise.resolve() : notificationsApi.markAsRead(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
@@ -67,10 +72,11 @@ export function useMarkAsRead() {
  */
 export function useMarkAllAsRead() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useMutation({
     mutationFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve() : notificationsApi.markAllAsRead(),
+      isDemo ? Promise.resolve() : notificationsApi.markAllAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
@@ -82,10 +88,11 @@ export function useMarkAllAsRead() {
  */
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useMutation({
-    mutationFn: (id: number) =>
-      ENV.USE_MOCKS ? Promise.resolve() : notificationsApi.deleteNotification(id),
+    mutationFn: (id: EntityId) =>
+      isDemo ? Promise.resolve() : notificationsApi.deleteNotification(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },

@@ -6,10 +6,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '@/components/ui/Icon';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { useCreateStore } from '@/features/create/create.store';
+import { useCreatePost, useUploadMedia } from '@/features/post/usePost';
 
 export default function CreatePublicationScreen() {
   const router = useRouter();
   const { publicationData, setPublicationData } = useCreateStore();
+  const uploadMedia = useUploadMedia();
+  const createPost = useCreatePost();
   const [selectedImages, setSelectedImages] = useState<string[]>(publicationData.media_urls ?? []);
   const [caption, setCaption] = useState(publicationData.caption ?? '');
 
@@ -63,11 +66,27 @@ export default function CreatePublicationScreen() {
     }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     setPublicationData({ caption });
-    // TODO: API call to create post
-    console.log('Publishing:', publicationData);
-    router.back();
+    try {
+      const uploads = await Promise.all(selectedImages.map(async (uri, index) => {
+        const formData = new FormData();
+        formData.append('file', {
+          uri,
+          name: `publication-${index}.jpg`,
+          type: 'image/jpeg',
+        } as unknown as Blob);
+        return (await uploadMedia.mutateAsync(formData)).data.id;
+      }));
+      await createPost.mutateAsync({
+        type: publicationData.media_type ?? 'image',
+        caption,
+        media_ids: uploads,
+      });
+      router.back();
+    } catch {
+      Alert.alert('Publication impossible', 'Les médias ou la publication n’ont pas pu être envoyés.');
+    }
   };
 
   return (
@@ -191,7 +210,7 @@ export default function CreatePublicationScreen() {
         <CTAButton
           title="Publier"
           variant="primary"
-          onPress={handlePublish}
+          onPress={() => void handlePublish()}
           disabled={selectedImages.length === 0}
         />
       </View>

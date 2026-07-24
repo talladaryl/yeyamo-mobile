@@ -5,19 +5,20 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useCollectionSummaries, useAddPlaceToCollection } from '@/features/collections/useCollections';
+import type { EntityId } from '@/types/api.types';
 
 export default function AddToCollectionScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ placeId?: string; placeName?: string; placeImage?: string }>();
   
-  const placeId = parseInt(params.placeId || '0', 10);
+  const placeId = params.placeId || '';
   const placeName = params.placeName || 'La Falaise Resort';
   const placeImage = params.placeImage || 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400';
 
   const { data: collections, isLoading } = useCollectionSummaries();
   const addToCollection = useAddPlaceToCollection();
 
-  const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<EntityId | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSave = async () => {

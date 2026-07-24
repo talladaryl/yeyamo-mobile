@@ -1,5 +1,7 @@
+import type { EntityId } from '@/types/api.types';
+
 export interface Place {
-  id: number;
+  id: EntityId;
   name: string;
   description: string | null;
   city: string;
@@ -46,7 +48,7 @@ export interface PlaceReview {
 }
 
 export interface PlaceEvent {
-  id: number;
+  id: EntityId;
   title: string;
   image_url: string;
   date: string;

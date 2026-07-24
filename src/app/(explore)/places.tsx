@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { PlaceListItem } from '@/components/explore/PlaceListItem';
-import { trendingPlaces } from '@/features/explore/mockData';
+import { useTrendingPlaces } from '@/features/explore/useExplore';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 type FilterTab = 'all' | 'popular' | 'new' | 'nearby';
@@ -13,6 +13,7 @@ export default function PlacesListScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const params = useLocalSearchParams();
+  const { data: trendingPlaces = [] } = useTrendingPlaces();
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const regionId = typeof params.regionId === 'string' ? Number(params.regionId) : null;
   const regionName = typeof params.region === 'string' ? params.region : null;
@@ -28,7 +29,7 @@ export default function PlacesListScreen() {
   const filteredPlaces = useMemo(
     () =>
       trendingPlaces.filter((place) => {
-        const matchesRegion = regionId ? place.region_id === regionId : true;
+        const matchesRegion = regionId ? String(place.region_id) === String(regionId) : true;
         const matchesCategory = category ? place.category === category : true;
 
         return matchesRegion && matchesCategory;

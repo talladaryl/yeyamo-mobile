@@ -16,6 +16,7 @@ import { PinnedChats } from '@/components/chat/PinnedChats';
 import { useConversations } from '@/features/chat/useChat';
 import { useThemeStore } from '@/features/theme/theme.store';
 import type { ChatTab, Conversation } from '@/features/chat/types';
+import type { EntityId } from '@/types/api.types';
 
 function conversationName(conversation: Conversation) {
   return conversation.type === 'group'
@@ -57,7 +58,7 @@ export default function ChatsScreen() {
   );
   const listConversations = filteredConversations;
 
-  const openConversation = (id: number) => router.push(`/(chat)/${id}`);
+  const openConversation = (id: EntityId) => router.push(`/(chat)/${id}`);
 
   return (
     <SafeScreen style={{ backgroundColor: colors.background }}>

@@ -1,13 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import ENV from '@/config/env';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { MOCK_STORIES } from '@/features/mock/mockData';
 import { storyApi } from './story.api';
+import type { EntityId } from '@/types/api.types';
 
 export function useStories() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['stories'],
+    queryKey: ['stories', isDemo ? 'demo' : 'backend'],
     queryFn: () =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve({ data: MOCK_STORIES })
         : storyApi.getStories(),
     select: (res) => res.data,
@@ -15,13 +17,14 @@ export function useStories() {
   });
 }
 
-export function useStoryDetail(storyId: number) {
+export function useStoryDetail(storyId: EntityId) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['story', storyId],
+    queryKey: ['story', isDemo ? 'demo' : 'backend', storyId],
     queryFn: () =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve({
-            data: MOCK_STORIES.find((story) => story.id === storyId) ?? MOCK_STORIES[0],
+            data: MOCK_STORIES.find((story) => String(story.id) === String(storyId)) ?? MOCK_STORIES[0],
           })
         : storyApi.getStory(storyId),
     select: (res) => res.data,
@@ -30,9 +33,10 @@ export function useStoryDetail(storyId: number) {
 
 export function useMarkStoryViewed() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useMutation({
-    mutationFn: (storyId: number) =>
-      ENV.USE_MOCKS ? Promise.resolve() : storyApi.markViewed({ story_id: storyId }),
+    mutationFn: (storyId: EntityId) =>
+      isDemo ? Promise.resolve() : storyApi.markViewed({ story_id: storyId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stories'] });
     },

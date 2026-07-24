@@ -6,12 +6,14 @@ import { FilterButton } from '@/components/ui/FilterButton';
 import { ExperienceCard } from '@/components/experiences/ExperienceCard';
 import { mockExperiences } from '@/features/experiences/mockData';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 type FilterType = 'all' | 'adventure' | 'culture' | 'relaxation';
 
 export default function ExperiencesListScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [location, setLocation] = useState('Cameroun');
 
@@ -27,8 +29,8 @@ export default function ExperiencesListScreen() {
   };
 
   const filteredExperiences = activeFilter === 'all'
-    ? mockExperiences
-    : mockExperiences.filter(exp => exp.category === activeFilter);
+    ? (isDemo ? mockExperiences : [])
+    : (isDemo ? mockExperiences : []).filter(exp => exp.category === activeFilter);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>

@@ -4,15 +4,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { CollectionPlaceItem } from '@/components/collections/CollectionPlaceItem';
-import { useCollection, useDeleteCollection } from '@/features/collections/useCollections';
+import {
+  useCollection,
+  useDeleteCollection,
+  useUpdatePlaceInCollection,
+} from '@/features/collections/useCollections';
+import type { EntityId } from '@/types/api.types';
 
 export default function CollectionDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const collectionId = parseInt(id || '0', 10);
+  const collectionId = id || '';
 
   const { data: collection, isLoading } = useCollection(collectionId);
   const deleteCollection = useDeleteCollection();
+  const updatePlace = useUpdatePlaceInCollection();
 
   const handleShare = async () => {
     if (!collection) return;
@@ -50,8 +56,14 @@ export default function CollectionDetailScreen() {
     );
   };
 
-  const handleTogglePriority = (placeId: number) => {
-    Alert.alert('Priorité modifiée', `Le lieu ${placeId} est mis à jour localement.`);
+  const handleTogglePriority = (placeId: EntityId, isPriority: boolean, note?: string) => {
+    updatePlace.mutate(
+      { collectionId, placeId, isPriority: !isPriority, note },
+      {
+        onError: () =>
+          Alert.alert('Mise à jour impossible', 'La priorité du lieu n’a pas pu être enregistrée.'),
+      },
+    );
   };
 
   if (isLoading || !collection) {
@@ -140,7 +152,7 @@ export default function CollectionDetailScreen() {
                 key={place.id}
                 place={place}
                 onPress={() => router.push(`/(places)/${place.id}`)}
-                onTogglePriority={() => handleTogglePriority(place.id)}
+                onTogglePriority={() => handleTogglePriority(place.id, !!place.is_priority, place.note)}
               />
             ))
           ) : (

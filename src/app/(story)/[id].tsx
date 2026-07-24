@@ -1,10 +1,10 @@
-import { View, Text, TouchableOpacity, Dimensions, StatusBar, Pressable } from 'react-native';
+import { ActivityIndicator, View, Text, TouchableOpacity, Dimensions, StatusBar, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { mockStories } from '@/features/story/mockData';
 import { useState, useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useMarkStoryViewed, useStoryDetail } from '@/features/story/useStory';
 
 const { width, height } = Dimensions.get('window');
 
@@ -16,11 +16,18 @@ export default function StoryViewerScreen() {
   const [showReply, setShowReply] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
-  const story = mockStories.find(s => s.id === Number(id)) || mockStories[0];
+  const { data: story, isLoading } = useStoryDetail(id);
+  const { mutate: markViewed } = useMarkStoryViewed();
   const STORY_DURATION = 5000; // 5 seconds
 
   useEffect(() => {
-    if (!isPaused) {
+    if (story && !story.viewed) {
+      markViewed(story.id);
+    }
+  }, [markViewed, story]);
+
+  useEffect(() => {
+    if (story && !isPaused) {
       intervalRef.current = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 100) {
@@ -42,7 +49,7 @@ export default function StoryViewerScreen() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPaused]);
+  }, [isPaused, router, story]);
 
   const handlePressIn = () => {
     setIsPaused(true);
@@ -61,6 +68,14 @@ export default function StoryViewerScreen() {
     // Go to next story
     router.back();
   };
+
+  if (isLoading || !story) {
+    return (
+      <View className="flex-1 items-center justify-center bg-black">
+        <ActivityIndicator color="#FFFFFF" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-black">

@@ -9,11 +9,25 @@ import { RadioItem } from '@/components/settings/RadioItem';
 import { ThemeSelector } from '@/components/settings/ThemeSelector';
 import { ToggleItem } from '@/components/settings/ToggleItem';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function PreferencesScreen() {
   const router = useRouter();
   const { preference, setThemePreference, colors } = useThemeStore();
-  const [settings, setSettings] = useState(MOCK_USER_SETTINGS.preferences);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const [settings, setSettings] = useState(() => isDemo ? MOCK_USER_SETTINGS.preferences : {
+    language: 'fr' as const,
+    theme: 'system' as const,
+    content_categories: [],
+    show_sensitive_content: false,
+    reduce_motion: false,
+    large_text: false,
+    high_contrast: false,
+    discovery_radius_km: 25,
+    push_notifications: false,
+    email_notifications: false,
+    sms_notifications: false,
+  });
 
   return (
     <SafeAreaView className="flex-1" edges={['top']} style={{ backgroundColor: colors.background }}>

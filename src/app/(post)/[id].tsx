@@ -1,10 +1,12 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { mockFeedPosts } from '@/features/feed/mockData';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { usePostDetail } from '@/features/post/usePost';
+import { feedService } from '@/features/feed/feed.service';
+import { feedApi } from '@/features/feed/feed.api';
 
 const { width } = Dimensions.get('window');
 
@@ -14,15 +16,61 @@ export default function PostDetailScreen() {
   const colors = useThemeStore((state) => state.colors);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [likesCount, setLikesCount] = useState(24);
+  const [likesCount, setLikesCount] = useState(0);
   const [comment, setComment] = useState('');
-  
-  const post = mockFeedPosts.find(p => p.id === Number(id)) || mockFeedPosts[0];
+  const { data: post, isLoading, refetch } = usePostDetail(id);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+  useEffect(() => {
+    if (post) {
+      setIsLiked(post.is_liked);
+      setIsSaved(post.is_saved);
+      setLikesCount(post.likes_count);
+    }
+  }, [post]);
+
+  const handleLike = async () => {
+    const previous = isLiked;
+    setIsLiked(!previous);
+    setLikesCount((value) => value + (previous ? -1 : 1));
+    try {
+      await feedService.toggleLike(id, previous);
+    } catch {
+      setIsLiked(previous);
+      setLikesCount((value) => value + (previous ? 1 : -1));
+      Alert.alert('Action impossible', 'Le like n’a pas pu être enregistré.');
+    }
   };
+
+  const handleSave = async () => {
+    const previous = isSaved;
+    setIsSaved(!previous);
+    try {
+      await feedService.toggleSave(id, previous);
+    } catch {
+      setIsSaved(previous);
+      Alert.alert('Action impossible', 'La sauvegarde n’a pas pu être enregistrée.');
+    }
+  };
+
+  const handleComment = async () => {
+    const body = comment.trim();
+    if (!body) return;
+    try {
+      await feedApi.addComment(id, body);
+      setComment('');
+      await refetch();
+    } catch {
+      Alert.alert('Envoi impossible', 'Le commentaire n’a pas pu être publié.');
+    }
+  };
+
+  if (isLoading || !post) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -97,7 +145,7 @@ export default function PostDetailScreen() {
               <Ionicons name="paper-plane-outline" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => setIsSaved(!isSaved)}>
+          <TouchableOpacity onPress={handleSave}>
             <Ionicons 
               name={isSaved ? 'bookmark' : 'bookmark-outline'} 
               size={24} 
@@ -190,7 +238,7 @@ export default function PostDetailScreen() {
               style={{ color: colors.text }}
             />
             {comment.length > 0 && (
-              <TouchableOpacity onPress={() => setComment('')}>
+              <TouchableOpacity onPress={handleComment}>
                 <Ionicons name="send" size={20} color="#EF4444" />
               </TouchableOpacity>
             )}

@@ -1,10 +1,10 @@
-import { View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
+import { ActivityIndicator, View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { mockPlaces } from '@/features/places/mockData';
 import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { usePlaceDetail } from '@/features/places/usePlaces';
 
 const { width } = Dimensions.get('window');
 
@@ -14,7 +14,16 @@ export default function PlaceDetailScreen() {
   const colors = useThemeStore((state) => state.colors);
   const [isSaved, setIsSaved] = useState(false);
   
-  const place = mockPlaces.find(p => p.id === Number(id)) || mockPlaces[0];
+  const { data: place, isLoading } = usePlaceDetail(id);
+
+  if (isLoading || !place) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
   const openDirections = () => router.push(`/(places)/route/${place.id}`);
 
   const sharePlace = async () => {

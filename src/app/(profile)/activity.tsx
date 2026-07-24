@@ -4,7 +4,7 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { ActivityItem } from '@/components/social/ActivityItem';
-import { mockActivity } from '@/features/social/mockData';
+import { useNetworkActivity } from '@/features/social/useSocial';
 
 type ActivityFilter = 'all' | 'likes' | 'comments' | 'follows' | 'posts';
 
@@ -12,7 +12,7 @@ export default function ActivityScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState<ActivityFilter>('all');
 
-  const activities = mockActivity;
+  const { data: activities = [] } = useNetworkActivity();
 
   const filteredActivities =
     filter === 'all'

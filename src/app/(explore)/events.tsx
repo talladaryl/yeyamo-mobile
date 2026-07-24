@@ -4,8 +4,9 @@ import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { FilterButton } from '@/components/ui/FilterButton';
 import { EventCard } from '@/components/events/EventCard';
-import { mockEvents } from '@/features/events/mockData';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useUpcomingEvents } from '@/features/events/useEvents';
+import type { EntityId } from '@/types/api.types';
 
 type FilterType = 'all' | 'autumn' | 'later';
 
@@ -13,6 +14,7 @@ export default function EventsListScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const { data: events = [] } = useUpcomingEvents();
   const [location, setLocation] = useState('Yaoundé, Centre');
 
   const filters = [
@@ -21,7 +23,7 @@ export default function EventsListScreen() {
     { id: 'later' as FilterType, label: 'Plus tard' },
   ];
 
-  const handleSaveToggle = (eventId: number) => {
+  const handleSaveToggle = (eventId: EntityId) => {
     console.log('Toggle save:', eventId);
   };
 
@@ -77,7 +79,7 @@ export default function EventsListScreen() {
 
       {/* Events List */}
       <FlatList
-        data={mockEvents}
+        data={events}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}

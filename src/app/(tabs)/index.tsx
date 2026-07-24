@@ -8,25 +8,16 @@ import { Icon } from '@/components/ui/Icon';
 import { useFeed } from '@/features/feed/useFeed';
 import type { FeedPost } from '@/features/feed/types';
 import { useThemeStore } from '@/features/theme/theme.store';
-import { regions } from '@/features/explore/mockData';
-
-// Mock stories data - replace with real API call
-const mockStories = [
-  {
-    id: 1,
-    author: {
-      id: 1,
-      username: 'vous',
-      display_name: 'Vous',
-      avatar_url: null,
-    },
-    is_viewed: false,
-  },
-];
+import { useRegions } from '@/features/explore/useExplore';
+import { useStories } from '@/features/story/useStory';
+import { useAuth } from '@/features/auth/useAuth';
 
 export default function FeedScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const { user } = useAuth();
+  const { data: regions = [] } = useRegions();
+  const { data: stories = [] } = useStories();
   const [selectedRegionId, setSelectedRegionId] = useState<number | undefined>();
   const [isRegionPickerOpen, setRegionPickerOpen] = useState(false);
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
@@ -89,7 +80,7 @@ export default function FeedScreen() {
       </SafeAreaView>
 
       {/* Stories */}
-      <StoriesList stories={mockStories} currentUserId={1} />
+      <StoriesList stories={stories} currentUserId={user?.id} />
 
       {/* Vertical Feed */}
       <VerticalFeedList

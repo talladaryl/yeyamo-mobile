@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { CategoryCard } from '@/components/explore/CategoryCard';
 import { TrendingPlaceCard } from '@/components/explore/TrendingPlaceCard';
-import { categories, regions, trendingPlaces } from '@/features/explore/mockData';
+import { useCategories, useRegions, useTrendingPlaces } from '@/features/explore/useExplore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '@/features/theme/theme.store';
 
@@ -12,17 +12,23 @@ export default function ExploreHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colors = useThemeStore((state) => state.colors);
+  const { data: categories = [] } = useCategories();
+  const { data: regions = [] } = useRegions();
+  const { data: trendingPlaces = [] } = useTrendingPlaces();
   const [selectedRegionId, setSelectedRegionId] = useState(1);
   const [isRegionPickerOpen, setIsRegionPickerOpen] = useState(false);
 
   const selectedRegion = regions.find((region) => region.id === selectedRegionId) ?? regions[0];
-  const selectedLocationLabel = selectedRegion.name === 'Centre' ? 'Yaounde' : selectedRegion.name;
+  const selectedLocationLabel = selectedRegion?.name === 'Centre' ? 'Yaounde' : selectedRegion?.name ?? 'Cameroun';
   const filteredTrendingPlaces = useMemo(
-    () => trendingPlaces.filter((place) => place.region_id === selectedRegion.id),
-    [selectedRegion.id]
+    () => selectedRegion
+      ? trendingPlaces.filter((place) => String(place.region_id) === String(selectedRegion.id))
+      : trendingPlaces,
+    [selectedRegion, trendingPlaces]
   );
 
   const openPlacesForRegion = (category?: string) => {
+    if (!selectedRegion) return;
     router.push({
       pathname: '/(explore)/places',
       params: {
@@ -32,6 +38,10 @@ export default function ExploreHomeScreen() {
       },
     });
   };
+
+  if (!selectedRegion) {
+    return <View className="flex-1" style={{ backgroundColor: colors.background }} />;
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
