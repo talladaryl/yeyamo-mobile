@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { MOCK_FEED_PAGE } from '@/features/mock/mockData';
 import { feedApi } from './feed.api';
@@ -7,6 +7,8 @@ import type { FeedPost } from './types';
 import type { PaginatedResponse } from '@/types/api.types';
 import type { EntityId } from '@/types/api.types';
 import { useInterestsStore } from '@/features/interests/interests.store';
+import { mockSponsoredFeedItems } from './sponsoredMockData';
+import { sponsoredFeedApi } from './sponsored-feed.api';
 
 export const FEED_QUERY_KEY = ['feed'] as const;
 
@@ -23,6 +25,14 @@ export function useFeed(regionId?: number) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage: PaginatedResponse<FeedPost>) =>
       lastPage.links.next ? lastPage.meta.current_page.toString() : undefined,
+  });
+}
+
+export function useSponsoredFeed(regionId?: number) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  return useQuery({
+    queryKey: ['feed', 'sponsored', regionId ?? 'all', isDemo ? 'demo' : 'backend'],
+    queryFn: () => isDemo ? Promise.resolve(mockSponsoredFeedItems) : sponsoredFeedApi.deliveries(regionId),
   });
 }
 

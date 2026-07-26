@@ -1,21 +1,38 @@
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { recentActivities } from '@/features/partner-dashboard/mockData';
 
-const SECTIONS = [
-  { label: 'Passeport YeYamo', subtitle: 'Badges et aventures', icon: 'airplane-outline', route: '/(social-graph)/passport' },
+const QUICK_ACTIONS = [
   { label: 'Établissements', subtitle: 'Gérez vos lieux', icon: 'business-outline', route: '/(partner-dashboard)/establishments' },
   { label: 'Événements', subtitle: 'Créez et publiez', icon: 'calendar-outline', route: '/(partner-dashboard)/events' },
   { label: 'Réservations', subtitle: 'Suivez les demandes', icon: 'ticket-outline', route: '/(partner-dashboard)/reservations' },
   { label: 'Avis clients', subtitle: 'Répondez aux clients', icon: 'star-outline', route: '/(partner-dashboard)/reviews' },
+] as const;
+
+const BUSINESS_TOOLS = [
+  { label: 'Publicité', subtitle: 'Développez votre audience', icon: 'megaphone-outline', route: '/(partner-dashboard)/campaigns' },
+  { label: 'Promotions', subtitle: 'Animez vos offres', icon: 'pricetag-outline', route: '/(partner-dashboard)/promotions' },
+  { label: 'Finances', subtitle: 'Suivez vos revenus', icon: 'wallet-outline', route: '/(partner-dashboard)/finance' },
   { label: 'Statistiques', subtitle: 'Analysez vos résultats', icon: 'stats-chart-outline', route: '/(partner-dashboard)/statistics' },
+] as const;
+
+const SECONDARY_ACTIONS = [
+  { label: 'Mes billets', subtitle: 'Billets achetés', icon: 'ticket-outline', route: '/(profile)/tickets' },
+  { label: 'Passeport YeYamo', subtitle: 'Badges et aventures', icon: 'airplane-outline', route: '/(social-graph)/passport' },
   { label: 'Notifications', subtitle: '3 nouvelles activités', icon: 'notifications-outline', route: '/(partner-dashboard)/notifications' },
   { label: 'Paramètres', subtitle: 'Compte professionnel', icon: 'settings-outline', route: '/(partner-dashboard)/settings' },
 ] as const;
+
+type DashboardItem = {
+  readonly label: string;
+  readonly subtitle: string;
+  readonly icon: string;
+  readonly route: Href;
+};
 
 export function PartnerProfileDashboard() {
   const router = useRouter();
@@ -27,7 +44,7 @@ export function PartnerProfileDashboard() {
         <View className="flex-row items-center justify-between px-5 pb-4 pt-3">
           <View>
             <Text className="text-2xl font-extrabold" style={{ color: colors.text }}>Dashboard</Text>
-            <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Pilotez votre activité Yeyamo</Text>
+            <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Pilotez votre activité YeYamo</Text>
           </View>
           <TouchableOpacity onPress={() => router.push('/(partner-dashboard)/notifications')} className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
             <Icon name="notifications-outline" size={23} color={colors.text} />
@@ -47,7 +64,7 @@ export function PartnerProfileDashboard() {
           <Icon name="chevron-forward" size={20} color={colors.textMuted} />
         </View>
 
-        <View className="mx-5 mt-4 rounded-2xl bg-[#E60012] p-4">
+        <View className="mx-5 mt-4 rounded-2xl bg-[#EF4444] p-4">
           <View className="mb-4 flex-row items-center justify-between">
             <Text className="font-bold text-white">Aperçu aujourd’hui</Text>
             <Text className="text-xs text-white/80">Aujourd’hui⌄</Text>
@@ -59,30 +76,16 @@ export function PartnerProfileDashboard() {
           </View>
         </View>
 
-        <SectionTitle title="Outils professionnels" />
-        <View className="mx-5 flex-row flex-wrap justify-between">
-          {SECTIONS.map((item) => (
-            <TouchableOpacity
-              key={item.route}
-              onPress={() => router.push(item.route)}
-              className="mb-3 w-[48.5%] rounded-2xl border p-3.5"
-              style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            >
-              <View className="mb-3 h-10 w-10 items-center justify-center rounded-xl bg-[#FEE2E2]">
-                <Icon name={item.icon} size={21} color="#E60012" />
-              </View>
-              <Text className="text-sm font-bold" style={{ color: colors.text }}>{item.label}</Text>
-              <Text className="mt-1 text-[11px]" style={{ color: colors.textSecondary }}>{item.subtitle}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <DashboardSection title="Accès rapides" items={QUICK_ACTIONS} />
+        <DashboardSection title="Outils business" items={BUSINESS_TOOLS} />
+        <DashboardSection title="Plus d’outils" items={SECONDARY_ACTIONS} />
 
         <SectionTitle title="Activité récente" />
         <View className="mx-5 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
           {recentActivities.map((activity, index) => (
             <View key={activity.id} className="flex-row items-center p-3.5" style={{ borderBottomWidth: index === recentActivities.length - 1 ? 0 : 1, borderColor: colors.border }}>
               <View className="h-10 w-10 items-center justify-center rounded-full bg-[#FEE2E2]">
-                <Icon name={activity.icon} size={19} color="#E60012" />
+                <Icon name={activity.icon} size={19} color="#EF4444" />
               </View>
               <View className="ml-3 flex-1">
                 <Text className="text-sm font-semibold" style={{ color: colors.text }}>{activity.title}</Text>
@@ -94,6 +97,33 @@ export function PartnerProfileDashboard() {
         </View>
       </ScrollView>
     </SafeScreen>
+  );
+}
+
+function DashboardSection({ title, items }: { title: string; items: readonly DashboardItem[] }) {
+  const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
+
+  return (
+    <>
+      <SectionTitle title={title} />
+      <View className="mx-5 flex-row flex-wrap justify-between">
+        {items.map((item) => (
+          <TouchableOpacity
+            key={item.label}
+            onPress={() => router.push(item.route)}
+            className="mb-3 w-[48.5%] rounded-2xl border p-3.5"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          >
+            <View className="mb-3 h-10 w-10 items-center justify-center rounded-xl bg-[#FEE2E2]">
+              <Icon name={item.icon} size={21} color="#EF4444" />
+            </View>
+            <Text className="text-sm font-bold" style={{ color: colors.text }}>{item.label}</Text>
+            <Text className="mt-1 text-[11px]" style={{ color: colors.textSecondary }}>{item.subtitle}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </>
   );
 }
 

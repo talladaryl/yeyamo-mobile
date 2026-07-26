@@ -12,7 +12,6 @@ const QUICK_LINKS = [
   ['images', 'Mes publications', '/(profile)/publications'],
   ['heart', 'Mes favoris', '/(profile)/favorites'],
   ['calendar', 'Mes sorties', '/(profile)/events'],
-  ['ticket', 'Mes réservations', '/(profile)/reservations'],
   ['star', 'Mes avis', '/(profile)/reviews'],
   ['notifications', 'Notifications', '/(profile)/notifications', '2'],
   ['settings', 'Paramètres', '/(profile)/settings'],
@@ -25,7 +24,12 @@ const SOCIAL_LINKS = [
   ['notifications', 'Activité du réseau', '/(profile)/activity'],
   ['settings', 'Paramètres du réseau social', '/(profile)/social-settings'],
   ['airplane', 'Passeport YeYamo', '/(social-graph)/passport', '12'],
-  ['albums', 'Mes collections', '/(collections)', '6'],
+] as const;
+
+const SECONDARY_ACTIONS = [
+  ['ticket-outline', 'Mes billets', '/(profile)/tickets'],
+  ['calendar-outline', 'Mes réservations', '/(profile)/reservations'],
+  ['albums-outline', 'Mes collections', '/(collections)', '6'],
 ] as const;
 
 export default function ProfileScreen() {
@@ -79,6 +83,12 @@ export default function ProfileScreen() {
         <ProfileSection title="Réseau social">
           {SOCIAL_LINKS.map(([icon, label, route, badge], index) => (
             <ProfileLink key={route} icon={icon} label={label} badge={badge} isLast={index === SOCIAL_LINKS.length - 1} onPress={() => router.push(route as Href)} />
+          ))}
+        </ProfileSection>
+
+        <ProfileSection title="Actions secondaires">
+          {SECONDARY_ACTIONS.map(([icon, label, route, badge], index) => (
+            <ProfileLink key={route} icon={icon} label={label} badge={badge} isLast={index === SECONDARY_ACTIONS.length - 1} onPress={() => router.push(route as Href)} />
           ))}
         </ProfileSection>
 

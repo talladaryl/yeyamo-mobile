@@ -83,6 +83,7 @@ export const partnerEvents: PartnerEvent[] = [
     location: 'La Falaise Resort',
     participants: 8,
     status: 'published',
+    supports_ticketing: true,
   },
   {
     id: '2',
@@ -92,6 +93,7 @@ export const partnerEvents: PartnerEvent[] = [
     location: 'Bistro Douala',
     participants: 0,
     status: 'draft',
+    supports_ticketing: false,
   },
   {
     id: '3',
@@ -101,6 +103,7 @@ export const partnerEvents: PartnerEvent[] = [
     location: 'Espace Sunshine',
     participants: 15,
     status: 'published',
+    supports_ticketing: true,
   },
 ];
 

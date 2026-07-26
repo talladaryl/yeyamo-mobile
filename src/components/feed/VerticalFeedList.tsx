@@ -1,17 +1,19 @@
 import { useRef, useState, useCallback } from 'react';
 import { Alert, FlatList, Share, Text, View } from 'react-native';
 import { VerticalFeedItem } from './VerticalFeedItem';
+import { SponsoredFeedCard } from './SponsoredFeedCard';
 import { useLikePost } from '@/features/feed/useFeed';
 import { useRouter } from 'expo-router';
-import type { FeedPost } from '@/features/feed/types';
+import { isSponsoredFeedItem, type FeedItem } from '@/features/feed/types';
 import type { ViewToken } from 'react-native';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { socialApi } from '@/features/social/social.api';
 import { useAuthStore } from '@/features/auth/auth.store';
 import type { EntityId } from '@/types/api.types';
+import { useTrackAdImpression } from '@/features/ads/useAds';
 
 type VerticalFeedListProps = {
-  posts: FeedPost[];
+  posts: FeedItem[];
   onEndReached?: () => void;
 };
 
@@ -21,19 +23,31 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [itemHeight, setItemHeight] = useState(0);
+  const trackedDeliveries = useRef<Set<string>>(new Set());
   const [savedPostIds, setSavedPostIds] = useState<Set<EntityId>>(
-    () => new Set(posts.filter((post) => post.is_saved).map((post) => post.id)),
+    () => new Set(posts.filter((post) => !isSponsoredFeedItem(post) && post.is_saved).map((post) => post.id)),
   );
   const [followedAuthorIds, setFollowedAuthorIds] = useState<Set<EntityId>>(new Set());
   const { mutate: toggleLike } = useLikePost();
+  const trackImpression = useTrackAdImpression();
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0 && viewableItems[0].index !== null) {
         setActiveIndex(viewableItems[0].index);
       }
+      viewableItems.forEach((token) => {
+        const item = token.item as FeedItem;
+        if (token.isViewable && isSponsoredFeedItem(item) && !trackedDeliveries.current.has(item.delivery_id)) {
+          trackedDeliveries.current.add(item.delivery_id);
+          trackImpression.mutate(
+            { deliveryId: item.delivery_id, trackingToken: item.impression_tracking_token },
+            { onError: () => trackedDeliveries.current.delete(item.delivery_id) },
+          );
+        }
+      });
     },
-    []
+    [trackImpression]
   );
 
   const viewabilityConfig = useRef({
@@ -73,7 +87,9 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
       style={{ flex: 1 }}
       data={posts}
       keyExtractor={(item) => String(item.id)}
-      renderItem={({ item, index }) => (
+      renderItem={({ item, index }) => isSponsoredFeedItem(item) ? (
+        <SponsoredFeedCard item={item} height={itemHeight} isActive={index === activeIndex} />
+      ) : (
         <VerticalFeedItem
           post={item}
           height={itemHeight}

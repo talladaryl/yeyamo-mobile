@@ -2,7 +2,7 @@
 
 > Audit statique du code effectué le **22 juillet 2026**. Les routes ci-dessous proviennent des contrôleurs Spring (`@RestController`) présents dans le dépôt, et non d'une liste d'API théorique.
 
-Ce document recense les **223 endpoints REST effectivement implémentés**, répartis dans **23 services applicatifs**. Il précise aussi les règles d'accès, le routage via l'API Gateway et les modules qui ne publient actuellement aucun endpoint métier.
+Ce document recense les **235 endpoints REST effectivement implémentés**, répartis dans **23 services applicatifs**. Il précise aussi les règles d'accès, le routage via l'API Gateway et les modules qui ne publient actuellement aucun endpoint métier.
 
 ---
 
@@ -19,16 +19,16 @@ Ce document recense les **223 endpoints REST effectivement implémentés**, rép
 
 | Domaine | Service | Port par défaut | Endpoints |
 |---|---|---:|---:|
-| Authentification | `auth-service` | 8082 | 11 |
+| Authentification | `auth-service` | 8082 | 15 |
 | Passerelle | `api-gateway` | 8083 | 1 endpoint de fallback |
 | Lieux | `place-service` | 8084 | 17 |
-| Événements | `event-service` | 8085 | 9 |
+| Événements | `event-service` | 8085 | 10 |
 | Utilisateurs / graphe social | `user-service` | 8086 | 21 |
 | Partenaires | `partner-service` | 8087 | 9 |
 | Catalogue / collections | `catalog-service` | 8088 | 24 |
 | Ingestion catalogue | `ingestion-service` | 8089 | 2 |
 | Contenu | `content-service` | 8090 | 16 |
-| Interactions | `interaction-service` | 8091 | 18 |
+| Interactions | `interaction-service` | 8091 | 21 |
 | Feed | `feed-service` | 8092 | 1 |
 | Discovery | `discovery-service` | 8093 | 2 |
 | Notifications | `notification-service` | 8094 | 8 |
@@ -42,8 +42,8 @@ Ce document recense les **223 endpoints REST effectivement implémentés**, rép
 | Réservations | `booking-service` | 8102 | 9 |
 | Paiements | `payment-service` | 8103 | 5 |
 | Messagerie | `messaging-service` | 8104 | 11 |
-| Gamification | `gamification-service` | 8105 | 6 |
-| **Total métier** | **23 services** |  | **223** |
+| Gamification | `gamification-service` | 8105 | 10 |
+| **Total métier** | **23 services** |  | **235** |
 
 Les ports viennent de `cloud-conf-yeyamo/*.properties`. `config-server` utilise le port 8080 et `registry-service` le port 8761, mais ils n'exposent pas de contrôleur métier.
 
@@ -145,6 +145,10 @@ Dans les tableaux existants ci-dessous, le chemin affiché est relatif au **Base
 | POST | `/password/reset` | Reset password with code | Password reset |
 | GET | `/me` | Get current user info | Auth state - utilisé par authApi.me |
 | POST | `/logout` | Logout | Logout button - utilisé par authApi.logout |
+| PUT | `/password` | Change password and revoke refresh sessions | Security settings |
+| POST | `/account/deactivate` | Temporarily deactivate account | Account settings |
+| GET | `/sessions` | List refresh sessions | Session management |
+| DELETE | `/sessions/{sessionId}` | Revoke one refresh session | Session management |
 
 ---
 
@@ -303,6 +307,9 @@ Dans les tableaux existants ci-dessous, le chemin affiché est relatif au **Base
 | POST | `/interactions/posts/{postId}/shares` | Share a post | Share menu |
 | GET | `/interactions/posts/{postId}/summary` | Interaction counts | Post detail |
 | GET | `/interactions/posts/{postId}/comments` | List comments | Comments section |
+| PUT | `/interactions/comments/{id}/like` | Like a comment (idempotent) | Comment actions |
+| DELETE | `/interactions/comments/{id}/like` | Unlike a comment (idempotent) | Comment actions |
+| GET | `/interactions/comments/{id}/likes` | Comment like count and current-user state | Comments section |
 | POST | `/interactions/places/{placeId}/reviews` | Create review | Review form - utilisé indirectement par profileApi.getUserReviews |
 | PUT | `/interactions/reviews/{id}` | Update review | Edit review |
 | DELETE | `/interactions/reviews/{id}` | Delete review | Delete review |
@@ -378,6 +385,7 @@ Dans les tableaux existants ci-dessous, le chemin affiché est relatif au **Base
 | GET | `/upcoming` | Upcoming events | Events explore |
 | GET | `/me` | Events where the current user has a confirmed registration (`limit=50`, max 100) | My events |
 | GET | `/{id}` | Event detail | Event detail screen |
+| GET | `/{id}/participants?limit=100` | Confirmed participants, maximum 200 rows | Event participants |
 | PUT | `/{id}` | Update event | Edit event |
 | PATCH | `/{id}/status` | Update status | Event management |
 | POST | `/{id}/register` | Register for event | Event registration - utilisé indirectement par profileApi.getUserEvents |
@@ -518,12 +526,16 @@ Le remboursement manuel exige `Idempotency-Key` et un utilisateur ayant le rôle
 |--------|------|-------------|------------------|
 | GET | `/xp` | My XP and level | Profile gamification |
 | GET | `/badges` | My badges | Badges screen - utilisé indirectement par badgesApi.getUserBadges |
+| GET | `/badges/catalog` | Badge catalog with current user's earned state | Badges catalog |
+| GET | `/badges/catalog/{code}` | Badge detail with current user's earned state | Badge detail |
+| GET | `/badges/stats` | Badge, XP, level and rank statistics | Badge statistics |
+| GET | `/leaderboard?limit=50` | XP leaderboard, maximum 100 rows | Leaderboard |
 | GET | `/passport` | My passport stamps | Passport screen |
 | GET | `/streaks` | My streaks | Streaks widget |
 | GET | `/rewards` | My rewards | Rewards screen |
 | POST | `/rewards/{id}/claim` | Claim reward | Claim button |
 
-**Note:** Les endpoints `/badges/user`, `/badges/{id}`, `/badges/stats`, `/badges` du client mobile ne correspondent pas au service gamification actuel.
+**Note:** le mobile doit utiliser les chemins ci-dessus sous `/api/v1/me`; les anciens chemins simulés `/badges/user` et `/badges/{id}` ne sont pas des routes backend.
 
 ---
 
@@ -1573,3 +1585,129 @@ Ne conclus `PRÊT` que si :
 
 Si un seul de ces critères manque, conclus `PARTIEL` ou `BLOQUÉ` et indique exactement ce qui empêche l'intégration. Ne masque pas un manque de contrat derrière une valeur supposée ou un exemple fictif.
 ```
+
+---
+
+## Mise à jour du 24 juillet 2026 — vérification des API signalées absentes
+
+Cette section est le bilan de référence après comparaison du rapport frontend avec le code backend. Elle remplace les affirmations d'absence devenues obsolètes dans les sections historiques du rapport.
+
+### Endpoints ajoutés
+
+Tous les appels passent par `http://localhost:8083/api/v1` et nécessitent
+`Authorization: Bearer <accessToken>`.
+
+#### Compte et sessions (`auth-service`)
+
+| Méthode | Chemin | Requête | Réponse |
+|---|---|---|---|
+| POST | `/auth/account/deactivate` | `{ "currentPassword": "..." }` | `204 No Content` |
+| GET | `/auth/sessions` | aucune | tableau `{ id, expiresAt, revokedAt, active }` |
+| DELETE | `/auth/sessions/{sessionId}` | aucune | `204 No Content`; `404 SESSION_NOT_FOUND` si la session n'appartient pas à l'utilisateur |
+
+La réactivation n'utilise volontairement pas une route publique séparée: une connexion
+`POST /auth/login` avec le bon mot de passe réactive un compte `INACTIVE`, puis émet
+de nouveaux tokens. Un compte `PENDING` retourne maintenant explicitement
+`403 EMAIL_NOT_VERIFIED` avant l'authentification, au lieu d'un `401` ambigu.
+La désactivation et le changement de mot de passe révoquent tous les refresh tokens.
+Un access token déjà émis reste cependant valable jusqu'à son expiration, car les JWT
+sont stateless et il n'existe pas encore de denylist distribuée.
+
+La liste représente des **sessions de refresh token**. Le schéma actuel ne conserve pas
+encore le nom de l'appareil, l'adresse IP ni le user-agent.
+
+#### Participants d'événement (`event-service`)
+
+| Méthode | Chemin | Réponse |
+|---|---|---|
+| GET | `/events/{eventId}/participants?limit=100` | tableau `{ registrationId, userId, status, registeredAt }` |
+
+Seules les inscriptions `CONFIRMED` sont retournées. `limit` vaut `100` par défaut et
+est borné entre `1` et `200`. La route exige un JWT et retourne
+`404 EVENT_NOT_FOUND` pour un événement inconnu.
+
+#### Réponses et likes de commentaires (`interaction-service`)
+
+Les réponses imbriquées étaient déjà prises en charge par
+`POST /interactions/posts/{postId}/comments` avec le champ optionnel `parentId`.
+Les routes manquantes de like sont maintenant:
+
+| Méthode | Chemin | Réponse |
+|---|---|---|
+| PUT | `/interactions/comments/{commentId}/like` | `{ commentId, likeCount, liked: true }` |
+| DELETE | `/interactions/comments/{commentId}/like` | `{ commentId, likeCount, liked: false }` |
+| GET | `/interactions/comments/{commentId}/likes` | `{ commentId, likeCount, liked }` |
+
+`PUT` et `DELETE` sont idempotents. Un commentaire absent ou supprimé retourne
+`404 COMMENT_NOT_FOUND`. La migration Flyway `V3__create_comment_likes.sql` impose
+une unicité `(comment_id, user_id)` et supprime les likes en cascade avec le commentaire.
+
+#### Badges et classement (`gamification-service`)
+
+| Méthode | Chemin | Réponse |
+|---|---|---|
+| GET | `/me/badges/catalog` | catalogue `{ code, name, description, earned, earnedAt }[]` |
+| GET | `/me/badges/catalog/{code}` | détail d'un badge et état de gain de l'utilisateur |
+| GET | `/me/badges/stats` | `{ earnedBadges, totalBadges, totalXp, level, rank }` |
+| GET | `/me/leaderboard?limit=50` | `{ rank, userId, totalXp, level }[]`, maximum 100 |
+
+Le catalogue contient les sept règles réellement attribuées par le service:
+`FIRST_POST`, `EXPLORER`, `TRAVELER_5`, `SOCIAL_10`, `FIRST_BOOKING`,
+`STREAK_7` et `LEVEL_5`. Le leaderboard ne fabrique ni nom, ni avatar: il retourne
+le sujet utilisateur canonique; le front doit résoudre le profil via `user-service`.
+La gateway a été étendue pour router `/api/v1/me/leaderboard/**`.
+
+### État exhaustif des 23 besoins du rapport frontend
+
+| # | Besoin signalé | État vérifié | Décision/contrat |
+|---:|---|---|---|
+| 1 | Désactivation/réactivation | **Implémenté** | désactivation authentifiée; réactivation à la connexion valide |
+| 2 | Changement de mot de passe | **Déjà présent** | `PUT /auth/password`, ancien et nouveau mot de passe, révocation des refresh tokens |
+| 3 | Sessions/appareils | **Partiel implémenté** | liste et révocation des sessions; métadonnées appareil/IP/user-agent encore absentes |
+| 4 | Workflow 2FA | **Absent** | nécessite stockage des secrets, chiffrement, QR/TOTP, recovery codes et politique de challenge |
+| 5 | Vérification/changement de téléphone | **Absent** | aucun fournisseur SMS ni contrat OTP téléphone n'est configuré |
+| 6 | Confidentialité détaillée | **Partiel déjà présent** | `GET/PUT /users/settings` couvre visibilité, activité, abonnés, notifications, suggestions et messages inconnus; statut en ligne, tags et réglages de recherche restent à définir |
+| 7 | Suggestions par contacts | **Absent** | `/users/suggestions` couvre les amis d'amis, pas l'import consenti et haché du carnet d'adresses |
+| 8 | Paramètres sociaux | **Déjà présent** | `GET/PUT /users/settings` avec DTO `privacy`, `notifications`, `preferences` |
+| 9 | Suggestion de lieu utilisateur | **Absent** | workflow de modération et modèle de brouillon à définir avant d'exposer une écriture publique |
+| 10 | Favoris de lieux | **Absent comme API dédiée** | les collections existent, mais aucune collection système « favoris » n'est contractualisée |
+| 11 | Note/priorité d'une collection | **Déjà présent** | `PATCH /collections/{collectionId}/places/{assetId}` |
+| 12 | Participants/invitations/amis proches | **Partiel implémenté** | participants confirmés ajoutés; invitations, acceptation/refus et groupes proches restent absents |
+| 13 | Sauvegarde événement/expérience | **Absent** | aucune règle canonique entre collections, favoris et événements n'est figée |
+| 14 | Offres partenaires | **Absent** | aucun agrégat/service d'offre, cycle de validation ou schéma n'existe |
+| 15 | Supprimer/archiver conversation | **Absent** | le modèle Cassandra actuel ne définit pas d'archivage par participant |
+| 16 | Messages épinglés | **Absent** | schéma et règles d'autorisation à ajouter à la messagerie |
+| 17 | Conversation en sourdine | **Absent** | préférence par participant non modélisée |
+| 18 | Recherche/export conversation | **Absent** | index de recherche, pagination d'export et politique de confidentialité non définis |
+| 19 | Appels audio/vidéo | **Absent** | nécessite signalisation, historique, présence et infrastructure STUN/TURN/WebRTC |
+| 20 | Réponses/likes commentaire | **Implémenté** | `parentId` existait; like/unlike/statut ajoutés |
+| 21 | Catalogue/stats/leaderboard badges | **Implémenté** | quatre routes `/me` ajoutées avec données persistées réelles |
+| 22 | Push multi-appareil | **Absent** | le `pushToken` unique reste transitoire; registre d'appareils et révocation par appareil requis |
+| 23 | Challenge de paiement mobile réel | **Absent** | le fournisseur de paiement est simulé; aucun SDK/provider ni webhook réel n'est configuré |
+
+**Bilan:** les 23 lignes ne sont pas toutes implémentées. Six familles sont désormais
+complètement couvertes (`1`, `2`, `8`, `11`, `20`, `21`), trois sont partiellement
+couvertes (`3`, `6`, `12`) et quatorze restent absentes faute de contrat de domaine,
+de schéma persistant ou de fournisseur externe. Aucun endpoint factice n'a été ajouté
+pour masquer ces dépendances.
+
+### Build et validation
+
+- Suites et tests ciblés réussis: `auth-service` **10 tests**, `interaction-service`
+  **27 tests**, `gamification-service` **15 tests**, `event-service` **5 tests**;
+  aucun échec ni erreur.
+- Validation ciblée des nouveaux comportements: **11 tests réussis**.
+- JAR Spring Boot reconstruits pour `auth-service`, `event-service`,
+  `interaction-service` et `gamification-service`.
+- Images Docker locales reconstruites sans téléchargement externe à partir de
+  `yeyamo-api-java21-runtime:local`.
+- Services recréés avec la gateway afin de charger le routage du leaderboard.
+- État Docker final des services modifiés et de la gateway:
+  `auth-service`, `event-service`, `interaction-service`, `gamification-service`
+  et `api-gateway` sont tous `healthy` et enregistrés dans Eureka.
+- Smoke tests authentifiés via `http://localhost:8083`: login `200`, sessions
+  `200`, révocation d'une session `204`, catalogue de badges `200` (7 entrées),
+  statistiques `200`, leaderboard `200`; les UUID inconnus sur participants
+  et likes retournent bien le `404` métier du service cible.
+- Cycle compte vérifié sur l'instance reconstruite: désactivation `204`, puis
+  connexion avec le bon mot de passe `200` et compte réactivé.

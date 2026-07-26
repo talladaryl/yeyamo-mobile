@@ -175,6 +175,8 @@ function RootNavigator() {
         <Stack.Screen name="(places)/[id]" />
         <Stack.Screen name="(places)/route/[id]" />
         <Stack.Screen name="(events)/[id]" />
+        <Stack.Screen name="(events)/[id]/tickets" />
+        <Stack.Screen name="(events)/[id]/checkout" />
         <Stack.Screen name="(experiences)/[id]" />
         <Stack.Screen name="(explore)/events" />
         <Stack.Screen name="(explore)/experiences" />
@@ -206,6 +208,19 @@ function RootNavigator() {
         <Stack.Screen name="(partner-dashboard)/reservations" />
         <Stack.Screen name="(partner-dashboard)/reviews" />
         <Stack.Screen name="(partner-dashboard)/statistics" />
+        <Stack.Screen name="(partner-dashboard)/campaigns" />
+        <Stack.Screen name="(partner-dashboard)/campaign-create" />
+        <Stack.Screen name="(partner-dashboard)/campaign/[id]" />
+        <Stack.Screen name="(partner-dashboard)/event/[id]/tickets" />
+        <Stack.Screen name="(partner-dashboard)/event/[id]/ticket-create" />
+        <Stack.Screen name="(partner-dashboard)/event/[id]/ticket-orders" />
+        <Stack.Screen name="(partner-dashboard)/event/[id]/ticket-scans" />
+        <Stack.Screen name="(partner-dashboard)/event/[id]/staff" />
+        <Stack.Screen name="(partner-dashboard)/event/[id]/analytics" />
+        <Stack.Screen name="(partner-dashboard)/promotions" />
+        <Stack.Screen name="(partner-dashboard)/promotion-create" />
+        <Stack.Screen name="(partner-dashboard)/finance" />
+        <Stack.Screen name="(partner-dashboard)/transaction/[id]" />
         <Stack.Screen name="(partner-dashboard)/notifications" />
         <Stack.Screen name="(partner-dashboard)/settings" />
         <Stack.Screen name="(social-graph)" />
@@ -217,6 +232,8 @@ function RootNavigator() {
         <Stack.Screen name="(profile)/reviews" />
         <Stack.Screen name="(profile)/notifications" />
         <Stack.Screen name="(profile)/settings" />
+        <Stack.Screen name="(profile)/tickets" />
+        <Stack.Screen name="(profile)/ticket/[id]" />
         <Stack.Screen name="+not-found" />
       </Stack>
       </View>

@@ -1,10 +1,11 @@
 import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useEventDetail, useEventRegistration, useUpcomingEvents } from '@/features/events/useEvents';
+import { useEventTickets } from '@/features/ticketing/useTicketing';
 
 const { width } = Dimensions.get('window');
 
@@ -17,6 +18,7 @@ export default function EventDetailScreen() {
   const { data: event, isLoading } = useEventDetail(id);
   const { data: upcomingEvents = [] } = useUpcomingEvents();
   const registration = useEventRegistration(id);
+  const { data: ticketing } = useEventTickets(String(id));
 
   if (isLoading || !event) {
     return (
@@ -163,6 +165,28 @@ export default function EventDetailScreen() {
             </View>
           )}
 
+          {ticketing && ticketing.tickets.some((ticket) => ticket.available) ? (
+            <View className="mb-5 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              <View className="flex-row items-center gap-2">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#FEE2E2]">
+                  <Ionicons name="ticket-outline" size={21} color="#EF4444" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-base font-bold" style={{ color: colors.text }}>Billets disponibles</Text>
+                  <Text className="mt-0.5 text-xs" style={{ color: colors.textSecondary }}>Achat distinct de votre participation sociale</Text>
+                </View>
+              </View>
+              <View className="my-4 flex-row justify-between">
+                <TicketingMetric label="À partir de" value={`${Math.min(...ticketing.tickets.filter((ticket) => ticket.available).map((ticket) => ticket.price)).toLocaleString('fr-FR')} ${ticketing.currency}`} />
+                <TicketingMetric label="Types" value={String(ticketing.tickets.filter((ticket) => ticket.available).length)} />
+                <TicketingMetric label="Places restantes" value={ticketing.tickets.reduce((total, ticket) => total + (ticket.available ? ticket.remaining : 0), 0).toLocaleString('fr-FR')} />
+              </View>
+              <TouchableOpacity onPress={() => router.push(`/(events)/${id}/tickets` as Href)} className="items-center rounded-xl bg-[#EF4444] py-3.5">
+                <Text className="text-base font-bold text-white">Acheter un billet</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
           {/* Participants Section */}
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
@@ -247,6 +271,16 @@ export default function EventDetailScreen() {
 
         <View className="h-20" />
       </ScrollView>
+    </View>
+  );
+}
+
+function TicketingMetric({ label, value }: { label: string; value: string }) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <View className="max-w-[38%]">
+      <Text className="text-[10px]" style={{ color: colors.textMuted }}>{label}</Text>
+      <Text className="mt-1 text-xs font-bold" style={{ color: colors.text }}>{value}</Text>
     </View>
   );
 }

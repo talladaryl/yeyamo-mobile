@@ -5,8 +5,8 @@ import { useMemo, useState } from 'react';
 import { VerticalFeedList } from '@/components/feed/VerticalFeedList';
 import { StoriesList } from '@/components/story/StoriesList';
 import { Icon } from '@/components/ui/Icon';
-import { useFeed } from '@/features/feed/useFeed';
-import type { FeedPost } from '@/features/feed/types';
+import { useFeed, useSponsoredFeed } from '@/features/feed/useFeed';
+import type { FeedItem } from '@/features/feed/types';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useRegions } from '@/features/explore/useExplore';
 import { useStories } from '@/features/story/useStory';
@@ -22,11 +22,13 @@ export default function FeedScreen() {
   const [isRegionPickerOpen, setRegionPickerOpen] = useState(false);
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
   const { data, isLoading, isError, fetchNextPage, hasNextPage } = useFeed(selectedRegionId);
+  const { data: sponsoredItems = [] } = useSponsoredFeed(selectedRegionId);
 
-  const posts = useMemo<FeedPost[]>(() => {
+  const posts = useMemo<FeedItem[]>(() => {
     const loadedPosts = data?.pages.flatMap((page) => page.data) ?? [];
-    return loadedPosts;
-  }, [data]);
+    if (!sponsoredItems.length || loadedPosts.length < 2) return loadedPosts;
+    return [...loadedPosts.slice(0, 2), sponsoredItems[0], ...loadedPosts.slice(2)];
+  }, [data, sponsoredItems]);
 
   if (isLoading) {
     return (

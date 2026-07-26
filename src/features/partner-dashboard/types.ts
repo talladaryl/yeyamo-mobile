@@ -33,6 +33,7 @@ export interface PartnerEvent {
   location: string;
   participants: number;
   status: 'published' | 'draft' | 'archived';
+  supports_ticketing: boolean;
 }
 
 export interface Reservation {

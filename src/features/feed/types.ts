@@ -16,6 +16,28 @@ export interface FeedPost {
   created_at: string;
 }
 
+export type OrganicFeedItem = FeedPost & { item_kind?: 'organic' };
+
+export interface SponsoredFeedItem {
+  item_kind: 'sponsored';
+  id: string;
+  delivery_id: string;
+  campaign_id: string;
+  sponsor: UserSummary;
+  media: MediaAttachment[];
+  caption: string | null;
+  cta: { label: string };
+  promoted_entity: { type: 'place' | 'event' | 'post' | 'partner'; id: EntityId };
+  impression_tracking_token: string;
+  click_tracking_token: string;
+}
+
+export type FeedItem = OrganicFeedItem | SponsoredFeedItem;
+
+export function isSponsoredFeedItem(item: FeedItem): item is SponsoredFeedItem {
+  return item.item_kind === 'sponsored';
+}
+
 export interface PostComment {
   id: string;
   author: UserSummary;
