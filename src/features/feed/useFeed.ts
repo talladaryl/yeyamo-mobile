@@ -9,6 +9,7 @@ import type { EntityId } from '@/types/api.types';
 import { useInterestsStore } from '@/features/interests/interests.store';
 import { mockSponsoredFeedItems } from './sponsoredMockData';
 import { sponsoredFeedApi } from './sponsored-feed.api';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 export const FEED_QUERY_KEY = ['feed'] as const;
 
@@ -32,6 +33,7 @@ export function useSponsoredFeed(regionId?: number) {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
     queryKey: ['feed', 'sponsored', regionId ?? 'all', isDemo ? 'demo' : 'backend'],
+    enabled: FEATURE_FLAGS.ads_delivery_enabled,
     queryFn: () => isDemo ? Promise.resolve(mockSponsoredFeedItems) : sponsoredFeedApi.deliveries(regionId),
   });
 }

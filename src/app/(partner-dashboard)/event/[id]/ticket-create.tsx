@@ -1,15 +1,16 @@
 import { Controller, useForm } from 'react-hook-form';
+import axios from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
-import { useCreateTicket } from '@/features/ticketing/useTicketing';
+import { useCreateTicketType } from '@/features/ticketing/useTicketing';
+import { ticketFormToCreateRequest } from '@/features/ticketing/ticketing.mapper';
 import { useThemeStore } from '@/features/theme/theme.store';
-import type { CreateTicketTypeInput } from '@/features/ticketing/types';
 
 const isValidDate = (value: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -46,23 +47,30 @@ export default function TicketCreateScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const mutation = useCreateTicket(id);
-  const { control, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults });
+  const mutation = useCreateTicketType(id);
+  const { control, handleSubmit, watch, setError, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults });
   const preview = watch();
   const goBack = () => router.canGoBack() ? router.back() : router.replace(`/(partner-dashboard)/event/${id}/tickets` as never);
 
   const submit = handleSubmit(async (values) => {
-    const input: CreateTicketTypeInput = {
-      ...values,
-      price: Number(values.price),
-      quantity: Number(values.quantity),
-      maxPerBuyer: Number(values.maxPerBuyer),
-    };
     try {
-      await mutation.mutateAsync(input);
+      await mutation.mutateAsync(ticketFormToCreateRequest(values));
+      Alert.alert('Billet créé', 'Le type de billet a été ajouté à cet événement.');
       router.back();
-    } catch {
-      // The mutation state renders the error without leaving the form.
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const body = error.response?.data as { detail?: string; message?: string; validationErrors?: Record<string, string> } | undefined;
+        if (error.response?.status === 422 || error.response?.status === 400) {
+          const aliases: Record<string, keyof FormValues> = { salesStartAt: 'salesStartDate', salesEndAt: 'salesEndDate', maxTicketsPerBuyer: 'maxPerBuyer', gateInstructions: 'entryInstructions' };
+          Object.entries(body?.validationErrors ?? {}).forEach(([field, message]) => {
+            const target = aliases[field] ?? field as keyof FormValues;
+            setError(target, { type: 'server', message });
+          });
+        }
+        if (error.response?.status === 409) {
+          Alert.alert('Conflit de billetterie', body?.detail ?? body?.message ?? 'Un type de billet similaire existe déjà ou la configuration a changé.');
+        }
+      }
     }
   });
 

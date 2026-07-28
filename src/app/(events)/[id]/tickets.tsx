@@ -2,7 +2,7 @@ import { FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
-import { useEventTickets } from '@/features/ticketing/useTicketing';
+import { useAvailableTicketTypes } from '@/features/ticketing/useTicketing';
 import { useThemeStore } from '@/features/theme/theme.store';
 import type { PublicTicketType } from '@/features/ticketing/types';
 
@@ -10,7 +10,7 @@ export default function PublicEventTicketsScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const query = useEventTickets(id);
+  const query = useAvailableTicketTypes(id);
   return (
     <SafeScreen>
       <View className="flex-row items-center px-4 pb-3 pt-2">

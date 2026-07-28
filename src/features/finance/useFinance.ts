@@ -1,31 +1,32 @@
-import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '@/features/auth/auth.store';
-import { financeApi } from './finance.api';
-import { mockFinanceDashboard } from './mockData';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { usePartnerProfile } from '@/features/partner-dashboard/usePartnerDashboard';
+import { financeApi, type FinanceFilters } from './finance.api';
 import type { FinancePeriod } from './types';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 export const financeKeys = {
   all: ['partner', 'finance'] as const,
-  dashboard: (period: FinancePeriod) => [...financeKeys.all, 'dashboard', period] as const,
-  summary: (period: FinancePeriod) => [...financeKeys.all, 'summary', period] as const,
-  transactions: (period: FinancePeriod) => [...financeKeys.all, 'transactions', period] as const,
-  detail: (id: string) => [...financeKeys.all, 'transaction', id] as const,
+  summary: (filters: FinanceFilters) => [...financeKeys.all, 'summary', filters] as const,
+  transactions: (filters: FinanceFilters) => [...financeKeys.all, 'transactions', filters] as const,
+  detail: (partnerId: string, id: string) => [...financeKeys.all, 'transaction', partnerId, id] as const,
 };
-function useDemo() { return useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false); }
 
-export function useFinanceSummary(period: FinancePeriod) {
-  const isDemo = useDemo();
-  return useQuery({ queryKey: financeKeys.summary(period), queryFn: () => !isDemo ? financeApi.summary(period) : Promise.resolve(mockFinanceDashboard.summary) });
+function periodFilters(partnerId: string, value: FinancePeriod | Omit<FinanceFilters, 'partnerId'>): FinanceFilters {
+  if (typeof value !== 'string') return { partnerId, currency: 'XAF', ...value };
+  const days = value === '7D' ? 7 : value === '30D' ? 30 : 90;
+  return { partnerId, currency: 'XAF', from: new Date(Date.now() - days * 86_400_000).toISOString() };
 }
-export function usePartnerTransactions(period: FinancePeriod) {
-  const isDemo = useDemo();
-  return useQuery({ queryKey: financeKeys.transactions(period), queryFn: () => !isDemo ? financeApi.transactions(period) : Promise.resolve(mockFinanceDashboard.transactions) });
+
+export function useFinanceSummary(filters: FinancePeriod | Omit<FinanceFilters, 'partnerId'>) {
+  const profile = usePartnerProfile(); const resolved = periodFilters(profile.data?.id ?? '', filters);
+  return useQuery({ queryKey: financeKeys.summary(resolved), queryFn: () => financeApi.getFinanceSummary(resolved), enabled: FEATURE_FLAGS.partner_finance_enabled && Boolean(profile.data?.id), staleTime: 30_000 });
 }
-export function usePartnerFinance(period: FinancePeriod) {
-  const isDemo = useDemo();
-  return useQuery({ queryKey: financeKeys.dashboard(period), queryFn: () => !isDemo ? financeApi.dashboard(period) : Promise.resolve(mockFinanceDashboard) });
+export function usePartnerTransactions(filters: FinancePeriod | Omit<FinanceFilters, 'partnerId'>) {
+  const profile = usePartnerProfile(); const resolved = periodFilters(profile.data?.id ?? '', filters);
+  return useInfiniteQuery({ queryKey: financeKeys.transactions(resolved), initialPageParam: 0, queryFn: ({ pageParam }) => financeApi.getTransactions({ ...resolved, page: pageParam, size: resolved.size ?? 20 }), getNextPageParam: (last) => last.last ? undefined : last.number + 1, enabled: FEATURE_FLAGS.partner_finance_enabled && Boolean(profile.data?.id), staleTime: 15_000 });
 }
-export function useFinanceTransaction(id: string) {
-  const isDemo = useDemo();
-  return useQuery({ queryKey: financeKeys.detail(id), queryFn: async () => { if (!isDemo) return financeApi.transaction(id); const item = mockFinanceDashboard.transactions.find((transaction) => transaction.id === id); if (!item) throw new Error('Transaction introuvable'); return item; }, enabled: Boolean(id) });
+export function usePartnerTransaction(id: string) {
+  const profile = usePartnerProfile();
+  return useQuery({ queryKey: financeKeys.detail(profile.data?.id ?? '', id), queryFn: () => financeApi.getTransaction(profile.data!.id, id), enabled: FEATURE_FLAGS.partner_finance_enabled && Boolean(profile.data?.id && id) });
 }
+export const useFinanceTransaction = usePartnerTransaction;

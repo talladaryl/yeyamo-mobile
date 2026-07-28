@@ -30,6 +30,19 @@ export interface ApiError {
   errors?: Record<string, string[]>;
   status?: number;
 }
+export interface AppApiError {
+  status?: number;
+  code?: string;
+  message: string;
+  fieldErrors?: Record<string, string>;
+  correlationId?: string;
+}
+
+declare module '@tanstack/react-query' {
+  interface Register {
+    defaultError: AppApiError;
+  }
+}
 
 // ─── Shared Entities ────────────────────────────────────────────────────────
 

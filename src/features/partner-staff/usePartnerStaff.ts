@@ -1,45 +1,76 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/features/auth/auth.store';
-import { mockStaff, mockStaffUsers } from './mockData';
+import { usePartnerProfile } from '@/features/partner-dashboard/usePartnerDashboard';
 import { partnerStaffApi } from './partner-staff.api';
-import type { StaffMember, StaffRole } from './types';
+import type {
+  AssignEventStaffRequest,
+  InviteEventStaffRequest,
+  StaffRole,
+} from './types';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 export const staffKeys = {
   all: ['partner', 'staff'] as const,
   event: (eventId: string) => [...staffKeys.all, 'event', eventId] as const,
-  search: (query: string) => [...staffKeys.all, 'search', query] as const,
 };
-function useDemo() { return useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false); }
+
+function useEventStaffContext(eventId: string) {
+  const profile = usePartnerProfile();
+  return { partnerId: profile.data?.id, enabled: Boolean(eventId && profile.data?.id) };
+}
 
 export function useEventStaff(eventId: string) {
-  const isDemo = useDemo();
-  return useQuery({ queryKey: staffKeys.event(eventId), queryFn: () => !isDemo ? partnerStaffApi.list(eventId) : Promise.resolve(mockStaff), enabled: Boolean(eventId) });
-}
-export function useStaffUserSearch(query: string) {
-  const isDemo = useDemo();
-  return useQuery({ queryKey: staffKeys.search(query), queryFn: () => !isDemo ? partnerStaffApi.searchUsers(query) : Promise.resolve(mockStaffUsers.filter((user) => `${user.displayName} ${user.username} ${user.contactHint}`.toLowerCase().includes(query.toLowerCase()))), enabled: query.trim().length >= 2 });
-}
-function useStaffMutation<TInput>(eventId: string, mutationFn: (input: TInput, isDemo: boolean) => Promise<unknown>) {
-  const client = useQueryClient(); const isDemo = useDemo();
-  return useMutation({ mutationFn: (input: TInput) => mutationFn(input, isDemo), onSuccess: () => client.invalidateQueries({ queryKey: staffKeys.event(eventId) }) });
-}
-export function useInviteEventStaff(eventId: string) {
-  return useStaffMutation(eventId, async ({ userId, role }: { userId: string; role: StaffRole }, isDemo) => {
-    if (!isDemo) return partnerStaffApi.invite(eventId, { userId, role });
-    const user = mockStaffUsers.find((item) => item.userId === userId); if (!user) throw new Error('Utilisateur introuvable');
-    const member: StaffMember = { id: `staff-${Date.now()}`, userId, displayName: user.displayName, username: user.username, avatarUrl: user.avatarUrl, role, status: 'INVITED', permissions: permissionsFor(role) }; mockStaff.push(member); return member;
+  const context = useEventStaffContext(eventId);
+  return useQuery({
+    queryKey: staffKeys.event(eventId),
+    queryFn: () => partnerStaffApi.getEventStaff(context.partnerId!, eventId),
+    enabled: FEATURE_FLAGS.event_staff_enabled && context.enabled,
   });
 }
-export const useInviteStaff = useInviteEventStaff;
+
+function useEventStaffMutation<TInput, TResult>(
+  eventId: string,
+  mutation: (partnerId: string, input: TInput) => Promise<TResult>,
+) {
+  const queryClient = useQueryClient();
+  const context = useEventStaffContext(eventId);
+  return useMutation({
+    mutationFn: (input: TInput) => {
+      if (!FEATURE_FLAGS.event_staff_enabled) throw { code: 'FEATURE_DISABLED', message: 'La gestion du personnel est désactivée.' };
+      if (!context.partnerId) throw { code: 'PARTNER_PROFILE_UNAVAILABLE', message: 'Profil partenaire indisponible' };
+      return mutation(context.partnerId, input);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: staffKeys.event(eventId), exact: true }),
+  });
+}
+
+export function useInviteEventStaff(eventId: string) {
+  return useEventStaffMutation(eventId, (partnerId, payload: InviteEventStaffRequest) =>
+    partnerStaffApi.inviteEventStaff(partnerId, eventId, payload));
+}
+
+export function useAssignEventStaff(eventId: string) {
+  return useEventStaffMutation(eventId, (partnerId, payload: Omit<AssignEventStaffRequest, 'eventId'>) =>
+    partnerStaffApi.assignEventStaff(partnerId, eventId, payload));
+}
+
 export function useUpdateEventStaffRole(eventId: string) {
-  return useStaffMutation(eventId, async ({ memberId, role }: { memberId: string; role: StaffRole }, isDemo) => { if (!isDemo) return partnerStaffApi.updateRole(eventId, memberId, role); const member = mockStaff.find((item) => item.id === memberId); if (!member) throw new Error('Membre introuvable'); member.role = role; member.permissions = permissionsFor(role); return member; });
+  return useEventStaffMutation(
+    eventId,
+    (partnerId, input: { assignmentId: string; role: StaffRole }) =>
+      partnerStaffApi.updateEventStaffRole(partnerId, eventId, input.assignmentId, { role: input.role }),
+  );
 }
-export const useUpdateStaffRole = useUpdateEventStaffRole;
+
 export function useRevokeEventStaff(eventId: string) {
-  return useStaffMutation(eventId, async (memberId: string, isDemo) => { if (!isDemo) return partnerStaffApi.revoke(eventId, memberId); const member = mockStaff.find((item) => item.id === memberId); if (member) member.status = 'REVOKED'; });
+  return useEventStaffMutation(eventId, (partnerId, assignmentId: string) =>
+    partnerStaffApi.revokeEventStaff(partnerId, eventId, assignmentId));
 }
-export const useRevokeStaff = useRevokeEventStaff;
+
 export function useResendStaffInvitation(eventId: string) {
-  return useStaffMutation(eventId, (memberId: string, isDemo) => !isDemo ? partnerStaffApi.resend(eventId, memberId) : Promise.resolve());
+  return useEventStaffMutation(eventId, (partnerId, invitationId: string) =>
+    partnerStaffApi.resendStaffInvitation(partnerId, invitationId));
 }
-function permissionsFor(role: StaffRole) { if (role === 'EVENT_MANAGER') return ['Billetterie', 'Équipe', 'Rapports']; if (role === 'ACCESS_CONTROLLER') return ['Scanner', 'Historique']; if (role === 'CASHIER') return ['Ventes', 'Commandes']; return ['Scanner', 'Équipe terrain']; }
+
+export const useInviteStaff = useInviteEventStaff;
+export const useUpdateStaffRole = useUpdateEventStaffRole;
+export const useRevokeStaff = useRevokeEventStaff;

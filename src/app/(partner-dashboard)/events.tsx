@@ -6,6 +6,7 @@ import { FilterChips, PartnerPage } from '@/components/partner-dashboard/Partner
 import { partnerEvents } from '@/features/partner-dashboard/mockData';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useAuthStore } from '@/features/auth/auth.store';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 const FILTERS = ['Tous', 'À venir', 'Brouillons', 'Passés'] as const;
 
@@ -28,7 +29,7 @@ export default function EventsScreen() {
           key={item.id}
           event={item}
           onPress={() => {}}
-          onTicketingPress={isPartner && item.supports_ticketing
+          onTicketingPress={FEATURE_FLAGS.ticketing_enabled && isPartner && item.supports_ticketing
             ? () => router.push(`/(partner-dashboard)/event/${item.id}/tickets` as Href)
             : undefined}
         />

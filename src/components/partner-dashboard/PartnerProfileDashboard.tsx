@@ -5,6 +5,7 @@ import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { recentActivities } from '@/features/partner-dashboard/mockData';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 const QUICK_ACTIONS = [
   { label: 'Établissements', subtitle: 'Gérez vos lieux', icon: 'business-outline', route: '/(partner-dashboard)/establishments' },
@@ -37,6 +38,10 @@ type DashboardItem = {
 export function PartnerProfileDashboard() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const businessTools = BUSINESS_TOOLS.filter((item) =>
+    (item.route !== '/(partner-dashboard)/campaigns' || FEATURE_FLAGS.campaigns_enabled)
+    && (item.route !== '/(partner-dashboard)/promotions' || FEATURE_FLAGS.promotions_enabled)
+    && (item.route !== '/(partner-dashboard)/finance' || FEATURE_FLAGS.partner_finance_enabled));
 
   return (
     <SafeScreen>
@@ -77,7 +82,7 @@ export function PartnerProfileDashboard() {
         </View>
 
         <DashboardSection title="Accès rapides" items={QUICK_ACTIONS} />
-        <DashboardSection title="Outils business" items={BUSINESS_TOOLS} />
+        <DashboardSection title="Outils business" items={businessTools} />
         <DashboardSection title="Plus d’outils" items={SECONDARY_ACTIONS} />
 
         <SectionTitle title="Activité récente" />

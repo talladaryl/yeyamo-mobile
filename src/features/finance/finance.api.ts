@@ -1,8 +1,13 @@
 import { apiGet } from '@/services/api/client';
-import type { FinanceDashboard, FinancePeriod, FinanceTransaction } from './types';
+import type { LedgerEntry, PartnerFinanceSummary } from './types';
+import type { SpringPage } from '@/services/api/contracts';
+
+export interface FinanceFilters { partnerId: string; currency?: string; from?: string; to?: string; page?: number; size?: number }
+const base = (partnerId: string) => `/commerce/partners/${partnerId}/finance`;
+const params = ({ partnerId: _partnerId, ...filters }: FinanceFilters) => filters;
+
 export const financeApi = {
-  dashboard: (period: FinancePeriod) => apiGet<FinanceDashboard>('/partners/me/finance', { params: { period } }),
-  summary: (period: FinancePeriod) => apiGet<FinanceDashboard['summary']>('/partners/me/finance/summary', { params: { period } }),
-  transactions: (period: FinancePeriod) => apiGet<FinanceTransaction[]>('/partners/me/finance/transactions', { params: { period } }),
-  transaction: (id: string) => apiGet<FinanceTransaction>(`/partners/me/finance/transactions/${id}`),
+  getFinanceSummary: (filters: FinanceFilters) => apiGet<PartnerFinanceSummary>(`${base(filters.partnerId)}/summary`, { params: params(filters) }),
+  getTransactions: (filters: FinanceFilters) => apiGet<SpringPage<LedgerEntry>>(`${base(filters.partnerId)}/transactions`, { params: params(filters) }),
+  getTransaction: (partnerId: string, id: string) => apiGet<LedgerEntry>(`${base(partnerId)}/transactions/${id}`),
 };

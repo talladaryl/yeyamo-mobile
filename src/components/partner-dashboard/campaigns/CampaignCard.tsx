@@ -23,6 +23,8 @@ export function CampaignCard({ campaign, onPress }: { campaign: Campaign; onPres
   const status = STATUS[campaign.status];
   const progress = campaign.totalBudget > 0 ? Math.min(100, (campaign.amountSpent / campaign.totalBudget) * 100) : 0;
   const ctr = campaign.impressions > 0 ? (campaign.clicks / campaign.impressions) * 100 : 0;
+  const performanceAvailable = campaign.performanceAvailable !== false;
+  const remainingAmount = Math.max(0, campaign.totalBudget - campaign.amountSpent);
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} className="mb-4 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
@@ -48,11 +50,12 @@ export function CampaignCard({ campaign, onPress }: { campaign: Campaign; onPres
         <View className="mt-2 h-2 overflow-hidden rounded-full" style={{ backgroundColor: colors.elevated }}>
           <View className="h-full rounded-full bg-[#EF4444]" style={{ width: `${progress}%` }} />
         </View>
+        <Text className="mt-1 text-[10px]" style={{ color: colors.textMuted }}>Restant : {money.format(remainingAmount)} FCFA</Text>
 
         <View className="mt-4 flex-row justify-between">
-          <Metric label="Impressions" value={money.format(campaign.impressions)} />
-          <Metric label="Clics" value={money.format(campaign.clicks)} />
-          <Metric label="CTR" value={`${ctr.toFixed(1)} %`} />
+          <Metric label="Impressions" value={performanceAvailable ? money.format(campaign.impressions) : '—'} />
+          <Metric label="Clics" value={performanceAvailable ? money.format(campaign.clicks) : '—'} />
+          <Metric label="CTR" value={performanceAvailable ? `${ctr.toFixed(1)} %` : '—'} />
         </View>
         <Text className="mt-4 text-[11px]" style={{ color: colors.textMuted }}>
           {shortDate.format(new Date(campaign.startsAt))} — {shortDate.format(new Date(campaign.endsAt))}

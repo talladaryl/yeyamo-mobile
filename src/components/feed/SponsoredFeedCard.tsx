@@ -14,7 +14,7 @@ export function SponsoredFeedCard({ item, height, isActive }: { item: SponsoredF
   const media = item.media[0];
   const player = useVideoPlayer(media?.type === 'video' && isActive ? media.url : null, (instance) => { instance.loop = true; if (isActive) instance.play(); });
   const open = () => {
-    trackClick.mutate({ deliveryId: item.delivery_id, trackingToken: item.click_tracking_token });
+    trackClick.mutate({ deliveryId: item.delivery_id, clickTrackingToken: item.click_tracking_token });
     const target = item.promoted_entity;
     const route = target.type === 'place' ? `/(places)/${target.id}` : target.type === 'event' ? `/(events)/${target.id}` : target.type === 'post' ? `/(post)/${target.id}` : `/(profile)/${target.id}`;
     router.push(route as Href);

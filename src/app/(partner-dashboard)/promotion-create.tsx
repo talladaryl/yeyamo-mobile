@@ -1,15 +1,18 @@
 import { Controller, useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
 import { useCreatePromotion } from '@/features/promotions/usePromotions';
+import { promotionFormToCreateRequest } from '@/features/promotions/promotions.mapper';
+import { usePartnerProfile } from '@/features/partner-dashboard/usePartnerDashboard';
+import { normalizeApiError } from '@/services/api/errors';
 import { useThemeStore } from '@/features/theme/theme.store';
-import type { CreatePromotionInput, DiscountType, PromotionApplication } from '@/features/promotions/types';
+import type { DiscountType, PromotionApplication } from '@/features/promotions/types';
 
 const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
 const nonNegative = (message: string) => z.string().refine((value) => value !== '' && Number(value) >= 0 && Number.isFinite(Number(value)), message);
@@ -27,12 +30,13 @@ const TYPES: Array<{ value: DiscountType; label: string }> = [{ value: 'PERCENTA
 const APPS: Array<{ value: PromotionApplication; label: string }> = [{ value: 'TICKETS', label: 'Billets' }, { value: 'RESERVATIONS', label: 'Réservations' }, { value: 'EXPERIENCES', label: 'Expériences' }];
 
 export default function PromotionCreateScreen() {
-  const router = useRouter(); const colors = useThemeStore((state) => state.colors); const mutation = useCreatePromotion();
-  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: '', code: '', description: '', discountType: 'PERCENTAGE', value: '', maximumDiscount: '', minimumOrder: '0', startsAt: '', endsAt: '', globalLimit: '100', userLimit: '1', applications: ['TICKETS'] } });
+  const router = useRouter(); const colors = useThemeStore((state) => state.colors); const mutation = useCreatePromotion(); const profile = usePartnerProfile();
+  const { control, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: '', code: '', description: '', discountType: 'PERCENTAGE', value: '', maximumDiscount: '', minimumOrder: '0', startsAt: '', endsAt: '', globalLimit: '100', userLimit: '1', applications: ['TICKETS'] } });
   const values = watch();
   const submit = handleSubmit(async (form) => {
-    const input: CreatePromotionInput = { ...form, code: form.code.toUpperCase(), value: Number(form.value), maximumDiscount: form.maximumDiscount === '' ? null : Number(form.maximumDiscount), minimumOrder: Number(form.minimumOrder), globalLimit: Number(form.globalLimit), userLimit: Number(form.userLimit) };
-    try { await mutation.mutateAsync(input); router.back(); } catch {}
+    if (!profile.data?.id) return;
+    try { await mutation.mutateAsync(promotionFormToCreateRequest(form, profile.data.id)); reset(); Alert.alert('Promotion créée', 'La promotion est maintenant disponible dans votre liste.', [{ text: 'OK', onPress: () => router.back() }]); }
+    catch (error) { const apiError = normalizeApiError(error); const message = apiError.status === 409 ? 'Ce code promotionnel est déjà utilisé.' : apiError.status === 403 ? 'Vous ne pouvez pas créer une promotion pour cette entité.' : apiError.status === 422 ? 'Vérifiez les dates et les limites de la promotion.' : apiError.message; Alert.alert('Promotion non créée', message); }
   });
   const toggleApplication = (application: PromotionApplication) => setValue('applications', values.applications.includes(application) ? values.applications.filter((item) => item !== application) : [...values.applications, application], { shouldValidate: true });
   return <SafeScreen><View className="flex-row items-center px-4 pb-3 pt-2"><TouchableOpacity onPress={() => router.back()} className="mr-3 h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="arrow-back" size={22} color={colors.text} /></TouchableOpacity><Text className="text-xl font-extrabold" style={{ color: colors.text }}>Créer une promotion</Text></View><KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: 40 }}><View className="gap-4"><Field control={control} name="name" label="Nom" error={errors.name?.message} /><Field control={control} name="code" label="Code" error={errors.code?.message} autoCapitalize="characters" /><Field control={control} name="description" label="Description" error={errors.description?.message} multiline /><Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>Type de réduction</Text><View className="flex-row flex-wrap gap-2">{TYPES.map((type) => <Choice key={type.value} label={type.label} selected={values.discountType === type.value} onPress={() => setValue('discountType', type.value)} />)}</View><Field control={control} name="value" label="Valeur" error={errors.value?.message} keyboardType="numeric" /><Field control={control} name="maximumDiscount" label="Réduction maximum" error={errors.maximumDiscount?.message} keyboardType="numeric" /><Field control={control} name="minimumOrder" label="Commande minimum" error={errors.minimumOrder?.message} keyboardType="numeric" /><View className="flex-row gap-3"><View className="flex-1"><Field control={control} name="startsAt" label="Date début" placeholder="AAAA-MM-JJ" error={errors.startsAt?.message} /></View><View className="flex-1"><Field control={control} name="endsAt" label="Date fin" placeholder="AAAA-MM-JJ" error={errors.endsAt?.message} /></View></View><Field control={control} name="globalLimit" label="Limite globale" error={errors.globalLimit?.message} keyboardType="number-pad" /><Field control={control} name="userLimit" label="Limite utilisateur" error={errors.userLimit?.message} keyboardType="number-pad" /><Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>Application</Text><View className="flex-row flex-wrap gap-2">{APPS.map((app) => <Choice key={app.value} label={app.label} selected={values.applications.includes(app.value)} onPress={() => toggleApplication(app.value)} />)}</View>{errors.applications ? <Text className="text-xs text-[#EF4444]">{errors.applications.message}</Text> : null}</View><Text className="mb-3 mt-7 text-base font-extrabold" style={{ color: colors.text }}>Aperçu</Text><PromotionPreview values={values} /><Text className="mt-3 text-center text-xs" style={{ color: colors.textMuted }}>Aperçu indicatif. Le backend calcule et valide toujours la réduction finale.</Text>{mutation.isError ? <Text className="mt-2 text-center text-xs text-[#EF4444]">Création impossible. Réessayez.</Text> : null}<View className="mt-5"><Button label="Créer la promotion" onPress={submit} isLoading={mutation.isPending} /></View></ScrollView></KeyboardAvoidingView></SafeScreen>;

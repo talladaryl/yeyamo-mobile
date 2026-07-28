@@ -71,8 +71,18 @@ const analyticsPoints = [
 
 export function mockCampaignAnalytics(period: AnalyticsPeriod): CampaignAnalytics {
   const multiplier = period === 'ALL' ? 4 : period === '30D' ? 2 : 1;
+  const impressions = analyticsPoints.reduce((sum, point) => sum + point.impressions, 0) * multiplier;
+  const clicks = analyticsPoints.reduce((sum, point) => sum + point.clicks, 0) * multiplier;
+  const conversions = analyticsPoints.reduce((sum, point) => sum + point.conversions, 0) * multiplier;
   return {
     reach: 37420 * multiplier,
+    impressions,
+    clicks,
+    conversions,
+    ctr: impressions ? clicks / impressions * 100 : 0,
+    cpc: 0,
+    cpm: 0,
+    cpa: 0,
     points: analyticsPoints.map((point) => ({
       ...point,
       impressions: point.impressions * multiplier,

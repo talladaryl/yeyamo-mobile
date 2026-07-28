@@ -1,5 +1,6 @@
+import axios from 'axios';
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +10,7 @@ import { CampaignListSkeleton } from '@/components/partner-dashboard/campaigns/C
 import {
   useCampaign,
   useCampaignAnalytics,
+  useCancelCampaign,
   usePauseCampaign,
   useResumeCampaign,
   useSubmitCampaign,
@@ -39,9 +41,10 @@ export default function CampaignDetailScreen() {
   const pause = usePauseCampaign();
   const resume = useResumeCampaign();
   const submit = useSubmitCampaign();
+  const cancel = useCancelCampaign();
   const campaign = campaignQuery.data;
   const analytics = analyticsQuery.data;
-  const pending = pause.isPending || resume.isPending || submit.isPending;
+  const pending = pause.isPending || resume.isPending || submit.isPending || cancel.isPending;
   const goBack = () => router.canGoBack() ? router.back() : router.replace('/(partner-dashboard)/campaigns');
 
   if (campaignQuery.isLoading) return <SafeScreen><CampaignListSkeleton /></SafeScreen>;
@@ -52,16 +55,50 @@ export default function CampaignDetailScreen() {
 
   const remaining = Math.max(0, campaign.totalBudget - campaign.amountSpent);
   const progress = campaign.totalBudget ? Math.min(100, campaign.amountSpent / campaign.totalBudget * 100) : 0;
-  const ctr = campaign.impressions ? campaign.clicks / campaign.impressions * 100 : 0;
-  const cpc = campaign.clicks ? campaign.amountSpent / campaign.clicks : 0;
-  const cpm = campaign.impressions ? campaign.amountSpent / campaign.impressions * 1000 : 0;
-  const cpa = campaign.conversions ? campaign.amountSpent / campaign.conversions : 0;
+  const success = (message: string) => {
+    Alert.alert('Campagne mise à jour', message);
+    void campaignQuery.refetch();
+    void analyticsQuery.refetch();
+  };
+  const failure = (error: unknown) => {
+    const body = axios.isAxiosError(error)
+      ? error.response?.data as { detail?: string; message?: string } | undefined
+      : undefined;
+    Alert.alert('Action impossible', body?.detail ?? body?.message
+      ?? (error instanceof Error ? error.message : 'Une erreur est survenue.'));
+  };
+  const run = (mutation: typeof pause, message: string) =>
+    mutation.mutate(id, { onSuccess: () => success(message), onError: failure });
+  const confirmPause = () => Alert.alert(
+    'Mettre en pause',
+    'Confirmer la mise en pause de cette campagne ?',
+    [
+      { text: 'Retour', style: 'cancel' },
+      { text: 'Mettre en pause', onPress: () => run(pause, 'La campagne est maintenant en pause.') },
+    ],
+  );
+  const confirmCancel = () => Alert.alert(
+    'Annuler la campagne',
+    'Cette action applique les règles métier du backend et peut être définitive.',
+    [
+      { text: 'Retour', style: 'cancel' },
+      { text: 'Annuler la campagne', style: 'destructive', onPress: () => run(cancel, 'La campagne a été annulée.') },
+    ],
+  );
 
   return (
     <SafeScreen>
       <Header title={campaign.name} subtitle={STATUS_LABELS[campaign.status]} onBack={goBack} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
-        <ActionRow campaign={campaign} pending={pending} onPause={() => pause.mutate(id)} onResume={() => resume.mutate(id)} onSubmit={() => submit.mutate(id)} onEdit={() => router.push('/(partner-dashboard)/campaign-create' as Href)} />
+        <ActionRow
+          campaign={campaign}
+          pending={pending}
+          onPause={confirmPause}
+          onResume={() => run(resume, 'La diffusion a repris.')}
+          onSubmit={() => run(submit, 'La campagne a été soumise pour validation.')}
+          onCancel={confirmCancel}
+          onEdit={() => router.push('/(partner-dashboard)/campaign-create' as Href)}
+        />
 
         <SectionTitle title="Budget" />
         <View className="rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
@@ -77,10 +114,10 @@ export default function CampaignDetailScreen() {
         <SectionTitle title="Performances" />
         <View className="flex-row flex-wrap gap-3">
           {[
-            ['Impressions', compact.format(campaign.impressions)], ['Portée', compact.format(analytics?.reach ?? 0)],
-            ['Clics', compact.format(campaign.clicks)], ['CTR', `${ctr.toFixed(2)} %`],
-            ['Conversions', compact.format(campaign.conversions)], ['CPC', `${money.format(cpc)} F`],
-            ['CPM', `${money.format(cpm)} F`], ['CPA', `${money.format(cpa)} F`],
+            ['Impressions', compact.format(analytics?.impressions ?? 0)], ['Portée', compact.format(analytics?.reach ?? 0)],
+            ['Clics', compact.format(analytics?.clicks ?? 0)], ['CTR', `${(analytics?.ctr ?? 0).toFixed(2)} %`],
+            ['Conversions', compact.format(analytics?.conversions ?? 0)], ['CPC', `${money.format(analytics?.cpc ?? 0)} F`],
+            ['CPM', `${money.format(analytics?.cpm ?? 0)} F`], ['CPA', `${money.format(analytics?.cpa ?? 0)} F`],
           ].map(([label, value]) => <PerformanceCard key={label} label={label} value={value} />)}
         </View>
 
@@ -105,12 +142,13 @@ function Header({ title, subtitle, onBack }: { title: string; subtitle: string; 
   return <View className="flex-row items-center px-4 pb-3 pt-2"><TouchableOpacity onPress={onBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="arrow-back" size={22} color={colors.text} /></TouchableOpacity><View className="min-w-0 flex-1"><Text numberOfLines={1} className="text-xl font-extrabold" style={{ color: colors.text }}>{title}</Text><Text className="text-xs font-semibold text-[#EF4444]">{subtitle}</Text></View><TouchableOpacity accessibilityLabel="Actions de la campagne" className="h-10 w-10 items-center justify-center"><Icon name="ellipsis-vertical" size={21} color={colors.text} /></TouchableOpacity></View>;
 }
 
-function ActionRow({ campaign, pending, onEdit, onSubmit, onPause, onResume }: { campaign: Campaign; pending: boolean; onEdit: () => void; onSubmit: () => void; onPause: () => void; onResume: () => void }) {
+function ActionRow({ campaign, pending, onEdit, onSubmit, onPause, onResume, onCancel }: { campaign: Campaign; pending: boolean; onEdit: () => void; onSubmit: () => void; onPause: () => void; onResume: () => void; onCancel: () => void }) {
   if (campaign.status === 'COMPLETED') return null;
   return <View className="mt-2 flex-row gap-3">
     {(campaign.status === 'DRAFT' || campaign.status === 'REJECTED') ? <><View className="flex-1"><Button label="Modifier" variant="outline" onPress={onEdit} disabled={pending} /></View><View className="flex-1"><Button label={campaign.status === 'REJECTED' ? 'Soumettre à nouveau' : 'Soumettre'} onPress={onSubmit} isLoading={pending} /></View></> : null}
     {campaign.status === 'ACTIVE' ? <View className="flex-1"><Button label="Mettre en pause" variant="outline" onPress={onPause} isLoading={pending} /></View> : null}
     {campaign.status === 'PAUSED' ? <View className="flex-1"><Button label="Reprendre" onPress={onResume} isLoading={pending} /></View> : null}
+    <View className="flex-1"><Button label="Annuler" variant="outline" onPress={onCancel} disabled={pending} /></View>
   </View>;
 }
 

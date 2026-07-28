@@ -41,7 +41,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
         if (token.isViewable && isSponsoredFeedItem(item) && !trackedDeliveries.current.has(item.delivery_id)) {
           trackedDeliveries.current.add(item.delivery_id);
           trackImpression.mutate(
-            { deliveryId: item.delivery_id, trackingToken: item.impression_tracking_token },
+            { deliveryId: item.delivery_id, impressionTrackingToken: item.impression_tracking_token, viewDurationMs: 1_000 },
             { onError: () => trackedDeliveries.current.delete(item.delivery_id) },
           );
         }
@@ -52,6 +52,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
+    minimumViewTime: 1_000,
   }).current;
 
   const handleFollow = async (authorId: EntityId) => {

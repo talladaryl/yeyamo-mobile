@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "834824406284",
+    "project_id": "yeyamo-85825",
+    "storage_bucket": "yeyamo-85825.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:834824406284:android:7617f9871e41b88cdf3529",
+        "android_client_info": {
+          "package_name": "com.yeyamo.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqGUMNquOqERXZU3a1ONEf7uDq_ekZrAI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

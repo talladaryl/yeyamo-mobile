@@ -5,6 +5,7 @@ import axios, {
 } from 'axios';
 import ENV from '@/config/env';
 import { secureStore } from '@/services/storage/secure-store';
+import { normalizeApiError } from './errors';
 
 // ─── Singleton router ref (set from root layout) ────────────────────────────
 // Avoids importing expo-router directly in a service (no React context here)
@@ -68,6 +69,12 @@ apiClient.interceptors.response.use(
     }
     return Promise.reject(error);
   },
+);
+
+// Runs after authentication refresh handling; it never performs logout or redirects.
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => Promise.reject(normalizeApiError(error)),
 );
 
 async function refreshAccessToken(): Promise<string> {

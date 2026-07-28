@@ -1,6 +1,6 @@
 import { campaignsApi } from './campaigns.api';
 import { mockCampaignAnalytics, mockCampaigns } from './mockData';
-import type { AnalyticsPeriod, Campaign, CampaignFilter, CampaignListResult, CampaignStatus, CreateCampaignInput } from './types';
+import type { AnalyticsPeriod, Campaign, CampaignFilter, CampaignListResult, CampaignStatus, CreateCampaignRequest } from './types';
 
 const FILTER_STATUSES: Record<Exclude<CampaignFilter, 'ALL'>, CampaignStatus[]> = {
   ACTIVE: ['APPROVED', 'ACTIVE', 'PAUSED', 'BUDGET_EXHAUSTED'],
@@ -43,9 +43,22 @@ export const campaignsService = {
     if (!mockCampaigns.some((item) => item.id === id)) throw new Error('Campagne introuvable');
     return mockCampaignAnalytics(period);
   },
-  create: async (input: CreateCampaignInput, isDemo = false) => {
-    if (!isDemo) return campaignsApi.create(input);
-    const campaign: Campaign = { id: `campaign-${Date.now()}`, visualUrl: '', amountSpent: 0, impressions: 0, clicks: 0, conversions: 0, status: 'DRAFT', ...input };
+  create: async (input: CreateCampaignRequest, isDemo = false) => {
+    if (!isDemo) return campaignsApi.createCampaign(input);
+    const campaign: Campaign = {
+      id: `campaign-${Date.now()}`,
+      name: input.name,
+      visualUrl: input.creativeConfiguration.imageUrl ?? input.creativeConfiguration.videoUrl ?? '',
+      promotedContent: input.creativeConfiguration.title ?? input.promotedEntityId,
+      totalBudget: input.totalBudget,
+      startsAt: input.startAt,
+      endsAt: input.endAt,
+      amountSpent: 0,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      status: 'DRAFT',
+    };
     mockCampaigns.push(campaign);
     return campaign;
   },
