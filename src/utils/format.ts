@@ -22,6 +22,25 @@ export function timeAgo(isoDate: string): string {
   return `${days}d ago`;
 }
 
+export function formatMoney(amount: string | number | null | undefined, currencyCode: string | null | undefined, locale = 'fr-CM'): string {
+  if (amount === null || amount === undefined || amount === '') return '—';
+  const value = typeof amount === 'number' ? amount : Number(amount);
+  if (!Number.isFinite(value) || !currencyCode) return '—';
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: currencyCode, maximumFractionDigits: 2 }).format(value);
+}
+
+export function formatPhone(phone: string, countryCallingCode?: string | null): string {
+  const trimmed = phone.trim();
+  if (!trimmed || trimmed.startsWith('+') || !countryCallingCode) return trimmed;
+  return `${countryCallingCode} ${trimmed.replace(/^0+/, '')}`;
+}
+
+export function formatDate(date: string | Date, timezone?: string | null, locale = 'fr-CM'): string {
+  const value = typeof date === 'string' ? new Date(date) : date;
+  if (Number.isNaN(value.getTime())) return '—';
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: timezone ?? undefined }).format(value);
+}
+
 /**
  * Truncate text with ellipsis
  */

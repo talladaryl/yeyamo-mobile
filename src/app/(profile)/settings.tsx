@@ -7,6 +7,7 @@ import { SettingsItem } from '@/components/profile/SettingsItem';
 import { ThemeSelector } from '@/components/settings/ThemeSelector';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { i18n } from '@/i18n';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -90,10 +91,12 @@ export default function SettingsScreen() {
         <View className="mt-6 px-4">
           <Text className="mb-3 text-xs font-semibold uppercase" style={{ color: colors.textSecondary }}>Support & à propos</Text>
           <View className="overflow-hidden rounded-xl" style={{ backgroundColor: colors.card }}>
-            <SettingsItem icon="help-circle-outline" label="Aide" onPress={() => Alert.alert('Aide Yeyamo', 'Support demo : support@yeyamo.local')} />
+            <SettingsItem icon="help-circle-outline" label={i18n.t('support.howToUse')} onPress={() => router.push('/(profile)/help')} />
+            <SettingsItem icon="help-circle-outline" label={i18n.t('support.faq')} onPress={() => router.push('/(profile)/faq')} showBorder />
+            <SettingsItem icon="mail-outline" label={i18n.t('support.contact')} onPress={() => router.push('/(profile)/support')} showBorder />
             <SettingsItem icon="document-text-outline" label="Conditions d'utilisation" onPress={() => Alert.alert('CGU', 'Conditions d\'utilisation')} showBorder />
-            <SettingsItem icon="shield-outline" label="Politique de confidentialité" onPress={() => Alert.alert('Politique', 'Politique de confidentialité')} showBorder />
-            <SettingsItem icon="information-circle-outline" label="À propos de Yeyamo" value="v1.0.0" onPress={() => Alert.alert('À propos', 'Yeyamo - Version 1.0.0')} showBorder />
+            <SettingsItem icon="shield-outline" label={i18n.t('support.privacyPolicy')} onPress={() => router.push('/(profile)/privacy-policy')} showBorder />
+            <SettingsItem icon="information-circle-outline" label={i18n.t('support.about')} value="v1.0.0" onPress={() => router.push('/(profile)/about')} showBorder />
           </View>
         </View>
 

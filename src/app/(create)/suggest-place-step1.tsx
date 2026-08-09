@@ -1,7 +1,7 @@
 import { memo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
@@ -11,6 +11,7 @@ const StableMapPreview = memo(function StableMapPreview() {
   return (
     <View className="rounded-2xl overflow-hidden" style={{ height: 180 }}>
       <MapView
+        provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={{ latitude: 4.0511, longitude: 9.7679, latitudeDelta: 0.1, longitudeDelta: 0.1 }}
         scrollEnabled={false}

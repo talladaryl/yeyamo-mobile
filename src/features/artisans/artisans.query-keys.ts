@@ -1,0 +1,2 @@
+import type { ArtisanFilters } from './artisans.types';
+export const artisanKeys = { all: ['artisans'] as const, list: (filters: ArtisanFilters) => [...artisanKeys.all, 'list', filters] as const, detail: (id: string) => [...artisanKeys.all, 'detail', id] as const, specialties: () => [...artisanKeys.all, 'specialties'] as const, artworks: (id: string) => [...artisanKeys.all, 'artworks', id] as const };

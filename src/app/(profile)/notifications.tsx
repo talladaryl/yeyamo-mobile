@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { NotificationItem } from '@/components/profile/NotificationItem';
-import { useNotifications, useUnreadNotifications, useMarkAllAsRead } from '@/features/notifications/useNotifications';
+import { useNotifications, useUnreadNotifications, useMarkAllAsRead, useMarkAsRead } from '@/features/notifications/useNotifications';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function NotificationsScreen() {
@@ -16,6 +16,7 @@ export default function NotificationsScreen() {
   const { data: allNotifications } = useNotifications();
   const { data: unreadNotifications } = useUnreadNotifications();
   const markAllAsRead = useMarkAllAsRead();
+  const markAsRead = useMarkAsRead();
 
   const displayedNotifications = activeTab === 'all' ? allNotifications : unreadNotifications;
 
@@ -84,6 +85,7 @@ export default function NotificationsScreen() {
             <NotificationItem
               notification={item}
               onPress={() => {
+                markAsRead.mutate(item.id);
                 // Navigation selon le type de notification
                 if (item.target_type === 'post' && item.target_id) {
                   router.push(`/(post)/${item.target_id}`);
@@ -91,6 +93,16 @@ export default function NotificationsScreen() {
                   router.push(`/(events)/${item.target_id}`);
                 } else if (item.target_type === 'place' && item.target_id) {
                   router.push(`/(places)/${item.target_id}`);
+                } else if (item.target_type === 'culture' && item.target_id) {
+                  router.push(`/(explore)/culture/${item.target_id}`);
+                } else if (item.target_type === 'challenge' && item.target_id) {
+                  router.push(`/(explore)/challenges/${item.target_id}`);
+                } else if (item.target_type === 'artwork' && item.target_id) {
+                  router.push(`/(explore)/artworks/${item.target_id}`);
+                } else if (item.target_type === 'order' && item.target_id) {
+                  router.push(`/(profile)/artwork-orders/${item.target_id}`);
+                } else if (item.target_type === 'artisan' && item.target_id) {
+                  router.push(`/(explore)/artisans/${item.target_id}`);
                 }
               }}
             />

@@ -9,6 +9,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { usePartnerProfile } from '@/features/partner-dashboard/usePartnerDashboard';
+import { i18n } from '@/i18n';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -27,9 +28,23 @@ export default function SettingsScreen() {
       {settingsSections.map((section) => (
         <View key={section.title} className="mb-5">
           <Text className="mb-2 text-sm font-extrabold" style={{ color: colors.text }}>{section.title}</Text>
-          {section.items.map((item) => <SettingsItem key={item.id} item={isDemo ? item : { ...item, value: undefined }} onPress={openItem} />)}
+          {section.items.map((item) => {
+            const supportRoute = item.id === 'help'
+              ? '/(profile)/help'
+              : item.id === 'contact'
+                ? '/(profile)/support'
+                : item.id === 'about'
+                  ? '/(profile)/about'
+                  : undefined;
+            return <SettingsItem key={item.id} item={isDemo ? item : { ...item, value: undefined }} onPress={() => supportRoute ? router.push(supportRoute) : openItem()} />;
+          })}
         </View>
       ))}
+      <View className="mb-5">
+        <Text className="mb-2 text-sm font-extrabold" style={{ color: colors.text }}>{i18n.t('support.information')}</Text>
+        <TouchableOpacity onPress={() => router.push('/(profile)/faq')} className="mb-2 flex-row items-center rounded-xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Icon name="help-circle-outline" size={21} color={colors.textSecondary} /><Text className="ml-3 flex-1 text-sm font-semibold" style={{ color: colors.text }}>{i18n.t('support.faq')}</Text><Icon name="chevron-forward" size={18} color={colors.textMuted} /></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/(profile)/privacy-policy')} className="flex-row items-center rounded-xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Icon name="shield-outline" size={21} color={colors.textSecondary} /><Text className="ml-3 flex-1 text-sm font-semibold" style={{ color: colors.text }}>{i18n.t('support.privacyPolicy')}</Text><Icon name="chevron-forward" size={18} color={colors.textMuted} /></TouchableOpacity>
+      </View>
       <TouchableOpacity onPress={logout} className="mb-4 flex-row items-center justify-center gap-2 rounded-xl border border-[#EF4444] p-4"><Icon name="log-out-outline" size={20} color="#E60012" /><Text className="font-bold text-[#E60012]">Se déconnecter</Text></TouchableOpacity>
     </PartnerPage>
   );

@@ -1,10 +1,14 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, usePathname, useRouter } from 'expo-router';
 import { View } from 'react-native';
+import { useEffect } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
+import { FloatingTabBarBackground } from '@/components/ui/FloatingTabBar';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useAuth } from '@/features/auth/useAuth';
 import { useConversations } from '@/features/chat/useChat';
 import { useUnreadCount } from '@/features/notifications/useNotifications';
+import { useFloatingNavigationStore } from '@/hooks/useFloatingNavigation';
 
 type TabIconKind = 'feed' | 'explore' | 'create' | 'chats' | 'profile';
 
@@ -41,11 +45,11 @@ function TabIcon({
       <View
         className="h-10 w-10 items-center justify-center rounded-full border"
         style={{
-          backgroundColor: focused ? '#EF4444' : 'transparent',
+          backgroundColor: 'transparent',
           borderColor: focused ? '#EF4444' : inactiveColor,
         }}
       >
-        <Icon name="earth-outline" size={24} color={focused ? '#FFFFFF' : inactiveColor} />
+        <Icon name="earth-outline" size={24} color={focused ? '#EF4444' : inactiveColor} />
         <View
           className="absolute -bottom-0.5 -right-0.5 h-4 w-4 items-center justify-center rounded-full border-2 bg-[#EF4444]"
           style={{ borderColor: surfaceColor }}
@@ -64,7 +68,7 @@ function TabIcon({
   const [inactiveName, activeName] = names[kind];
 
   return (
-    <View className={`h-10 w-10 items-center justify-center rounded-2xl ${focused ? 'bg-[#EF4444]/10' : ''}`}>
+    <View className="h-10 w-10 items-center justify-center rounded-2xl">
       <Icon name={focused ? activeName : inactiveName} size={25} color={focused ? '#EF4444' : inactiveColor} />
     </View>
   );
@@ -72,24 +76,44 @@ function TabIcon({
 
 export default function TabsLayout() {
   const { colors } = useThemeStore();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const pathname = usePathname();
+  const isScrolling = useFloatingNavigationStore((state) => state.isScrolling);
+  const setScrolling = useFloatingNavigationStore((state) => state.setScrolling);
   const { data: conversations = [] } = useConversations();
   const { data: unreadNotifications = 0 } = useUnreadCount();
   const unreadMessages = conversations.reduce((total, conversation) => total + conversation.unread_count, 0);
   const badgeStyle = { backgroundColor: '#EF4444', color: '#FFFFFF', fontSize: 10 };
 
+  useEffect(() => {
+    setScrolling(false);
+  }, [pathname, setScrolling]);
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarBackground: () => <FloatingTabBarBackground />,
         tabBarStyle: {
-          backgroundColor: colors.tabBar,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: 68,
-          paddingTop: 5,
-          paddingBottom: 8,
+          position: 'absolute',
+          left: 20,
+          right: 20,
+          bottom: insets.bottom + (isScrolling ? 14 : 12),
+          height: isScrolling ? 52 : 68,
+          paddingTop: isScrolling ? 2 : 5,
+          paddingBottom: isScrolling ? 4 : 8,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          borderBottomWidth: 0,
+          borderLeftWidth: 0,
+          borderRightWidth: 0,
+          shadowColor: colors.text,
+          shadowOffset: { width: 0, height: 5 },
+          shadowOpacity: isScrolling ? 0.16 : 0.1,
+          shadowRadius: isScrolling ? 13 : 8,
+          elevation: isScrolling ? 7 : 4,
         },
         tabBarItemStyle: {
           paddingVertical: 2,

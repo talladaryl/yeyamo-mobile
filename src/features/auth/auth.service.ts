@@ -3,9 +3,10 @@ import { reverbClient } from '@/services/socket/reverb.client';
 import { MOCK_PARTNER_USER, MOCK_TOKEN, MOCK_USER } from '@/features/mock/mockData';
 import { useAuthStore, type SessionMode } from './auth.store';
 import { authApi } from './auth.api';
-import type { AuthApiUser, AuthUser, LoginCredentials, RegisterCredentials } from './types';
+import type { AuthApiUser, AuthUser, LoginCredentials, RegisterCredentials, SocialLoginCredentials } from './types';
 import { useInterestsStore } from '@/features/interests/interests.store';
 import { registerTokenRefreshedHandler } from '@/services/api/client';
+import { synchronizePushToken, unregisterCurrentPushToken } from '@/features/notifications/push.service';
 
 function toAuthUser(user: AuthApiUser, displayName?: string): AuthUser {
   const identifier = user.email ?? user.phone ?? `user-${user.id}`;
@@ -37,6 +38,7 @@ async function persistSession(response: {
   ]);
   useAuthStore.getState().setAuth(user, response.accessToken, 'backend');
   reverbClient.connect(response.accessToken);
+  void synchronizePushToken();
 }
 
 registerTokenRefreshedHandler((accessToken) => {
@@ -77,21 +79,31 @@ export const authService = {
         useAuthStore.getState().setAuth(user, token, 'backend');
         await secureStore.set(secureStore.KEYS.SESSION_MODE, 'backend');
         reverbClient.connect(token);
+        void synchronizePushToken();
       }
-    } catch {
-      // Token invalid/expired — wipe it
-      await secureStore.clearAll();
+    } catch (error: unknown) {
+      const status = typeof error === 'object' && error !== null && 'status' in error
+        ? Number(error.status)
+        : undefined;
+      if (status === 401) {
+        await secureStore.clearAuthSession();
+        useAuthStore.getState().clearAuth();
+      }
     } finally {
       useAuthStore.getState().setHydrated(true);
     }
   },
 
-  async login(credentials: LoginCredentials): Promise<void> {
-    await persistSession(await authApi.login(credentials));
+  async login(credentials: LoginCredentials, turnstileToken?: string): Promise<void> {
+    await persistSession(await authApi.login(credentials, turnstileToken));
   },
 
-  async register(credentials: RegisterCredentials): Promise<void> {
-    await persistSession(await authApi.register(credentials), credentials.display_name);
+  async register(credentials: RegisterCredentials, turnstileToken?: string): Promise<void> {
+    await persistSession(await authApi.register(credentials, turnstileToken), credentials.display_name);
+  },
+
+  async socialLogin(credentials: SocialLoginCredentials): Promise<void> {
+    await persistSession(await authApi.socialLogin(credentials));
   },
 
   async loginDemo(kind: 'user' | 'partner'): Promise<void> {
@@ -100,19 +112,20 @@ export const authService = {
 
   async logout(): Promise<void> {
     if (useAuthStore.getState().sessionMode?.startsWith('demo-')) {
-      await secureStore.clearAll();
+      await secureStore.clearAuthSession();
       useAuthStore.getState().clearAuth();
       useInterestsStore.getState().reset();
       return;
     }
 
     try {
+      try { await unregisterCurrentPushToken(); } catch { /* best-effort */ }
       await authApi.logout();
     } catch {
       // Best-effort — clear local state regardless
     } finally {
       reverbClient.disconnect();
-      await secureStore.clearAll();
+      await secureStore.clearAuthSession();
       useAuthStore.getState().clearAuth();
       useInterestsStore.getState().reset();
     }

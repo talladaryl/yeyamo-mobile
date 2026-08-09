@@ -7,6 +7,8 @@ import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { PartnerProfileDashboard } from '@/components/partner-dashboard/PartnerProfileDashboard';
+import { useFloatingNavigationScroll } from '@/hooks/useFloatingNavigation';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const QUICK_LINKS = [
   ['images', 'Mes publications', '/(profile)/publications'],
@@ -32,10 +34,21 @@ const SECONDARY_ACTIONS = [
   ['albums-outline', 'Mes collections', '/(collections)', '6'],
 ] as const;
 
+const CULTURE_LINKS = [
+  ['language-outline', 'Progression linguistique', '/(profile)/language-progress'],
+  ['leaf-outline', 'Mes contributions culturelles', '/(profile)/culture-contributions'],
+  ['trophy-outline', 'Mes défis culturels', '/(profile)/culture-challenges'],
+  ['color-palette-outline', 'Œuvres enregistrées', '/(profile)/saved-artworks'],
+  ['people-outline', 'Artisans suivis', '/(profile)/followed-artisans'],
+  ['receipt-outline', 'Commandes d’œuvres', '/(profile)/artwork-orders'],
+] as const;
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const colors = useThemeStore((state) => state.colors);
+  const floatingScroll = useFloatingNavigationScroll();
+  const tabBarHeight = useBottomTabBarHeight();
 
   if (!user) return null;
 
@@ -45,7 +58,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeScreen>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView {...floatingScroll} contentContainerStyle={{ paddingBottom: tabBarHeight + 40 }} showsVerticalScrollIndicator={false}>
         <View className="items-center px-6 pb-6 pt-8">
           <Avatar uri={user.avatar_url} displayName={user.display_name} size={90} />
           <Text className="mt-4 text-2xl font-bold" style={{ color: colors.text }}>{user.display_name}</Text>
@@ -89,6 +102,12 @@ export default function ProfileScreen() {
         <ProfileSection title="Actions secondaires">
           {SECONDARY_ACTIONS.map(([icon, label, route, badge], index) => (
             <ProfileLink key={route} icon={icon} label={label} badge={badge} isLast={index === SECONDARY_ACTIONS.length - 1} onPress={() => router.push(route as Href)} />
+          ))}
+        </ProfileSection>
+
+        <ProfileSection title="Culture et découvertes">
+          {CULTURE_LINKS.map(([icon, label, route], index) => (
+            <ProfileLink key={route} icon={icon} label={label} isLast={index === CULTURE_LINKS.length - 1} onPress={() => router.push(route as Href)} />
           ))}
         </ProfileSection>
 

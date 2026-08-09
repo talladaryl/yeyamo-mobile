@@ -13,6 +13,7 @@ const OPTIONS: PartnerCreationOption[] = [
   { id: 'place', title: 'Ajouter un lieu', description: 'Référencez votre établissement ou un nouveau lieu', icon: 'location-outline', iconLibrary: 'ionicons', color: '#E60012' },
   { id: 'event', title: 'Ajouter un événement', description: 'Annoncez une activité et gérez ses informations', icon: 'calendar-outline', iconLibrary: 'ionicons', color: '#F59E0B' },
   { id: 'offer', title: 'Créer une offre', description: 'Mettez en avant une promotion ou un package spécial', icon: 'pricetag-outline', iconLibrary: 'ionicons', color: '#16A34A' },
+  { id: 'artwork', title: 'Publier une œuvre', description: 'Présentez une création artisanale et son histoire', icon: 'color-palette-outline', iconLibrary: 'ionicons', color: '#7C3AED' },
 ];
 
 export default function PartnerChoiceScreen() {
@@ -27,6 +28,7 @@ export default function PartnerChoiceScreen() {
       place: '/(partner)/add-place-step1',
       event: '/(partner)/add-event-step1',
       offer: '/(partner)/offer',
+      artwork: '/(create)/artwork/basic-information',
     } as const;
     router.push(routes[id]);
   };

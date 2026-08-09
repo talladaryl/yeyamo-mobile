@@ -1,0 +1,9 @@
+import type { CultureChallenge, CultureContent, CultureLanguage, CultureTranslation, LanguageLesson } from './culture.types';
+
+export const demoCultureContents: CultureContent[] = [{
+  id: 'demo-culture-proverb', type: 'PROVERB', slug: 'la-patience-construit', status: 'PUBLISHED', visibility: 'PUBLIC', primaryLanguageCode: 'fr', countryCode: 'CM', adminLevel1Id: 'CENTRE', cityId: 'yaounde', communityName: null, sourceType: 'COMMUNITY', verificationStatus: 'VERIFIED', sensitivityLevel: 'PUBLIC', createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z', publishedAt: '2026-01-01T00:00:00Z',
+}];
+export const demoCultureTranslations: CultureTranslation[] = [{ id: 'demo-culture-translation', languageCode: 'fr', title: 'La patience construit ce que la hâte détruit', summary: 'Un proverbe à transmettre.', body: 'La patience donne le temps d’écouter, d’apprendre et de construire durablement.', translatorId: 'demo-user', status: 'VERIFIED', createdAt: '2026-01-01T00:00:00Z' }];
+export const demoLanguages: CultureLanguage[] = [{ code: 'bas', name: 'Bassa', nativeName: 'Basaá', countryCodes: ['CM'], writingSystem: 'Latin', status: 'ACTIVE', description: 'Langue parlée au Cameroun.', speakerEstimate: null, verified: true }];
+export const demoLessons: LanguageLesson[] = [{ id: 'demo-lesson-bas-1', languageCode: 'bas', topicId: null, title: 'Saluer avec respect', description: 'Les salutations essentielles.', difficulty: 1, estimatedMinutes: 4, status: 'PUBLISHED', displayOrder: 1 }];
+export const demoChallenges: CultureChallenge[] = [{ id: 'demo-challenge-1', title: 'Un mot de chez vous', description: 'Partagez un mot qui mérite d’être transmis.', type: 'CONTRIBUTION', countryCode: 'CM', languageCode: null, startsAt: '2026-01-01T00:00:00Z', endsAt: '2026-12-31T00:00:00Z', status: 'ACTIVE', rewardDefinitionId: null, moderationRequired: true, prompts: ['Quel mot souhaitez-vous transmettre ?'] }];

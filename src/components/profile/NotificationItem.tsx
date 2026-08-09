@@ -17,6 +17,17 @@ const iconConfig: Record<Notification['type'], { name: string; color: string }> 
   event_reminder: { name: 'notifications', color: '#F59E0B' },
   new_place: { name: 'location', color: '#06B6D4' },
   reservation_confirmed: { name: 'checkmark-circle', color: '#10B981' },
+  CULTURE_CONTRIBUTION_APPROVED: { name: 'leaf', color: '#16A34A' },
+  CULTURE_CONTRIBUTION_REJECTED: { name: 'close-circle', color: '#EF4444' },
+  TRANSLATION_VERIFIED: { name: 'language', color: '#2563EB' },
+  CHALLENGE_STARTED: { name: 'trophy', color: '#7C3AED' },
+  CHALLENGE_RESULT: { name: 'ribbon', color: '#F59E0B' },
+  ARTWORK_LIKED: { name: 'heart', color: '#EF4444' },
+  ARTWORK_SOLD: { name: 'pricetag', color: '#16A34A' },
+  ARTWORK_ORDER_CREATED: { name: 'receipt', color: '#2563EB' },
+  ARTWORK_ORDER_UPDATED: { name: 'refresh-circle', color: '#0EA5E9' },
+  ARTISAN_FOLLOWED: { name: 'person-add', color: '#DB2777' },
+  AUTHENTICITY_VERIFIED: { name: 'shield-checkmark', color: '#16A34A' },
 };
 
 function getTimeAgo(date: string) {
@@ -34,7 +45,7 @@ function getTimeAgo(date: string) {
 }
 
 export function NotificationItem({ notification, onPress }: NotificationItemProps) {
-  const icon = iconConfig[notification.type];
+  const icon = iconConfig[notification.type] ?? { name: 'notifications-outline', color: '#71717A' };
   const colors = useThemeStore((state) => state.colors);
 
   return (

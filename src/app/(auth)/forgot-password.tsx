@@ -10,11 +10,13 @@ import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { forgotPasswordSchema, type ForgotPasswordForm } from '@/utils/validation';
+import { useTurnstileChallenge } from '@/features/auth/useTurnstileChallenge';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { forgotPassword, isLoading, error } = useAuth();
   const colors = useThemeStore((state) => state.colors);
+  const { requestToken, challenge } = useTurnstileChallenge();
 
   const {
     control,
@@ -27,7 +29,8 @@ export default function ForgotPasswordScreen() {
 
   const onSubmit = async (data: ForgotPasswordForm) => {
     try {
-      await forgotPassword(data);
+      const turnstileToken = await requestToken('forgot_password');
+      await forgotPassword(data, turnstileToken);
       router.push({ pathname: '/(auth)/reset-password', params: { email: data.email } } as unknown as Href);
     } catch {
       // error displayed via useAuth state
@@ -36,6 +39,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeScreen>
+      {challenge}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"

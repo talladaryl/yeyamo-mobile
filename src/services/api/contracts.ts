@@ -38,6 +38,19 @@ export function toPaginatedResponse<T>(
   };
 }
 
+/** Builds a Spring Page envelope for explicitly selected demo sessions only. */
+export function toSpringPage<T>(items: T[], page = 0, size = Math.max(items.length, 1)): SpringPage<T> {
+  return {
+    content: items,
+    number: page,
+    size,
+    totalElements: items.length,
+    totalPages: items.length === 0 ? 0 : Math.ceil(items.length / size),
+    first: page === 0,
+    last: true,
+  };
+}
+
 export function fromSpringPage<T>(page: SpringPage<T>): PaginatedResponse<T> {
   return toPaginatedResponse(
     page.content,

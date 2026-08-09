@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
@@ -9,6 +9,7 @@ import { CAMEROON_CENTER } from '@/features/explore/mockData';
 import type { MapPlace } from '@/features/explore/types';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { usePlaces } from '@/features/places/usePlaces';
+import { useLocation } from '@/hooks/useLocation';
 
 const { height } = Dimensions.get('window');
 
@@ -16,6 +17,8 @@ export default function MapScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
+  const mapRef = useRef<MapView>(null);
+  const currentLocation = useLocation();
   const { data } = usePlaces({
     lat: CAMEROON_CENTER.latitude,
     lng: CAMEROON_CENTER.longitude,
@@ -34,6 +37,13 @@ export default function MapScreen() {
       })),
   [data]);
 
+  useEffect(() => { void currentLocation.requestLocation(); }, [currentLocation.requestLocation]);
+
+  const recenter = async () => {
+    const location = currentLocation.location ?? await currentLocation.requestLocation();
+    if (location) mapRef.current?.animateToRegion({ ...location, latitudeDelta: 0.04, longitudeDelta: 0.04 }, 500);
+  };
+
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
@@ -44,6 +54,7 @@ export default function MapScreen() {
 
       {/* Map */}
       <MapView
+        ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={CAMEROON_CENTER}
@@ -153,6 +164,7 @@ export default function MapScreen() {
 
       {/* My Location Button */}
       <TouchableOpacity
+        onPress={recenter}
         className="absolute bottom-32 right-4 bg-white w-12 h-12 rounded-full items-center justify-center shadow-lg"
         activeOpacity={0.8}
       >

@@ -12,6 +12,14 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useInterestsStore } from '@/features/interests/interests.store';
+import { useCountryStore } from '@/features/country/country.store';
+import {
+  subscribeToNotificationEvents,
+  subscribeToPushTokenChanges,
+  synchronizePushToken,
+} from '@/features/notifications/push.service';
+import { AppErrorScreen } from '@/components/ui/AppErrorScreen';
+import type { ErrorBoundaryProps } from 'expo-router';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +34,10 @@ const queryClient = new QueryClient({
 export const unstable_settings = {
   initialRouteName: 'index',
 };
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return <AppErrorScreen error={error} onRetry={retry} />;
+}
 
 export default function RootLayout() {
   return (
@@ -57,6 +69,7 @@ function RootNavigator() {
     isHydrated: isOnboardingHydrated,
     checkOnboardingStatus,
   } = useOnboardingStore();
+  const hydrateCountry = useCountryStore((state) => state.hydrate);
 
   // Register 401 handler — clears store and redirects to login
   useEffect(() => {
@@ -72,7 +85,8 @@ function RootNavigator() {
     checkOnboardingStatus();
     hydrateTheme();
     hydrateInterests();
-  }, []);
+    hydrateCountry();
+  }, [hydrateCountry, hydrateInterests, hydrateTheme, checkOnboardingStatus]);
 
   useEffect(() => {
     const subscription = Appearance.addChangeListener(() => {
@@ -81,6 +95,26 @@ function RootNavigator() {
 
     return () => subscription.remove();
   }, [syncSystemTheme]);
+
+  useEffect(() => {
+    let unsubscribe: () => void = () => undefined;
+    void subscribeToNotificationEvents(() => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }).then((cleanup) => {
+      unsubscribe = cleanup;
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isHydrated || useAuthStore.getState().sessionMode !== 'backend') return;
+    void synchronizePushToken();
+    let unsubscribe: () => void = () => undefined;
+    void subscribeToPushTokenChanges().then((cleanup) => {
+      unsubscribe = cleanup;
+    });
+    return () => unsubscribe();
+  }, [isAuthenticated, isHydrated]);
 
   // Route guard — runs after hydration
   useEffect(() => {
@@ -232,6 +266,11 @@ function RootNavigator() {
         <Stack.Screen name="(profile)/reviews" />
         <Stack.Screen name="(profile)/notifications" />
         <Stack.Screen name="(profile)/settings" />
+        <Stack.Screen name="(profile)/help" />
+        <Stack.Screen name="(profile)/faq" />
+        <Stack.Screen name="(profile)/support" />
+        <Stack.Screen name="(profile)/privacy-policy" />
+        <Stack.Screen name="(profile)/about" />
         <Stack.Screen name="(profile)/tickets" />
         <Stack.Screen name="(profile)/ticket/[id]" />
         <Stack.Screen name="+not-found" />

@@ -1,20 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '@/components/ui/Icon';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { useCreateStore } from '@/features/create/create.store';
 import { useCreatePost, useUploadMedia } from '@/features/post/usePost';
+import { useSubmitChallenge } from '@/features/culture/culture.hooks';
 
 export default function CreatePublicationScreen() {
   const router = useRouter();
+  const { challengeId } = useLocalSearchParams<{ challengeId?: string }>();
   const { publicationData, setPublicationData } = useCreateStore();
   const uploadMedia = useUploadMedia();
   const createPost = useCreatePost();
+  const submitChallenge = useSubmitChallenge();
   const [selectedImages, setSelectedImages] = useState<string[]>(publicationData.media_urls ?? []);
-  const [caption, setCaption] = useState(publicationData.caption ?? '');
+  // L'éditeur reste non contrôlé pendant la saisie : cela évite qu'un
+  // rerender du formulaire ne réinitialise le focus et ne ferme le clavier.
+  const captionRef = useRef(publicationData.caption ?? '');
 
   const applyAssets = (assets: ImagePicker.ImagePickerAsset[]) => {
     if (!assets.length) return;
@@ -67,7 +72,7 @@ export default function CreatePublicationScreen() {
   };
 
   const handlePublish = async () => {
-    setPublicationData({ caption });
+    setPublicationData({ caption: captionRef.current });
     try {
       const uploads = await Promise.all(selectedImages.map(async (uri, index) => {
         const formData = new FormData();
@@ -78,11 +83,12 @@ export default function CreatePublicationScreen() {
         } as unknown as Blob);
         return (await uploadMedia.mutateAsync(formData)).data.id;
       }));
-      await createPost.mutateAsync({
+      const created = await createPost.mutateAsync({
         type: publicationData.media_type ?? 'image',
-        caption,
+        caption: captionRef.current,
         media_ids: uploads,
       });
+      if (challengeId) await submitChallenge.mutateAsync({ id: challengeId, postId: String(created.data.id) });
       router.back();
     } catch {
       Alert.alert('Publication impossible', 'Les médias ou la publication n’ont pas pu être envoyés.');
@@ -107,7 +113,7 @@ export default function CreatePublicationScreen() {
       />
 
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" keyboardDismissMode="none" automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}>
         {/* Main Image Area */}
         <TouchableOpacity
           onPress={() => pickImage(['images'])}
@@ -156,10 +162,11 @@ export default function CreatePublicationScreen() {
             className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm"
             placeholder="Ajoutez une légende..."
             placeholderTextColor="#A1A1AA"
-            value={caption}
-            onChangeText={setCaption}
+            defaultValue={captionRef.current}
+            onChangeText={(value) => { captionRef.current = value; }}
             multiline
             maxLength={500}
+            blurOnSubmit={false}
             style={{ minHeight: 100, textAlignVertical: 'top' }}
           />
         </View>

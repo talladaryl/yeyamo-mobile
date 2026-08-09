@@ -14,11 +14,13 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { loginSchema, type LoginForm } from '@/utils/validation';
 import { useInterestsStore } from '@/features/interests/interests.store';
+import { useTurnstileChallenge } from '@/features/auth/useTurnstileChallenge';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, loginDemo, isLoading, error } = useAuth();
+  const { login, loginDemo, googleLogin, isLoading, error } = useAuth();
   const colors = useThemeStore((state) => state.colors);
+  const { requestToken, challenge } = useTurnstileChallenge();
   const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
@@ -29,6 +31,19 @@ export default function LoginScreen() {
       await login(data);
       router.replace('/interests');
     } catch (requestError: unknown) {
+      if (
+        isAxiosError<{ code?: string }>(requestError)
+        && requestError.response?.data?.code === 'TURNSTILE_REQUIRED'
+      ) {
+        try {
+          const turnstileToken = await requestToken('login');
+          await login(data, turnstileToken);
+          router.replace('/interests');
+        } catch {
+          // The challenge can be cancelled without blocking normal navigation.
+        }
+        return;
+      }
       if (
         isAxiosError<{ code?: string }>(requestError)
         && requestError.response?.data?.code === 'EMAIL_NOT_VERIFIED'
@@ -50,6 +65,10 @@ export default function LoginScreen() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    if (await googleLogin()) router.replace('/interests');
+  };
+
   const partnerDemoLogin = async () => {
     try {
       const interests = useInterestsStore.getState();
@@ -66,6 +85,7 @@ export default function LoginScreen() {
 
   return (
     <SafeScreen>
+      {challenge}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
           <LinearGradient colors={['#EF4444', '#DC2626', '#991B1B']} className="h-48 overflow-hidden px-6 pt-3">
@@ -163,7 +183,7 @@ export default function LoginScreen() {
               <View className="h-px flex-1" style={{ backgroundColor: colors.border }} />
             </View>
             <View className="gap-3">
-              <SocialButton provider="google" onPress={() => undefined} disabled={isLoading} />
+              <SocialButton provider="google" onPress={handleGoogleLogin} disabled={isLoading} />
               <SocialButton provider="apple" onPress={() => undefined} disabled={isLoading} />
             </View>
 

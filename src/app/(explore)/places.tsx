@@ -16,6 +16,7 @@ export default function PlacesListScreen() {
   const { data: trendingPlaces = [] } = useTrendingPlaces();
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const regionId = typeof params.regionId === 'string' ? Number(params.regionId) : null;
+  const regionCode = typeof params.regionCode === 'string' ? params.regionCode : null;
   const regionName = typeof params.region === 'string' ? params.region : null;
   const category = typeof params.category === 'string' ? params.category : null;
 
@@ -29,12 +30,14 @@ export default function PlacesListScreen() {
   const filteredPlaces = useMemo(
     () =>
       trendingPlaces.filter((place) => {
-        const matchesRegion = regionId ? String(place.region_id) === String(regionId) : true;
+        const matchesRegion = regionCode
+          ? String(place.region_id) === regionCode || String(place.region_id) === String(regionId)
+          : regionId ? String(place.region_id) === String(regionId) : true;
         const matchesCategory = category ? place.category === category : true;
 
         return matchesRegion && matchesCategory;
       }),
-    [category, regionId]
+    [category, regionCode, regionId, trendingPlaces]
   );
 
   return (

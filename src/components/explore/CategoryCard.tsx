@@ -13,10 +13,10 @@ export function CategoryCard({ category, onPress }: CategoryCardProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="items-center flex-1 min-w-[100px]"
+      className="items-center flex-1 px-0.5"
       activeOpacity={0.7}
     >
-      <View className="mb-2 h-16 w-16 items-center justify-center rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+      <View className="mb-2 h-14 w-14 items-center justify-center rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
         <Icon
           library={category.iconLibrary}
           name={category.icon}
@@ -24,7 +24,7 @@ export function CategoryCard({ category, onPress }: CategoryCardProps) {
           color="#EF4444"
         />
       </View>
-      <Text className="text-center text-xs" style={{ color: colors.text }}>{category.label}</Text>
+      <Text className="text-center text-[11px] leading-4" style={{ color: colors.text }} numberOfLines={2}>{category.label}</Text>
     </TouchableOpacity>
   );
 }

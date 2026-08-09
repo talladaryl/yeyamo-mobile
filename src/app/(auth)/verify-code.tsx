@@ -12,6 +12,7 @@ import { useThemeStore } from '@/features/theme/theme.store';
 import { authApi } from '@/features/auth/auth.api';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { verifyCodeSchema, type VerifyCodeForm } from '@/utils/validation';
+import { useTurnstileChallenge } from '@/features/auth/useTurnstileChallenge';
 
 export default function VerifyCodeScreen() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function VerifyCodeScreen() {
   const email = params.email || sessionEmail;
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const { requestToken, challenge } = useTurnstileChallenge();
 
   const {
     control,
@@ -61,12 +63,13 @@ export default function VerifyCodeScreen() {
     
     try {
       if (!email) throw new Error('Adresse email absente');
-      await authApi.requestEmailVerification(email);
+      const turnstileToken = await requestToken('resend_otp');
+      await authApi.requestEmailVerification(email, turnstileToken);
       setTimer(60);
       setCanResend(false);
       setValue('code', '');
     } catch {
-      console.error('Failed to resend code');
+      // Cancellation and challenge errors leave the current screen usable.
     }
   };
 
@@ -78,6 +81,7 @@ export default function VerifyCodeScreen() {
 
   return (
     <SafeScreen>
+      {challenge}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"

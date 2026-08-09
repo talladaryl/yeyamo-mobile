@@ -4,6 +4,7 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { notificationsApi } from './notifications.api';
 import type { EntityId } from '@/types/api.types';
 import { MOCK_NOTIFICATIONS } from './mockData';
+import type { PushTokenRegistration } from './notifications.api';
 
 /**
  * Hook pour récupérer toutes les notifications
@@ -96,5 +97,19 @@ export function useDeleteNotification() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
+  });
+}
+
+export function useRegisterPushToken() {
+  return useMutation({
+    mutationFn: (payload: PushTokenRegistration) => notificationsApi.registerPushToken(payload),
+    retry: 1,
+  });
+}
+
+export function useUnregisterPushToken() {
+  return useMutation({
+    mutationFn: (deviceId: string) => notificationsApi.unregisterPushToken(deviceId),
+    retry: 0,
   });
 }

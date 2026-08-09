@@ -109,7 +109,30 @@
     "places": "Places",
     "map": "Map",
     "filters": "Filters",
-    "nearYou": "Near you"
+    "nearYou": "Near you",
+    "quickFilters": { "all": "All", "nearby": "Nearby", "places": "Places", "events": "Events", "culture": "Culture", "artworks": "Artworks", "artisans": "Artisans", "filters": "Filters" },
+    "advanced": { "title": "Advanced filters", "subtitle": "Refine Discovery results.", "reset": "Reset", "country": "Country", "countryPlaceholder": "CM", "region": "Region", "allRegions": "All", "city": "City / city identifier", "cityPlaceholder": "e.g. Douala", "distance": "Maximum distance (km)", "distancePlaceholder": "e.g. 25", "typeAndCategory": "Type and category", "categoryCode": "Category code", "categoryCodePlaceholder": "e.g. HERITAGE", "languageAndCulture": "Language and culture", "allLanguages": "All languages", "availability": "Availability and trust", "availableNow": "Available now", "verified": "Verified content", "forSale": "Available for sale", "apply": "Apply filters" },
+    "types": { "place": "Places", "event": "Events", "experience": "Experiences", "culture": "Culture", "artwork": "Artworks", "artisan": "Artisans" },
+    "searchSuggestions": "Suggestions and results",
+    "searchEmptyTitle": "Search for inspiration",
+    "searchEmptyDescription": "Search Discovery for places, events, artworks, artisans and cultures.",
+    "searchUnavailable": "Search is unavailable.",
+    "noSearchResults": "No results for these filters.",
+    "searchRetry": "Try again",
+    "searchPlaceholderModern": "Search places, events, culture…",
+    "openResult": "Open",
+    "discoverResult": "Discover",
+    "community": "YeYamo community",
+    "trendTypes": { "destination": "Destination", "nearby": "Near you", "experience": "Experience", "event": "Event", "content": "To discover", "artwork": "Artwork", "artisan": "Artisan", "culture": "Culture", "language": "Language", "tradition": "Tradition" }
+  },
+  "comments": {
+    "title": "Comments",
+    "placeholder": "Write a comment…",
+    "send": "Send comment",
+    "close": "Close comments",
+    "empty": "No comments yet.",
+    "sendErrorTitle": "Unable to send",
+    "sendError": "The comment could not be published."
   },
   "create": {
     "chooseType": "What would you like to create?",
@@ -154,5 +177,59 @@
     "tickets": "Tickets",
     "organizer": "Organizer",
     "description": "Description"
+  },
+  "support": {
+    "help": "Help",
+    "helpTitle": "How to use YeYamo",
+    "helpIntro": "Learn the essential actions to discover, share and interact on YeYamo.",
+    "faq": "FAQ",
+    "faqTitle": "Frequently asked questions",
+    "privacyPolicy": "Privacy policy",
+    "privacyPolicyTitle": "Privacy policy",
+    "about": "About YeYamo",
+    "aboutTitle": "YeYamo",
+    "contact": "Contact support",
+    "contactTitle": "Contact support",
+    "contactDescription": "Our team can help with your account, content and YeYamo features.",
+    "contactEmail": "support@yeyamo.com",
+    "openEmail": "Send an email",
+    "information": "Information",
+    "account": "Account",
+    "helpAndSupport": "Help and support",
+    "security": "Security",
+    "preferences": "Preferences",
+    "version": "Version",
+    "versionUnknown": "Unavailable",
+    "howToUse": "How to use YeYamo",
+    "close": "Close",
+    "helpSections": {
+      "discover": { "title": "Discover", "body": "Use Explore to discover places, events, experiences, artworks, artisans and cultural content available around you or elsewhere in Africa." },
+      "publish": { "title": "Publish", "body": "Share your experiences, discoveries and stories with the YeYamo community from the Create button." },
+      "interact": { "title": "Interact", "body": "Follow other users, like, comment on and share their posts, and talk directly through messaging." },
+      "culture": { "title": "Explore culture", "body": "Discover the traditions, languages, proverbs, stories and artworks that keep Cameroonian and African heritage alive." },
+      "language": { "title": "Learn a language", "body": "Discover words, expressions, audio and mini-lessons to reconnect gradually with African languages." },
+      "save": { "title": "Save", "body": "Save your favourite places, artworks and content so you can find them easily from your profile." },
+      "reserve": { "title": "Book", "body": "When booking is available, book an activity, experience or event directly from YeYamo." },
+      "artisan": { "title": "Artisan", "body": "Artisans can present their creations, tell their story, showcase their craft and offer selected artworks for sale when available." },
+      "safety": { "title": "Safety", "body": "You can report content or block a user from the options available on their content or profile." }
+    },
+    "faqQuestions": {
+      "q1": "What is YeYamo?", "q2": "How do I discover places near me?", "q3": "How do I publish an experience?", "q4": "How do I follow a user?", "q5": "How do I send a message?", "q6": "How do I save a place or artwork?", "q7": "How do I find events?", "q8": "How do I discover African cultures?", "q9": "How do I learn a language on YeYamo?", "q10": "How do I join a cultural challenge?", "q11": "How do I become a partner?", "q12": "How do I become an artisan on YeYamo?", "q13": "How do I publish an artwork?", "q14": "Can I sell an artwork on YeYamo?", "q15": "How are partners and artisans verified?", "q16": "How do I book an event or experience?", "q17": "How does payment work?", "q18": "How do I report content?", "q19": "How do I block a user?", "q20": "How do I edit my personal information?", "q21": "How do I change my country or city?", "q22": "How do I delete my account?", "q23": "Is YeYamo available across Africa?", "q24": "How do I contact YeYamo support?"
+    },
+    "faqAnswers": {
+      "q1": "YeYamo is an African social discovery platform for places, experiences, events, cultures and communities.", "q2": "Open Explore, allow location if you want, then use Near you or regional filters.", "q3": "Use Create, choose Post, add your content and publish it after checking the settings.", "q4": "Open a user's profile and tap Follow.", "q5": "Open Messages, choose a conversation or a person's profile, then use the message action.", "q6": "Tap Save on a place, artwork or piece of content; your saved items are available from Profile.", "q7": "Open the Events category or search by city, region or date.", "q8": "Explore Culture, Languages, Traditions and Stories in Explore.", "q9": "Open Languages, choose a language, then follow the available lessons and exercises.", "q10": "Open Challenges in Explore and select an active cultural challenge.", "q11": "Choose the partner journey from Create or contact support for the applicable requirements.", "q12": "From Profile, choose Become an artisan and complete the presentation and verification steps.", "q13": "Verified artisans can publish an artwork from their partner space when the catalogue is enabled.", "q14": "Sales depend on catalogue and offer activation for your account and country.", "q15": "Submitted information is reviewed under YeYamo verification rules; the status is shown on the profile.", "q16": "Open an event or experience and choose Book when the option is available.", "q17": "Payment methods and steps can vary by country and service; the summary always shows the terms before confirmation.", "q18": "Use the content or profile options menu to submit a report.", "q19": "Use the profile options menu and choose Block.", "q20": "Open Profile, Settings and Edit profile.", "q21": "Open your profile preferences and choose the country or city to display.", "q22": "Open Settings, Account management and Delete account. This action is permanent after confirmation.", "q23": "YeYamo is designed to roll out progressively across several African countries. Some features may vary by country.", "q24": "Open Contact support from Settings or email the address displayed in the app."
+    },
+    "privacyNotice": "This policy gives a general description of how YeYamo handles information used by the app. It may be updated as the service and applicable obligations evolve.",
+    "privacySections": {
+      "collected": { "title": "Information collected", "body": "YeYamo may process information provided when creating an account and using its features, including name, email address, phone number, profile photo, location when authorised, published content, interactions, bookings and information needed to operate the services used." },
+      "use": { "title": "Use of information", "body": "Information may be used to provide YeYamo features, personalise discovery, secure accounts, facilitate bookings and transactions, improve the service, moderate content and communicate with users." },
+      "location": { "title": "Location", "body": "When you allow YeYamo to use your location, it may be used to show places, events and recommendations near you." },
+      "content": { "title": "Published content", "body": "Content you choose to publish may be visible to other users according to the privacy settings associated with your account or content." },
+      "security": { "title": "Security", "body": "YeYamo implements technical and organisational measures intended to protect information processed by the platform." },
+      "choices": { "title": "Your choices", "body": "You can edit your information, manage certain preferences, control some permissions, delete certain content and request account deletion." },
+      "contact": { "title": "Contact", "body": "For questions about this policy, use the official contact shown in the app on the Contact support page." }
+    },
+    "aboutBody": "YeYamo is an African social discovery platform that brings people closer to the places, experiences, events and cultures around them.\n\nBorn in Cameroon and designed to grow progressively across Africa, YeYamo helps everyone discover their environment, meet their community and showcase the richness of their country.\n\nBeyond places and events, YeYamo highlights the languages, traditions, stories, artworks and skills that make up African heritage.\n\nArtisans and creators can present their work, tell their story and share their craft with a local and international community.\n\nOur ambition is simple: use technology to bring generations, communities and cultures closer while giving more visibility to the people who keep African heritage alive.",
+    "signature": "Discover. Share. Pass it on."
   }
 }

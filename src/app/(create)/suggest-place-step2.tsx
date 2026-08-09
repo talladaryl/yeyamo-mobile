@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, View, Text, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
@@ -65,6 +65,7 @@ export default function SuggestPlaceStep2Screen() {
         {/* Map */}
         <View className="flex-1 relative">
           <MapView
+            provider={PROVIDER_GOOGLE}
             style={{ flex: 1 }}
             initialRegion={{
               latitude: selectedCoordinates.latitude,

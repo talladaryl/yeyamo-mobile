@@ -11,6 +11,8 @@ import { socialApi } from '@/features/social/social.api';
 import { useAuthStore } from '@/features/auth/auth.store';
 import type { EntityId } from '@/types/api.types';
 import { useTrackAdImpression } from '@/features/ads/useAds';
+import { useFloatingNavigationScroll } from '@/hooks/useFloatingNavigation';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 type VerticalFeedListProps = {
   posts: FeedItem[];
@@ -30,6 +32,8 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
   const [followedAuthorIds, setFollowedAuthorIds] = useState<Set<EntityId>>(new Set());
   const { mutate: toggleLike } = useLikePost();
   const trackImpression = useTrackAdImpression();
+  const floatingScroll = useFloatingNavigationScroll();
+  const tabBarHeight = useBottomTabBarHeight();
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -135,6 +139,8 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
       disableIntervalMomentum
       decelerationRate="fast"
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: tabBarHeight + 20 }}
+      {...floatingScroll}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}
       onViewableItemsChanged={onViewableItemsChanged}

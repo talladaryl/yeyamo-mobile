@@ -1,12 +1,6 @@
-﻿import type { Category, TrendingPlace, Region, MapPlace, UpcomingEvent } from './types';
+﻿import { EXPLORE_CATEGORY_DEFINITIONS, type Category, type TrendingPlace, type Region, type MapPlace, type UpcomingEvent } from './types';
 
-export const categories: Category[] = [
-  { id: 'attractions', label: 'Attractions', icon: 'location', iconLibrary: 'ionicons' },
-  { id: 'events', label: 'Evenements', icon: 'calendar', iconLibrary: 'ionicons' },
-  { id: 'experiences', label: 'Experiences', icon: 'compass', iconLibrary: 'ionicons' },
-  { id: 'restaurants', label: 'Restaurants', icon: 'restaurant', iconLibrary: 'ionicons' },
-  { id: 'hotels', label: 'Hotels', icon: 'bed', iconLibrary: 'ionicons' },
-];
+export const categories: Category[] = EXPLORE_CATEGORY_DEFINITIONS;
 
 export const regions: Region[] = [
   {

@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeScreen } from '@/components/ui/SafeScreen';
@@ -6,8 +5,14 @@ import { Icon } from '@/components/ui/Icon';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { recentActivities } from '@/features/partner-dashboard/mockData';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
+import { useAuthStore } from '@/features/auth/auth.store';
+import { usePartnerProfile, usePartnerStatistics } from '@/features/partner-dashboard/usePartnerDashboard';
+import { useFloatingNavigationScroll } from '@/hooks/useFloatingNavigation';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const QUICK_ACTIONS = [
+  { label: 'Mes œuvres', subtitle: 'Gérez votre catalogue', icon: 'color-palette-outline', route: '/(partner-dashboard)/artworks' },
+  { label: 'Commandes d’œuvres', subtitle: 'Suivez les commandes', icon: 'receipt-outline', route: '/(partner-dashboard)/artwork-orders' },
   { label: 'Établissements', subtitle: 'Gérez vos lieux', icon: 'business-outline', route: '/(partner-dashboard)/establishments' },
   { label: 'Événements', subtitle: 'Créez et publiez', icon: 'calendar-outline', route: '/(partner-dashboard)/events' },
   { label: 'Réservations', subtitle: 'Suivez les demandes', icon: 'ticket-outline', route: '/(partner-dashboard)/reservations' },
@@ -38,6 +43,11 @@ type DashboardItem = {
 export function PartnerProfileDashboard() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const floatingScroll = useFloatingNavigationScroll();
+  const tabBarHeight = useBottomTabBarHeight();
+  const profile = usePartnerProfile();
+  const statistics = usePartnerStatistics();
   const businessTools = BUSINESS_TOOLS.filter((item) =>
     (item.route !== '/(partner-dashboard)/campaigns' || FEATURE_FLAGS.campaigns_enabled)
     && (item.route !== '/(partner-dashboard)/promotions' || FEATURE_FLAGS.promotions_enabled)
@@ -45,7 +55,7 @@ export function PartnerProfileDashboard() {
 
   return (
     <SafeScreen>
-      <ScrollView contentContainerStyle={{ paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+      <ScrollView {...floatingScroll} contentContainerStyle={{ paddingBottom: tabBarHeight + 30 }} showsVerticalScrollIndicator={false}>
         <View className="flex-row items-center justify-between px-5 pb-4 pt-3">
           <View>
             <Text className="text-2xl font-extrabold" style={{ color: colors.text }}>Dashboard</Text>
@@ -58,11 +68,11 @@ export function PartnerProfileDashboard() {
         </View>
 
         <View className="mx-5 flex-row items-center rounded-2xl border p-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-          <Image source={{ uri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300' }} style={{ width: 64, height: 64, borderRadius: 14 }} contentFit="cover" />
+          <View className="h-16 w-16 items-center justify-center rounded-2xl bg-[#FEE2E2]"><Icon name="business-outline" size={27} color="#EF4444" /></View>
           <View className="ml-3 flex-1">
             <View className="flex-row items-center gap-1">
-              <Text className="text-base font-bold" style={{ color: colors.text }}>La Falaise Resort</Text>
-              <Icon name="checkmark-circle" size={16} color="#16A34A" />
+              <Text className="text-base font-bold" style={{ color: colors.text }}>{profile.data?.tradeName ?? profile.data?.legalName ?? 'Profil partenaire'}</Text>
+              {profile.data?.status === 'VERIFIED' ? <Icon name="checkmark-circle" size={16} color="#16A34A" /> : null}
             </View>
             <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Hôtel & Resort • Partenaire vérifié</Text>
           </View>
@@ -75,9 +85,9 @@ export function PartnerProfileDashboard() {
             <Text className="text-xs text-white/80">Aujourd’hui⌄</Text>
           </View>
           <View className="flex-row">
-            <Metric label="Vues" value="1 248" change="+12%" />
-            <Metric label="Interactions" value="356" change="+8%" divided />
-            <Metric label="Réservations" value="24" change="+15%" divided />
+            <Metric label="Vues" value={statistics.data?.metrics.views.toLocaleString('fr-FR') ?? '—'} change="" />
+            <Metric label="Établissements" value={statistics.data?.metrics.establishments?.toLocaleString('fr-FR') ?? '—'} change="" divided />
+            <Metric label="Publications" value={statistics.data?.metrics.publications?.toLocaleString('fr-FR') ?? '—'} change="" divided />
           </View>
         </View>
 
@@ -87,7 +97,7 @@ export function PartnerProfileDashboard() {
 
         <SectionTitle title="Activité récente" />
         <View className="mx-5 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-          {recentActivities.map((activity, index) => (
+          {isDemo ? recentActivities.map((activity, index) => (
             <View key={activity.id} className="flex-row items-center p-3.5" style={{ borderBottomWidth: index === recentActivities.length - 1 ? 0 : 1, borderColor: colors.border }}>
               <View className="h-10 w-10 items-center justify-center rounded-full bg-[#FEE2E2]">
                 <Icon name={activity.icon} size={19} color="#EF4444" />
@@ -98,7 +108,7 @@ export function PartnerProfileDashboard() {
               </View>
               <Icon name="chevron-forward" size={18} color={colors.textMuted} />
             </View>
-          ))}
+          )) : <View className="p-5"><Text className="text-sm" style={{ color: colors.textSecondary }}>Les activités récentes seront affichées par le service partenaire.</Text></View>}
         </View>
       </ScrollView>
     </SafeScreen>

@@ -8,6 +8,8 @@ const KEYS = {
   HAS_SEEN_ONBOARDING: 'yeyamo_has_seen_onboarding',
   INTERESTS: 'yeyamo_interests',
   HAS_SELECTED_INTERESTS: 'yeyamo_has_selected_interests',
+  DEVICE_ID: 'yeyamo_device_id',
+  EXPO_PUSH_TOKEN: 'yeyamo_expo_push_token',
 } as const;
 
 type StoreKey = (typeof KEYS)[keyof typeof KEYS];
@@ -28,4 +30,14 @@ async function clearAll(): Promise<void> {
   await Promise.all(Object.values(KEYS).map((k) => SecureStore.deleteItemAsync(k)));
 }
 
-export const secureStore = { set, get, remove, clearAll, KEYS };
+async function clearAuthSession(): Promise<void> {
+  await Promise.all([
+    KEYS.AUTH_TOKEN,
+    KEYS.REFRESH_TOKEN,
+    KEYS.USER_ID,
+    KEYS.SESSION_MODE,
+    KEYS.EXPO_PUSH_TOKEN,
+  ].map((key) => SecureStore.deleteItemAsync(key)));
+}
+
+export const secureStore = { set, get, remove, clearAll, clearAuthSession, KEYS };

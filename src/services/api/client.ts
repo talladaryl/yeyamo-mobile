@@ -39,6 +39,9 @@ apiClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    if (config.headers && !config.headers['X-Correlation-ID'] && !config.headers['X-Correlation-Id']) {
+      config.headers['X-Correlation-ID'] = `mobile-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    }
     return config;
   },
   (error: unknown) => Promise.reject(error),
@@ -54,6 +57,11 @@ apiClient.interceptors.response.use(
       || request?.url?.startsWith('/auth/refresh');
 
     if (error.response?.status === 401 && request && !request._retry && !isAuthenticationRequest) {
+      const sessionMode = await secureStore.get(secureStore.KEYS.SESSION_MODE);
+      if (sessionMode === 'demo-user' || sessionMode === 'demo-partner') {
+        return Promise.reject(error);
+      }
+
       request._retry = true;
       try {
         refreshPromise ??= refreshAccessToken().finally(() => {
@@ -63,7 +71,7 @@ apiClient.interceptors.response.use(
         request.headers.Authorization = `Bearer ${accessToken}`;
         return apiClient.request(request);
       } catch {
-        await secureStore.clearAll();
+        await secureStore.clearAuthSession();
         _onUnauthenticated?.();
       }
     }

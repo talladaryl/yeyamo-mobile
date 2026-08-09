@@ -12,12 +12,14 @@ import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { registerSchema, type RegisterForm } from '@/utils/validation';
+import { useTurnstileChallenge } from '@/features/auth/useTurnstileChallenge';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register: registerUser, isLoading, error } = useAuth();
+  const { register: registerUser, googleLogin, isLoading, error } = useAuth();
   const colors = useThemeStore((state) => state.colors);
   const [countryCode, setCountryCode] = useState('+237');
+  const { requestToken, challenge } = useTurnstileChallenge();
 
   const {
     control,
@@ -43,10 +45,11 @@ export default function RegisterScreen() {
   const onSubmit = async (data: RegisterForm) => {
     try {
       const fullPhone = data.phone ? `${countryCode}${data.phone}` : undefined;
+      const turnstileToken = await requestToken('register');
       await registerUser({
         ...data,
         phone: fullPhone,
-      });
+      }, turnstileToken);
       // Navigation handled by root layout guard or verification screen
       router.replace({
         pathname: '/(auth)/verify-code',
@@ -58,12 +61,12 @@ export default function RegisterScreen() {
   };
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
-    // TODO: Implement social login
-    console.log(`${provider} login not implemented yet`);
+    if (provider === 'google' && await googleLogin()) router.replace('/interests');
   };
 
   return (
     <SafeScreen>
+      {challenge}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"

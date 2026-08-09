@@ -3,6 +3,13 @@ import { apiClient } from '@/services/api/client';
 import type { EntityId } from '@/types/api.types';
 import type { Notification } from './types';
 
+export interface PushTokenRegistration {
+  token: string;
+  platform: 'ANDROID' | 'IOS';
+  deviceId: string;
+  appVersion: string;
+}
+
 interface BackendNotification {
   id: string;
   eventType: string;
@@ -34,9 +41,15 @@ function mapNotification(item: BackendNotification): Notification {
       typeof data.targetId === 'string' || typeof data.targetId === 'number'
         ? data.targetId
         : undefined,
+    target_type: toTargetType(data.targetType ?? data.target_type),
     is_read: item.readAt !== null,
     created_at: item.createdAt,
   };
+}
+
+function toTargetType(value: unknown): Notification['target_type'] {
+  if (value === 'post' || value === 'event' || value === 'place' || value === 'reservation' || value === 'culture' || value === 'challenge' || value === 'artwork' || value === 'order' || value === 'artisan') return value;
+  return undefined;
 }
 
 export const notificationsApi = {
@@ -83,5 +96,11 @@ export const notificationsApi = {
   getUnreadCount: async (): Promise<number> => {
     const response = await apiClient.get<{ count: number }>('/notifications/unread/count');
     return response.data.count;
+  },
+  registerPushToken: async (payload: PushTokenRegistration): Promise<void> => {
+    await apiClient.post('/notifications/devices/push-token', payload);
+  },
+  unregisterPushToken: async (deviceId: string): Promise<void> => {
+    await apiClient.delete(`/notifications/devices/push-token/${encodeURIComponent(deviceId)}`);
   },
 };

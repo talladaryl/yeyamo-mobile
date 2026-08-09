@@ -15,10 +15,16 @@ export default function AccountTypeScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { setAccountType, completeOnboarding, setCurrentStep } = useOnboardingStore();
+  const { hasCompletedLaunchFlow, setAccountType, completeOnboarding, setCurrentStep } = useOnboardingStore();
   const [submittingType, setSubmittingType] = useState<AccountType | null>(null);
 
   useEffect(() => setCurrentStep(4), [setCurrentStep]);
+
+  useEffect(() => {
+    if (hasCompletedLaunchFlow && !submittingType) {
+      router.replace(isAuthenticated ? '/(tabs)' : '/(auth)/login');
+    }
+  }, [hasCompletedLaunchFlow, isAuthenticated, router, submittingType]);
 
   const selectAccountType = async (type: AccountType) => {
     if (submittingType) return;

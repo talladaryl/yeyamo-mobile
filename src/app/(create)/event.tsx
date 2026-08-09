@@ -73,7 +73,7 @@ export default function CreateEventScreen() {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
+        keyboardDismissMode="none"
         automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       >
         {/* Cover Image */}

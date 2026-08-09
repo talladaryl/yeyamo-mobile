@@ -1,5 +1,5 @@
 import { apiGet } from '@/services/api/client';
-import type { Category, Region, TrendingPlace } from './types';
+import { EXPLORE_CATEGORY_DEFINITIONS, type Category, type Region, type TrendingPlace } from './types';
 
 interface BackendRegion {
   id: number;
@@ -27,6 +27,7 @@ interface DiscoveryDocument {
   latitude: number | null;
   longitude: number | null;
 }
+interface DiscoveryPage { items: DiscoveryDocument[]; page: number; size: number; hasNext: boolean; }
 
 function mapCategory(item: BackendCategory): Category {
   return {
@@ -37,10 +38,21 @@ function mapCategory(item: BackendCategory): Category {
   };
 }
 
+function mergeCategories(remote: Category[]): Category[] {
+  const byId = new Map(remote.map((item) => [item.id.toLowerCase(), item]));
+  const curated = EXPLORE_CATEGORY_DEFINITIONS.map((definition) => {
+    const remoteItem = byId.get(definition.id.toLowerCase());
+    return remoteItem ? { ...definition, ...remoteItem, id: definition.id } : definition;
+  });
+  const curatedIds = new Set(curated.map((item) => item.id));
+  return [...curated, ...remote.filter((item) => !curatedIds.has(item.id))];
+}
+
 export const exploreApi = {
   getRegions: async (): Promise<Region[]> =>
     (await apiGet<BackendRegion[]>('/regions')).map((item) => ({
       id: item.id,
+      code: item.code,
       name: item.name,
       description: item.description ?? '',
       places_count: 0,
@@ -52,11 +64,11 @@ export const exploreApi = {
 
   getCategories: async (): Promise<Category[]> => {
     const items = await apiGet<BackendCategory[]>('/categories');
-    return items.flatMap((item) => [mapCategory(item), ...item.children.map(mapCategory)]);
+    return mergeCategories(items.flatMap((item) => [mapCategory(item), ...item.children.map(mapCategory)]));
   },
 
   getTrending: async (): Promise<TrendingPlace[]> =>
-    (await apiGet<DiscoveryDocument[]>('/discovery/trending?type=PLACE&limit=20')).map(
+    (await apiGet<DiscoveryPage>('/discovery/trending?type=PLACE&size=20')).items.map(
       (item) => ({
         id: item.sourceId,
         name: item.title,

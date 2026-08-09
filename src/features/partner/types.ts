@@ -1,6 +1,6 @@
 // ─── Partner Types ──────────────────────────────────────────────────────────
 
-export type PartnerCreationType = 'publication' | 'story' | 'place' | 'event' | 'offer';
+export type PartnerCreationType = 'publication' | 'story' | 'place' | 'event' | 'offer' | 'artwork';
 
 export interface PartnerCreationOption {
   id: PartnerCreationType;

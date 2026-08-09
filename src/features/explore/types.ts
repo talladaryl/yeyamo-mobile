@@ -6,6 +6,11 @@ export type ExploreCategory =
   | 'experiences' 
   | 'restaurants' 
   | 'hotels'
+  | 'culture'
+  | 'languages'
+  | 'artworks'
+  | 'artisans'
+  | 'challenges'
   | 'all';
 
 export interface Category {
@@ -26,6 +31,19 @@ export interface TrendingPlace {
   image_url: string;
   category: string;
 }
+
+export const EXPLORE_CATEGORY_DEFINITIONS: Category[] = [
+  { id: 'attractions', label: 'Attractions', icon: 'location-outline', iconLibrary: 'ionicons' },
+  { id: 'events', label: 'Événements', icon: 'calendar-outline', iconLibrary: 'ionicons' },
+  { id: 'experiences', label: 'Expériences', icon: 'compass-outline', iconLibrary: 'ionicons' },
+  { id: 'restaurants', label: 'Restaurants', icon: 'restaurant-outline', iconLibrary: 'ionicons' },
+  { id: 'hotels', label: 'Hôtels', icon: 'bed-outline', iconLibrary: 'ionicons' },
+  { id: 'culture', label: 'Culture', icon: 'leaf-outline', iconLibrary: 'ionicons' },
+  { id: 'languages', label: 'Langues', icon: 'language-outline', iconLibrary: 'ionicons' },
+  { id: 'artworks', label: 'Œuvres à découvrir', icon: 'color-palette-outline', iconLibrary: 'ionicons' },
+  { id: 'artisans', label: 'Artisans près de vous', icon: 'people-outline', iconLibrary: 'ionicons' },
+  { id: 'challenges', label: 'Défis', icon: 'trophy-outline', iconLibrary: 'ionicons' },
+];
 
 export interface Place {
   id: EntityId;
@@ -56,6 +74,7 @@ export interface Place {
 
 export interface Region {
   id: number;
+  code?: string;
   name: string;
   description: string;
   places_count: number;

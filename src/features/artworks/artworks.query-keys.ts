@@ -1,0 +1,2 @@
+import type { ArtworkFilters } from './artworks.types';
+export const artworkKeys = { all: ['artworks'] as const, list: (filters: ArtworkFilters) => [...artworkKeys.all, 'list', filters] as const, detail: (id: string) => [...artworkKeys.all, 'detail', id] as const, history: (id: string) => [...artworkKeys.all, 'history', id] as const, related: (id: string) => [...artworkKeys.all, 'related', id] as const, offer: (id: string) => [...artworkKeys.all, 'offer', id] as const };

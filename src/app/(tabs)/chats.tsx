@@ -17,6 +17,8 @@ import { useConversations } from '@/features/chat/useChat';
 import { useThemeStore } from '@/features/theme/theme.store';
 import type { ChatTab, Conversation } from '@/features/chat/types';
 import type { EntityId } from '@/types/api.types';
+import { useFloatingNavigationScroll } from '@/hooks/useFloatingNavigation';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 function conversationName(conversation: Conversation) {
   return conversation.type === 'group'
@@ -27,6 +29,8 @@ function conversationName(conversation: Conversation) {
 export default function ChatsScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const floatingScroll = useFloatingNavigationScroll();
+  const tabBarHeight = useBottomTabBarHeight();
   const [activeTab, setActiveTab] = useState<ChatTab>('recent');
   const [search, setSearch] = useState('');
   const { data: conversations = [], isLoading, isError } = useConversations();
@@ -115,10 +119,11 @@ export default function ChatsScreen() {
       ) : (
         <View className="flex-1">
           <FlatList
+            {...floatingScroll}
             data={listConversations}
             keyExtractor={(item) => String(item.id)}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingBottom: 92 }}
+            contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
             ListHeaderComponent={activeTab === 'recent' && !search ? (
               <>
                 <PinnedChats conversations={pinnedConversations} onPress={openConversation} />

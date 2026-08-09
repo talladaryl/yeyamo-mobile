@@ -23,6 +23,17 @@ const ENV = {
     | 'development'
     | 'staging'
     | 'production',
+  GOOGLE_MAPS_ANDROID_API_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY,
+  GOOGLE_MAPS_IOS_API_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY,
+  GOOGLE_ANDROID_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  GOOGLE_IOS_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  TURNSTILE_SITE_KEY: process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY,
+  TURNSTILE_CHALLENGE_URL:
+    process.env.EXPO_PUBLIC_TURNSTILE_CHALLENGE_URL ?? 'https://yeyamo.com/turnstile',
 };
+
+const platformMapsKey = Platform.OS === 'android' ? ENV.GOOGLE_MAPS_ANDROID_API_KEY : ENV.GOOGLE_MAPS_IOS_API_KEY;
+if (!platformMapsKey && ENV.APP_ENV !== 'development') throw new Error(`Clé Google Maps ${Platform.OS} absente`);
 
 export default ENV;

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import MapView, { Marker, Polyline } from 'react-native-maps';
-import * as Location from 'expo-location';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { usePlaceDetail } from '@/features/places/usePlaces';
+import { mapsApi, decodePolyline } from '@/features/maps/maps.api';
+import { useLocation } from '@/hooks/useLocation';
 
 type Coordinate = {
   latitude: number;
@@ -22,6 +23,7 @@ export default function PlaceRouteScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const { data: place, isLoading: isPlaceLoading } = usePlaceDetail(id);
+  const currentLocation = useLocation();
   const destination = useMemo(
     () => ({
       latitude: place?.lat ?? DEFAULT_ORIGIN.latitude,
@@ -44,41 +46,24 @@ export default function PlaceRouteScreen() {
       if (!place) return;
       setIsLoading(true);
       try {
-        const permission = await Location.requestForegroundPermissionsAsync();
         let nextOrigin = DEFAULT_ORIGIN;
-
-        if (permission.status === 'granted') {
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
+        const location = await currentLocation.requestLocation();
+        if (location) {
           nextOrigin = {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
+            latitude: location.latitude,
+            longitude: location.longitude,
           };
         }
-
-        const osrmUrl =
-          `https://router.project-osrm.org/route/v1/driving/` +
-          `${nextOrigin.longitude},${nextOrigin.latitude};${destination.longitude},${destination.latitude}` +
-          `?overview=full&geometries=geojson`;
-
-        const response = await fetch(osrmUrl);
-        const json = await response.json();
-        const osrmRoute = json?.routes?.[0];
+        const result = await mapsApi.getRoute(nextOrigin, destination, 'DRIVE');
 
         if (!isMounted) return;
 
         setOrigin(nextOrigin);
 
-        if (osrmRoute?.geometry?.coordinates?.length) {
-          setRoute(
-            osrmRoute.geometry.coordinates.map(([longitude, latitude]: [number, number]) => ({
-              latitude,
-              longitude,
-            }))
-          );
-          setDistanceKm(osrmRoute.distance / 1000);
-          setDurationMin(osrmRoute.duration / 60);
+        if (result.encodedPolyline) {
+          setRoute(decodePolyline(result.encodedPolyline));
+          setDistanceKm(result.distanceMeters / 1000);
+          setDurationMin(result.durationSeconds / 60);
           setUsedFallback(false);
         } else {
           setRoute([nextOrigin, destination]);
@@ -98,7 +83,7 @@ export default function PlaceRouteScreen() {
     return () => {
       isMounted = false;
     };
-  }, [destination.latitude, destination.longitude, place]);
+  }, [destination.latitude, destination.longitude, place, currentLocation.requestLocation]);
 
   if (isPlaceLoading || !place) {
     return (
@@ -113,6 +98,7 @@ export default function PlaceRouteScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <MapView
+        provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={{
           latitude: (origin.latitude + destination.latitude) / 2,

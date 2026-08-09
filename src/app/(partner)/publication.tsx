@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
@@ -9,7 +9,7 @@ import { CTAButton } from '@/components/ui/CTAButton';
 export default function PartnerPublicationScreen() {
   const router = useRouter();
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
-  const [caption, setCaption] = useState('');
+  const captionRef = useRef('');
 
   const pickImage = async (mediaTypes: Array<'images' | 'videos'> = ['images']) => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -63,7 +63,7 @@ export default function PartnerPublicationScreen() {
         }}
       />
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" keyboardDismissMode="none">
         {/* Main Image */}
         <TouchableOpacity
           onPress={() => pickImage(['images'])}
@@ -115,10 +115,11 @@ export default function PartnerPublicationScreen() {
             className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm"
             placeholder="Ajoutez une légende..."
             placeholderTextColor="#A1A1AA"
-            value={caption}
-            onChangeText={setCaption}
+            defaultValue={captionRef.current}
+            onChangeText={(value) => { captionRef.current = value; }}
             multiline
             maxLength={500}
+            blurOnSubmit={false}
             style={{ minHeight: 100, textAlignVertical: 'top' }}
           />
         </View>

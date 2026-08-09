@@ -3,8 +3,7 @@ import { isAxiosError } from 'axios';
 import { useAuthStore } from './auth.store';
 import { authService } from './auth.service';
 import { authApi } from './auth.api';
-import { secureStore } from '@/services/storage/secure-store';
-import { reverbClient } from '@/services/socket/reverb.client';
+import { googleSignInErrorMessage, signInWithGoogle } from './google-auth';
 import type { 
   LoginCredentials, 
   RegisterCredentials, 
@@ -28,11 +27,11 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function login(credentials: LoginCredentials) {
+  async function login(credentials: LoginCredentials, turnstileToken?: string) {
     setIsLoading(true);
     setError(null);
     try {
-      await authService.login(credentials);
+      await authService.login(credentials, turnstileToken);
     } catch (err: unknown) {
       setError(authErrorMessage(err, 'Connexion impossible. Réessayez.'));
       throw err;
@@ -41,11 +40,11 @@ export function useAuth() {
     }
   }
 
-  async function register(credentials: RegisterCredentials) {
+  async function register(credentials: RegisterCredentials, turnstileToken?: string) {
     setIsLoading(true);
     setError(null);
     try {
-      await authService.register(credentials);
+      await authService.register(credentials, turnstileToken);
     } catch (err: unknown) {
       setError(authErrorMessage(err, 'Inscription impossible. Réessayez.'));
       throw err;
@@ -100,11 +99,11 @@ export function useAuth() {
     }
   }
 
-  async function forgotPassword(credentials: ForgotPasswordCredentials) {
+  async function forgotPassword(credentials: ForgotPasswordCredentials, turnstileToken: string) {
     setIsLoading(true);
     setError(null);
     try {
-      await authApi.forgotPassword(credentials.email);
+      await authApi.forgotPassword(credentials.email, turnstileToken);
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Failed to send reset code. Please try again.';
@@ -119,31 +118,28 @@ export function useAuth() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await authApi.socialLogin(credentials);
-      await Promise.all([
-        secureStore.set(secureStore.KEYS.AUTH_TOKEN, response.accessToken),
-        secureStore.set(secureStore.KEYS.REFRESH_TOKEN, response.refreshToken),
-        secureStore.set(secureStore.KEYS.USER_ID, String(response.user.id)),
-      ]);
-      const identifier = response.user.email ?? response.user.phone ?? `user-${response.user.id}`;
-      useAuthStore.getState().setAuth({
-        id: response.user.id,
-        username: identifier.split('@')[0],
-        display_name: identifier.split('@')[0],
-        email: response.user.email ?? '',
-        avatar_url: null,
-        city: '',
-        is_verified: Boolean(response.user.emailVerifiedAt),
-        user_type: response.user.roles.includes('PARTNER') ? 'partner' : 'user',
-        created_at: response.user.createdAt,
-      }, response.accessToken, 'backend');
-      await secureStore.set(secureStore.KEYS.SESSION_MODE, 'backend');
-      reverbClient.connect(response.accessToken);
+      await authService.socialLogin(credentials);
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Social login failed. Please try again.';
       setError(msg);
       throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function googleLogin(): Promise<boolean> {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { idToken } = await signInWithGoogle();
+      await authService.socialLogin({ provider: 'google', token: idToken });
+      return true;
+    } catch (err: unknown) {
+      const message = googleSignInErrorMessage(err);
+      if (message) setError(authErrorMessage(err, message));
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -166,6 +162,7 @@ export function useAuth() {
     verifyCode,
     forgotPassword,
     socialLogin,
+    googleLogin,
     logout 
   };
 }

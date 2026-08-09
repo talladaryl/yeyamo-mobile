@@ -1,0 +1,6 @@
+import { Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { SafeScreen } from '@/components/ui/SafeScreen';
+import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
+export default function LessonResultScreen() { const { score } = useLocalSearchParams<{ score?: string }>(); const router = useRouter(); const colors = useThemeStore((state) => state.colors); return <SafeScreen><View className="flex-1 items-center justify-center px-8"><View className="h-20 w-20 items-center justify-center rounded-full bg-[#DCFCE7]"><Icon name="checkmark" size={42} color="#15803D" /></View><Text className="mt-6 text-3xl font-extrabold" style={{ color: colors.text }}>Leçon terminée</Text><Text className="mt-2 text-center text-base" style={{ color: colors.textSecondary }}>Votre progression officielle est enregistrée par YeYamo.</Text><Text className="mt-6 text-4xl font-extrabold text-[#EF4444]">{score ?? '—'}%</Text><TouchableOpacity onPress={() => router.replace('/(tabs)/profile')} className="mt-8 rounded-xl bg-[#EF4444] px-6 py-4"><Text className="font-bold text-white">Voir ma progression</Text></TouchableOpacity></View></SafeScreen>; }
