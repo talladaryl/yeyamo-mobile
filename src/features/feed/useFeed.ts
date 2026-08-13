@@ -13,7 +13,7 @@ import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 export const FEED_QUERY_KEY = ['feed'] as const;
 
-export function useFeed(regionId?: number) {
+export function useFeed(regionId?: number, enabled = true) {
   const selectedInterestIds = useInterestsStore((state) => state.selectedInterestIds);
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
@@ -24,6 +24,7 @@ export function useFeed(regionId?: number) {
         ? Promise.resolve(personalizeMockFeed(selectedInterestIds, regionId))
         : feedApi.getFeed(pageParam as string | undefined, selectedInterestIds, regionId),
     initialPageParam: undefined as string | undefined,
+    enabled,
     getNextPageParam: (lastPage: PaginatedResponse<FeedPost>) =>
       lastPage.links.next ? lastPage.meta.current_page.toString() : undefined,
   });

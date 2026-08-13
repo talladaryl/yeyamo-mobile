@@ -1,4 +1,4 @@
-import { ActivityIndicator, View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +25,10 @@ export default function PlaceDetailScreen() {
   }
 
   const openDirections = () => router.push(`/(places)/route/${place.id}`);
+  const explainBookingBlock = () => Alert.alert(
+    'Réservation indisponible',
+    'BLOCKED_BY_BACKEND — le contrat disponible ne relie pas encore ce lieu à une activité réservable et ne publie pas le DTO nécessaire au formulaire de réservation.',
+  );
 
   const sharePlace = async () => {
     await Share.share({
@@ -120,7 +124,7 @@ export default function PlaceDetailScreen() {
 
           {/* Action Buttons */}
           <View className="flex-row gap-3 mb-6">
-            <TouchableOpacity className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
+            <TouchableOpacity onPress={explainBookingBlock} className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
               <Text className="text-base font-semibold text-white">Réserver</Text>
             </TouchableOpacity>
             <TouchableOpacity

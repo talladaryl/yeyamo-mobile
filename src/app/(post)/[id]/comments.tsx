@@ -16,11 +16,13 @@ import { feedApi } from '@/features/feed/feed.api';
 import { usePostDetail } from '@/features/post/usePost';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { i18n } from '@/i18n';
+import { useAuth } from '@/features/auth/useAuth';
 
 export default function CommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const { user } = useAuth();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['55%', '88%'], []);
   const { data: post, isLoading, refetch } = usePostDetail(id);
@@ -91,7 +93,7 @@ export default function CommentsScreen() {
                 keyboardShouldPersistTaps="handled"
                 ListEmptyComponent={<View className="flex-1 items-center justify-center px-6"><Text className="text-center" style={{ color: colors.textSecondary }}>{i18n.t('comments.empty')}</Text></View>}
               />
-              <CommentInput onSubmit={handleSubmitComment} autoFocus />
+              <CommentInput onSubmit={handleSubmitComment} autoFocus avatarUrl={user?.avatar_url} displayName={user?.display_name} />
             </>
           )}
         </View>

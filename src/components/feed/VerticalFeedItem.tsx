@@ -12,6 +12,7 @@ import type { FeedPost } from '@/features/feed/types';
 type VerticalFeedItemProps = {
   post: FeedPost;
   height: number;
+  bottomOverlayInset: number;
   isActive: boolean;
   isFollowing: boolean;
   isSaved: boolean;
@@ -25,6 +26,7 @@ type VerticalFeedItemProps = {
 export function VerticalFeedItem({
   post,
   height,
+  bottomOverlayInset,
   isActive,
   isFollowing,
   isSaved,
@@ -70,7 +72,7 @@ export function VerticalFeedItem({
       />
 
       {/* Bottom info */}
-      <View className="absolute bottom-4 left-4 right-20">
+      <View className="absolute left-4 right-20" style={{ bottom: bottomOverlayInset }}>
         <Pressable
           onPress={() => router.push(`/(profile)/${post.author.username}`)}
           className="flex-row items-center gap-2 mb-3"
@@ -105,7 +107,7 @@ export function VerticalFeedItem({
       </View>
 
       {/* Right action buttons */}
-      <View className="absolute right-3 bottom-20 gap-6">
+      <View className="absolute right-3 gap-6" style={{ bottom: bottomOverlayInset + 8 }}>
         {/* Author avatar (clickable) */}
         <View className="items-center pb-1">
         <TouchableOpacity onPress={() => router.push(`/(profile)/${post.author.username}`)} activeOpacity={0.8}>

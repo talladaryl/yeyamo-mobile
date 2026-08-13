@@ -1,4 +1,4 @@
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
@@ -22,7 +22,18 @@ export default function ArtworkDetailScreen() {
   if (detail.isError || !detail.data) return <SafeScreen><View className="flex-1 items-center justify-center px-8"><Text className="text-center" style={{ color: colors.text }}>Cette œuvre n’est pas accessible.</Text><TouchableOpacity onPress={() => detail.refetch()} className="mt-4"><Text className="font-bold text-[#EF4444]">Réessayer</Text></TouchableOpacity></View></SafeScreen>;
   const artwork = detail.data.artwork;
   const primary = detail.data.media.find((item) => item.mediaType === 'PRIMARY_IMAGE') ?? detail.data.media[0];
-  const canOrder = commerce && offer.data?.status === 'ACTIVE' && artwork.availabilityStatus === 'AVAILABLE';
+  const canPlaceDirectOrder = commerce
+    && offer.data?.status === 'ACTIVE'
+    && offer.data.saleType === 'FIXED_PRICE'
+    && artwork.availabilityStatus === 'AVAILABLE';
+  const customOrderBlocked = commerce
+    && offer.data?.status === 'ACTIVE'
+    && offer.data.customOrderAllowed
+    && offer.data.saleType !== 'FIXED_PRICE';
+  const contactArtisan = () => Alert.alert(
+    'Contact indisponible',
+    'BLOCKED_BY_BACKEND — l’œuvre expose un partnerId, mais la messagerie requiert un userId destinataire.',
+  );
   return <SafeScreen><ScrollView contentContainerStyle={{ paddingBottom: 36 }}>
     <View className="flex-row items-center px-4 pt-3"><TouchableOpacity onPress={() => router.back()} className="-ml-2 p-2"><Icon name="chevron-back" size={24} color={colors.text} /></TouchableOpacity><View className="flex-1" /><Icon name="bookmark-outline" size={23} color={colors.text} /></View>
     {primary ? <Image source={{ uri: mediaContentUrl(primary.mediaId) }} className="mx-4 mt-4 h-64 rounded-3xl" resizeMode="cover" /> : <View className="mx-4 mt-4 h-64 items-center justify-center rounded-3xl bg-[#FEE2E2]"><Icon name="color-palette-outline" size={62} color="#B91C1C" /></View>}
@@ -32,7 +43,7 @@ export default function ArtworkDetailScreen() {
       {offer.data?.saleType === 'ON_REQUEST' ? <View className="mt-5 rounded-2xl bg-[#FEF3C7] p-4"><Text className="font-bold text-[#92400E]">Prix sur demande</Text></View> : null}
       {history.isLoading ? <ActivityIndicator className="mt-7" color={colors.primary} /> : null}
       {!history.isLoading && history.data?.length ? <View className="mt-8"><Text className="text-lg font-bold" style={{ color: colors.text }}>Histoire de l’œuvre</Text>{history.data.map((entry) => <View key={entry.id} className="mt-3 rounded-xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Text className="font-bold" style={{ color: colors.text }}>{entry.title}</Text><Text className="mt-1 leading-6" style={{ color: colors.textSecondary }}>{entry.narrative}</Text>{entry.culturalMeaning ? <Text className="mt-2 text-sm italic" style={{ color: colors.textMuted }}>{entry.culturalMeaning}</Text> : null}</View>)}</View> : null}
-      <View className="mt-7 gap-3"><TouchableOpacity onPress={() => router.push('/(tabs)/chats')} className="items-center rounded-xl border px-4 py-4" style={{ borderColor: colors.border }}><Text className="font-bold" style={{ color: colors.text }}>Contacter l’artisan</Text></TouchableOpacity>{canOrder ? <TouchableOpacity onPress={() => router.push({ pathname: '/(profile)/artwork-orders' as never, params: { offerId: offer.data!.id } } as never)} className="items-center rounded-xl bg-[#EF4444] px-4 py-4"><Text className="font-bold text-white">Commander cette œuvre</Text></TouchableOpacity> : <Text className="text-center text-xs" style={{ color: colors.textMuted }}>{commerce ? 'Cette œuvre ne peut pas être commandée en ce moment.' : 'Le commerce artisanal est indisponible pour ce pays.'}</Text>}</View>
+      <View className="mt-7 gap-3"><TouchableOpacity onPress={contactArtisan} className="items-center rounded-xl border px-4 py-4" style={{ borderColor: colors.border }}><Text className="font-bold" style={{ color: colors.text }}>Contacter l’artisan</Text></TouchableOpacity>{canPlaceDirectOrder ? <TouchableOpacity onPress={() => router.push({ pathname: '/(profile)/artwork-orders' as never, params: { offerId: offer.data!.id } } as never)} className="items-center rounded-xl bg-[#EF4444] px-4 py-4"><Text className="font-bold text-white">Acheter cette œuvre</Text></TouchableOpacity> : customOrderBlocked ? <View className="rounded-xl border p-4" style={{ borderColor: colors.borderSoft, backgroundColor: colors.surface }}><Text className="text-center text-xs" style={{ color: colors.textSecondary }}>BLOCKED_BY_BACKEND — l’offre autorise une commande personnalisée, mais le contrat mobile ne publie ni configuration, ni demande de devis, ni réponse artisan.</Text></View> : <Text className="text-center text-xs" style={{ color: colors.textMuted }}>{commerce ? 'Cette œuvre ne peut pas être commandée en ce moment.' : 'Le commerce artisanal est indisponible pour ce pays.'}</Text>}</View>
     </View>
   </ScrollView></SafeScreen>;
 }

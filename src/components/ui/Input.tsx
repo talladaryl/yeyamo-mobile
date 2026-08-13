@@ -19,7 +19,7 @@ export function Input({ label, error, containerClassName = '', leftIcon, ...prop
       ) : null}
       <View
         className="flex-row items-center rounded-xl border"
-        style={{ backgroundColor: colors.elevated, borderColor: error ? colors.primary : colors.border }}
+        style={{ backgroundColor: colors.surface, borderColor: error ? colors.primary : colors.borderSoft }}
       >
         {leftIcon ? <View className="pl-4">{leftIcon}</View> : null}
         <TextInput

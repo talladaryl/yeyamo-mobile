@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, View, TouchableOpacity } from 'react-native';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Icon } from '@/components/ui/Icon';
+import { Avatar } from '@/components/ui/Avatar';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { i18n } from '@/i18n';
 
@@ -9,12 +10,16 @@ type CommentInputProps = {
   onSubmit: (text: string) => void | Promise<void>;
   placeholder?: string;
   autoFocus?: boolean;
+  avatarUrl?: string | null;
+  displayName?: string;
 };
 
 export function CommentInput({
   onSubmit,
   placeholder = i18n.t('comments.placeholder'),
   autoFocus = false,
+  avatarUrl,
+  displayName = 'Vous',
 }: CommentInputProps) {
   const [text, setText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +41,8 @@ export function CommentInput({
   };
 
   return (
-    <View className="border-t px-4 py-3 flex-row items-end gap-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+    <View className="border-t px-4 py-3 flex-row items-end gap-3" style={{ backgroundColor: colors.surfaceElevated, borderColor: colors.borderSoft }}>
+        <Avatar uri={avatarUrl} displayName={displayName} size={34} />
         <View className="flex-1 rounded-[22px] px-4 py-2.5 flex-row items-end gap-2" style={{ backgroundColor: colors.elevated }}>
           <BottomSheetTextInput
             value={text}
@@ -50,10 +56,6 @@ export function CommentInput({
             maxLength={500}
             accessibilityLabel={i18n.t('comments.placeholder')}
           />
-          
-          <TouchableOpacity activeOpacity={0.7}>
-            <Icon library="ionicons" name="happy-outline" size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
         </View>
 
         <TouchableOpacity

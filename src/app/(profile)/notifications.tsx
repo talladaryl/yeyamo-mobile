@@ -1,5 +1,5 @@
 // ÉCRAN 7 - Notifications
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { Alert, View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { NotificationItem } from '@/components/profile/NotificationItem';
 import { useNotifications, useUnreadNotifications, useMarkAllAsRead, useMarkAsRead } from '@/features/notifications/useNotifications';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { resolveResourceRoute } from '@/utils/resource-route';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -86,24 +87,16 @@ export default function NotificationsScreen() {
               notification={item}
               onPress={() => {
                 markAsRead.mutate(item.id);
-                // Navigation selon le type de notification
-                if (item.target_type === 'post' && item.target_id) {
-                  router.push(`/(post)/${item.target_id}`);
-                } else if (item.target_type === 'event' && item.target_id) {
-                  router.push(`/(events)/${item.target_id}`);
-                } else if (item.target_type === 'place' && item.target_id) {
-                  router.push(`/(places)/${item.target_id}`);
-                } else if (item.target_type === 'culture' && item.target_id) {
-                  router.push(`/(explore)/culture/${item.target_id}`);
-                } else if (item.target_type === 'challenge' && item.target_id) {
-                  router.push(`/(explore)/challenges/${item.target_id}`);
-                } else if (item.target_type === 'artwork' && item.target_id) {
-                  router.push(`/(explore)/artworks/${item.target_id}`);
-                } else if (item.target_type === 'order' && item.target_id) {
-                  router.push(`/(profile)/artwork-orders/${item.target_id}`);
-                } else if (item.target_type === 'artisan' && item.target_id) {
-                  router.push(`/(explore)/artisans/${item.target_id}`);
+                const resolution = resolveResourceRoute({
+                  type: item.target_type,
+                  id: item.target_id,
+                  metadata: item.target_metadata,
+                });
+                if (resolution.href) {
+                  router.push(resolution.href as never);
+                  return;
                 }
+                Alert.alert('Contenu indisponible', "Ce contenu n'est plus disponible ou ne peut pas être ouvert depuis cette notification.");
               }}
             />
           )}

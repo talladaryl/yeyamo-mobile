@@ -28,7 +28,8 @@ export interface Notification {
   content: string;
   action_url?: string;
   target_id?: EntityId;
-  target_type?: 'post' | 'event' | 'place' | 'reservation' | 'culture' | 'challenge' | 'artwork' | 'order' | 'artisan';
+  target_type?: 'post' | 'event' | 'place' | 'reservation' | 'culture' | 'challenge' | 'artwork' | 'order' | 'artisan' | 'story' | 'experience' | 'collection' | 'profile';
+  target_metadata?: Record<string, unknown>;
   is_read: boolean;
   created_at: string;
 }

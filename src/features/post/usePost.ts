@@ -51,6 +51,20 @@ export function useUploadMedia() {
   });
 }
 
+export function useCreateStory() {
+  const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  return useMutation({
+    mutationFn: ({ mediaId, durationSeconds }: { mediaId: EntityId; durationSeconds: number }) =>
+      isDemo
+        ? Promise.resolve({ data: { id: `demo-story-${Date.now()}` } })
+        : postApi.createStory(mediaId, durationSeconds),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['stories'] });
+    },
+  });
+}
+
 export function useDeletePost() {
   const queryClient = useQueryClient();
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);

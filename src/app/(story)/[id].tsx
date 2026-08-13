@@ -13,7 +13,6 @@ export default function StoryViewerScreen() {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [showReply, setShowReply] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   const { data: story, isLoading } = useStoryDetail(id);
@@ -182,28 +181,6 @@ export default function StoryViewerScreen() {
         </View>
       )}
 
-      {/* Bottom Actions */}
-      <View className="absolute bottom-8 left-4 right-4">
-        <View className="flex-row items-center justify-between">
-          {/* Reply Input */}
-          <TouchableOpacity 
-            onPress={() => setShowReply(true)}
-            className="flex-1 mr-3 bg-white/20 backdrop-blur-lg border border-white/30 rounded-full px-5 py-3"
-          >
-            <Text className="text-white/80 text-sm">Répondre à cette story</Text>
-          </TouchableOpacity>
-
-          {/* Action Buttons */}
-          <View className="flex-row items-center gap-3">
-            <TouchableOpacity>
-              <Ionicons name="heart-outline" size={28} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Ionicons name="paper-plane-outline" size={26} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
     </View>
   );
 }

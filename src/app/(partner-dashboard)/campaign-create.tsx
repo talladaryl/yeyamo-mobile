@@ -17,6 +17,7 @@ import {
 } from '@/features/campaigns/campaign-draft.store';
 import { useCreateCampaign } from '@/features/campaigns/useCampaigns';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { getSuggestedCampaignActions } from '@/features/campaigns/campaign-actions';
 
 type FieldErrors = Partial<Record<keyof CampaignDraft, string>>;
 
@@ -27,6 +28,10 @@ export default function CampaignCreateScreen() {
   const createCampaign = useCreateCampaign();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const suggestedActions = getSuggestedCampaignActions({
+    promotedEntityType: draft.promotedEntityType,
+    objective: draft.objective,
+  });
 
   const submit = () => {
     setFieldErrors({});
@@ -100,9 +105,14 @@ export default function CampaignCreateScreen() {
           <>
             <Field label="Titre créatif" value={draft.title} onChangeText={(title) => update({ title })} />
             <Field label="Description" value={draft.description} onChangeText={(description) => update({ description })} multiline />
-            <Field label="URL de l'image" value={draft.imageUrl} onChangeText={(imageUrl) => update({ imageUrl })} autoCapitalize="none" />
+            <Field label="Image — URL média" value={draft.imageUrl} onChangeText={(imageUrl) => update({ imageUrl })} autoCapitalize="none" />
+            <Text className="-mt-2 mb-4 text-xs" style={{ color: colors.textMuted }}>L’API Campaign attend actuellement une URL. L’association d’un upload média à une campagne n’est pas encore publiée par le backend.</Text>
+            <Text className="mb-2 text-xs font-bold" style={{ color: colors.textSecondary }}>Action suggérée</Text>
+            <View className="mb-4 flex-row flex-wrap gap-2">
+              {suggestedActions.map((action) => <TouchableOpacity key={action.label} onPress={() => update({ callToAction: action.label })} className="rounded-full border px-3 py-2" style={{ borderColor: action.label === draft.callToAction ? colors.primary : colors.borderSoft, backgroundColor: action.recommended ? colors.accentSoft : colors.surface }}><Text className="text-xs font-bold" style={{ color: action.label === draft.callToAction ? colors.primary : colors.text }}>{action.label}{action.recommended ? ' · Recommandé' : ''}</Text></TouchableOpacity>)}
+            </View>
             <Field label="Call to action" value={draft.callToAction} onChangeText={(callToAction) => update({ callToAction })} />
-            <Field label="URL de destination" value={draft.destinationUrl} onChangeText={(destinationUrl) => update({ destinationUrl })} autoCapitalize="none" />
+            <Field label="Lien externe (facultatif)" value={draft.destinationUrl} onChangeText={(destinationUrl) => update({ destinationUrl })} autoCapitalize="none" />
           </>
         ) : null}
         {step === 6 ? (

@@ -11,6 +11,7 @@ import { useThemeStore } from '@/features/theme/theme.store';
 import { useRegions } from '@/features/explore/useExplore';
 import { useStories } from '@/features/story/useStory';
 import { useAuth } from '@/features/auth/useAuth';
+import { FeedModeSwitch, type FeedMode } from '@/components/feed/FeedModeSwitch';
 
 export default function FeedScreen() {
   const router = useRouter();
@@ -19,9 +20,10 @@ export default function FeedScreen() {
   const { data: regions = [] } = useRegions();
   const { data: stories = [] } = useStories();
   const [selectedRegionId, setSelectedRegionId] = useState<number | undefined>();
+  const [feedMode, setFeedMode] = useState<FeedMode>('for-you');
   const [isRegionPickerOpen, setRegionPickerOpen] = useState(false);
   const selectedRegion = regions.find((region) => region.id === selectedRegionId);
-  const { data, isLoading, isError, fetchNextPage, hasNextPage } = useFeed(selectedRegionId);
+  const { data, isLoading, isError, fetchNextPage, hasNextPage } = useFeed(selectedRegionId, feedMode === 'for-you');
   const { data: sponsoredItems = [] } = useSponsoredFeed(selectedRegionId);
 
   const posts = useMemo<FeedItem[]>(() => {
@@ -30,7 +32,7 @@ export default function FeedScreen() {
     return [...loadedPosts.slice(0, 2), sponsoredItems[0], ...loadedPosts.slice(2)];
   }, [data, sponsoredItems]);
 
-  if (isLoading) {
+  if (feedMode === 'for-you' && isLoading) {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color="#EF4444" />
@@ -38,7 +40,7 @@ export default function FeedScreen() {
     );
   }
 
-  if (isError) {
+  if (feedMode === 'for-you' && isError) {
     return (
       <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: colors.background }}>
         <Text className="text-[#EF4444] text-base text-center">
@@ -84,13 +86,25 @@ export default function FeedScreen() {
       {/* Stories */}
       <StoriesList stories={stories} currentUserId={user?.id} />
 
+      <FeedModeSwitch value={feedMode} onChange={setFeedMode} />
+
       {/* Vertical Feed */}
-      <VerticalFeedList
-        posts={posts}
-        onEndReached={() => {
-          if (hasNextPage) fetchNextPage();
-        }}
-      />
+      {feedMode === 'for-you' ? (
+        <VerticalFeedList
+          posts={posts}
+          onEndReached={() => {
+            if (hasNextPage) fetchNextPage();
+          }}
+        />
+      ) : (
+        <View className="flex-1 items-center justify-center px-8">
+          <Icon name="people-outline" size={38} color={colors.textMuted} />
+          <Text className="mt-4 text-center text-lg font-bold" style={{ color: colors.text }}>Les abonnements arrivent bientôt</Text>
+          <Text className="mt-2 text-center text-sm leading-5" style={{ color: colors.textSecondary }}>
+            BLOCKED_BY_BACKEND — le contrat Feed actuel ne distingue pas encore les contenus des comptes suivis.
+          </Text>
+        </View>
+      )}
 
       <Modal visible={isRegionPickerOpen} transparent animationType="fade" onRequestClose={() => setRegionPickerOpen(false)}>
         <Pressable className="flex-1 justify-end bg-black/45" onPress={() => setRegionPickerOpen(false)}>

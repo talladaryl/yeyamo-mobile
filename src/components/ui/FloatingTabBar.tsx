@@ -52,9 +52,9 @@ export function ActiveTabBubble({ itemCount, width, activeIndex }: { itemCount: 
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: withAlpha(colors.card, 0.42),
+          backgroundColor: withAlpha(colors.surfaceGlassStrong, 0.58),
           borderWidth: 1,
-          borderColor: withAlpha(colors.border, 0.78),
+          borderColor: withAlpha(colors.borderGlass, 0.9),
           shadowColor: colors.text,
           shadowOffset: { width: 0, height: 3 },
           shadowOpacity: 0.14,
@@ -73,7 +73,7 @@ export function ActiveTabBubble({ itemCount, width, activeIndex }: { itemCount: 
           right: 8,
           height: 8,
           borderRadius: 8,
-          backgroundColor: withAlpha(colors.card, 0.38),
+          backgroundColor: withAlpha(colors.accent, 0.12),
         }}
       />
     </Animated.View>
@@ -94,10 +94,10 @@ export function FloatingTabBarBackground() {
         StyleSheet.absoluteFillObject,
         {
           overflow: 'hidden',
-          borderRadius: isScrolling ? 27 : 24,
+          borderRadius: isScrolling ? 27 : 30,
           borderWidth: 1,
-          borderColor: withAlpha(colors.border, 0.76),
-          backgroundColor: withAlpha(colors.card, 0.22),
+          borderColor: withAlpha(colors.borderGlass, 0.9),
+          backgroundColor: withAlpha(colors.surfaceGlass, 0.38),
         },
       ]}
     >
@@ -108,7 +108,7 @@ export function FloatingTabBarBackground() {
       />
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFillObject, { backgroundColor: withAlpha(colors.card, 0.38) }]}
+        style={[StyleSheet.absoluteFillObject, { backgroundColor: withAlpha(colors.surfaceGlassStrong, 0.4) }]}
       />
       <ActiveTabBubble itemCount={5} width={width} activeIndex={activeIndex} />
     </View>

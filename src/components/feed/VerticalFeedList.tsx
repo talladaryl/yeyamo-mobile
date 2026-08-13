@@ -34,6 +34,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
   const trackImpression = useTrackAdImpression();
   const floatingScroll = useFloatingNavigationScroll();
   const tabBarHeight = useBottomTabBarHeight();
+  const bottomOverlayInset = tabBarHeight + 18;
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -98,6 +99,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
         <VerticalFeedItem
           post={item}
           height={itemHeight}
+          bottomOverlayInset={bottomOverlayInset}
           isActive={index === activeIndex}
           isFollowing={followedAuthorIds.has(item.author.id)}
           isSaved={savedPostIds.has(item.id)}
@@ -139,7 +141,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
       disableIntervalMomentum
       decelerationRate="fast"
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: tabBarHeight + 20 }}
+      contentContainerStyle={{ paddingBottom: tabBarHeight + 32 }}
       {...floatingScroll}
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}

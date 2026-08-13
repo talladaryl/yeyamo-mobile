@@ -39,10 +39,10 @@ export const postApi = {
     return { data: { id: published.id } };
   },
 
-  createStory: async (mediaId: EntityId): Promise<{ data: { id: EntityId } }> => {
+  createStory: async (mediaId: EntityId, durationSeconds = 15): Promise<{ data: { id: EntityId } }> => {
     const story = await apiPost<{ id: string }>('/stories', {
       mediaId,
-      durationSeconds: 15,
+      durationSeconds,
     });
     return { data: { id: story.id } };
   },

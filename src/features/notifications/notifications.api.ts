@@ -42,13 +42,15 @@ function mapNotification(item: BackendNotification): Notification {
         ? data.targetId
         : undefined,
     target_type: toTargetType(data.targetType ?? data.target_type),
+    target_metadata: data,
     is_read: item.readAt !== null,
     created_at: item.createdAt,
   };
 }
 
 function toTargetType(value: unknown): Notification['target_type'] {
-  if (value === 'post' || value === 'event' || value === 'place' || value === 'reservation' || value === 'culture' || value === 'challenge' || value === 'artwork' || value === 'order' || value === 'artisan') return value;
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (normalized === 'post' || normalized === 'event' || normalized === 'place' || normalized === 'reservation' || normalized === 'culture' || normalized === 'challenge' || normalized === 'artwork' || normalized === 'order' || normalized === 'artisan' || normalized === 'story' || normalized === 'experience' || normalized === 'collection' || normalized === 'profile') return normalized;
   return undefined;
 }
 

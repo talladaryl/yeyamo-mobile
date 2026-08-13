@@ -137,7 +137,7 @@ export default function PostDetailScreen() {
               />
               <Text className="font-semibold" style={{ color: colors.text }}>{likesCount}</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="flex-row items-center gap-1">
+            <TouchableOpacity onPress={() => router.push(`/(post)/${id}/comments`)} className="flex-row items-center gap-1">
               <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
               <Text className="font-semibold" style={{ color: colors.text }}>{post.comments_count}</Text>
             </TouchableOpacity>
