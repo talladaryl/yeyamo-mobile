@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { NativeMap, NativeMarker, NativePolyline, PROVIDER_GOOGLE } from '@/components/maps/NativeMap';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { usePlaceDetail } from '@/features/places/usePlaces';
@@ -97,7 +97,7 @@ export default function PlaceRouteScreen() {
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <MapView
+      <NativeMap
         provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={{
@@ -107,10 +107,10 @@ export default function PlaceRouteScreen() {
           longitudeDelta: Math.max(Math.abs(origin.longitude - destination.longitude) * 1.8, 0.08),
         }}
       >
-        <Marker coordinate={origin} title="Votre position" pinColor="#7C3AED" />
-        <Marker coordinate={destination} title={place.name} pinColor="#EF4444" />
-        {route.length > 1 ? <Polyline coordinates={route} strokeColor="#EF4444" strokeWidth={5} /> : null}
-      </MapView>
+        <NativeMarker coordinate={origin} title="Votre position" pinColor="#7C3AED" />
+        <NativeMarker coordinate={destination} title={place.name} pinColor="#EF4444" />
+        {route.length > 1 ? <NativePolyline coordinates={route} strokeColor="#EF4444" strokeWidth={5} /> : null}
+      </NativeMap>
 
       <View className="absolute top-12 left-4 right-4">
         <View className="flex-row items-center justify-between">

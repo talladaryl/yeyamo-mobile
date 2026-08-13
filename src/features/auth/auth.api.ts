@@ -24,6 +24,10 @@ export const authApi = {
       password: credentials.password,
       displayName: credentials.display_name,
       turnstileToken,
+      countryCode: credentials.countryCode,
+      cityId: credentials.cityId ?? null,
+      preferredLanguageCode: credentials.preferredLanguageCode ?? null,
+      timezone: credentials.timezone ?? null,
     }),
 
   logout: () => apiPost<void>('/auth/logout'),

@@ -21,6 +21,8 @@ import { useArtisans } from '@/features/artisans/artisans.hooks';
 import { ArtisanCard } from '@/features/artisans/components/ArtisanCard';
 import { useDiscoveryTrending } from '@/features/discovery/discovery.hooks';
 import type { DiscoveryItem } from '@/features/discovery/discovery.types';
+import { recommendationAsDiscoveryItem } from '@/features/recommendations/recommendations.types';
+import { useRecommendations } from '@/features/recommendations/recommendations.hooks';
 import { useFloatingNavigationScroll } from '@/hooks/useFloatingNavigation';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
@@ -31,7 +33,8 @@ export default function ExploreHomeScreen() {
   const floatingScroll = useFloatingNavigationScroll();
   const tabBarHeight = useBottomTabBarHeight();
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
-  const countryCode = useCountryStore((state) => state.selectedCountryCode ?? 'CM');
+  const countryCode = useCountryStore((state) => state.selectedCountryCode ?? undefined);
+  const preferredLanguageCode = useCountryStore((state) => state.preferredLanguageCode);
   const { data: categories = [] } = useCategories();
   const { data: regions = [] } = useRegions();
   const { data: trendingPlaces = [] } = useTrendingPlaces();
@@ -64,6 +67,11 @@ export default function ExploreHomeScreen() {
   const trendArtisans = useDiscoveryTrending({ type: 'ARTISAN', countryCode, regionCode, size: 8 });
   const trendNearby = useDiscoveryTrending({ type: 'PLACE', countryCode, regionCode, size: 8 });
   const trendEvents = useDiscoveryTrending({ type: 'EVENT', countryCode, regionCode, size: 8 });
+  const recommendations = useRecommendations({ languageCodes: preferredLanguageCode ? [preferredLanguageCode] : [], size: 8 });
+  const recommendationItems = useMemo(
+    () => (recommendations.data?.items ?? []).map(recommendationAsDiscoveryItem),
+    [recommendations.data?.items],
+  );
 
   const filteredTrendingPlaces = useMemo(
     () => trendingPlaces.filter((place) => (regionCode ? String(place.region_id) === String(regionCode) : true)),
@@ -189,6 +197,7 @@ export default function ExploreHomeScreen() {
           <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>Ce que la communauté découvre et partage le plus.</Text>
         </View>
 
+        <TrendRail title="Pour vous" subtitle="Des suggestions adaptées à vos préférences" items={recommendationItems} isDemo={isDemo} onViewAll={() => router.push('/(explore)/search')} onPress={openDiscovery} />
         <TrendRail title="Près de vous" subtitle={`Les lieux populaires dans ${selectedRegion.name}`} items={trendNearby.data?.items} isDemo={isDemo} onViewAll={() => openPlacesForRegion()} onPress={openDiscovery}>
           {filteredTrendingPlaces.map((place) => <TrendingPlaceCard key={place.id} place={place} onPress={() => router.push(`/(places)/${place.id}`)} />)}
         </TrendRail>

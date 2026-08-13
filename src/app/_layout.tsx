@@ -13,6 +13,8 @@ import { useOnboardingStore } from '@/features/onboarding/onboarding.store';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useInterestsStore } from '@/features/interests/interests.store';
 import { useCountryStore } from '@/features/country/country.store';
+import { countryApi } from '@/features/country/country.api';
+import { mapCountryConfiguration } from '@/features/country/country.mappers';
 import {
   subscribeToNotificationEvents,
   subscribeToPushTokenChanges,
@@ -70,6 +72,10 @@ function RootNavigator() {
     checkOnboardingStatus,
   } = useOnboardingStore();
   const hydrateCountry = useCountryStore((state) => state.hydrate);
+  const selectedCountryCode = useCountryStore((state) => state.selectedCountryCode);
+  const selectCountry = useCountryStore((state) => state.selectCountry);
+  const applyCountryProfile = useCountryStore((state) => state.applyProfilePreferences);
+  const markCountryConfigurationUnavailable = useCountryStore((state) => state.markConfigurationUnavailable);
 
   // Register 401 handler — clears store and redirects to login
   useEffect(() => {
@@ -115,6 +121,28 @@ function RootNavigator() {
     });
     return () => unsubscribe();
   }, [isAuthenticated, isHydrated]);
+
+  // Profile remains the source of truth once authenticated. The persisted
+  // selection only avoids a blank UI while the profile request is in flight.
+  useEffect(() => {
+    if (!isAuthenticated || !isHydrated || useAuthStore.getState().sessionMode !== 'backend') return;
+    let active = true;
+    void countryApi.myPreferences()
+      .then(async (preferences) => { if (active) await applyCountryProfile(preferences); })
+      .catch(() => { if (active) markCountryConfigurationUnavailable(); });
+    return () => { active = false; };
+  }, [applyCountryProfile, isAuthenticated, isHydrated, markCountryConfigurationUnavailable]);
+
+  useEffect(() => {
+    if (!selectedCountryCode) return;
+    let active = true;
+    void Promise.all([countryApi.configuration(selectedCountryCode), countryApi.features(selectedCountryCode)])
+      .then(async ([configuration, features]) => {
+        if (active) await selectCountry(mapCountryConfiguration(configuration, features));
+      })
+      .catch(() => { if (active) markCountryConfigurationUnavailable(); });
+    return () => { active = false; };
+  }, [markCountryConfigurationUnavailable, selectCountry, selectedCountryCode]);
 
   // Route guard — runs after hydration
   useEffect(() => {

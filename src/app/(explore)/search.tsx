@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -18,7 +18,7 @@ import { i18n } from '@/i18n';
 export default function SearchScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const defaultCountryCode = useCountryStore((state) => state.selectedCountryCode ?? 'CM');
+  const defaultCountryCode = useCountryStore((state) => state.selectedCountryCode ?? undefined);
   const { data: regions = [] } = useRegions();
   const { data: languages = [] } = useCultureLanguages();
   const params = useLocalSearchParams<{ type?: DiscoveryType }>();
@@ -27,6 +27,7 @@ export default function SearchScreen() {
   const [type, setType] = useState<DiscoveryType | undefined>(params.type);
   const [nearby, setNearby] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<ExploreAdvancedFilters>({ countryCode: defaultCountryCode, type: params.type });
+  useEffect(() => { setAdvancedFilters((current) => current.countryCode ? current : { ...current, countryCode: defaultCountryCode }); }, [defaultCountryCode]);
   const debounced = useDebounce(query, 400);
   const selectedRegion = regions.find((region) => region.code === advancedFilters.regionCode || String(region.id) === advancedFilters.regionCode);
   const regionCode = nearby

@@ -20,8 +20,12 @@ export const registerSchema = z
     email: z.string().email('Invalid email address'),
     password: z.string().min(12, 'Password must be at least 12 characters'),
     password_confirmation: z.string(),
-    city: z.string().min(2, 'Please enter your city'),
+    city: z.string().optional(),
     phone: z.string().optional(),
+    countryCode: z.string().regex(/^[A-Z]{2}$/, 'Choisissez un pays disponible'),
+    cityId: z.string().uuid().optional(),
+    preferredLanguageCode: z.string().max(10).optional(),
+    timezone: z.string().max(50).optional(),
   })
   .refine((data) => data.password === data.password_confirmation, {
     message: 'Passwords do not match',

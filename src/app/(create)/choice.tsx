@@ -20,14 +20,25 @@ export default function CreateChoiceScreen() {
   const userType = useAuthStore((state) => state.user?.user_type);
   const cultureEnabled = useCountryFeature('cultureModuleEnabled');
   const commerceEnabled = useCountryFeature('artisanCommerceEnabled');
-  const options = [...commonOptions.filter((option) => option.id !== 'culture' || cultureEnabled), ...(userType === 'partner' && commerceEnabled ? [artworkOption] : [])];
+  const contentPublishingEnabled = useCountryFeature('contentPublishingEnabled');
+  const placePublishingEnabled = useCountryFeature('placePublishingEnabled');
+  const eventFeatureEnabled = useCountryFeature('eventFeatureEnabled');
+  const options = [
+    ...commonOptions.filter((option) => {
+      if (option.id === 'publication' || option.id === 'story') return contentPublishingEnabled;
+      if (option.id === 'event') return contentPublishingEnabled && eventFeatureEnabled;
+      if (option.id === 'place') return contentPublishingEnabled || placePublishingEnabled;
+      return cultureEnabled && contentPublishingEnabled;
+    }),
+    ...(userType === 'partner' && commerceEnabled ? [artworkOption] : []),
+  ];
   const close = () => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); };
   const open = (id: CreationOption['id']) => {
     const routes: Partial<Record<CreationOption['id'], string>> = { publication: '/(create)/publication', story: '/(create)/story', event: '/(create)/event', place: '/(create)/suggest-place-step1', culture: '/(create)/culture-contribution', artwork: '/(create)/artwork/basic-information' };
     const route = routes[id]; if (route) router.push(route as never);
   };
   return <View className="flex-1 bg-white dark:bg-[#0A0A0A]"><Stack.Screen options={{ presentation: 'modal', headerShown: true, headerStyle: { backgroundColor: '#0A0A0A' }, headerTintColor: '#FFFFFF', headerTitle: '', headerLeft: () => null }} />
-    <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}><View className="pt-4 pb-6"><Text className="mb-2 text-2xl font-bold text-[#18181B] dark:text-white">Bonjour</Text><Text className="text-2xl font-bold text-[#18181B] dark:text-white">Que souhaitez-vous partager aujourd’hui ?</Text></View><View className="pb-6">{options.map((option) => <CreationOptionCard key={option.id} option={option} onPress={() => open(option.id)} />)}</View></ScrollView>
+    <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}><View className="pt-4 pb-6"><Text className="mb-2 text-2xl font-bold text-[#18181B] dark:text-white">Bonjour</Text><Text className="text-2xl font-bold text-[#18181B] dark:text-white">Que souhaitez-vous partager aujourd’hui ?</Text></View><View className="pb-6">{options.map((option) => <CreationOptionCard key={option.id} option={option} onPress={() => open(option.id)} />)}{options.length === 0 ? <Text className="py-8 text-center text-sm text-[#71717A]">La publication n’est pas activée pour votre pays ou sa configuration est indisponible.</Text> : null}</View></ScrollView>
     <TouchableOpacity onPress={close} className="absolute bottom-8 left-1/2 -ml-6 h-12 w-12 items-center justify-center rounded-full bg-[#F4F4F5] dark:bg-[#27272A]" activeOpacity={0.7}><Icon library="ionicons" name="close" size={24} color="#52525B" /></TouchableOpacity>
   </View>;
 }

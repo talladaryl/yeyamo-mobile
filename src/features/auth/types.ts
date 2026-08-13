@@ -21,18 +21,12 @@ export interface RegisterCredentials {
   email: string;
   password: string;
   password_confirmation: string;
-  city: string;
+  city?: string;
   phone?: string;
-}
-
-export interface PartnerRegisterCredentials {
-  company_name: string;
-  category: string;
-  email: string;
-  phone: string;
-  password: string;
-  password_confirmation: string;
-  accept_terms: boolean;
+  countryCode: string;
+  cityId?: string;
+  preferredLanguageCode?: string;
+  timezone?: string;
 }
 
 export interface VerifyCodeCredentials {

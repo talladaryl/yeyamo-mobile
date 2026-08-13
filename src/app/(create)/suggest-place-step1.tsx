@@ -1,7 +1,7 @@
 import { memo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { NativeMap, NativeMarker, PROVIDER_GOOGLE } from '@/components/maps/NativeMap';
 import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
@@ -10,7 +10,7 @@ import { useCreateStore } from '@/features/create/create.store';
 const StableMapPreview = memo(function StableMapPreview() {
   return (
     <View className="rounded-2xl overflow-hidden" style={{ height: 180 }}>
-      <MapView
+      <NativeMap
         provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={{ latitude: 4.0511, longitude: 9.7679, latitudeDelta: 0.1, longitudeDelta: 0.1 }}
@@ -19,8 +19,8 @@ const StableMapPreview = memo(function StableMapPreview() {
         pitchEnabled={false}
         rotateEnabled={false}
       >
-        <Marker coordinate={{ latitude: 4.0511, longitude: 9.7679 }} pinColor="#EF4444" />
-      </MapView>
+        <NativeMarker coordinate={{ latitude: 4.0511, longitude: 9.7679 }} pinColor="#EF4444" />
+      </NativeMap>
     </View>
   );
 });

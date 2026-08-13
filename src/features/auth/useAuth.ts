@@ -7,7 +7,6 @@ import { googleSignInErrorMessage, signInWithGoogle } from './google-auth';
 import type { 
   LoginCredentials, 
   RegisterCredentials, 
-  PartnerRegisterCredentials,
   VerifyCodeCredentials,
   ForgotPasswordCredentials,
   SocialLoginCredentials
@@ -60,23 +59,6 @@ export function useAuth() {
       await authService.loginDemo(kind);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Impossible de lancer le mode démo.';
-      setError(msg);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function registerPartner(credentials: PartnerRegisterCredentials) {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // TODO: Implement partner registration API call
-      console.log('Partner registration:', credentials);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Partner registration failed. Please try again.';
       setError(msg);
       throw err;
     } finally {
@@ -158,7 +140,6 @@ export function useAuth() {
     login, 
     loginDemo,
     register, 
-    registerPartner,
     verifyCode,
     forgotPassword,
     socialLogin,

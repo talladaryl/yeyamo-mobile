@@ -1,73 +1,62 @@
-# Audit final mobile — Culture, Artisanat et Africa-ready
+# Audit final mobile ↔ backend — Culture, Artisanat et Africa-ready
 
-Date : 9 août 2026  
-Périmètre : `yeyamo-mobile` (Expo Router, React Query, Zustand, TypeScript strict)
+Date : 13 août 2026
 
-## Décision de navigation
+## Navigation
 
-La bottom bar n’a pas été modifiée. Elle conserve exactement cinq espaces : Feed, Explorer, Créer, Messages et Profil. Culture, langues, œuvres, artisans, défis et commandes sont des routes secondaires dans ces espaces existants. Le tableau artisan reste une extension de `(partner-dashboard)`.
+La bottom bar est inchangée : **Feed, Explorer, Créer, Messages, Profil**. Les vérifications de routes confirment qu’aucun onglet principal supplémentaire n’a été ajouté.
 
 ## Matrice d’alignement
 
-| Fonctionnalité | FRONT_COMPLETE | BACKEND_ENDPOINT_AVAILABLE | CONNECTED | TESTED | État |
+| Fonctionnalité | FRONT_COMPLETE | BACKEND_ENDPOINT_AVAILABLE | CONNECTED | TESTED | Statut |
 |---|---:|---:|---:|---:|---|
-| Explorer Culture / contenu / détail | oui | oui (`culture-service`) | oui | non exécuté | prêt intégration |
-| Langues, leçons, audio et progression | oui | oui (`culture-service`, `media-service`) | oui | non exécuté | prêt intégration |
-| Quiz start / attempts / complete | oui | oui | oui, notation serveur | non exécuté | prêt intégration |
-| Défis, participation et soumission post | oui | oui | oui | non exécuté | prêt intégration |
-| Contributions culturelles | oui | oui | oui, payload enum corrigé | non exécuté | prêt intégration |
-| Culture Graph / related | partiel | oui (`graph-service`) | client présent, affichage related à enrichir | non exécuté | dette UX |
-| Catalogue œuvres | oui | oui (`catalog-service`) | oui | non exécuté | prêt intégration |
-| Médias œuvres / audio | oui | oui (`media-service`) | oui, multipart réel | non exécuté | prêt intégration |
-| Offres et commandes | oui | oui (`commerce-service`) | oui | non exécuté | prêt intégration |
-| Profils artisans | oui | oui (`partner-service`) | oui | non exécuté | prêt intégration |
-| Dashboard artisan | oui | partiel (analytics dédié absent) | catalogue et commandes oui | non exécuté | statistiques bloquées |
-| Recherche Discovery | oui | oui (`discovery-service`) | oui, enveloppe `DiscoveryPage` respectée | non exécuté | prêt intégration |
-| Notifications culture/artisan | oui | oui (`notification-service`) | oui, types + deep links allow-list | non exécuté | prêt intégration |
-| Pays / configuration Africa-ready | interface locale Cameroun | backend dédié non livré pour ce périmètre | non, volontairement | non exécuté | BLOCKED_BACKEND |
-| Feed polymorphe ARTWORK/CULTURE/CHALLENGE | renderer legacy post | flux backend actuel post uniquement | non simulé | non exécuté | BLOCKED_CONTRACT |
+| Sélection pays, ville, langue, timezone | oui | oui | oui | statique | prêt |
+| Préférences pays / devise / découverte | oui | oui | oui | statique | prêt |
+| Flags pays et blocage des créations | oui | oui | oui | statique | prêt |
+| Inscription E.164 multi-pays | oui | oui | oui | statique | prêt |
+| Explorer Culture, détail, traductions, contenu sensible | oui | oui | oui | statique | prêt |
+| Langues, leçons, quiz, progression, mot du jour | oui | oui | oui | statique | prêt |
+| Défis et contributions culturelles | partiel | oui | oui | statique | contribution avancée à enrichir |
+| Graphe culturel relié | partiel | oui | relation de contenu | statique | routes lieu/langue/discover à afficher |
+| Œuvres, offres, histoire et artisans | oui | oui | oui | statique | prêt |
+| Création d’œuvre et upload média | oui | oui | oui | statique | prêt |
+| Création partenaire puis profil artisan | oui | oui | oui | statique | KYC documentaire restant |
+| Commandes d’œuvre utilisateur / artisan | oui | oui | oui | statique | prêt |
+| Recommandations Explorer | oui | oui | oui | statique | filtre pays géré serveur |
+| Notifications Culture / Artisan et deep links | oui | oui | oui | statique | prêt |
+| Feed culturel polymorphe | non | non, contrat insuffisant | non | n/a | BLOCKED_CONTRACT |
+| Feed local / pays / Afrique / voyage | préférences oui | non, paramètres absents | non | n/a | BLOCKED_CONTRACT |
+| Contact direct artisan | bouton explicite | partiel | non | n/a | BLOCKED_CONTRACT |
 
-`TESTED = non exécuté` signifie qu’aucun test automatisé ou test manuel n’a été lancé à la demande. La vérification statique `npx tsc --noEmit` a été exécutée et réussit.
+`TESTED = statique` correspond à TypeScript, ESLint et export Expo. Il ne remplace pas une recette sur appareils et services démarrés.
 
-## Routes ajoutées ou étendues
+## Africa-ready
 
-- Explorer : `culture`, `languages`, `traditions`, `stories`, `challenges`, `artworks`, `artisans`, détails, leçons/quiz/résultat et recherche Discovery.
-- Créer : `culture-contribution` et `artwork/basic-information`, `story`, `culture`, `materials`, `media`, `availability`, `review`.
-- Profil : progression linguistique, contributions, défis, œuvres enregistrées, artisans suivis, commandes, onboarding artisan et alias de ses étapes.
-- Partner Dashboard : catalogue œuvres, détail œuvre, commandes, détail commande, profil artisan et écran de statistiques explicitement non simulées.
+- Le module `features/country` ne contient plus de bootstrap Cameroun codé en dur.
+- Le backend fournit les pays, statuts, devises, langues, fuseaux et flags. Le store ne persiste qu’une sélection minimale; le profil backend réécrase celle-ci après connexion.
+- L’inscription bloque un pays désactivé ou sans inscription autorisée. Les pays `COMING_SOON` restent gouvernés par le flag backend, sans décision locale.
+- Les créations culturelles, commerciales et artisanales sont masquées et bloquées par les flags correspondants. L’indisponibilité de configuration est un blocage strict.
+- Les valeurs `CM`, `XAF` et `+237` ne sont plus utilisées comme valeurs de repli dans les parcours ajoutés. Les données de démonstration conservent naturellement leurs valeurs camerounaises.
 
-## Modules et clients API
+## Sécurité et intégrité
 
-- `features/culture` : contenus, traductions, langues, leçons, défis, contributions et invalidations React Query.
-- `features/artworks` : catalogue, détail, historique, médias, related, offre et création.
-- `features/artisans` : recherche, profil public, spécialités, profil courant et création de profil artisan.
-- `features/artwork-orders` : commande utilisateur, annulation, commandes artisan et transition de statut.
-- `features/media` : upload multipart réel vers `/media/culture`, sans succès optimiste.
-- `features/discovery` : recherche `/discovery/search` avec filtres de type et pagination backend.
-- `features/country` : store SecureStore et configuration bootstrap Cameroun uniquement ; aucun endpoint Africa-ready supposé.
+- JWT et refresh token sont stockés dans SecureStore; Axios injecte aussi un identifiant de corrélation.
+- Les routes de notifications passent par `resolveResourceRoute`, une allow-list qui encode les identifiants.
+- Les actions commerciales sont subordonnées au pays, aux flags, au statut d’offre et à la réponse serveur.
+- Les appels de création n’annoncent jamais de succès avant la réponse backend.
+- Les anciennes inscriptions partenaire simulées ont été supprimées; l’espace artisan commence par le partenaire authentifié requis par le backend.
 
-Le client Axios ajoute le JWT, renouvelle la session, normalise les erreurs et propage un `X-Correlation-ID` par requête.
+## Dette restante priorisée
 
-## UX, sécurité et performance
+1. Étendre le contrat Feed avec les types culturels, les poids locaux/nationaux/panafricains, les modes et les impressions.
+2. Exposer un `recipientUserId` de messagerie sur le profil artisan ou l’œuvre.
+3. Relier les requirements KYC et l’upload multipart de documents à l’onboarding artisan.
+4. Donner une interface aux relations Culture Graph de langue, lieu et découverte globale.
+5. Remplacer les anciens flows de lieux/événements encore centrés Cameroun par les villes et zones du country-config-service.
+6. Planifier séparément la migration Expo 54 → 56.
 
-- Tous les écrans réseau ont un état loading, erreur/retry ou vide explicite.
-- Les prix `ON_REQUEST` n’affichent jamais de montant fictif. Les achats dépendent des feature flags pays, du statut d’offre et de l’authentification backend.
-- Les soumissions de quiz et commandes utilisent les endpoints idempotents disponibles; la progression officielle ne peut pas être attribuée localement.
-- Les médias sensibles ne sont pas préchargés. L’audio est chargé uniquement après action utilisateur.
-- Les deep links de notifications sont limités aux types post, événement, lieu, culture, défi, œuvre, commande et artisan.
-- Les mocks `culture/artwork/artisan` sont sélectionnés uniquement pour `demo-user`/`demo-partner`; le chemin `backend` utilise Axios et ne retombe pas sur ces données.
+## Commandes exécutées
 
-## Dépendances bloquantes restantes
-
-1. Contrat backend Africa-ready (pays disponibles, statut, villes, devise, timezone, feature flags) avant remplacement du bootstrap Cameroun.
-2. Contrat de flux Feed polymorphe et impressions pour `ARTWORK`, `CULTURE_CONTENT`, `DAILY_WORD`, `CULTURE_CHALLENGE` et `ARTISAN_SPOTLIGHT`.
-3. Endpoint analytics artisan dédié pour vues, favoris et revenus.
-4. Endpoint canonique de favoris/suivi ciblant les artisans et œuvres pour hydrater les deux écrans Profil hors démo.
-5. Migration Expo SDK 54 vers SDK 56 à planifier séparément : le projet actuel reste en SDK 54 pour ne pas introduire une rupture non vérifiée dans cette tranche.
-
-## Vérification finale demandée
-
-- Aucun nouvel onglet principal ni nouvelle bottom bar n’a été ajouté.
-- Les interfaces normales ne consomment pas de mock métier pour Culture, œuvres, artisans, commandes, Discovery ou notifications.
-- Les comptes démo conservent un parcours local contrôlé.
-- Aucun test n’a été lancé et aucune image Docker n’a été construite.
+- `npm run lint` : succès, 0 erreur, avertissements historiques.
+- `npx tsc --noEmit` : succès.
+- `npx expo export --platform web` : succès; sortie `dist/`.

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { NativeMap, NativeMarker, PROVIDER_GOOGLE } from '@/components/maps/NativeMap';
 import { Icon } from '@/components/ui/Icon';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { usePartnerStore } from '@/features/partner/partner.store';
@@ -57,7 +57,7 @@ export default function AddPlaceStep2Screen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Map */}
         <View style={{ height: 250 }}>
-          <MapView
+          <NativeMap
             provider={PROVIDER_GOOGLE}
             style={{ flex: 1 }}
             initialRegion={{
@@ -68,13 +68,13 @@ export default function AddPlaceStep2Screen() {
             }}
             onPress={handleMapPress}
           >
-            <Marker
+            <NativeMarker
               coordinate={selectedCoordinates}
               pinColor="#EF4444"
               draggable
               onDragEnd={handleMapPress}
             />
-          </MapView>
+          </NativeMap>
         </View>
 
         <View className="px-4 py-6">

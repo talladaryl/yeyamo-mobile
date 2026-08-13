@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { NativeMap, NativeMarker, PROVIDER_GOOGLE, type NativeMapRef } from '@/components/maps/NativeMap';
 import { Image } from 'expo-image';
 import { Icon } from '@/components/ui/Icon';
 import { CAMEROON_CENTER } from '@/features/explore/mockData';
@@ -17,7 +17,7 @@ export default function MapScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<NativeMapRef>(null);
   const currentLocation = useLocation();
   const { data } = usePlaces({
     lat: CAMEROON_CENTER.latitude,
@@ -53,7 +53,7 @@ export default function MapScreen() {
       />
 
       {/* Map */}
-      <MapView
+      <NativeMap
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
@@ -62,7 +62,7 @@ export default function MapScreen() {
         showsMyLocationButton={false}
       >
         {mapPlaces.map((place) => (
-          <Marker
+          <NativeMarker
             key={place.id}
             coordinate={place.coordinates}
             onPress={() => setSelectedPlace(place)}
@@ -70,9 +70,9 @@ export default function MapScreen() {
             <View className="bg-[#EF4444] w-10 h-10 rounded-full items-center justify-center border-2 border-white">
               <Icon library="ionicons" name="location" size={20} color="#FFFFFF" />
             </View>
-          </Marker>
+          </NativeMarker>
         ))}
-      </MapView>
+      </NativeMap>
 
       {/* Top Controls */}
       <SafeAreaView className="absolute top-0 left-0 right-0">

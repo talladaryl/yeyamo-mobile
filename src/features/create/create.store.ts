@@ -66,7 +66,7 @@ export const useCreateStore = create<CreateStore>((set) => ({
   setPublicationData: (data) => set((state) => ({ publicationData: { ...state.publicationData, ...data } })),
   resetPublicationData: () => set({ publicationData: { media_urls: [], media_type: 'image', caption: '' } }),
 
-  artworkDraft: { countryCode: 'CM', editionType: 'UNIQUE', availabilityStatus: 'DISPLAY_ONLY', mediaIds: [] },
+  artworkDraft: { editionType: 'UNIQUE', availabilityStatus: 'DISPLAY_ONLY', mediaIds: [] },
   setArtworkDraft: (draft) => set((state) => ({ artworkDraft: { ...state.artworkDraft, ...draft } })),
-  resetArtworkDraft: () => set({ artworkDraft: { countryCode: 'CM', editionType: 'UNIQUE', availabilityStatus: 'DISPLAY_ONLY', mediaIds: [] } }),
+  resetArtworkDraft: () => set({ artworkDraft: { editionType: 'UNIQUE', availabilityStatus: 'DISPLAY_ONLY', mediaIds: [] } }),
 }));

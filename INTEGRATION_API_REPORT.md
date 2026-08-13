@@ -1,88 +1,78 @@
-# Rapport d'intégration API — YeYamo mobile
+# Rapport d’intégration API — YeYamo Mobile
 
-Date : 2026-07-27
+Date : 13 août 2026  
+Portée : audit des écrans Culture, Artisanat, Africa-ready, Feed, Recommendations, Notifications et des parcours historiques directement concernés.
 
-## Portée et méthode
+## Résultat
 
-Validation effectuée par comparaison des appels React Native avec les contrôleurs backend, compilation TypeScript, ESLint, Expo Doctor et suites Maven des services concernés. Les 87 tests backend disponibles passent (campagnes 20, ticketing 3, commerce 6, ads 15, feed 20, staff 6, analytics 17).
+Les interfaces qui disposent d’un contrat backend utilisable sont maintenant reliées à des clients typés, React Query et des états d’erreur. Aucune nouvelle route ni aucun nouvel onglet principal n’a été dupliqué. Les faux succès de l’ancienne inscription partenaire ont été retirés.
 
-Un test end-to-end sur une stack réelle n'a pas pu être exécuté : aucun conteneur n'est démarré et les variables `POSTGRES_PASSWORD`, `TICKET_QR_KEY_ID`, `TICKET_QR_PRIVATE_KEY_BASE64` et `TICKET_QR_PUBLIC_KEY_BASE64` ne sont pas configurées. Aucun compte/token partner, user et staff de test n'est fourni. Les lignes « contrat validé » ne doivent donc pas être confondues avec une recette réelle sur appareil.
+## Interfaces connectées à une API
 
-## Parcours fonctionnels
+| Interface | Route mobile | API consommée | Remarque |
+|---|---|---|---|
+| Inscription | `/(auth)/register` | `POST /auth/register`, `GET /countries*`, villes | pays, ville, langue, timezone et E.164 |
+| Préférences territoriales | `/(profile)/preferences` | `GET /users/me`, PATCH location/language/discovery | source de vérité backend |
+| Explorer Culture | `/(explore)/culture*` | `/culture/contents`, traductions, langues, défis, mot du jour | états loading/erreur/retry |
+| Recherche | `/(explore)/search` | `GET /discovery/search` | pays et langue transmis quand connus |
+| Recommandations | rail Explorer « Pour vous » | `GET /recommendations` | langue + contexte contractuels |
+| Œuvres / artisans | `/(explore)/artworks*`, `artisans*` | catalog + partner | offres et détails réels |
+| Création œuvre | `/(create)/artwork/*` | artworks, artwork-offers, media | garde-fous pays/devise |
+| Contribution culturelle | `/(create)/culture-contribution` | contributions + submit | blocage si feature inactive |
+| Devenir artisan | `/(profile)/become-artisan` | `GET/POST /partners/me`, `POST /partners`, profil artisan | crée le partenaire avant le profil |
+| Commandes œuvre | Profil et dashboard | artwork-orders / artisan orders | montants avec devise |
+| Notifications | `/(profile)/notifications` | notification-service | deep links allow-list |
 
-| Endpoint | Écran | Payload | Status attendu | Résultat | Erreur éventuelle | Correction / décision |
-|---|---|---|---:|---|---|---|
-| `GET /api/v1/campaigns` | Publicité / campagnes | filtres `partnerId`, pagination | 200 | Contrat validé | Recette live non exécutée | Mapping enveloppe/page présent |
-| `POST /api/v1/campaigns` | Création campagne | objectif, budget, dates, ciblage, destination | 200/201 | Contrat validé | Recette live non exécutée | Payload mappé depuis le draft |
-| `GET /api/v1/campaigns/{id}` | Détail campagne | — | 200 | Contrat validé | 404 possible | État d'erreur et retry sans crash |
-| `POST /api/v1/campaigns/{id}/submit` | Détail campagne | — | 200 | Contrat validé | 409/422 possibles | Erreur affichée, cache invalidé au succès |
-| `POST /api/v1/campaigns/{id}/pause` | Détail campagne | — | 200 | Contrat validé | 403/409 possibles | Transition confirmée par le serveur |
-| `POST /api/v1/campaigns/{id}/resume` | Détail campagne | — | 200 | Contrat validé | 403/409 possibles | Transition confirmée par le serveur |
-| `GET /api/v1/analytics/partners/{partnerId}/campaigns/{id}` | Analytics campagne | `from`, `to`, `timezone`, page | 200 | Contrat validé | Analytics vide possible | Valeurs serveur conservées |
-| `GET /api/v1/partners/{partnerId}/tickets/events/{eventId}/types` | Event partenaire / billets | — | 200 | Contrat validé | 401/403 | État vide/erreur contrôlé |
-| `PUT /api/v1/partners/{partnerId}/tickets/configuration` puis `POST .../configurations/{id}/types` | Création VIP | configuration puis type VIP | 200/201 | Contrat validé | Création en deux appels non atomique | Le second appel utilise l'id du premier |
-| Liste partenaire des commandes event | Commandes | page/statut | — | **Bloqué backend** | Aucun endpoint exposé | Le mobile retourne une erreur explicite, sans URL fictive |
-| `GET /api/v1/analytics/partners/{partnerId}/ticket-events/{eventId}` | Analytics billetterie | période, timezone, page | 200 | Contrat validé | Recette live non exécutée | Totaux calculés sur dimensions `TOTAL` |
-| `GET /api/v1/tickets/events/{eventId}/types` | Event public / billets | — | 200 | Contrat validé | 404/serveur indisponible | État retry, aucune donnée mock hors mode démo |
-| `POST /api/v1/tickets/hold` | Checkout | event, type, quantité + `Idempotency-Key` | 200 | Contrat validé | 409 stock | Le 409 normalisé rafraîchit maintenant les disponibilités |
-| `POST /api/v1/tickets/orders` | Checkout | `holdId`, `promotionCode` nullable | 200 | Contrat validé | 409/422 | Libération compensatoire du hold en cas d'échec |
-| Paiement asynchrone | Checkout | événement outbox `payment.requested` | — | Contrat interne validé | Aucun endpoint mobile de paiement direct | Polling de la commande jusqu'au statut terminal |
-| Émission billet | Checkout / Mes billets | événement de paiement confirmé | — | Contrat interne validé | Recette live Kafka non exécutée | Invalidation des billets sur statut payé/émis |
-| `GET /api/v1/tickets/my-tickets` | Mes billets | statut optionnel | 200 | Contrat validé | 401/timeout | État vide/erreur et retry |
-| `GET /api/v1/tickets/{ticketId}` | Mon billet | — | 200 | Contrat validé | 403/404 | Aucun QR affiché si billet non valide |
-| `GET /api/v1/tickets/{ticketId}/qr` | Mon billet | — | 200 | Contrat validé | 403/404/timeout | Credential jamais journalisé, retry contrôlé |
-| `POST /api/v1/tickets/scan` | Scanner | QR, event, gate, device, référence offline, date | 200 | Contrat + domaine validés | Accès refusé renvoyé dans le résultat métier | Réponse typée |
-| `POST /api/v1/tickets/scan` (1er scan) | Scanner | QR valide | 200 `VALID` | Logique backend validée | Recette live QR non exécutée | Verrou pessimiste et passage atomique à `USED` |
-| `POST /api/v1/tickets/scan` (2e scan) | Scanner | même QR | 200 `ALREADY_USED` | Logique backend validée | Recette live QR non exécutée | Premier scanner masqué |
-| Historique détaillé scans | Scanner | page/statut | — | **Bloqué backend** | Seules les statistiques sont exposées | Erreur explicite ; aucune fausse route |
-| `GET /api/v1/partners/{partnerId}/tickets/events/{eventId}/staff` | Staff event | — | 200 | Contrat validé | 403 | État erreur contrôlé |
-| `POST /api/v1/partners/{partnerId}/staff/invitations` | Invitation staff | contact, roleId | 200/201 | Contrat validé | 409/422 possibles | Message sûr normalisé |
-| `PUT /api/v1/partners/{partnerId}/tickets/events/{eventId}/staff/{assignmentId}/role` | Staff event | rôle | 200 | Contrat validé | 403/404 | Cache staff invalidé au succès |
-| `DELETE /api/v1/partners/{partnerId}/tickets/events/{eventId}/staff/{assignmentId}` | Staff event | — | 204 | Contrat validé | 403/404 | Retrait après confirmation serveur |
-| `POST /api/v1/commerce/partners/{partnerId}/promotions` | Création promotion | code, type/valeur, limites, dates, périmètre | 200/201 | Contrat validé | 409 code dupliqué, 422 période | Messages dédiés sans crash |
-| `GET /api/v1/commerce/partners/{partnerId}/promotions` | Promotions | statut, page | 200 | Contrat validé | 403 | État vide/erreur et retry |
-| Promotion dans commande ticket | Checkout | `promotionCode` | 200 | **Non supporté fonctionnellement** | `ticket-service` contient encore `TODO` et applique une remise nulle | Ne pas annoncer la remise dans le mobile |
-| `GET /api/v1/commerce/partners/{partnerId}/finance/summary` | Finance | devise, période | 200 | Contrat validé | 403 | État verrouillé/erreur |
-| `GET /api/v1/commerce/partners/{partnerId}/finance/transactions` | Finance | devise, période, page | 200 | Contrat validé | 403/timeout | Pagination backend utilisée |
-| `GET /api/v1/commerce/partners/{partnerId}/finance/transactions/{id}` | Détail transaction | — | 200 | Contrat validé | 403/404 | État erreur, aucune exception de rendu |
-| Feed + élément sponsorisé | Feed | région/contexte | 200 | Contrat service validé | Recette live non exécutée | Injection ads couverte par 9 tests feed |
-| `POST /api/v1/ads/impressions` | Carte sponsorisée | token impression, date, durée | 200/204 | Contrat validé | Échec silencieux contrôlé | Token de tracking utilisé |
-| `POST /api/v1/ads/clicks` | Carte sponsorisée | token click, date | 200/204 | Contrat validé | Échec réseau | Navigation destination découplée du tracking |
-| Destination sponsorisée | Carte sponsorisée | destination reçue | — | Contrat UI validé | Destination invalide possible | Navigation seulement si destination supportée |
+## Interfaces sans API exploitable ou contrat suffisant
 
-## Robustesse HTTP et réseau
-
-| Cas | Résultat mobile | Statut |
+| Interface | Situation | Décision actuelle |
 |---|---|---|
-| 401 | tentative unique de refresh ; purge session et redirection si refresh impossible | Validé par inspection/TypeScript |
-| 403 | message d'autorisation sûr, écran reste monté | Validé par inspection |
-| 404 | ressource introuvable, état vide/retry | Validé par inspection |
-| 409 | message conflit ; checkout recharge le stock | Corrigé et compilé |
-| 422 | erreurs de champs extraites si présentes, sans données techniques | Validé par inspection |
-| 429 | message de limitation explicite | Validé par inspection |
-| Timeout | timeout Axios 15 s, erreur réseau normalisée | Validé par inspection |
-| Mode offline | requête rejetée et état erreur/retry ; aucun fallback mock hors mode démo | Validé par inspection |
-| Serveur indisponible / 5xx | message générique sûr, aucun stacktrace/SQL exposé | Validé par inspection |
+| Feed « abonnements » | Feed Service ne distingue pas les suivis | message explicite, sans faux feed |
+| Feed LOCAL / COUNTRY / AFRICA / TRAVEL | `GET /feed` accepte seulement `page` et `size` | préférences enregistrées, mix bloqué côté contrat |
+| Feed polymorphe Culture/Artwork/Challenge | le DTO Feed ne contient que des posts | aucun renderer fictif ajouté |
+| Contacter un artisan | l’œuvre expose un `partnerId`, la messagerie exige un `userId` destinataire | bouton explique le blocage |
+| Commande personnalisée / devis | aucun contrat de demande/réponse publié | offre affichée sans faux checkout |
+| Statistiques artisan détaillées | pas de métriques dédiées vues/favoris/revenus | dashboard conserve un écran sans chiffres inventés |
+| Ancien flow suggestion de lieu | parcours historique encore basé sur données démo et régions fixes | documenté pour migration territoriale, non étendu dans cette tranche |
 
-## Nettoyage des mocks
+## APIs disponibles sans interface dédiée complète
 
-- Conservé : `src/features/campaigns/mockData.ts`, encore importé par `campaigns.service.ts` pour le mode démo.
-- Supprimés après recherche globale sans import : `ticketing/mockData.ts`, `promotions/mockData.ts`, `finance/mockData.ts`, `partner-staff/mockData.ts`.
-- Aucun mock historique hors de ces nouvelles fonctionnalités n'a été supprimé.
+| API | Écart UI restant |
+|---|---|
+| `GET /countries/{code}/administrative-areas`, localités | seules les villes sont sélectionnables aujourd’hui |
+| `GET /partners/onboarding/requirements` | requirements KYC à afficher dans l’onboarding artisan |
+| `POST /partners/me/documents` multipart | sélection et upload de documents KYC à relier |
+| `POST /partners/me/submit` | soumission KYC finale à ajouter après upload |
+| Culture Graph langue, lieu et discover | seule la relation Culture → explore est affichée |
+| `GET /culture/daily`, `/trending`, `/categories` | le mot du jour et les listes filtrées sont utilisés; ces variantes n’ont pas de surface dédiée |
+| endpoints de configuration pays unitaires langue/devise/timezone | la route agrégée `/configuration` est utilisée pour éviter les appels N+1 |
 
-## Vérifications finales
+## Contrats contrôlés avec attention
 
-- `npx tsc --noEmit` : succès, 0 erreur.
-- `npx eslint . --ext .ts,.tsx` : succès, 0 erreur, 87 avertissements historiques.
-- `npx expo-doctor` : 17/18. Le peer natif `react-native-svg` manquant a été installé. Le contrôle React Native Directory restant reçoit une réponse externe inattendue.
-- Imports des quatre mocks supprimés : aucune occurrence.
+- Tous les montants utilisateur passent avec leur `currencyCode`; il n’y a pas de conversion locale.
+- Le client Recommendation n’envoie pas `countryCode` et `cityId` car le contrôleur actuel ne les accepte pas. Les préférences de pays sont appliquées dans le profil côté serveur.
+- Le client Country n’envoie pas `contentLanguages` au PATCH discovery : ce champ ne fait pas partie du DTO backend de cette route; les langues passent par le PATCH dédié.
+- Les identifiants des routes sont encodés avant navigation et les notifications ne peuvent générer aucune URL arbitraire.
 
-## Conditions restantes pour une recette end-to-end réelle
+## Mocks
 
-1. Configurer les secrets Postgres et QR de Compose.
-2. Démarrer la stack et fournir des comptes/tokens user, partner et staff avec leurs identifiants event/partner.
-3. Fournir un moyen de paiement sandbox et Kafka opérationnel.
-4. Ajouter côté backend la liste partenaire des commandes et, si souhaité, l'historique détaillé des scans.
-5. Implémenter réellement la validation/application des promotions dans `ticket-service` avant de valider ce parcours.
+Les mocks Culture, Artwork, Artisan et Feed ne sont accessibles que dans les sessions `demo-*`. Une session backend ne bascule pas sur un mock si le serveur est indisponible. Les anciens écrans partenaire pré-authentification qui simulaient une soumission ont été remplacés par une redirection vers l’inscription réelle.
 
+## Vérifications exécutées
 
+| Commande | Résultat |
+|---|---|
+| `npx tsc --noEmit` | succès |
+| `npm run lint` | succès, 0 erreur; avertissements historiques non bloquants |
+| `npx expo export --platform web` | succès, sortie dans `dist/` |
+
+L’export a initialement révélé l’absence de `react-native-web` et l’import direct de `react-native-maps`. `react-native-web` a été ajouté avec Expo et les écrans carte utilisent désormais un adaptateur `.web.tsx`; les cartes natives restent inchangées sur iOS/Android.
+
+## À tester avec une stack réelle
+
+1. Pays LIVE, COMING_SOON, DISABLED et configuration indisponible.
+2. Ville hors pays, téléphone E.164 et timezone à l’inscription.
+3. Création de partenaire, profil artisan puis documents KYC.
+4. Offre dans devise non-Cameroun, commande et annulation.
+5. Deep link de chaque nouveau type de notification.
+6. Feed multi-pays dès que son contrat versionné est disponible.

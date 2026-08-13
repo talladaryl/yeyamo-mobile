@@ -1,19 +1,58 @@
-import type { CountryConfiguration } from './country.types';
+import type { CountryConfiguration, CountryFeatureCode, CountrySummary } from './country.types';
 
-/**
- * Configuration de démarrage limitée au pays lancé. Ce n'est pas une réponse
- * simulée : country.api.ts prendra le relais quand le service sera exposé.
- */
-export const CAMEROON_BOOTSTRAP_CONFIGURATION: CountryConfiguration = {
-  code: 'CM', name: 'Cameroun', flag: '🇨🇲', status: 'LIVE',
-  currencies: ['XAF'], defaultCurrencyCode: 'XAF', callingCode: '+237',
-  timezones: ['Africa/Douala'], defaultTimezone: 'Africa/Douala', languages: ['fr', 'en'],
-  features: {
-    paymentsEnabled: true, bookingEnabled: true, ticketingEnabled: true,
-    artisanCommerceEnabled: true, cultureModuleEnabled: true,
-    partnerOnboardingEnabled: true, contentPublishingEnabled: true,
-  },
+type CountryDto = {
+  code: string; name: string; defaultLanguageCode: string; defaultCurrencyCode: string;
+  defaultTimezone: string; phoneCountryCode: string | null; launchStatus: string;
+  registrationEnabled: boolean | null; contentPublishingEnabled: boolean | null;
+  placePublishingEnabled: boolean | null; eventFeatureEnabled: boolean | null;
+  partnerOnboardingEnabled: boolean | null; paymentsEnabled: boolean | null;
+  bookingEnabled: boolean | null; ticketingEnabled: boolean | null;
+  artisanCommerceEnabled: boolean | null; cultureModuleEnabled: boolean | null;
 };
+
+type FeatureFlagsDto = Omit<CountryDto, 'code' | 'name' | 'defaultLanguageCode' | 'defaultCurrencyCode' | 'defaultTimezone' | 'phoneCountryCode' | 'launchStatus'>;
+
+export type CountryConfigurationDto = {
+  country: CountryDto;
+  languages: { languageCode: string; isDefault: boolean }[];
+  currencies: { currencyCode: string; isDefault: boolean }[];
+  timezones: { timezone: string; isDefault: boolean }[];
+};
+
+const featureCodes: CountryFeatureCode[] = [
+  'registrationEnabled', 'contentPublishingEnabled', 'placePublishingEnabled', 'eventFeatureEnabled',
+  'partnerOnboardingEnabled', 'paymentsEnabled', 'bookingEnabled', 'ticketingEnabled',
+  'artisanCommerceEnabled', 'cultureModuleEnabled',
+];
+
+function countryStatus(value: string): CountrySummary['status'] {
+  return value === 'LIVE' || value === 'BETA' || value === 'COMING_SOON' || value === 'DISABLED' ? value : 'DISABLED';
+}
+
+function mapFeatures(source: CountryDto | FeatureFlagsDto): CountryConfiguration['features'] {
+  const values = source as Record<string, unknown>;
+  return Object.fromEntries(featureCodes.map((code) => [code, Boolean(values[code])])) as CountryConfiguration['features'];
+}
+
+export function mapCountrySummary(dto: CountryDto): CountrySummary {
+  return {
+    code: dto.code.toUpperCase(), name: dto.name, flag: getCountryFlag(dto.code), status: countryStatus(dto.launchStatus),
+    registrationEnabled: Boolean(dto.registrationEnabled), defaultCurrencyCode: dto.defaultCurrencyCode,
+    defaultTimezone: dto.defaultTimezone, defaultLanguageCode: dto.defaultLanguageCode,
+    callingCode: dto.phoneCountryCode,
+  };
+}
+
+export function mapCountryConfiguration(dto: CountryConfigurationDto, featureFlags?: FeatureFlagsDto): CountryConfiguration {
+  const country = mapCountrySummary(dto.country);
+  return {
+    ...country,
+    currencies: dto.currencies.map((item) => item.currencyCode),
+    timezones: dto.timezones.map((item) => item.timezone),
+    languages: dto.languages.map((item) => item.languageCode),
+    features: mapFeatures(featureFlags ?? dto.country),
+  };
+}
 
 export function getCountryFlag(countryCode: string | null | undefined): string {
   if (!countryCode || countryCode.length !== 2) return '🌍';

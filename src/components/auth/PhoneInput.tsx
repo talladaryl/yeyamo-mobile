@@ -12,13 +12,8 @@ interface PhoneInputProps {
   error?: string;
   placeholder?: string;
   disabled?: boolean;
+  countryOptions?: { code: string; name: string }[];
 }
-
-const COUNTRIES = [
-  { code: '+237', name: 'Cameroon' },
-  { code: '+33', name: 'France' },
-  { code: '+1', name: 'USA' },
-];
 
 export function PhoneInput({
   value,
@@ -29,11 +24,10 @@ export function PhoneInput({
   error,
   placeholder = '6XX XX XX XX',
   disabled = false,
+  countryOptions = [],
 }: PhoneInputProps) {
   const colors = useThemeStore((state) => state.colors);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
-
-  const selectedCountry = COUNTRIES.find(c => c.code === countryCode) || COUNTRIES[0];
 
   const handlePhoneChange = (text: string) => {
     // Remove non-numeric characters except spaces
@@ -53,7 +47,7 @@ export function PhoneInput({
         {/* Country Code Selector */}
         <TouchableOpacity
           onPress={() => setShowCountryPicker(!showCountryPicker)}
-          disabled={disabled}
+          disabled={disabled || countryOptions.length === 0}
           className="flex-row items-center rounded-l-xl border-2 border-r-0 px-3 py-3"
           style={{ backgroundColor: colors.elevated, borderColor: error ? colors.primary : colors.border }}
         >
@@ -82,7 +76,7 @@ export function PhoneInput({
       {/* Simple Country Picker */}
       {showCountryPicker && (
         <View className="absolute left-0 right-0 top-16 z-10 rounded-xl border shadow-lg" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-          {COUNTRIES.map((country) => (
+          {countryOptions.map((country) => (
             <TouchableOpacity
               key={country.code}
               onPress={() => {
