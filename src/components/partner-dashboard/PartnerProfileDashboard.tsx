@@ -7,7 +7,6 @@ import { recentActivities } from '@/features/partner-dashboard/mockData';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { usePartnerProfile, usePartnerStatistics } from '@/features/partner-dashboard/usePartnerDashboard';
-import { useFloatingNavigationScroll } from '@/hooks/useFloatingNavigation';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const QUICK_ACTIONS = [
@@ -44,7 +43,6 @@ export function PartnerProfileDashboard() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
-  const floatingScroll = useFloatingNavigationScroll();
   const tabBarHeight = useBottomTabBarHeight();
   const profile = usePartnerProfile();
   const statistics = usePartnerStatistics();
@@ -55,7 +53,7 @@ export function PartnerProfileDashboard() {
 
   return (
     <SafeScreen>
-      <ScrollView {...floatingScroll} contentContainerStyle={{ paddingBottom: tabBarHeight + 30 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 30 }} showsVerticalScrollIndicator={false}>
         <View className="flex-row items-center justify-between px-5 pb-4 pt-3">
           <View>
             <Text className="text-2xl font-extrabold" style={{ color: colors.text }}>Dashboard</Text>

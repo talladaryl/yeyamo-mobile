@@ -15,28 +15,30 @@ const experiences = [
 
 export default function Step3Screen() {
   const router = useRouter();
-  const { nextStep, previousStep, setCurrentStep, completeOnboarding } = useOnboardingStore();
+  const { previousStep, setCurrentStep, completeOnboarding } = useOnboardingStore();
 
   useEffect(() => setCurrentStep(3), [setCurrentStep]);
 
-  const handleSkip = async () => {
-    await completeOnboarding();
+  const finishOnboarding = async () => {
+    try {
+      await completeOnboarding();
+    } catch {
+      // Navigation remains available even if secure persistence is temporarily unavailable.
+    }
     router.replace('/(auth)/login');
   };
 
   return (
     <OnboardingLayout
       currentStep={3}
-      totalSteps={4}
+      totalSteps={3}
       onPrevious={() => {
         previousStep();
         router.back();
       }}
-      onNext={() => {
-        nextStep();
-        router.push('/(onboarding)/account-type');
-      }}
-      onSkip={handleSkip}
+      onNext={finishOnboarding}
+      nextButtonText="Commencer"
+      onSkip={finishOnboarding}
       title="Vivez des expériences ensemble"
       subtitle="Rejoignez des activités, rencontrez la communauté et réservez vos prochaines expériences en toute simplicité."
     >

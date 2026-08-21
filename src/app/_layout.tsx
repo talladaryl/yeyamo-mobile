@@ -1,10 +1,11 @@
 import '../../global.css';
 import '@/i18n'; // Initialiser i18n
 import { useEffect } from 'react';
-import { Appearance, View } from 'react-native';
+import { AppState, Appearance, Platform, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { registerUnauthenticatedHandler } from '@/services/api/client';
 import { authService } from '@/features/auth/auth.service';
@@ -101,6 +102,25 @@ function RootNavigator() {
 
     return () => subscription.remove();
   }, [syncSystemTheme]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const hideAndroidNavigation = async () => {
+      try {
+        await NavigationBar.setVisibilityAsync('hidden');
+        await NavigationBar.setButtonStyleAsync('light');
+      } catch {
+        // Some vendor ROMs can refuse immersive mode; the app remains usable.
+      }
+    };
+
+    void hideAndroidNavigation();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void hideAndroidNavigation();
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     let unsubscribe: () => void = () => undefined;
@@ -220,6 +240,10 @@ function RootNavigator() {
         />
         <Stack.Screen
           name="(chat)/[id]"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="(chat)/new"
           options={{ headerShown: false, animation: 'slide_from_right' }}
         />
         <Stack.Screen

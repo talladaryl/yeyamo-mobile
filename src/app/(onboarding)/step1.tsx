@@ -21,7 +21,7 @@ export default function Step1Screen() {
   return (
     <OnboardingLayout
       currentStep={1}
-      totalSteps={4}
+      totalSteps={3}
       onNext={() => {
         nextStep();
         router.push('/(onboarding)/step2');

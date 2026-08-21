@@ -22,7 +22,7 @@ export default function Step2Screen() {
   return (
     <OnboardingLayout
       currentStep={2}
-      totalSteps={4}
+      totalSteps={3}
       onPrevious={() => {
         previousStep();
         router.back();

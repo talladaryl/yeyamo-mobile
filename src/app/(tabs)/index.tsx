@@ -1,144 +1,82 @@
-import { View, Text, ActivityIndicator, TouchableOpacity, Modal, Pressable, ScrollView } from 'react-native';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
 import { VerticalFeedList } from '@/components/feed/VerticalFeedList';
-import { StoriesList } from '@/components/story/StoriesList';
 import { Icon } from '@/components/ui/Icon';
 import { useFeed, useSponsoredFeed } from '@/features/feed/useFeed';
-import type { FeedItem } from '@/features/feed/types';
-import { useThemeStore } from '@/features/theme/theme.store';
-import { useRegions } from '@/features/explore/useExplore';
-import { useStories } from '@/features/story/useStory';
-import { useAuth } from '@/features/auth/useAuth';
-import { FeedModeSwitch, type FeedMode } from '@/components/feed/FeedModeSwitch';
+import { isSponsoredFeedItem, type FeedItem } from '@/features/feed/types';
+
+type FeedMode = 'for-you' | 'following';
 
 export default function FeedScreen() {
   const router = useRouter();
-  const colors = useThemeStore((state) => state.colors);
-  const { user } = useAuth();
-  const { data: regions = [] } = useRegions();
-  const { data: stories = [] } = useStories();
-  const [selectedRegionId, setSelectedRegionId] = useState<number | undefined>();
   const [feedMode, setFeedMode] = useState<FeedMode>('for-you');
-  const [isRegionPickerOpen, setRegionPickerOpen] = useState(false);
-  const selectedRegion = regions.find((region) => region.id === selectedRegionId);
-  const { data, isLoading, isError, fetchNextPage, hasNextPage } = useFeed(selectedRegionId, feedMode === 'for-you');
-  const { data: sponsoredItems = [] } = useSponsoredFeed(selectedRegionId);
+  const { data, isLoading, isError, fetchNextPage, hasNextPage } = useFeed(undefined, true);
+  const { data: sponsoredItems = [] } = useSponsoredFeed();
 
   const posts = useMemo<FeedItem[]>(() => {
     const loadedPosts = data?.pages.flatMap((page) => page.data) ?? [];
+    if (feedMode === 'following') return loadedPosts;
     if (!sponsoredItems.length || loadedPosts.length < 2) return loadedPosts;
     return [...loadedPosts.slice(0, 2), sponsoredItems[0], ...loadedPosts.slice(2)];
-  }, [data, sponsoredItems]);
+  }, [data, feedMode, sponsoredItems]);
 
-  if (feedMode === 'for-you' && isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color="#EF4444" />
-      </View>
-    );
+  if (isLoading) {
+    return <View className="flex-1 items-center justify-center bg-black"><StatusBar style="light" /><ActivityIndicator size="large" color="#FFFFFF" /></View>;
   }
 
-  if (feedMode === 'for-you' && isError) {
-    return (
-      <View className="flex-1 items-center justify-center px-6" style={{ backgroundColor: colors.background }}>
-        <Text className="text-[#EF4444] text-base text-center">
-          Échec du chargement du feed
-        </Text>
-      </View>
-    );
+  if (isError) {
+    return <View className="flex-1 items-center justify-center bg-black px-6"><StatusBar style="light" /><Text className="text-center text-base text-white">Échec du chargement du feed</Text></View>;
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      {/* Compact feed controls: region + search, without a brand header. */}
-      <SafeAreaView edges={['top']} className="border-b" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
-        <View className="flex-row items-center justify-between px-4 py-1.5">
-          <TouchableOpacity
-            onPress={() => setRegionPickerOpen(true)}
-            className="h-8 flex-row items-center gap-1.5 rounded-full px-3"
-            style={{ backgroundColor: colors.elevated }}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Filtrer par région"
-          >
-            <Icon library="ionicons" name="location" size={15} color="#EF4444" />
-            <Text className="max-w-40 text-xs font-semibold" style={{ color: colors.text }} numberOfLines={1}>
-              {selectedRegion?.name ?? 'Toutes les régions'}
-            </Text>
-            <Icon library="ionicons" name="chevron-down" size={14} color={colors.textSecondary} />
-          </TouchableOpacity>
+    <View className="flex-1 bg-black">
+      <StatusBar style="light" translucent backgroundColor="transparent" />
+      <VerticalFeedList
+        posts={posts.filter((item, index, all) => all.findIndex((candidate) => String(candidate.id) === String(item.id) && isSponsoredFeedItem(candidate) === isSponsoredFeedItem(item)) === index)}
+        onEndReached={() => {
+          if (hasNextPage) fetchNextPage();
+        }}
+      />
 
-          <TouchableOpacity
-            onPress={() => router.push('/(explore)/search')}
-            activeOpacity={0.8}
-            className="h-8 w-8 items-center justify-center rounded-full"
-            style={{ backgroundColor: colors.elevated }}
-            accessibilityRole="button"
-            accessibilityLabel="Rechercher"
-          >
-            <Icon library="ionicons" name="search" size={19} color={colors.text} />
-          </TouchableOpacity>
+      <SafeAreaView pointerEvents="box-none" edges={['top']} className="absolute left-0 right-0 top-0 z-20">
+        <View pointerEvents="box-none" className="h-28 flex-row items-start justify-center px-3">
+          <View className="flex-row items-center gap-6">
+            <FeedTopTab label="Abonnements" selected={feedMode === 'following'} onPress={() => setFeedMode('following')} />
+            <FeedTopTab label="Pour vous" selected={feedMode === 'for-you'} onPress={() => setFeedMode('for-you')} />
+          </View>
+          <View className="absolute right-3 top-0 items-center gap-2">
+            <TouchableOpacity
+              onPress={() => router.push('/(explore)/search')}
+              className="h-11 w-11 items-center justify-center"
+              activeOpacity={0.75}
+              accessibilityLabel="Rechercher"
+            >
+              <Icon name="search" size={29} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push('/(social-graph)/passport')}
+              className="h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-[#EF4444]"
+              style={{ shadowColor: '#000000', shadowOpacity: 0.35, shadowRadius: 5, elevation: 5 }}
+              activeOpacity={0.8}
+              accessibilityLabel="Ouvrir le Passport Yeyamo"
+            >
+              <Icon name="id-card-outline" size={23} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
-
-      {/* Stories */}
-      <StoriesList stories={stories} currentUserId={user?.id} />
-
-      <FeedModeSwitch value={feedMode} onChange={setFeedMode} />
-
-      {/* Vertical Feed */}
-      {feedMode === 'for-you' ? (
-        <VerticalFeedList
-          posts={posts}
-          onEndReached={() => {
-            if (hasNextPage) fetchNextPage();
-          }}
-        />
-      ) : (
-        <View className="flex-1 items-center justify-center px-8">
-          <Icon name="people-outline" size={38} color={colors.textMuted} />
-          <Text className="mt-4 text-center text-lg font-bold" style={{ color: colors.text }}>Les abonnements arrivent bientôt</Text>
-          <Text className="mt-2 text-center text-sm leading-5" style={{ color: colors.textSecondary }}>
-            BLOCKED_BY_BACKEND — le contrat Feed actuel ne distingue pas encore les contenus des comptes suivis.
-          </Text>
-        </View>
-      )}
-
-      <Modal visible={isRegionPickerOpen} transparent animationType="fade" onRequestClose={() => setRegionPickerOpen(false)}>
-        <Pressable className="flex-1 justify-end bg-black/45" onPress={() => setRegionPickerOpen(false)}>
-          <Pressable
-            className="max-h-[70%] rounded-t-[28px] border-t px-4 pb-8 pt-3"
-            style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            onPress={(event) => event.stopPropagation()}
-          >
-            <View className="mb-4 h-1 w-10 self-center rounded-full" style={{ backgroundColor: colors.border }} />
-            <Text className="mb-1 text-xl font-extrabold" style={{ color: colors.text }}>Filtrer par région</Text>
-            <Text className="mb-4 text-sm" style={{ color: colors.textSecondary }}>Choisissez une région du Cameroun.</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {[{ id: undefined, name: 'Toutes les régions' }, ...regions].map((region) => {
-                const isSelected = region.id === selectedRegionId;
-                return (
-                  <TouchableOpacity
-                    key={region.id ?? 'all'}
-                    onPress={() => {
-                      setSelectedRegionId(region.id);
-                      setRegionPickerOpen(false);
-                    }}
-                    className="mb-2 flex-row items-center rounded-2xl border px-4 py-3.5"
-                    style={{ backgroundColor: isSelected ? '#FEE2E2' : colors.elevated, borderColor: isSelected ? '#EF4444' : colors.border }}
-                  >
-                    <Icon name="location-outline" size={19} color={isSelected ? '#EF4444' : colors.textSecondary} />
-                    <Text className="ml-3 flex-1 font-semibold" style={{ color: isSelected ? '#B91C1C' : colors.text }}>{region.name}</Text>
-                    {isSelected ? <Icon name="checkmark-circle" size={21} color="#EF4444" /> : null}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
+  );
+}
+
+function FeedTopTab({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} className="relative h-11 justify-center px-1" activeOpacity={0.75} accessibilityRole="tab" accessibilityState={{ selected }}>
+      <Text className={`text-[15px] text-white ${selected ? 'font-extrabold' : 'font-semibold opacity-70'}`} style={{ textShadowColor: 'rgba(0,0,0,0.8)', textShadowRadius: 4 }}>{label}</Text>
+      {selected ? <View className="absolute bottom-1.5 left-1/2 h-[3px] w-7 -translate-x-3.5 rounded-full bg-white" /> : null}
+    </TouchableOpacity>
   );
 }

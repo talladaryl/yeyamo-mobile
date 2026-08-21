@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,18 +17,22 @@ import { usePostDetail } from '@/features/post/usePost';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { i18n } from '@/i18n';
 import { useAuth } from '@/features/auth/useAuth';
+import { useAuthStore } from '@/features/auth/auth.store';
+import type { Comment } from '@/features/comments/types';
 
 export default function CommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const { user } = useAuth();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const [localComments, setLocalComments] = useState<Comment[]>([]);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['55%', '88%'], []);
+  const snapPoints = useMemo(() => ['62%', '90%'], []);
   const { data: post, isLoading, refetch } = usePostDetail(id);
-  const comments = useMemo(
-    () =>
-      (post?.comments ?? []).map((item) => ({
+  const comments = useMemo<Comment[]>(
+    () => [
+      ...(post?.comments ?? []).map((item) => ({
         id: item.id,
         post_id: id,
         user: item.author,
@@ -39,10 +43,26 @@ export default function CommentsScreen() {
         parent_id: null,
         created_at: item.created_at,
       })),
-    [id, post?.comments],
+      ...localComments,
+    ],
+    [id, localComments, post?.comments],
   );
 
   const handleSubmitComment = async (text: string) => {
+    if (isDemo && user) {
+      setLocalComments((current) => [...current, {
+        id: `demo-comment-${Date.now()}`,
+        post_id: id,
+        user,
+        content: text,
+        likes_count: 0,
+        replies_count: 0,
+        is_liked: false,
+        parent_id: null,
+        created_at: new Date().toISOString(),
+      }]);
+      return;
+    }
     try {
       await feedApi.addComment(id, text);
       await refetch();
@@ -53,8 +73,13 @@ export default function CommentsScreen() {
   };
 
   const renderBackdrop = (props: BottomSheetBackdropProps) => (
-    <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.42} pressBehavior="close" />
+    <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.18} pressBehavior="close" />
   );
+
+  const closeComments = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)');
+  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: 'transparent' }}>
@@ -63,8 +88,9 @@ export default function CommentsScreen() {
         ref={bottomSheetRef}
         index={0}
         snapPoints={snapPoints}
+        enableDynamicSizing={false}
         enablePanDownToClose
-        onClose={() => router.back()}
+        onClose={closeComments}
         backdropComponent={renderBackdrop}
         backgroundStyle={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }}
         handleIndicatorStyle={{ backgroundColor: colors.textMuted }}
@@ -73,8 +99,12 @@ export default function CommentsScreen() {
         android_keyboardInputMode="adjustResize"
       >
         <View className="flex-1">
-          <View className="flex-row items-center justify-between border-b px-4 pb-3" style={{ borderColor: colors.border }}>
-            <Text className="text-lg font-bold" style={{ color: colors.text }}>{i18n.t('comments.title')}</Text>
+          <View className="flex-row items-center border-b px-3 pb-3" style={{ borderColor: colors.border }}>
+            <View className="w-11" />
+            <View className="flex-1 flex-row items-center justify-center gap-1.5">
+              <Text className="text-[15px] font-extrabold" style={{ color: colors.text }}>{post ? post.comments_count + localComments.length : comments.length} commentaires</Text>
+              <Icon name="options-outline" size={16} color={colors.textSecondary} />
+            </View>
             <TouchableOpacity onPress={() => bottomSheetRef.current?.close()} className="h-11 w-11 items-center justify-center" accessibilityRole="button" accessibilityLabel={i18n.t('comments.close')}>
               <Icon library="ionicons" name="close" size={24} color={colors.text} />
             </TouchableOpacity>
@@ -93,7 +123,7 @@ export default function CommentsScreen() {
                 keyboardShouldPersistTaps="handled"
                 ListEmptyComponent={<View className="flex-1 items-center justify-center px-6"><Text className="text-center" style={{ color: colors.textSecondary }}>{i18n.t('comments.empty')}</Text></View>}
               />
-              <CommentInput onSubmit={handleSubmitComment} autoFocus avatarUrl={user?.avatar_url} displayName={user?.display_name} />
+              <CommentInput onSubmit={handleSubmitComment} avatarUrl={user?.avatar_url} displayName={user?.display_name} />
             </>
           )}
         </View>

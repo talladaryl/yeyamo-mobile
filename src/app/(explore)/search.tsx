@@ -21,13 +21,18 @@ export default function SearchScreen() {
   const defaultCountryCode = useCountryStore((state) => state.selectedCountryCode ?? undefined);
   const { data: regions = [] } = useRegions();
   const { data: languages = [] } = useCultureLanguages();
-  const params = useLocalSearchParams<{ type?: DiscoveryType }>();
+  const params = useLocalSearchParams<{ type?: DiscoveryType; nearby?: string; regionCode?: string; filters?: string }>();
   const advancedSheetRef = useRef<ExploreAdvancedFiltersSheetHandle>(null);
   const [query, setQuery] = useState('');
   const [type, setType] = useState<DiscoveryType | undefined>(params.type);
-  const [nearby, setNearby] = useState(false);
-  const [advancedFilters, setAdvancedFilters] = useState<ExploreAdvancedFilters>({ countryCode: defaultCountryCode, type: params.type });
+  const [nearby, setNearby] = useState(params.nearby === '1');
+  const [advancedFilters, setAdvancedFilters] = useState<ExploreAdvancedFilters>({ countryCode: defaultCountryCode, type: params.type, regionCode: params.regionCode });
   useEffect(() => { setAdvancedFilters((current) => current.countryCode ? current : { ...current, countryCode: defaultCountryCode }); }, [defaultCountryCode]);
+  useEffect(() => {
+    if (params.filters !== '1') return;
+    const frame = requestAnimationFrame(() => advancedSheetRef.current?.open());
+    return () => cancelAnimationFrame(frame);
+  }, [params.filters]);
   const debounced = useDebounce(query, 400);
   const selectedRegion = regions.find((region) => region.code === advancedFilters.regionCode || String(region.id) === advancedFilters.regionCode);
   const regionCode = nearby

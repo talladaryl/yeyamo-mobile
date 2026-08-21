@@ -5,6 +5,7 @@ import { notificationsApi } from './notifications.api';
 import type { EntityId } from '@/types/api.types';
 import { MOCK_NOTIFICATIONS } from './mockData';
 import type { PushTokenRegistration } from './notifications.api';
+import type { Notification } from './types';
 
 /**
  * Hook pour récupérer toutes les notifications
@@ -62,8 +63,17 @@ export function useMarkAsRead() {
   return useMutation({
     mutationFn: (id: EntityId) =>
       isDemo ? Promise.resolve() : notificationsApi.markAsRead(id),
+    onMutate: (id) => {
+      if (!isDemo) return;
+      const allKey = ['notifications', 'demo'];
+      const unreadKey = ['notifications', 'demo', 'unread'];
+      const countKey = ['notifications', 'demo', 'unread', 'count'];
+      queryClient.setQueryData<Notification[]>(allKey, (current = MOCK_NOTIFICATIONS) => current.map((notification) => notification.id === id ? { ...notification, is_read: true } : notification));
+      queryClient.setQueryData<Notification[]>(unreadKey, (current = MOCK_NOTIFICATIONS.filter((notification) => !notification.is_read)) => current.filter((notification) => notification.id !== id));
+      queryClient.setQueryData<number>(countKey, (current = 0) => Math.max(0, current - 1));
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (!isDemo) queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }
@@ -78,8 +88,14 @@ export function useMarkAllAsRead() {
   return useMutation({
     mutationFn: () =>
       isDemo ? Promise.resolve() : notificationsApi.markAllAsRead(),
+    onMutate: () => {
+      if (!isDemo) return;
+      queryClient.setQueryData<Notification[]>(['notifications', 'demo'], (current = MOCK_NOTIFICATIONS) => current.map((notification) => ({ ...notification, is_read: true })));
+      queryClient.setQueryData<Notification[]>(['notifications', 'demo', 'unread'], []);
+      queryClient.setQueryData<number>(['notifications', 'demo', 'unread', 'count'], 0);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (!isDemo) queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }
@@ -94,8 +110,16 @@ export function useDeleteNotification() {
   return useMutation({
     mutationFn: (id: EntityId) =>
       isDemo ? Promise.resolve() : notificationsApi.deleteNotification(id),
+    onMutate: (id) => {
+      if (!isDemo) return;
+      const current = queryClient.getQueryData<Notification[]>(['notifications', 'demo']) ?? MOCK_NOTIFICATIONS;
+      const removedWasUnread = current.some((notification) => notification.id === id && !notification.is_read);
+      queryClient.setQueryData<Notification[]>(['notifications', 'demo'], current.filter((notification) => notification.id !== id));
+      queryClient.setQueryData<Notification[]>(['notifications', 'demo', 'unread'], (unread = []) => unread.filter((notification) => notification.id !== id));
+      if (removedWasUnread) queryClient.setQueryData<number>(['notifications', 'demo', 'unread', 'count'], (count = 0) => Math.max(0, count - 1));
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (!isDemo) queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }

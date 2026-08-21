@@ -1,14 +1,11 @@
-import { Tabs, usePathname, useRouter } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
-import { FloatingTabBarBackground } from '@/components/ui/FloatingTabBar';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useAuth } from '@/features/auth/useAuth';
 import { useConversations } from '@/features/chat/useChat';
 import { useUnreadCount } from '@/features/notifications/useNotifications';
-import { useFloatingNavigationStore } from '@/hooks/useFloatingNavigation';
 
 type TabIconKind = 'feed' | 'explore' | 'create' | 'chats' | 'profile';
 
@@ -29,10 +26,10 @@ function TabIcon({
         className="h-12 w-12 items-center justify-center rounded-full border-[3px] border-[#FEE2E2] bg-[#EF4444]"
         style={{
           shadowColor: '#EF4444',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: focused ? 0.42 : 0.25,
-          shadowRadius: 8,
-          elevation: 7,
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: focused ? 0.4 : 0.28,
+          shadowRadius: 7,
+          elevation: 6,
         }}
       >
         <Icon name="add" size={30} color="#FFFFFF" />
@@ -79,54 +76,45 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const pathname = usePathname();
-  const isScrolling = useFloatingNavigationStore((state) => state.isScrolling);
-  const setScrolling = useFloatingNavigationStore((state) => state.setScrolling);
   const { data: conversations = [] } = useConversations();
   const { data: unreadNotifications = 0 } = useUnreadCount();
   const unreadMessages = conversations.reduce((total, conversation) => total + conversation.unread_count, 0);
+  const unreadInbox = unreadMessages + unreadNotifications;
   const badgeStyle = { backgroundColor: '#EF4444', color: '#FFFFFF', fontSize: 10 };
-
-  useEffect(() => {
-    setScrolling(false);
-  }, [pathname, setScrolling]);
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarBackground: () => <FloatingTabBarBackground />,
         tabBarStyle: {
           position: 'absolute',
-          left: 12,
-          right: 12,
-          bottom: insets.bottom + (isScrolling ? 4 : 6),
-          height: isScrolling ? 52 : 62,
-          paddingTop: isScrolling ? 2 : 5,
-          paddingBottom: isScrolling ? 3 : 6,
-          backgroundColor: 'transparent',
-          borderTopWidth: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 58 + insets.bottom,
+          paddingTop: 4,
+          paddingBottom: Math.max(insets.bottom, 4),
+          backgroundColor: colors.tabBar,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
           borderBottomWidth: 0,
           borderLeftWidth: 0,
           borderRightWidth: 0,
-          shadowColor: colors.text,
-          shadowOffset: { width: 0, height: 5 },
-          shadowOpacity: isScrolling ? 0.16 : 0.1,
-          shadowRadius: isScrolling ? 13 : 8,
-          elevation: isScrolling ? 7 : 4,
+          shadowOpacity: 0,
+          elevation: 0,
         },
         tabBarItemStyle: {
-          paddingVertical: 2,
+          paddingTop: 1,
         },
         tabBarActiveTintColor: '#EF4444',
-        tabBarInactiveTintColor: '#52525B',
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarShowLabel: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Feed',
+          title: 'Accueil',
           tabBarIcon: ({ focused }) => <TabIcon kind="feed" focused={focused} inactiveColor={colors.textMuted} surfaceColor={colors.tabBar} />,
           tabBarAccessibilityLabel: 'Home feed',
         }}
@@ -134,7 +122,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
+          title: 'Explorer',
           tabBarIcon: ({ focused }) => <TabIcon kind="explore" focused={focused} inactiveColor={colors.textMuted} surfaceColor={colors.tabBar} />,
           tabBarAccessibilityLabel: 'Explore places',
         }}
@@ -148,7 +136,7 @@ export default function TabsLayout() {
           },
         }}
         options={{
-          title: 'Create',
+          title: 'Créer',
           tabBarIcon: ({ focused }) => <TabIcon kind="create" focused={focused} inactiveColor={colors.textMuted} surfaceColor={colors.tabBar} />,
           tabBarAccessibilityLabel: 'Create post',
         }}
@@ -156,17 +144,17 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="chats"
         options={{
-          title: 'Chats',
+          title: 'Messages',
           tabBarIcon: ({ focused }) => <TabIcon kind="chats" focused={focused} inactiveColor={colors.textMuted} surfaceColor={colors.tabBar} />,
           tabBarAccessibilityLabel: 'Chats',
-          tabBarBadge: unreadMessages > 0 ? (unreadMessages > 99 ? '99+' : unreadMessages) : undefined,
+          tabBarBadge: unreadInbox > 0 ? (unreadInbox > 99 ? '99+' : unreadInbox) : undefined,
           tabBarBadgeStyle: badgeStyle,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'Profil',
           tabBarIcon: ({ focused }) => <TabIcon kind="profile" focused={focused} inactiveColor={colors.textMuted} surfaceColor={colors.tabBar} />,
           tabBarAccessibilityLabel: 'My profile',
           tabBarBadge: unreadNotifications > 0 ? (unreadNotifications > 99 ? '99+' : unreadNotifications) : undefined,

@@ -82,7 +82,17 @@
         }
       ],
       "expo-video",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-navigation-bar",
+        {
+          "visibility": "hidden",
+          "behavior": "overlay-swipe",
+          "position": "relative",
+          "backgroundColor": "#0A0A0A",
+          "barStyle": "light"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

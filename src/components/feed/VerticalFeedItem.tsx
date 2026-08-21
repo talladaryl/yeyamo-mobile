@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, Text, TouchableOpacity, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -16,6 +17,7 @@ type VerticalFeedItemProps = {
   isActive: boolean;
   isFollowing: boolean;
   isSaved: boolean;
+  playbackRate: number;
   onFollow: () => void;
   onLike: () => void;
   onComment: () => void;
@@ -30,6 +32,7 @@ export function VerticalFeedItem({
   isActive,
   isFollowing,
   isSaved,
+  playbackRate,
   onFollow,
   onLike,
   onComment,
@@ -43,9 +46,14 @@ export function VerticalFeedItem({
     post.type === 'video' && isActive ? videoUri : null,
     (p) => {
       p.loop = true;
+      p.playbackRate = playbackRate;
       if (isActive) p.play();
     }
   );
+
+  useEffect(() => {
+    if (post.type === 'video') player.playbackRate = playbackRate;
+  }, [playbackRate, player, post.type]);
 
   return (
     <View style={{ height }} className="bg-[#0A0A0A]">
@@ -67,33 +75,19 @@ export function VerticalFeedItem({
 
       {/* Bottom gradient overlay */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.8)']}
-        className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none"
+        colors={['transparent', 'rgba(0,0,0,0.88)']}
+        className="absolute bottom-0 left-0 right-0 h-72 pointer-events-none"
       />
 
       {/* Bottom info */}
-      <View className="absolute left-4 right-20" style={{ bottom: bottomOverlayInset }}>
-        <Pressable
-          onPress={() => router.push(`/(profile)/${post.author.username}`)}
-          className="flex-row items-center gap-2 mb-3"
-        >
-          <Avatar
-            uri={post.author.avatar_url}
-            displayName={post.author.display_name}
-            size={40}
-          />
-          <View className="flex-1">
-            <View className="flex-row items-center gap-1">
-              <Text className="text-white font-semibold text-sm">
-                {post.author.username}
-              </Text>
-              {post.author.is_verified && <VerifiedBadge size={14} />}
-            </View>
-          </View>
+      <View className="absolute left-4 right-20" style={{ bottom: bottomOverlayInset + 8 }}>
+        <Pressable onPress={() => router.push(`/(profile)/${post.author.username}`)} className="mb-2 flex-row items-center gap-1.5">
+          <Text className="text-[15px] font-extrabold text-white">@{post.author.username}</Text>
+          {post.author.is_verified && <VerifiedBadge size={15} />}
         </Pressable>
 
         {post.caption && (
-          <Text className="text-white text-sm mb-2" numberOfLines={3}>
+          <Text className="mb-2 text-sm leading-5 text-white" numberOfLines={4}>
             {post.caption}
           </Text>
         )}
@@ -107,7 +101,7 @@ export function VerticalFeedItem({
       </View>
 
       {/* Right action buttons */}
-      <View className="absolute right-3 gap-6" style={{ bottom: bottomOverlayInset + 8 }}>
+      <View className="absolute right-3 gap-5" style={{ bottom: bottomOverlayInset + 18 }}>
         {/* Author avatar (clickable) */}
         <View className="items-center pb-1">
         <TouchableOpacity onPress={() => router.push(`/(profile)/${post.author.username}`)} activeOpacity={0.8}>
