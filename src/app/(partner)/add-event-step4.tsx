@@ -5,9 +5,11 @@ import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { usePartnerStore } from '@/features/partner/partner.store';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function AddEventStep4Screen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const { eventForm, resetEventForm } = usePartnerStore();
   const [showFullPreview, setShowFullPreview] = useState(false);
 
@@ -21,17 +23,17 @@ export default function AddEventStep4Screen() {
   };
 
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Ajouter un événement',
           headerTitleStyle: { fontSize: 18, fontWeight: '600' },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
@@ -143,7 +145,7 @@ export default function AddEventStep4Screen() {
       </ScrollView>
 
       {/* Bottom Buttons */}
-      <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
         <View className="flex-row gap-3">
           <View className="flex-1">
             <CTAButton

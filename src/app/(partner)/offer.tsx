@@ -6,6 +6,8 @@ import { Stack, useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { Icon } from '@/components/ui/Icon';
+import { DateTimeField } from '@/components/ui/DateTimeField';
+import { formValidation } from '@/utils/formValidation';
 import { usePartnerStore } from '@/features/partner/partner.store';
 import { useThemeStore } from '@/features/theme/theme.store';
 
@@ -29,10 +31,12 @@ export default function PartnerOfferScreen() {
   const publish = () => {
     const numericPrice = Number(price.replace(/\s/g, ''));
     const numericOriginalPrice = originalPrice ? Number(originalPrice.replace(/\s/g, '')) : undefined;
-    if (!title.trim() || !description.trim() || !numericPrice || !validUntil.trim()) {
-      Alert.alert('Informations manquantes', 'Renseignez le titre, la description, le prix et la date de fin.');
+    const error = formValidation.required(title, 'Titre') ?? formValidation.required(description, 'Description') ?? formValidation.positiveNumber(price.replace(/\s/g, ''), 'Prix', true) ?? formValidation.date(validUntil, 'Date de fin', true);
+    if (error) {
+      Alert.alert('Informations à vérifier', error);
       return;
     }
+    if (numericOriginalPrice && numericOriginalPrice <= numericPrice) { Alert.alert('Prix à vérifier', 'Le prix initial doit être supérieur au prix promotionnel.'); return; }
     setOfferForm({
       title: title.trim(), description: description.trim(), price: numericPrice,
       original_price: numericOriginalPrice, valid_until: validUntil.trim(), terms: terms.trim(),
@@ -60,7 +64,7 @@ export default function PartnerOfferScreen() {
           <Field label="Titre de l’offre *" value={title} onChangeText={setTitle} placeholder="Ex. Week-end détente à -20 %" />
           <Field label="Description *" value={description} onChangeText={setDescription} placeholder="Présentez clairement l’avantage proposé" multiline />
           <View className="flex-row gap-3"><View className="flex-1"><Field label="Prix promotionnel *" value={price} onChangeText={setPrice} placeholder="25 000" keyboardType="numeric" suffix="FCFA" /></View><View className="flex-1"><Field label="Prix initial" value={originalPrice} onChangeText={setOriginalPrice} placeholder="30 000" keyboardType="numeric" suffix="FCFA" /></View></View>
-          <Field label="Valable jusqu’au *" value={validUntil} onChangeText={setValidUntil} placeholder="Ex. 30/08/2026" icon="calendar-outline" />
+          <DateTimeField label="Valable jusqu’au" value={validUntil} onChange={setValidUntil} minimumDate={new Date()} required />
           <Field label="Conditions de l’offre" value={terms} onChangeText={setTerms} placeholder="Ex. Sur réservation, hors boissons…" multiline />
           <View className="mb-5 flex-row rounded-xl bg-[#FEE2E2] p-3"><Icon name="information-circle-outline" size={20} color="#E60012" /><Text className="ml-2 flex-1 text-xs leading-5 text-[#991B1B]">L’offre sera visible après validation par l’équipe Yeyamo.</Text></View>
           <CTAButton title="Publier l’offre" variant="primary" onPress={publish} />

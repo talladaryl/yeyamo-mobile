@@ -1,5 +1,5 @@
-import { Redirect } from 'expo-router';
+import { PartnerProfileDashboard } from '@/components/partner-dashboard/PartnerProfileDashboard';
 
 export default function DashboardScreen() {
-  return <Redirect href="/(tabs)/profile" />;
+  return <PartnerProfileDashboard />;
 }

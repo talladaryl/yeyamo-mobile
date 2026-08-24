@@ -21,6 +21,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useProfileStats, useUserPublications } from '@/features/profile/useProfile';
 import { useUnreadCount } from '@/features/notifications/useNotifications';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 type ProfileTab = 'posts' | 'archive' | 'reposts' | 'favorites' | 'liked';
 
@@ -79,7 +80,7 @@ const PROFILE_TABS: { id: ProfileTab; icon: string; activeIcon: string; label: s
   { id: 'liked', icon: 'heart-outline', activeIcon: 'heart', label: 'Vidéos aimées' },
 ];
 
-const MENU_SECTIONS = [
+const EXPLORER_MENU_SECTIONS = [
   {
     title: 'Accès rapide',
     items: [
@@ -123,6 +124,55 @@ const MENU_SECTIONS = [
   },
 ] as const;
 
+const PARTNER_MENU_SECTIONS = [
+  {
+    title: 'Gestion partenaire',
+    items: [
+      ['business-outline', 'Mes établissements', '/(partner-dashboard)/establishments'],
+      ['calendar-outline', 'Mes événements', '/(partner-dashboard)/events'],
+      ['color-palette-outline', 'Mes œuvres', '/(partner-dashboard)/artworks'],
+      ['receipt-outline', 'Commandes d’œuvres', '/(partner-dashboard)/artwork-orders'],
+      ['calendar-number-outline', 'Réservations', '/(partner-dashboard)/reservations'],
+      ['star-outline', 'Avis clients', '/(partner-dashboard)/reviews'],
+    ],
+  },
+  {
+    title: 'Créer et publier',
+    items: [
+      ['add-circle-outline', 'Ajouter un établissement', '/(partner)/add-place-step1'],
+      ['calendar-clear-outline', 'Créer un événement', '/(partner)/add-event-step1'],
+      ['images-outline', 'Nouvelle publication', '/(partner)/publication'],
+      ['pricetag-outline', 'Créer une offre', '/(partner)/offer'],
+      ['book-outline', 'Partager une story', '/(partner)/story'],
+    ],
+  },
+  {
+    title: 'Piloter mon activité',
+    items: [
+      ['stats-chart-outline', 'Statistiques', '/(partner-dashboard)/statistics'],
+      ...(FEATURE_FLAGS.partner_finance_enabled
+        ? [['wallet-outline', 'Finances et transactions', '/(partner-dashboard)/finance'] as const]
+        : []),
+      ...(FEATURE_FLAGS.campaigns_enabled
+        ? [['megaphone-outline', 'Campagnes publicitaires', '/(partner-dashboard)/campaigns'] as const]
+        : []),
+      ...(FEATURE_FLAGS.promotions_enabled
+        ? [['gift-outline', 'Promotions', '/(partner-dashboard)/promotions'] as const]
+        : []),
+      ['notifications-outline', 'Notifications professionnelles', '/(partner-dashboard)/notifications'],
+    ],
+  },
+  {
+    title: 'Compte professionnel',
+    items: [
+      ['person-circle-outline', 'Profil artisan', '/(partner-dashboard)/artisan-profile'],
+      ['analytics-outline', 'Statistiques artisan', '/(partner-dashboard)/artisan-statistics'],
+      ['settings-outline', 'Paramètres partenaire', '/(partner-dashboard)/settings'],
+      ['help-circle-outline', 'Aide et assistance', '/(profile)/support'],
+    ],
+  },
+] as const;
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -158,6 +208,8 @@ export default function ProfileScreen() {
 
   if (!user) return null;
 
+  const isPartner = user.user_type === 'partner';
+  const menuSections = isPartner ? PARTNER_MENU_SECTIONS : EXPLORER_MENU_SECTIONS;
   const likedCount = publications.reduce((total, item) => total + item.likes_count, 0);
   const contentByTab: Record<Exclude<ProfileTab, 'archive'>, ProfileMedia[]> = {
     posts: postMedia,
@@ -307,12 +359,12 @@ export default function ProfileScreen() {
               <TouchableOpacity onPress={() => setMenuOpen(false)} className="h-10 w-10 items-center justify-center"><Icon name="close" size={25} color={colors.text} /></TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 34 }}>
-              {user.user_type === 'partner' ? <View className="px-4 pt-5"><TouchableOpacity onPress={() => navigateFromMenu('/(partner-dashboard)/dashboard')} className="flex-row items-center rounded-2xl bg-[#EF4444] p-4"><Icon name="stats-chart" size={22} color="#FFFFFF" /><View className="ml-3 flex-1"><Text className="font-bold text-white">Tableau de bord partenaire</Text><Text className="text-xs text-white/80">Gérer votre activité professionnelle</Text></View><Icon name="chevron-forward" size={20} color="#FFFFFF" /></TouchableOpacity></View> : null}
-              {MENU_SECTIONS.map((section) => (
+              {isPartner ? <View className="px-4 pt-5"><TouchableOpacity onPress={() => navigateFromMenu('/(partner-dashboard)/dashboard')} className="flex-row items-center rounded-2xl bg-[#EF4444] p-4"><Icon name="stats-chart" size={22} color="#FFFFFF" /><View className="ml-3 flex-1"><Text className="font-bold text-white">Tableau de bord partenaire</Text><Text className="text-xs text-white/80">Gérer votre activité professionnelle</Text></View><Icon name="chevron-forward" size={20} color="#FFFFFF" /></TouchableOpacity></View> : null}
+              {menuSections.map((section) => (
                 <View key={section.title} className="px-4 pt-6">
                   <Text className="mb-2 px-1 text-xs font-bold uppercase tracking-wider" style={{ color: colors.textMuted }}>{section.title}</Text>
                   <View className="overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-                    {section.items.map(([icon, label, route], index) => <MenuRow key={route} icon={icon} label={label} badge={route === '/(profile)/notifications' ? unreadNotifications : undefined} isLast={index === section.items.length - 1} onPress={() => navigateFromMenu(route)} />)}
+                    {section.items.map(([icon, label, route], index) => <MenuRow key={route} icon={icon} label={label} badge={route === '/(profile)/notifications' || route === '/(partner-dashboard)/notifications' ? unreadNotifications : undefined} isLast={index === section.items.length - 1} onPress={() => navigateFromMenu(route)} />)}
                   </View>
                 </View>
               ))}

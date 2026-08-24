@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Text, TouchableOpacity } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { EventCard } from '@/components/partner-dashboard/EventCard';
 import { FilterChips, PartnerPage } from '@/components/partner-dashboard/PartnerPage';
 import { partnerEvents } from '@/features/partner-dashboard/mockData';
-import { useThemeStore } from '@/features/theme/theme.store';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
 
@@ -12,7 +10,6 @@ const FILTERS = ['Tous', 'À venir', 'Brouillons', 'Passés'] as const;
 
 export default function EventsScreen() {
   const router = useRouter();
-  const colors = useThemeStore((state) => state.colors);
   const isDemo = useAuthStore((state) => state.sessionMode === 'demo-partner');
   const isPartner = useAuthStore((state) => state.user?.user_type === 'partner');
   const [filter, setFilter] = useState<string>('Tous');
@@ -34,9 +31,6 @@ export default function EventsScreen() {
             : undefined}
         />
       ))}
-      <TouchableOpacity onPress={() => router.push('/(partner)/add-event-step1')} className="items-center rounded-xl border p-4" style={{ borderColor: colors.border }}>
-        <Text className="font-bold text-[#EF4444]">Créer un événement</Text>
-      </TouchableOpacity>
     </PartnerPage>
   );
 }

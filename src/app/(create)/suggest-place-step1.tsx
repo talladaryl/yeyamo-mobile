@@ -5,6 +5,7 @@ import { NativeMap, NativeMarker, PROVIDER_GOOGLE } from '@/components/maps/Nati
 import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
+import { FormSelect } from '@/components/ui/FormSelect';
 import { useCreateStore } from '@/features/create/create.store';
 
 const StableMapPreview = memo(function StableMapPreview() {
@@ -77,7 +78,7 @@ export default function SuggestPlaceStep1Screen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}>
         {/* Stepper */}
         <View className="px-4 pt-4">
-          <Stepper currentStep={1} totalSteps={5} />
+          <Stepper currentStep={1} totalSteps={2} />
         </View>
 
         {/* Map Preview */}
@@ -131,39 +132,10 @@ export default function SuggestPlaceStep1Screen() {
           </View>
 
           {/* Catégorie */}
-          <View className="mb-4">
-            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
-              Catégorie <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <TouchableOpacity
-              onPress={() => setCategory(categories[(categories.indexOf(category) + 1) % categories.length] || categories[0])}
-              className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#E4E4E7] dark:border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <Text className={category ? 'text-[#18181B] dark:text-white text-sm' : 'text-[#52525B] dark:text-[#A1A1AA] text-sm'}>
-                {category || 'Sélectionner une catégorie'}
-              </Text>
-              <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
-            </TouchableOpacity>
-          </View>
+          <FormSelect label="Catégorie" value={category} options={categories.map((value) => ({ label: value, value }))} onChange={setCategory} required />
 
           {/* Type de lieu */}
-          <View className="mb-4">
-            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
-              Type de lieu <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <TouchableOpacity
-              onPress={() => setType(placeTypes[(placeTypes.indexOf(type) + 1) % placeTypes.length] || placeTypes[0])}
-              className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#E4E4E7] dark:border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <Text className="text-[#18181B] dark:text-white text-sm">{type}</Text>
-              <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
-            </TouchableOpacity>
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-1">
-              Événementiel, Naturel
-            </Text>
-          </View>
+          <FormSelect label="Type de lieu" value={type} options={placeTypes.map((value) => ({ label: value, value }))} onChange={setType} required />
 
           {/* Brève description */}
           <View className="mb-4">
@@ -183,19 +155,7 @@ export default function SuggestPlaceStep1Screen() {
           </View>
 
           {/* Région */}
-          <View className="mb-4">
-            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
-              Région <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <TouchableOpacity
-              onPress={() => setRegion(regions[(regions.indexOf(region) + 1) % regions.length])}
-              className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#E4E4E7] dark:border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <Text className="text-[#18181B] dark:text-white text-sm">{region}</Text>
-              <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
-            </TouchableOpacity>
-          </View>
+          <FormSelect label="Région" value={region} options={regions.map((value) => ({ label: value, value }))} onChange={setRegion} required />
         </View>
 
         <View className="h-24" />

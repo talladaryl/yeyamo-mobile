@@ -59,7 +59,7 @@ export default function SuggestPlaceStep2Screen() {
       <View className="flex-1">
         {/* Stepper */}
         <View className="px-4 pt-4 pb-3 bg-white dark:bg-[#0A0A0A]">
-          <Stepper currentStep={2} totalSteps={5} />
+          <Stepper currentStep={2} totalSteps={2} />
         </View>
 
         {/* Map */}

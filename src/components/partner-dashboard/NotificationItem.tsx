@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import type { Notification } from '@/features/partner-dashboard/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -8,12 +9,12 @@ interface NotificationItemProps {
 }
 
 export function NotificationItem({ notification, onPress }: NotificationItemProps) {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-row items-start gap-3 p-4 border-b border-[#E4E4E7] dark:border-[#27272A] ${
-        !notification.read ? 'bg-white dark:bg-[#161616]' : 'bg-transparent'
-      }`}
+      className="flex-row items-start gap-3 border-b p-4"
+      style={{ borderColor: colors.border, backgroundColor: notification.read ? 'transparent' : colors.card }}
       activeOpacity={0.8}
     >
       <View
@@ -29,13 +30,13 @@ export function NotificationItem({ notification, onPress }: NotificationItemProp
       </View>
 
       <View className="flex-1">
-        <Text className="text-[#18181B] dark:text-white font-semibold text-sm mb-0.5">
+        <Text className="mb-0.5 text-sm font-semibold" style={{ color: colors.text }}>
           {notification.title}
         </Text>
-        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mb-1">
+        <Text className="mb-1 text-xs" style={{ color: colors.textSecondary }}>
           {notification.subtitle}
         </Text>
-        <Text className="text-[#71717A] text-xs">
+        <Text className="text-xs" style={{ color: colors.textMuted }}>
           {notification.timestamp}
         </Text>
       </View>

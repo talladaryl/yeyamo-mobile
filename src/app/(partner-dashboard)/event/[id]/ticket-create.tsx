@@ -1,5 +1,5 @@
 import { Controller, useForm } from 'react-hook-form';
-import axios from 'axios';
+import { isAxiosError } from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { useCreateTicketType } from '@/features/ticketing/useTicketing';
 import { ticketFormToCreateRequest } from '@/features/ticketing/ticketing.mapper';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { DateTimeField } from '@/components/ui/DateTimeField';
 
 const isValidDate = (value: string) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -48,7 +49,7 @@ export default function TicketCreateScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const mutation = useCreateTicketType(id);
-  const { control, handleSubmit, watch, setError, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults });
+  const { control, handleSubmit, watch, setError, setValue, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults });
   const preview = watch();
   const goBack = () => router.canGoBack() ? router.back() : router.replace(`/(partner-dashboard)/event/${id}/tickets` as never);
 
@@ -58,7 +59,7 @@ export default function TicketCreateScreen() {
       Alert.alert('Billet créé', 'Le type de billet a été ajouté à cet événement.');
       router.back();
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (isAxiosError(error)) {
         const body = error.response?.data as { detail?: string; message?: string; validationErrors?: Record<string, string> } | undefined;
         if (error.response?.status === 422 || error.response?.status === 400) {
           const aliases: Record<string, keyof FormValues> = { salesStartAt: 'salesStartDate', salesEndAt: 'salesEndDate', maxTicketsPerBuyer: 'maxPerBuyer', gateInstructions: 'entryInstructions' };
@@ -87,10 +88,8 @@ export default function TicketCreateScreen() {
             <Field control={control} name="description" label="Description" placeholder="Décrivez les avantages de ce billet" error={errors.description?.message} multiline />
             <Field control={control} name="price" label="Prix (FCFA)" placeholder="0" error={errors.price?.message} keyboardType="numeric" />
             <Field control={control} name="quantity" label="Quantité" placeholder="100" error={errors.quantity?.message} keyboardType="number-pad" />
-            <View className="flex-row gap-3">
-              <View className="flex-1"><Field control={control} name="salesStartDate" label="Début des ventes" placeholder="AAAA-MM-JJ" error={errors.salesStartDate?.message} /></View>
-              <View className="flex-1"><Field control={control} name="salesEndDate" label="Fin des ventes" placeholder="AAAA-MM-JJ" error={errors.salesEndDate?.message} /></View>
-            </View>
+            <DateTimeField label="Début des ventes" value={preview.salesStartDate} onChange={(value) => setValue('salesStartDate', value, { shouldValidate: true })} mode="date" required minimumDate={new Date()} error={errors.salesStartDate?.message} />
+            <DateTimeField label="Fin des ventes" value={preview.salesEndDate} onChange={(value) => setValue('salesEndDate', value, { shouldValidate: true })} mode="date" required minimumDate={preview.salesStartDate ? new Date(`${preview.salesStartDate}T00:00:00`) : new Date()} error={errors.salesEndDate?.message} />
             <Field control={control} name="maxPerBuyer" label="Maximum par acheteur" placeholder="1" error={errors.maxPerBuyer?.message} keyboardType="number-pad" />
             <Field control={control} name="accessZone" label="Zone d’accès" placeholder="Ex. Terrasse, Carré VIP…" error={errors.accessZone?.message} />
             <Field control={control} name="entryInstructions" label="Instructions d’entrée" placeholder="Informations à présenter à l’entrée" error={errors.entryInstructions?.message} multiline />

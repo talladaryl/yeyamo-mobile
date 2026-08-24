@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -18,6 +18,9 @@ import {
 import { useCreateCampaign } from '@/features/campaigns/useCampaigns';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { getSuggestedCampaignActions } from '@/features/campaigns/campaign-actions';
+import { Stepper } from '@/components/ui/Stepper';
+import { DateTimeField } from '@/components/ui/DateTimeField';
+import { formValidation } from '@/utils/formValidation';
 
 type FieldErrors = Partial<Record<keyof CampaignDraft, string>>;
 
@@ -32,6 +35,23 @@ export default function CampaignCreateScreen() {
     promotedEntityType: draft.promotedEntityType,
     objective: draft.objective,
   });
+
+  const continueToNextStep = () => {
+    setFormError(null);
+    if (step === 1 && (!draft.name.trim() || !draft.promotedEntityId.trim())) return setFormError('Le nom et le contenu promu sont requis.');
+    if (step === 3) {
+      const error = formValidation.positiveNumber(draft.totalBudget, 'Budget total', true)
+        ?? formValidation.positiveNumber(draft.dailyBudget, 'Budget journalier', true)
+        ?? formValidation.date(draft.startAt, 'Date de début', true)
+        ?? formValidation.date(draft.endAt, 'Date de fin', true)
+        ?? formValidation.dateOrder(draft.startAt, draft.endAt);
+      if (error) return setFormError(error);
+      if (Number(draft.dailyBudget) > Number(draft.totalBudget)) return setFormError('Le budget journalier ne peut pas dépasser le budget total.');
+    }
+    if (step === 4 && draft.minimumAge && draft.maximumAge && Number(draft.minimumAge) > Number(draft.maximumAge)) return setFormError('L’âge maximum doit être supérieur ou égal à l’âge minimum.');
+    if (step === 5 && draft.destinationUrl && formValidation.url(draft.destinationUrl)) return setFormError(formValidation.url(draft.destinationUrl) ?? 'Lien invalide.');
+    setStep(step + 1);
+  };
 
   const submit = () => {
     setFieldErrors({});
@@ -50,7 +70,7 @@ export default function CampaignCreateScreen() {
         router.replace(`/(partner-dashboard)/campaign/${campaign.id}`);
       },
       onError: (error) => {
-        if (axios.isAxiosError(error)) {
+        if (isAxiosError(error)) {
           const body = error.response?.data as {
             detail?: string;
             message?: string;
@@ -70,6 +90,7 @@ export default function CampaignCreateScreen() {
 
   return (
     <PartnerPage title="Créer une campagne" subtitle={`Étape ${step} sur 6`}>
+      <View className="mt-3"><Stepper currentStep={step} totalSteps={6} /></View>
       <View className="mt-3 rounded-2xl border p-5" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
         {step === 1 ? (
           <>
@@ -88,8 +109,8 @@ export default function CampaignCreateScreen() {
           <>
             <Field label="Budget total (XAF)" value={draft.totalBudget} onChangeText={(totalBudget) => update({ totalBudget })} keyboardType="numeric" error={fieldErrors.totalBudget} />
             <Field label="Budget journalier (XAF)" value={draft.dailyBudget} onChangeText={(dailyBudget) => update({ dailyBudget })} keyboardType="numeric" error={fieldErrors.dailyBudget} />
-            <Field label="Début (AAAA-MM-JJ)" value={draft.startAt} onChangeText={(startAt) => update({ startAt })} error={fieldErrors.startAt} />
-            <Field label="Fin (AAAA-MM-JJ)" value={draft.endAt} onChangeText={(endAt) => update({ endAt })} error={fieldErrors.endAt} />
+            <DateTimeField label="Date de début" value={draft.startAt} onChange={(startAt) => update({ startAt })} minimumDate={new Date()} error={fieldErrors.startAt} required />
+            <DateTimeField label="Date de fin" value={draft.endAt} onChange={(endAt) => update({ endAt })} minimumDate={draft.startAt ? new Date(`${draft.startAt}T12:00:00`) : new Date()} error={fieldErrors.endAt} required />
           </>
         ) : null}
         {step === 4 ? (
@@ -131,7 +152,7 @@ export default function CampaignCreateScreen() {
           {step > 1 ? <Action label="Retour" secondary onPress={() => setStep(step - 1)} disabled={createCampaign.isPending} /> : null}
           <Action
             label={step === 6 ? 'Créer le brouillon' : 'Continuer'}
-            onPress={step === 6 ? submit : () => setStep(step + 1)}
+            onPress={step === 6 ? submit : continueToNextStep}
             disabled={createCampaign.isPending}
             pending={step === 6 && createCampaign.isPending}
           />

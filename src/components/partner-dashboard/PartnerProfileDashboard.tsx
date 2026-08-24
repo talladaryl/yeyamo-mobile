@@ -7,7 +7,7 @@ import { recentActivities } from '@/features/partner-dashboard/mockData';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { usePartnerProfile, usePartnerStatistics } from '@/features/partner-dashboard/usePartnerDashboard';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const QUICK_ACTIONS = [
   { label: 'Mes œuvres', subtitle: 'Gérez votre catalogue', icon: 'color-palette-outline', route: '/(partner-dashboard)/artworks' },
@@ -43,7 +43,7 @@ export function PartnerProfileDashboard() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
-  const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
   const profile = usePartnerProfile();
   const statistics = usePartnerStatistics();
   const businessTools = BUSINESS_TOOLS.filter((item) =>
@@ -53,9 +53,18 @@ export function PartnerProfileDashboard() {
 
   return (
     <SafeScreen>
-      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 30 }} showsVerticalScrollIndicator={false}>
-        <View className="flex-row items-center justify-between px-5 pb-4 pt-3">
-          <View>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 30 }} showsVerticalScrollIndicator={false}>
+        <View className="flex-row items-center px-4 pb-4 pt-3">
+          <TouchableOpacity
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/profile')}
+            className="mr-3 h-11 w-11 items-center justify-center rounded-full"
+            style={{ backgroundColor: colors.elevated }}
+            accessibilityRole="button"
+            accessibilityLabel="Retour au profil"
+          >
+            <Icon name="arrow-back" size={22} color={colors.text} />
+          </TouchableOpacity>
+          <View className="flex-1">
             <Text className="text-2xl font-extrabold" style={{ color: colors.text }}>Dashboard</Text>
             <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Pilotez votre activité YeYamo</Text>
           </View>

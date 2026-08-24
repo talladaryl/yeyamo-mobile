@@ -56,6 +56,7 @@ export interface CustomerReview {
   date: string;
   comment: string;
   establishment: string;
+  partner_reply?: string;
 }
 
 export interface StatisticCard {

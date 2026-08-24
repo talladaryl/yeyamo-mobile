@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -8,6 +8,8 @@ import { Toggle } from '@/components/ui/Toggle';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { useCreateStore } from '@/features/create/create.store';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { DateTimeField } from '@/components/ui/DateTimeField';
+import { formValidation } from '@/utils/formValidation';
 
 export default function CreateEventScreen() {
   const router = useRouter();
@@ -39,6 +41,15 @@ export default function CreateEventScreen() {
   };
 
   const handleNext = () => {
+    const error = formValidation.required(title, 'Le titre')
+      ?? formValidation.required(location, 'Le lieu')
+      ?? formValidation.date(date, 'La date', true)
+      ?? formValidation.required(time, 'L’heure')
+      ?? formValidation.positiveNumber(maxParticipants, 'Le nombre de participants', true);
+    if (error) {
+      Alert.alert('Informations à vérifier', error);
+      return;
+    }
     setEventForm({
       title,
       description,
@@ -145,28 +156,9 @@ export default function CreateEventScreen() {
             </View>
           </View>
 
-          <View className="flex-row gap-3 mb-4">
-            <View className="flex-1">
-              <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">Date</Text>
-              <TextInput
-                className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
-                placeholder="JJ/MM/AAAA"
-                placeholderTextColor="#A1A1AA"
-                value={date}
-                onChangeText={setDate}
-              />
-            </View>
-
-            <View className="flex-1">
-              <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">Heure</Text>
-              <TextInput
-                className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
-                placeholder="HH:MM"
-                placeholderTextColor="#A1A1AA"
-                value={time}
-                onChangeText={setTime}
-              />
-            </View>
+          <View className="mb-4 gap-4">
+            <DateTimeField label="Date" value={date} onChange={setDate} mode="date" required minimumDate={new Date()} />
+            <DateTimeField label="Heure" value={time} onChange={setTime} mode="time" required />
           </View>
 
           {/* Max Participants */}

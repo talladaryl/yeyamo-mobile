@@ -63,11 +63,11 @@ export default function EventsScreen() {
         <View className="absolute bottom-6 left-0 right-0 px-4">
           <TouchableOpacity
             onPress={handleCreateEvent}
-            className="bg-[#EF4444] py-4 rounded-xl flex-row items-center justify-center shadow-lg"
+            className="h-14 w-14 self-end rounded-full bg-[#EF4444] items-center justify-center shadow-lg"
             activeOpacity={0.8}
+            accessibilityLabel="Créer une sortie"
           >
-            <Ionicons name="add-circle-outline" size={24} color="#FFFFFF" />
-            <Text className="text-white font-bold text-base ml-2">Créer une sortie</Text>
+            <Ionicons name="add" size={30} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       )}

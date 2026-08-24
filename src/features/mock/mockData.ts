@@ -60,6 +60,11 @@ export const MOCK_FEED_POSTS: FeedPost[] = [
     is_liked: false,
     is_saved: false,
     place_tag: { id: 101, name: 'Kribi Beach', region_id: 9 },
+    comments: [
+      { id: '101-c1', author: { id: 21, username: 'amina.trips', display_name: 'Amina Trips', avatar_url: 'https://i.pravatar.cc/150?img=45', is_verified: false, user_type: 'user' }, text: 'Le coucher de soleil à Kribi est incroyable !', likes_count: 18, is_liked: false, created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+      { id: '101-c2', author: { id: 22, username: 'paul.mboa', display_name: 'Paul Mboa', avatar_url: 'https://i.pravatar.cc/150?img=13', is_verified: true, user_type: 'user' }, text: 'Quel restaurant recommandes-tu pour le poisson braisé ?', likes_count: 9, is_liked: true, created_at: new Date(Date.now() - 1000 * 60 * 22).toISOString() },
+      { id: '101-c3', author: MOCK_PARTNER_USER, text: 'Bienvenue à Kribi, passez nous voir lors de votre prochain séjour.', likes_count: 5, is_liked: false, created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString() },
+    ],
     created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
   },
   {
@@ -91,6 +96,10 @@ export const MOCK_FEED_POSTS: FeedPost[] = [
     is_liked: true,
     is_saved: true,
     place_tag: { id: 102, name: 'Bonapriso', region_id: 5 },
+    comments: [
+      { id: '102-c1', author: { id: 23, username: 'sarah.work', display_name: 'Sarah Work', avatar_url: 'https://i.pravatar.cc/150?img=32', is_verified: false, user_type: 'user' }, text: 'Parfait pour travailler au calme.', likes_count: 7, is_liked: false, created_at: new Date(Date.now() - 1000 * 60 * 80).toISOString() },
+      { id: '102-c2', author: { id: 24, username: 'joel.coffee', display_name: 'Joël Coffee', avatar_url: 'https://i.pravatar.cc/150?img=15', is_verified: false, user_type: 'user' }, text: 'Le café filtre est excellent.', likes_count: 4, is_liked: false, created_at: new Date(Date.now() - 1000 * 60 * 50).toISOString() },
+    ],
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
   },
   {
@@ -122,6 +131,11 @@ export const MOCK_FEED_POSTS: FeedPost[] = [
     is_liked: false,
     is_saved: false,
     place_tag: { id: 103, name: 'Marche artisanal', region_id: 8 },
+    comments: [
+      { id: '103-c1', author: { id: 25, username: 'nadia.art', display_name: 'Nadia Art', avatar_url: 'https://i.pravatar.cc/150?img=46', is_verified: true, user_type: 'user' }, text: 'Ces couleurs et ces motifs sont magnifiques.', likes_count: 21, is_liked: true, created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString() },
+      { id: '103-c2', author: { id: 26, username: 'atelier.nguon', display_name: 'Atelier Nguon', avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200', is_verified: true, user_type: 'partner' }, text: 'Merci de valoriser le travail des artisans locaux.', likes_count: 16, is_liked: false, created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString() },
+      { id: '103-c3', author: MOCK_USER, text: 'Je veux absolument visiter ce marché.', likes_count: 3, is_liked: false, created_at: new Date(Date.now() - 1000 * 60 * 20).toISOString() },
+    ],
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 7).toISOString(),
   },
 ];

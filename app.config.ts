@@ -24,6 +24,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       ...(base.plugins ?? []),
+      '@react-native-community/datetimepicker',
       ['@react-native-google-signin/google-signin', { iosUrlScheme }],
     ],
   });

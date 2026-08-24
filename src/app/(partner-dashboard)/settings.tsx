@@ -17,7 +17,15 @@ export default function SettingsScreen() {
   const colors = useThemeStore((state) => state.colors);
   const isDemo = useAuthStore((state) => state.sessionMode === 'demo-partner');
   const { data: profile } = usePartnerProfile();
-  const openItem = () => router.push('/(profile)/settings');
+  const routes: Record<string, string> = {
+    'business-info': '/(partner-dashboard)/establishments',
+    password: '/(profile)/security',
+    notifications: '/(partner-dashboard)/notifications',
+    language: '/(profile)/preferences',
+    help: '/(profile)/help',
+    contact: '/(profile)/support',
+    about: '/(profile)/about',
+  };
   return (
     <PartnerPage title="Paramètres" subtitle="Gérez votre compte et vos préférences professionnelles">
       <View className="my-3 flex-row items-center rounded-2xl border p-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
@@ -29,14 +37,8 @@ export default function SettingsScreen() {
         <View key={section.title} className="mb-5">
           <Text className="mb-2 text-sm font-extrabold" style={{ color: colors.text }}>{section.title}</Text>
           {section.items.map((item) => {
-            const supportRoute = item.id === 'help'
-              ? '/(profile)/help'
-              : item.id === 'contact'
-                ? '/(profile)/support'
-                : item.id === 'about'
-                  ? '/(profile)/about'
-                  : undefined;
-            return <SettingsItem key={item.id} item={isDemo ? item : { ...item, value: undefined }} onPress={() => supportRoute ? router.push(supportRoute) : openItem()} />;
+            const route = routes[item.id] ?? '/(partner-dashboard)';
+            return <SettingsItem key={item.id} item={isDemo ? item : { ...item, value: undefined }} onPress={() => router.push(route as never)} />;
           })}
         </View>
       ))}
