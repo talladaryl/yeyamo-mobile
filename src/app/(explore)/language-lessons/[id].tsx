@@ -1,38 +1,4 @@
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { useEffect } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeScreen } from '@/components/ui/SafeScreen';
-import { Icon } from '@/components/ui/Icon';
-import { useThemeStore } from '@/features/theme/theme.store';
-import { RemoteAudioPlayer } from '@/features/culture/components/RemoteAudioPlayer';
-import { useLesson, useStartLesson } from '@/features/culture/culture.hooks';
-import { mediaContentUrl } from '@/services/api/contracts';
-
-export default function LessonScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
-  const colors = useThemeStore((state) => state.colors);
-  const lesson = useLesson(id);
-  const start = useStartLesson();
-
-  useEffect(() => {
-    if (id && lesson.data && !start.isSuccess && !start.isPending) start.mutate(id);
-  }, [id, lesson.data, start]);
-
-  if (lesson.isLoading) return <SafeScreen><View className="flex-1 items-center justify-center"><ActivityIndicator color={colors.primary} /></View></SafeScreen>;
-  if (lesson.isError || !lesson.data) return <SafeScreen><View className="flex-1 items-center justify-center px-8"><Text className="text-center" style={{ color: colors.text }}>Cette leçon est indisponible.</Text><TouchableOpacity onPress={() => lesson.refetch()} className="mt-4"><Text className="font-bold text-[#EF4444]">Réessayer</Text></TouchableOpacity></View></SafeScreen>;
-  const data = lesson.data;
-  return <SafeScreen><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
-    <TouchableOpacity onPress={() => router.back()} className="mb-6 self-start p-1"><Icon name="chevron-back" size={24} color={colors.text} /></TouchableOpacity>
-    <Text className="text-xs font-bold text-[#B91C1C]">{data.lesson.estimatedMinutes} MIN · NIVEAU {data.lesson.difficulty}</Text>
-    <Text className="mt-2 text-3xl font-extrabold" style={{ color: colors.text }}>{data.lesson.title}</Text>
-    <Text className="mt-3 text-base" style={{ color: colors.textSecondary }}>{data.lesson.description}</Text>
-    {data.items.map((item, index) => <View key={item.id} className="mt-6 rounded-2xl border p-5" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-      <Text className="text-xs font-bold text-[#B91C1C]">ÉTAPE {index + 1}</Text><Text className="mt-3 text-2xl font-bold" style={{ color: colors.text }}>{item.phrase}</Text><Text className="mt-2 text-base" style={{ color: colors.textSecondary }}>{item.translation}</Text>
-      {item.transcription ? <Text className="mt-1 text-sm italic" style={{ color: colors.textMuted }}>{item.transcription}</Text> : null}
-      <View className="mt-4"><RemoteAudioPlayer source={item.audioMediaId ? mediaContentUrl(item.audioMediaId) : null} transcript={item.phonetic} /></View>
-      {item.culturalContext ? <Text className="mt-4 text-sm leading-6" style={{ color: colors.textSecondary }}>{item.culturalContext}</Text> : null}
-    </View>)}
-    <TouchableOpacity onPress={() => router.push(`/(explore)/language-lessons/${id}/quiz`)} className="mt-7 items-center rounded-xl bg-[#EF4444] px-4 py-4"><Text className="font-bold text-white">Passer au mini-quiz</Text></TouchableOpacity>
-  </ScrollView></SafeScreen>;
-}
+import { useEffect, useState } from 'react'; import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native'; import { useLocalSearchParams,useRouter } from 'expo-router'; import { SafeScreen } from '@/components/ui/SafeScreen'; import { Icon } from '@/components/ui/Icon'; import { RemoteAudioPlayer } from '@/features/culture/components/RemoteAudioPlayer'; import { useLesson,useStartLesson } from '@/features/culture/culture.hooks'; import { useThemeStore } from '@/features/theme/theme.store'; import { mediaContentUrl } from '@/services/api/contracts';
+export default function LessonScreen(){const {id}=useLocalSearchParams<{id:string}>();const router=useRouter();const colors=useThemeStore((s)=>s.colors);const lesson=useLesson(id);const start=useStartLesson();const [level,setLevel]=useState(1);const [count,setCount]=useState(3);useEffect(()=>{if(id&&lesson.data&&!start.isSuccess&&!start.isPending)start.mutate(id)},[id,lesson.data,start]);if(lesson.isLoading)return <SafeScreen><ActivityIndicator className="mt-20" color={colors.primary}/></SafeScreen>;if(!lesson.data)return <SafeScreen><View className="flex-1 items-center justify-center"><Text style={{color:colors.text}}>Leçon indisponible.</Text></View></SafeScreen>;const data=lesson.data;return <SafeScreen><ScrollView contentContainerStyle={{padding:20,paddingBottom:40}}><TouchableOpacity onPress={()=>router.back()} className="mb-5 h-11 w-11 items-center justify-center"><Icon name="chevron-back" size={24} color={colors.text}/></TouchableOpacity><Text className="text-xs font-bold text-[#EF4444]">{data.lesson.estimatedMinutes} MIN · NIVEAU {data.lesson.difficulty}</Text><Text className="mt-2 text-3xl font-extrabold" style={{color:colors.text}}>{data.lesson.title}</Text><Text className="mt-3 leading-6" style={{color:colors.textSecondary}}>{data.lesson.description}</Text>{data.items.map((item,index)=><View key={item.id} className="mt-6 rounded-2xl border p-5" style={{backgroundColor:colors.card,borderColor:colors.border}}><Text className="text-xs font-bold text-[#EF4444]">PHRASE {index+1}</Text><Text className="mt-3 text-2xl font-extrabold" style={{color:colors.text}}>{item.phrase}</Text><Text className="mt-2 text-base" style={{color:colors.textSecondary}}>{item.translation}</Text><View className="mt-4"><RemoteAudioPlayer source={item.audioMediaId?.startsWith('http')?item.audioMediaId:item.audioMediaId?mediaContentUrl(item.audioMediaId):null} transcript={item.phonetic} label="Écouter la prononciation"/></View><Text className="mt-4 text-xs leading-5" style={{color:colors.textMuted}}>{item.culturalContext}</Text></View>)}<View className="mt-8 rounded-2xl border p-5" style={{backgroundColor:colors.card,borderColor:colors.border}}><Text className="text-xl font-extrabold" style={{color:colors.text}}>Personnaliser le quiz</Text><Text className="mt-1 text-sm" style={{color:colors.textSecondary}}>Choisissez votre niveau et le nombre de questions.</Text><Label text="Niveau"/><View className="flex-row gap-2">{[1,2,3].map((value)=><Choice key={value} label={value===1?'Débutant':value===2?'Intermédiaire':'Avancé'} selected={level===value} onPress={()=>setLevel(value)}/>)}</View><Label text="Questions"/><View className="flex-row gap-2">{[3,5,10].map((value)=><Choice key={value} label={String(value)} selected={count===value} onPress={()=>setCount(value)}/>)}</View><TouchableOpacity onPress={()=>router.push({pathname:'/(explore)/language-lessons/[id]/quiz' as never,params:{id,level:String(level),count:String(count)}} as never)} className="mt-6 items-center rounded-xl bg-[#EF4444] py-4"><Text className="font-bold text-white">Passer au quiz</Text></TouchableOpacity></View></ScrollView></SafeScreen>}
+function Label({text}:{text:string}){const colors=useThemeStore((s)=>s.colors);return <Text className="mb-2 mt-5 text-sm font-bold" style={{color:colors.text}}>{text}</Text>}
+function Choice({label,selected,onPress}:{label:string;selected:boolean;onPress:()=>void}){const colors=useThemeStore((s)=>s.colors);return <TouchableOpacity onPress={onPress} className="flex-1 rounded-xl border py-3" style={{backgroundColor:selected?colors.primary:colors.elevated,borderColor:selected?colors.primary:colors.border}}><Text className="text-center text-xs font-bold" style={{color:selected?'#FFFFFF':colors.text}}>{label}</Text></TouchableOpacity>}

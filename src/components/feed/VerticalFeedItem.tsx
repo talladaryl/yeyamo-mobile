@@ -92,6 +92,21 @@ export function VerticalFeedItem({
           </Text>
         )}
 
+        {post.linked_content ? (
+          <TouchableOpacity
+            onPress={() => {
+              const linked = post.linked_content!;
+              const routes = { proverb: '/(explore)/proverbs/', recipe: '/(explore)/recipes/', artwork: '/(explore)/artworks/', artist: '/(explore)/artisans/', language: '/(explore)/languages/', culture: '/(explore)/culture/' } as const;
+              router.push(`${routes[linked.type]}${linked.id}` as never);
+            }}
+            className="mb-2 self-start flex-row items-center rounded-full bg-white/20 px-3 py-2"
+          >
+            <Icon name="book-outline" size={15} color="#FFFFFF" />
+            <Text className="ml-2 text-xs font-bold text-white">{post.linked_content.label}</Text>
+            <Icon name="chevron-forward" size={14} color="#FFFFFF" />
+          </TouchableOpacity>
+        ) : null}
+
         {post.place_tag && (
           <View className="flex-row items-center gap-1">
             <Icon library="ionicons" name="location" size={14} color="#EF4444" />

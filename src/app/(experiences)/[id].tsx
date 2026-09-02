@@ -231,7 +231,7 @@ export default function ExperienceDetailScreen() {
 
           {/* Action Buttons */}
           <View className="flex-row gap-3 mb-5">
-            <TouchableOpacity className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
+            <TouchableOpacity onPress={() => router.push(`/(bookings)/experience/${experience.id}`)} className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
               <Text className="text-base font-semibold text-white">Réserver</Text>
             </TouchableOpacity>
             <TouchableOpacity className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>

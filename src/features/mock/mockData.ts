@@ -138,6 +138,18 @@ export const MOCK_FEED_POSTS: FeedPost[] = [
     ],
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 7).toISOString(),
   },
+  {
+    id: 104, type: 'image', caption: 'Le proverbe du jour et son contexte de transmission.', media: [{ id: 1004, url: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=1080', thumbnail_url: null, type: 'image', width: 1080, height: 1920, duration_seconds: null }], author: { id: 27, username: 'yeyamo_culture', display_name: 'YeYamo Culture', avatar_url: 'https://i.pravatar.cc/150?img=48', is_verified: true, user_type: 'partner' }, likes_count: 980, comments_count: 31, shares_count: 44, is_liked: false, is_saved: false, place_tag: { id: 104, name: 'Centre, Cameroun', region_id: 1 }, linked_content: { type: 'proverb', id: 'proverb-1', label: 'Lire le proverbe' }, comments: [], created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  },
+  {
+    id: 105, type: 'image', caption: 'Ndolé aux crevettes : ingrédients, étapes et histoire du plat.', media: [{ id: 1005, url: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=1080', thumbnail_url: null, type: 'image', width: 1080, height: 1920, duration_seconds: null }], author: { id: 28, username: 'saveurs_du237', display_name: 'Saveurs du 237', avatar_url: 'https://i.pravatar.cc/150?img=44', is_verified: true, user_type: 'user' }, likes_count: 4200, comments_count: 186, shares_count: 310, is_liked: true, is_saved: true, place_tag: { id: 105, name: 'Littoral, Cameroun', region_id: 5 }, linked_content: { type: 'recipe', id: 'recipe-1', label: 'Voir la recette' }, comments: [], created_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+  },
+  {
+    id: 106, type: 'image', caption: 'Une œuvre, une voix : écoutez l’artiste raconter ce masque.', media: [{ id: 1006, url: 'https://images.unsplash.com/photo-1549490349-8643362247b5?w=1080', thumbnail_url: null, type: 'image', width: 1080, height: 1920, duration_seconds: null }], author: { id: 29, username: 'atelier_foumban', display_name: 'Atelier Foumban', avatar_url: 'https://i.pravatar.cc/150?img=33', is_verified: true, user_type: 'partner' }, likes_count: 7600, comments_count: 204, shares_count: 165, is_liked: false, is_saved: false, place_tag: { id: 106, name: 'Foumban', region_id: 8 }, linked_content: { type: 'artwork', id: 'demo-artwork-1', label: 'Découvrir l’œuvre' }, comments: [], created_at: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+  },
+  {
+    id: 107, type: 'image', caption: 'Apprenez trois salutations et testez votre prononciation.', media: [{ id: 1007, url: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1080', thumbnail_url: null, type: 'image', width: 1080, height: 1920, duration_seconds: null }], author: { id: 30, username: 'parlons_bassa', display_name: 'Parlons Bassa', avatar_url: 'https://i.pravatar.cc/150?img=36', is_verified: true, user_type: 'user' }, likes_count: 3600, comments_count: 142, shares_count: 202, is_liked: false, is_saved: true, place_tag: { id: 107, name: 'Cameroun', region_id: 1 }, linked_content: { type: 'language', id: 'bas', label: 'Commencer la leçon' }, comments: [], created_at: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+  },
 ];
 
 export const MOCK_FEED_PAGE: PaginatedResponse<FeedPost> = {

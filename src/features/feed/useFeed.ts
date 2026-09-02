@@ -43,6 +43,10 @@ const MOCK_POST_INTERESTS: Record<string, string[]> = {
   101: ['voyage', 'nature', 'photographie', 'sorties'],
   102: ['gastronomie', 'sorties', 'photographie'],
   103: ['culture', 'art', 'mode', 'histoire'],
+  104: ['culture', 'histoire', 'langues'],
+  105: ['gastronomie', 'culture'],
+  106: ['culture', 'art', 'histoire'],
+  107: ['culture', 'langues', 'education'],
 };
 
 function personalizeMockFeed(selectedInterestIds: string[], regionId?: number): PaginatedResponse<FeedPost> {

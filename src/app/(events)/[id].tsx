@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
-import { useEventDetail, useEventRegistration, useUpcomingEvents } from '@/features/events/useEvents';
+import { useEventDetail, useUpcomingEvents } from '@/features/events/useEvents';
 import { useEventTickets } from '@/features/ticketing/useTicketing';
 
 const { width } = Dimensions.get('window');
@@ -17,7 +17,6 @@ export default function EventDetailScreen() {
   
   const { data: event, isLoading } = useEventDetail(id);
   const { data: upcomingEvents = [] } = useUpcomingEvents();
-  const registration = useEventRegistration(id);
   const { data: ticketing } = useEventTickets(String(id));
 
   if (isLoading || !event) {
@@ -135,8 +134,7 @@ export default function EventDetailScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => registration.mutate(event.is_participating)}
-                    disabled={registration.isPending}
+                    onPress={() => router.push({ pathname: '/(bookings)/event/[id]' as never, params: { id: String(event.id), ticketId: ticket.id } } as never)}
                     className="bg-[#EF4444] px-6 py-2.5 rounded-xl"
                   >
                     <Text className="font-semibold text-white">Participer</Text>
@@ -150,8 +148,7 @@ export default function EventDetailScreen() {
           {(!event.ticket_types || event.ticket_types.length === 0) && (
             <View className="flex-row gap-3 mb-5">
               <TouchableOpacity
-                onPress={() => registration.mutate(event.is_participating)}
-                disabled={registration.isPending}
+                onPress={() => router.push({ pathname: '/(bookings)/event/[id]' as never, params: { id: String(event.id) } } as never)}
                 className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center"
               >
                 <Text className="text-base font-semibold text-white">Participer</Text>

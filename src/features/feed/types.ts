@@ -13,6 +13,7 @@ export interface FeedPost {
   is_saved: boolean;
   place_tag: { id: EntityId; name: string; location?: string; region_id?: number } | null;
   comments?: PostComment[];
+  linked_content?: { type: 'proverb' | 'recipe' | 'artwork' | 'artist' | 'language' | 'culture'; id: string; label: string };
   created_at: string;
 }
 
