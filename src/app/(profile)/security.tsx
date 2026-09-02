@@ -7,12 +7,24 @@ import { useState } from 'react';
 import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
 import { NavigationItem } from '@/components/settings/NavigationItem';
 import { ToggleItem } from '@/components/settings/ToggleItem';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function SecurityScreen() {
   const router = useRouter();
-  const [settings, setSettings] = useState(MOCK_USER_SETTINGS.security);
+  const user = useAuthStore((state) => state.user);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const [settings, setSettings] = useState(() => isDemo ? MOCK_USER_SETTINGS.security : {
+    password_last_changed: '',
+    email: user?.email ?? '',
+    email_verified: user?.is_verified ?? false,
+    phone: null,
+    phone_verified: false,
+    two_factor_enabled: false,
+    active_sessions: [],
+  });
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Non disponible';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -50,24 +62,24 @@ export default function SecurityScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold ml-2">Sécurité</Text>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold ml-2">Sécurité</Text>
         </View>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Connexion */}
         <View className="mt-6 px-4">
-          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
             Connexion
           </Text>
-          <View className="bg-[#161616] rounded-xl overflow-hidden">
+          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden">
             <NavigationItem
               icon="lock-closed-outline"
               label="Mot de passe"
@@ -75,14 +87,14 @@ export default function SecurityScreen() {
               onPress={handleChangePassword}
               showBorder={false}
             />
-            <View className="px-4 py-4 border-t border-[#27272A]">
+            <View className="px-4 py-4 border-t border-[#E4E4E7] dark:border-[#27272A]">
               <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center mr-3">
+                <View className="w-10 h-10 bg-[#F4F4F5] dark:bg-[#27272A] rounded-full items-center justify-center mr-3">
                   <Ionicons name="mail-outline" size={20} color="#EF4444" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-white font-medium text-sm">Email</Text>
-                  <Text className="text-[#A1A1AA] text-xs mt-0.5">
+                  <Text className="text-[#18181B] dark:text-white font-medium text-sm">Email</Text>
+                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-0.5">
                     {settings.email}
                   </Text>
                 </View>
@@ -93,14 +105,14 @@ export default function SecurityScreen() {
                 )}
               </View>
             </View>
-            <View className="px-4 py-4 border-t border-[#27272A]">
+            <View className="px-4 py-4 border-t border-[#E4E4E7] dark:border-[#27272A]">
               <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-[#27272A] rounded-full items-center justify-center mr-3">
+                <View className="w-10 h-10 bg-[#F4F4F5] dark:bg-[#27272A] rounded-full items-center justify-center mr-3">
                   <Ionicons name="call-outline" size={20} color="#EF4444" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-white font-medium text-sm">Téléphone</Text>
-                  <Text className="text-[#A1A1AA] text-xs mt-0.5">
+                  <Text className="text-[#18181B] dark:text-white font-medium text-sm">Téléphone</Text>
+                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-0.5">
                     {settings.phone || 'Non renseigné'}
                   </Text>
                 </View>
@@ -116,10 +128,10 @@ export default function SecurityScreen() {
 
         {/* Authentification */}
         <View className="mt-6 px-4">
-          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
             Authentification à deux facteurs
           </Text>
-          <View className="bg-[#161616] rounded-xl overflow-hidden">
+          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden">
             <ToggleItem
               icon="shield-checkmark-outline"
               label="Authentification à deux facteurs"
@@ -141,10 +153,10 @@ export default function SecurityScreen() {
 
         {/* Sessions actives */}
         <View className="mt-6 px-4">
-          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
             Sessions actives
           </Text>
-          <View className="bg-[#161616] rounded-xl overflow-hidden">
+          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden">
             <NavigationItem
               icon="phone-portrait-outline"
               label="Gérer les appareils"
@@ -157,16 +169,16 @@ export default function SecurityScreen() {
 
         {/* Badge sécurité */}
         <View className="mt-6 px-4 pb-8">
-          <View className="bg-[#161616] rounded-xl p-4 border border-[#10B981]/20">
+          <View className="bg-white dark:bg-[#161616] rounded-xl p-4 border border-[#10B981]/20">
             <View className="flex-row items-start">
               <View className="w-12 h-12 bg-[#10B981]/20 rounded-full items-center justify-center mr-3">
                 <Ionicons name="shield-checkmark" size={24} color="#10B981" />
               </View>
               <View className="flex-1">
-                <Text className="text-white font-bold text-base mb-1">
+                <Text className="text-[#18181B] dark:text-white font-bold text-base mb-1">
                   Compte sécurisé
                 </Text>
-                <Text className="text-[#A1A1AA] text-sm leading-5">
+                <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm leading-5">
                   Votre compte est protégé. Email et téléphone vérifiés.
                   {settings.two_factor_enabled
                     ? ' Authentification à deux facteurs activée.'

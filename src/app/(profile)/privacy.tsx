@@ -7,30 +7,42 @@ import { useState } from 'react';
 import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
 import { ToggleItem } from '@/components/settings/ToggleItem';
 import { RadioItem } from '@/components/settings/RadioItem';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function PrivacyScreen() {
   const router = useRouter();
-  const [settings, setSettings] = useState(MOCK_USER_SETTINGS.privacy);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const [settings, setSettings] = useState(() => isDemo ? MOCK_USER_SETTINGS.privacy : {
+    account_visibility: 'public' as const,
+    show_online_status: false,
+    who_can_message: 'no_one' as const,
+    who_can_see_posts: 'everyone' as const,
+    who_can_tag_me: 'no_one' as const,
+    show_location_in_posts: false,
+    show_city_in_profile: false,
+    show_in_search: true,
+    show_in_suggestions: false,
+  });
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold ml-2">Confidentialité</Text>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold ml-2">Confidentialité</Text>
         </View>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Visibilité du compte */}
         <View className="mt-6 px-4">
-          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
             Visibilité du compte
           </Text>
-          <View className="bg-[#161616] rounded-xl overflow-hidden">
+          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden">
             <RadioItem
               label="Public"
               description="Tout le monde peut voir votre profil"
@@ -58,7 +70,7 @@ export default function PrivacyScreen() {
             />
           </View>
 
-          <View className="bg-[#161616] rounded-xl overflow-hidden mt-3">
+          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden mt-3">
             <ToggleItem
               label="Afficher mon statut en ligne"
               description="Les autres peuvent voir si vous êtes en ligne"
@@ -73,14 +85,14 @@ export default function PrivacyScreen() {
 
         {/* Interactions */}
         <View className="mt-6 px-4">
-          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
             Interactions
           </Text>
           
           {/* Qui peut m'envoyer des messages */}
-          <View className="bg-[#161616] rounded-xl overflow-hidden mb-3">
+          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden mb-3">
             <View className="px-4 py-3">
-              <Text className="text-white font-medium text-sm mb-2">
+              <Text className="text-[#18181B] dark:text-white font-medium text-sm mb-2">
                 Qui peut m'envoyer des messages
               </Text>
             </View>
@@ -108,9 +120,9 @@ export default function PrivacyScreen() {
           </View>
 
           {/* Qui peut voir mes publications */}
-          <View className="bg-[#161616] rounded-xl overflow-hidden mb-3">
+          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden mb-3">
             <View className="px-4 py-3">
-              <Text className="text-white font-medium text-sm mb-2">
+              <Text className="text-[#18181B] dark:text-white font-medium text-sm mb-2">
                 Qui peut voir mes publications
               </Text>
             </View>
@@ -138,9 +150,9 @@ export default function PrivacyScreen() {
           </View>
 
           {/* Qui peut me taguer */}
-          <View className="bg-[#161616] rounded-xl overflow-hidden">
+          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden">
             <View className="px-4 py-3">
-              <Text className="text-white font-medium text-sm mb-2">
+              <Text className="text-[#18181B] dark:text-white font-medium text-sm mb-2">
                 Qui peut me taguer dans les publications
               </Text>
             </View>
@@ -170,10 +182,10 @@ export default function PrivacyScreen() {
 
         {/* Localisation */}
         <View className="mt-6 px-4 pb-8">
-          <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
             Localisation
           </Text>
-          <View className="bg-[#161616] rounded-xl overflow-hidden">
+          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden">
             <ToggleItem
               label="Afficher ma ville sur mon profil"
               value={settings.show_city_in_profile}

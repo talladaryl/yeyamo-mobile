@@ -26,21 +26,21 @@ export function ParticipantItem({
             className="rounded-full mr-3"
           />
         ) : (
-          <View className="w-10 h-10 rounded-full bg-[#27272A] items-center justify-center mr-3">
+          <View className="w-10 h-10 rounded-full bg-[#F4F4F5] dark:bg-[#27272A] items-center justify-center mr-3">
             <Icon library="ionicons" name="person" size={20} color="#A1A1AA" />
           </View>
         )}
-        <Text className="text-white text-sm font-medium">{name}</Text>
+        <Text className="text-[#18181B] dark:text-white text-sm font-medium">{name}</Text>
       </View>
       
       <TouchableOpacity
         onPress={onInviteToggle}
         className={`px-4 py-2 rounded-full ${
-          isInvited ? 'bg-[#27272A]' : 'bg-[#EF4444]'
+          isInvited ? 'bg-[#F4F4F5] dark:bg-[#27272A]' : 'bg-[#EF4444]'
         }`}
         activeOpacity={0.7}
       >
-        <Text className="text-white text-xs font-semibold">
+        <Text className={`text-xs font-semibold ${isInvited ? 'text-[#18181B] dark:text-white' : 'text-white'}`}>
           {isInvited ? 'Invité' : 'Inviter'}
         </Text>
       </TouchableOpacity>

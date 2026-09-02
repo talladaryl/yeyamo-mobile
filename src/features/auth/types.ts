@@ -21,18 +21,12 @@ export interface RegisterCredentials {
   email: string;
   password: string;
   password_confirmation: string;
-  city: string;
+  city?: string;
   phone?: string;
-}
-
-export interface PartnerRegisterCredentials {
-  company_name: string;
-  category: string;
-  email: string;
-  phone: string;
-  password: string;
-  password_confirmation: string;
-  accept_terms: boolean;
+  countryCode: string;
+  cityId?: string;
+  preferredLanguageCode?: string;
+  timezone?: string;
 }
 
 export interface VerifyCodeCredentials {
@@ -51,6 +45,25 @@ export interface SocialLoginCredentials {
 }
 
 export interface AuthResponse {
-  token: string;
-  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+  tokenType: 'Bearer';
+  expiresIn: number;
+  user: AuthApiUser;
+}
+
+export interface AuthApiUser {
+  id: number;
+  email: string | null;
+  phone: string | null;
+  status: string;
+  roles: string[];
+  createdAt: string;
+  emailVerifiedAt: string | null;
+}
+
+export interface PasswordResetCredentials {
+  email: string;
+  code: string;
+  newPassword: string;
 }

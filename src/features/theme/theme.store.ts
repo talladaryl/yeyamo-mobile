@@ -1,9 +1,12 @@
 import { Appearance } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
+import { colorScheme } from 'nativewind';
 import { themeColors, type ResolvedTheme, type ThemePreference } from '@/constants/theme';
 
-const STORAGE_KEY = 'yeyamo-theme-preference';
+// V2 intentionally starts existing installs on the new light-first experience.
+// Subsequent user choices are persisted under this key.
+const STORAGE_KEY = 'yeyamo-theme-preference-v2';
 
 type ThemeStore = {
   preference: ThemePreference;
@@ -25,6 +28,7 @@ function resolveTheme(preference: ThemePreference): ResolvedTheme {
 
 function valuesFor(preference: ThemePreference) {
   const resolvedTheme = resolveTheme(preference);
+  colorScheme.set(preference);
   return {
     preference,
     resolvedTheme,
@@ -33,7 +37,7 @@ function valuesFor(preference: ThemePreference) {
 }
 
 export const useThemeStore = create<ThemeStore>((set, get) => ({
-  ...valuesFor('system'),
+  ...valuesFor('light'),
   isHydrated: false,
 
   hydrateTheme: async () => {
@@ -41,7 +45,7 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
     const preference =
       storedPreference === 'light' || storedPreference === 'dark' || storedPreference === 'system'
         ? storedPreference
-        : 'system';
+        : 'light';
 
     set({ ...valuesFor(preference), isHydrated: true });
   },

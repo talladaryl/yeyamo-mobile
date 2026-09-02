@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { CreateEventForm, EventSettings, SuggestPlaceForm, StoryCreation, PublicationForm } from './types';
+import type { ArtworkDraft, CreateEventForm, EventSettings, SuggestPlaceForm, StoryCreation, PublicationForm } from './types';
 
 interface CreateStore {
   // Event creation
@@ -25,6 +25,10 @@ interface CreateStore {
   publicationData: Partial<PublicationForm>;
   setPublicationData: (data: Partial<PublicationForm>) => void;
   resetPublicationData: () => void;
+
+  artworkDraft: Partial<ArtworkDraft>;
+  setArtworkDraft: (draft: Partial<ArtworkDraft>) => void;
+  resetArtworkDraft: () => void;
 }
 
 const initialEventSettings: EventSettings = {
@@ -61,4 +65,8 @@ export const useCreateStore = create<CreateStore>((set) => ({
   publicationData: { media_urls: [], media_type: 'image', caption: '' },
   setPublicationData: (data) => set((state) => ({ publicationData: { ...state.publicationData, ...data } })),
   resetPublicationData: () => set({ publicationData: { media_urls: [], media_type: 'image', caption: '' } }),
+
+  artworkDraft: { editionType: 'UNIQUE', availabilityStatus: 'DISPLAY_ONLY', mediaIds: [] },
+  setArtworkDraft: (draft) => set((state) => ({ artworkDraft: { ...state.artworkDraft, ...draft } })),
+  resetArtworkDraft: () => set({ artworkDraft: { editionType: 'UNIQUE', availabilityStatus: 'DISPLAY_ONLY', mediaIds: [] } }),
 }));

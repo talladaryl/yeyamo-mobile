@@ -1,6 +1,7 @@
 import { Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TOUCH_TARGET, A11Y_LABELS } from '@/constants/accessibility';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface AccessibleButtonProps {
   label: string;
@@ -30,6 +31,7 @@ export function AccessibleButton({
   accessibilityHint,
   testID,
 }: AccessibleButtonProps) {
+  const colors = useThemeStore((state) => state.colors);
   const getVariantStyles = () => {
     const base = 'rounded-xl px-6 py-3 flex-row items-center justify-center';
     
@@ -37,7 +39,7 @@ export function AccessibleButton({
       case 'primary':
         return `${base} bg-[#EF4444]`;
       case 'secondary':
-        return `${base} bg-[#27272A]`;
+        return base;
       case 'outline':
         return `${base} bg-transparent border-2 border-[#EF4444]`;
       case 'ghost':
@@ -54,7 +56,7 @@ export function AccessibleButton({
       case 'outline':
         return 'text-[#EF4444] font-semibold text-base';
       case 'ghost':
-        return 'text-white font-semibold text-base';
+        return 'font-semibold text-base';
       default:
         return 'text-white font-semibold text-base';
     }
@@ -85,6 +87,7 @@ export function AccessibleButton({
       style={{
         minHeight: TOUCH_TARGET.MIN_SIZE,
         opacity: isDisabled ? 0.5 : 1,
+        backgroundColor: variant === 'secondary' ? colors.elevated : undefined,
       }}
     >
       {loading ? (
@@ -95,18 +98,18 @@ export function AccessibleButton({
             <Ionicons
               name={icon}
               size={20}
-              color={variant === 'outline' ? '#EF4444' : '#FFFFFF'}
+              color={variant === 'outline' ? '#EF4444' : variant === 'secondary' || variant === 'ghost' ? colors.text : '#FFFFFF'}
               style={{ marginRight: 8 }}
               importantForAccessibility="no"
               accessible={false}
             />
           )}
-          <Text className={getTextStyles()}>{label}</Text>
+          <Text className={getTextStyles()} style={{ color: variant === 'outline' ? colors.primary : variant === 'secondary' || variant === 'ghost' ? colors.text : '#FFFFFF' }}>{label}</Text>
           {icon && iconPosition === 'right' && (
             <Ionicons
               name={icon}
               size={20}
-              color={variant === 'outline' ? '#EF4444' : '#FFFFFF'}
+              color={variant === 'outline' ? '#EF4444' : variant === 'secondary' || variant === 'ghost' ? colors.text : '#FFFFFF'}
               style={{ marginLeft: 8 }}
               importantForAccessibility="no"
               accessible={false}

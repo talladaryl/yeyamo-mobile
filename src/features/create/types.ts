@@ -1,6 +1,6 @@
 // ─── Create Types ───────────────────────────────────────────────────────────
 
-export type CreationType = 'publication' | 'story' | 'event' | 'place';
+export type CreationType = 'publication' | 'story' | 'event' | 'place' | 'culture' | 'artwork' | 'challenge';
 
 export interface CreationOption {
   id: CreationType;
@@ -99,4 +99,36 @@ export interface PublicationForm {
   caption: string;
   location?: string;
   tags?: string[];
+}
+
+export interface ArtworkDraft {
+  artisanPartnerId: string;
+  title: string;
+  slug?: string;
+  shortDescription: string;
+  materials?: string;
+  techniques?: string;
+  story: string;
+  countryCode: string;
+  adminLevel1Id?: string;
+  cityId?: string;
+  localityId?: string;
+  cultureContentId?: string;
+  culturalCommunity?: string;
+  yearCreated?: number;
+  productionTime?: string;
+  width?: string;
+  height?: string;
+  depth?: string;
+  weight?: string;
+  editionType: 'UNIQUE' | 'LIMITED_EDITION' | 'SERIES' | 'REPRODUCTION' | 'CUSTOM_ORDER';
+  editionSize?: number;
+  availabilityStatus: 'DISPLAY_ONLY' | 'AVAILABLE' | 'ON_ORDER' | 'RESERVED' | 'SOLD' | 'UNAVAILABLE';
+  saleType?: 'FIXED_PRICE' | 'ON_REQUEST' | 'CUSTOM_ORDER' | 'AUCTION_FUTURE';
+  amount?: string;
+  currencyCode?: string;
+  availableQuantity?: number;
+  internationalShipping?: boolean;
+  customOrderAllowed?: boolean;
+  mediaIds: Array<{ mediaId: string; type: 'PRIMARY_IMAGE' | 'GALLERY_IMAGE' | 'VIDEO' | 'CREATION_PROCESS' | 'ARTISAN_AUDIO' | 'HISTORY_AUDIO' | 'CERTIFICATE'; displayOrder: number }>;
 }

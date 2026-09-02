@@ -1,21 +1,35 @@
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Icon } from '@/components/ui/Icon';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { TrendingPlaceCard } from '@/components/explore/TrendingPlaceCard';
 import { EventCard } from '@/components/explore/EventCard';
-import { regions, trendingPlaces, upcomingEvents } from '@/features/explore/mockData';
+import { useRegions, useTrendingPlaces } from '@/features/explore/useExplore';
+import { useUpcomingEvents } from '@/features/events/useEvents';
 
 export default function RegionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { data: regions = [] } = useRegions();
+  const { data: trendingPlaces = [] } = useTrendingPlaces();
+  const { data: backendEvents = [] } = useUpcomingEvents();
+  const upcomingEvents = backendEvents.map((event) => ({
+    id: event.id,
+    title: event.title,
+    date_start: event.start_date,
+    date_end: event.end_date,
+    location: event.location,
+    image_url: event.cover_image_url ?? '',
+    attendees_count: event.participants_count,
+  }));
 
-  // Find region (mock)
   const region = regions.find(r => r.id === Number(id)) || regions[0];
+  if (!region) return null;
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -51,46 +65,46 @@ export default function RegionDetailScreen() {
         <View className="px-4 pt-4">
           {/* Badge */}
           <View className="bg-[#EF4444] self-start px-3 py-1.5 rounded-full mb-3">
-            <Text className="text-white text-xs font-semibold">
+            <Text className="text-[#18181B] dark:text-white text-xs font-semibold">
               Région de l'Ouest
             </Text>
           </View>
 
           {/* Title */}
-          <Text className="text-white text-2xl font-bold mb-2">
+          <Text className="text-[#18181B] dark:text-white text-2xl font-bold mb-2">
             {region.name}
           </Text>
 
           {/* Description */}
-          <Text className="text-[#A1A1AA] text-sm leading-6 mb-4">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm leading-6 mb-4">
             {region.description}
           </Text>
 
           {/* Stats */}
-          <View className="flex-row items-center justify-around bg-[#161616] rounded-2xl py-4 mb-6">
+          <View className="flex-row items-center justify-around bg-white dark:bg-[#161616] rounded-2xl py-4 mb-6">
             <View className="items-center">
-              <Text className="text-white text-2xl font-bold">
+              <Text className="text-[#18181B] dark:text-white text-2xl font-bold">
                 {region.places_count}
               </Text>
-              <Text className="text-[#A1A1AA] text-xs mt-1">Lieux</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-1">Lieux</Text>
             </View>
 
-            <View className="w-px h-12 bg-[#27272A]" />
+            <View className="w-px h-12 bg-[#F4F4F5] dark:bg-[#27272A]" />
 
             <View className="items-center">
-              <Text className="text-white text-2xl font-bold">
+              <Text className="text-[#18181B] dark:text-white text-2xl font-bold">
                 {region.events_count}
               </Text>
-              <Text className="text-[#A1A1AA] text-xs mt-1">Événements</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-1">Événements</Text>
             </View>
 
-            <View className="w-px h-12 bg-[#27272A]" />
+            <View className="w-px h-12 bg-[#F4F4F5] dark:bg-[#27272A]" />
 
             <View className="items-center">
-              <Text className="text-white text-2xl font-bold">
+              <Text className="text-[#18181B] dark:text-white text-2xl font-bold">
                 {region.experiences_count}
               </Text>
-              <Text className="text-[#A1A1AA] text-xs mt-1">Expériences</Text>
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-1">Expériences</Text>
             </View>
           </View>
         </View>
@@ -98,7 +112,7 @@ export default function RegionDetailScreen() {
         {/* À ne pas manquer */}
         <View className="mb-6">
           <View className="px-4 flex-row items-center justify-between mb-3">
-            <Text className="text-white text-lg font-bold">
+            <Text className="text-[#18181B] dark:text-white text-lg font-bold">
               À ne pas manquer
             </Text>
             <TouchableOpacity
@@ -127,7 +141,7 @@ export default function RegionDetailScreen() {
         {/* Prochains événements */}
         <View className="mb-6">
           <View className="px-4 flex-row items-center justify-between mb-3">
-            <Text className="text-white text-lg font-bold">
+            <Text className="text-[#18181B] dark:text-white text-lg font-bold">
               Prochains événements
             </Text>
             <TouchableOpacity
@@ -158,7 +172,7 @@ export default function RegionDetailScreen() {
       </ScrollView>
 
       {/* Fixed Bottom CTA */}
-      <SafeAreaView className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-3">
+      <SafeAreaView className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-3">
         <CTAButton
           title="Explorer la région"
           variant="primary"

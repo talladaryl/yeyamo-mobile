@@ -13,7 +13,7 @@ export function CollectionPlaceItem({ place, onPress, onTogglePriority }: Collec
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="flex-row bg-[#161616] rounded-xl p-3 mb-3"
+      className="flex-row bg-white dark:bg-[#161616] rounded-xl p-3 mb-3"
       activeOpacity={0.7}
     >
       {/* Image */}
@@ -26,20 +26,20 @@ export function CollectionPlaceItem({ place, onPress, onTogglePriority }: Collec
       {/* Informations */}
       <View className="flex-1 ml-3 justify-between">
         <View>
-          <Text className="text-white font-semibold text-base" numberOfLines={1}>
+          <Text className="text-[#18181B] dark:text-white font-semibold text-base" numberOfLines={1}>
             {place.name}
           </Text>
-          <Text className="text-[#A1A1AA] text-sm" numberOfLines={1}>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm" numberOfLines={1}>
             {place.category.name} • {place.city}
           </Text>
         </View>
 
         <View className="flex-row items-center">
           <Ionicons name="star" size={14} color="#F59E0B" />
-          <Text className="text-white text-sm ml-1">
+          <Text className="text-[#18181B] dark:text-white text-sm ml-1">
             {place.rating.toFixed(1)}
           </Text>
-          <Text className="text-[#A1A1AA] text-sm ml-1">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm ml-1">
             ({place.reviews_count} avis)
           </Text>
         </View>

@@ -17,7 +17,6 @@ import { CommentItem } from './src/components/comments/CommentItem';
 import { CommentInput } from './src/components/comments/CommentInput';
 
 // Profile Components
-import { ProfileHeader } from './src/components/profile/ProfileHeader';
 import { MediaGrid } from './src/components/profile/MediaGrid';
 
 // Place Components

@@ -9,10 +9,10 @@ interface StatCardProps {
 export function StatCard({ stat }: StatCardProps) {
   return (
     <View className="bg-[#EF4444] rounded-xl p-4 flex-1">
-      <Text className="text-white text-sm mb-1">
+      <Text className="mb-1 text-sm text-white">
         {stat.label}
       </Text>
-      <Text className="text-white text-3xl font-bold mb-1">
+      <Text className="mb-1 text-3xl font-bold text-white">
         {stat.value}
       </Text>
       <View className="flex-row items-center gap-1">
@@ -22,7 +22,7 @@ export function StatCard({ stat }: StatCardProps) {
           size={14}
           color="#FFFFFF"
         />
-        <Text className="text-white text-sm font-semibold">
+        <Text className="text-sm font-semibold text-white">
           {stat.change}
         </Text>
       </View>

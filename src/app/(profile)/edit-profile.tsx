@@ -7,21 +7,50 @@ import {
   TextInput,
   Image,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
-import { AVAILABLE_INTERESTS, REGIONS } from '@/features/settings/types';
+import { AVAILABLE_INTERESTS, REGIONS, type ProfileSettings } from '@/features/settings/types';
 import { InterestTag } from '@/components/settings/InterestTag';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { useProfileSettings, useUpdateProfileSettings } from '@/features/settings/useSettings';
+import { useUploadMedia } from '@/features/post/usePost';
+import { useInterestsStore } from '@/features/interests/interests.store';
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const [settings, setSettings] = useState(MOCK_USER_SETTINGS.profile);
+  const colors = useThemeStore((state) => state.colors);
+  const { data } = useProfileSettings();
+  const updateProfile = useUpdateProfileSettings();
+  const uploadMedia = useUploadMedia();
+  const [settings, setSettings] = useState<ProfileSettings | null>(null);
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (data) setSettings(data);
+  }, [data]);
+
+  if (!settings) return null;
+
+  const handleSave = async () => {
+    let avatarUrl = settings.avatar_url;
+    if (avatarUrl?.startsWith('file:') || avatarUrl?.startsWith('content:')) {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: avatarUrl,
+        name: 'avatar.jpg',
+        type: 'image/jpeg',
+      } as unknown as Blob);
+      avatarUrl = (await uploadMedia.mutateAsync(formData)).data.url;
+    }
+    await updateProfile.mutateAsync({ ...settings, avatar_url: avatarUrl });
+    const interests = useInterestsStore.getState();
+    interests.setSelectedInterests(settings.interests);
+    await interests.saveInterests();
     Alert.alert('Succès', 'Votre profil a été mis à jour');
     router.back();
   };
@@ -65,23 +94,24 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }} edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A] flex-row items-center justify-between">
+      <View className="px-4 py-3 border-b flex-row items-center justify-between" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
         <View className="flex-row items-center flex-1">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold ml-2">Modifier le profil</Text>
+          <Text className="text-[#18181B] dark:text-white text-xl font-bold ml-2">Modifier le profil</Text>
         </View>
         <TouchableOpacity onPress={handleSave} activeOpacity={0.7}>
           <Text className="text-[#EF4444] font-semibold text-base">Enregistrer</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}>
         {/* Photo de profil */}
-        <View className="items-center py-6 border-b border-[#27272A]">
+        <View className="items-center py-6 border-b border-[#E4E4E7] dark:border-[#27272A]">
           <View className="relative">
             {settings.avatar_url ? (
               <Image
@@ -89,7 +119,7 @@ export default function EditProfileScreen() {
                 className="w-24 h-24 rounded-full"
               />
             ) : (
-              <View className="w-24 h-24 rounded-full bg-[#27272A] items-center justify-center">
+              <View className="w-24 h-24 rounded-full bg-[#F4F4F5] dark:bg-[#27272A] items-center justify-center">
                 <Ionicons name="person" size={40} color="#A1A1AA" />
               </View>
             )}
@@ -101,20 +131,21 @@ export default function EditProfileScreen() {
               <Ionicons name="camera" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          <Text className="text-[#A1A1AA] text-xs mt-2">Modifier la photo</Text>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-2">Modifier la photo</Text>
         </View>
 
         {/* Formulaire */}
         <View className="px-4 pt-6">
           {/* Nom */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Nom
             </Text>
             <TextInput
               value={settings.display_name}
               onChangeText={(text) => setSettings({ ...settings, display_name: text })}
-              className="bg-[#161616] text-white px-4 py-3 rounded-xl"
+              className="border px-4 py-3 rounded-xl"
+              style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
               placeholderTextColor="#52525B"
               placeholder="Votre nom"
             />
@@ -122,13 +153,14 @@ export default function EditProfileScreen() {
 
           {/* Nom d'utilisateur */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Nom d'utilisateur
             </Text>
             <TextInput
               value={settings.username}
               onChangeText={(text) => setSettings({ ...settings, username: text })}
-              className="bg-[#161616] text-white px-4 py-3 rounded-xl"
+              className="border px-4 py-3 rounded-xl"
+              style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
               placeholderTextColor="#52525B"
               placeholder="@username"
               autoCapitalize="none"
@@ -137,13 +169,14 @@ export default function EditProfileScreen() {
 
           {/* Bio */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Bio
             </Text>
             <TextInput
               value={settings.bio || ''}
               onChangeText={(text) => setSettings({ ...settings, bio: text })}
-              className="bg-[#161616] text-white px-4 py-3 rounded-xl"
+              className="border px-4 py-3 rounded-xl"
+              style={{ minHeight: 96, backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
               placeholderTextColor="#52525B"
               placeholder="Parlez de vous..."
               multiline
@@ -154,28 +187,30 @@ export default function EditProfileScreen() {
 
           {/* Ville */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Ville
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] px-4 py-3 rounded-xl flex-row items-center justify-between"
+              className="border px-4 py-3 rounded-xl flex-row items-center justify-between"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
               activeOpacity={0.7}
               onPress={() =>
                 Alert.alert('Ville', 'Sélecteur de ville à implémenter')
               }
             >
-              <Text className="text-white">{settings.city || 'Sélectionner une ville'}</Text>
+              <Text className="text-[#18181B] dark:text-white">{settings.city || 'Sélectionner une ville'}</Text>
               <Ionicons name="chevron-forward" size={18} color="#52525B" />
             </TouchableOpacity>
           </View>
 
           {/* Région */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Région
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] px-4 py-3 rounded-xl flex-row items-center justify-between"
+              className="border px-4 py-3 rounded-xl flex-row items-center justify-between"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
               activeOpacity={0.7}
               onPress={() =>
                 Alert.alert(
@@ -188,7 +223,7 @@ export default function EditProfileScreen() {
                 )
               }
             >
-              <Text className="text-white">
+              <Text className="text-[#18181B] dark:text-white">
                 {settings.region || 'Sélectionner une région'}
               </Text>
               <Ionicons name="chevron-forward" size={18} color="#52525B" />
@@ -197,11 +232,12 @@ export default function EditProfileScreen() {
 
           {/* Genre */}
           <View className="mb-4">
-            <Text className="text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-2">
               Genre
             </Text>
             <TouchableOpacity
-              className="bg-[#161616] px-4 py-3 rounded-xl flex-row items-center justify-between"
+              className="border px-4 py-3 rounded-xl flex-row items-center justify-between"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
               activeOpacity={0.7}
               onPress={() =>
                 Alert.alert('Genre', 'Sélectionnez votre genre', [
@@ -225,7 +261,7 @@ export default function EditProfileScreen() {
                 ])
               }
             >
-              <Text className="text-white">
+              <Text className="text-[#18181B] dark:text-white">
                 {settings.gender === 'male'
                   ? 'Homme'
                   : settings.gender === 'female'
@@ -243,7 +279,7 @@ export default function EditProfileScreen() {
           {/* Centres d'intérêt */}
           <View className="mb-6">
             <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-[#A1A1AA] text-xs font-semibold uppercase">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase">
                 Centres d'intérêt
               </Text>
               <TouchableOpacity onPress={handleAddInterest} activeOpacity={0.7}>
@@ -271,6 +307,7 @@ export default function EditProfileScreen() {
           </View>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -12,21 +12,21 @@ interface VisibilityPickerProps {
 export function VisibilityPicker({ value, onChange }: VisibilityPickerProps) {
   return (
     <View>
-      <Text className="text-white font-semibold text-base mb-3">Visibilité</Text>
+      <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-3">Visibilité</Text>
       {VISIBILITY_OPTIONS.map((option) => (
         <TouchableOpacity
           key={option.value}
           onPress={() => onChange(option.value)}
-          className="flex-row items-center py-3 border-b border-[#27272A]"
+          className="flex-row items-center py-3 border-b border-[#E4E4E7] dark:border-[#27272A]"
           activeOpacity={0.7}
         >
-          <View className="w-10 h-10 rounded-full bg-[#27272A] items-center justify-center mr-3">
+          <View className="w-10 h-10 rounded-full bg-[#F4F4F5] dark:bg-[#27272A] items-center justify-center mr-3">
             <Ionicons name={option.icon as any} size={20} color="#EF4444" />
           </View>
 
           <View className="flex-1">
-            <Text className="text-white font-medium text-base">{option.label}</Text>
-            <Text className="text-[#A1A1AA] text-sm">{option.description}</Text>
+            <Text className="text-[#18181B] dark:text-white font-medium text-base">{option.label}</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">{option.description}</Text>
           </View>
 
           <View

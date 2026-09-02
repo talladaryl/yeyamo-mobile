@@ -6,20 +6,25 @@ export type ExploreCategory =
   | 'experiences' 
   | 'restaurants' 
   | 'hotels'
+  | 'culture'
+  | 'languages'
+  | 'artworks'
+  | 'artisans'
+  | 'challenges'
   | 'all';
 
 export interface Category {
-  id: ExploreCategory;
+  id: string;
   label: string;
   icon: string;
   iconLibrary: 'ionicons' | 'material' | 'material-community';
 }
 
 export interface TrendingPlace {
-  id: number;
+  id: EntityId;
   name: string;
   city: string;
-  region_id: number;
+  region_id: EntityId;
   rating: number;
   reviews_count: number;
   distance_km: number;
@@ -27,11 +32,24 @@ export interface TrendingPlace {
   category: string;
 }
 
+export const EXPLORE_CATEGORY_DEFINITIONS: Category[] = [
+  { id: 'attractions', label: 'Attractions', icon: 'location-outline', iconLibrary: 'ionicons' },
+  { id: 'events', label: 'Événements', icon: 'calendar-outline', iconLibrary: 'ionicons' },
+  { id: 'experiences', label: 'Expériences', icon: 'compass-outline', iconLibrary: 'ionicons' },
+  { id: 'restaurants', label: 'Restaurants', icon: 'restaurant-outline', iconLibrary: 'ionicons' },
+  { id: 'hotels', label: 'Hôtels', icon: 'bed-outline', iconLibrary: 'ionicons' },
+  { id: 'culture', label: 'Culture', icon: 'leaf-outline', iconLibrary: 'ionicons' },
+  { id: 'languages', label: 'Langues', icon: 'language-outline', iconLibrary: 'ionicons' },
+  { id: 'artworks', label: 'Œuvres à découvrir', icon: 'color-palette-outline', iconLibrary: 'ionicons' },
+  { id: 'artisans', label: 'Artisans près de vous', icon: 'people-outline', iconLibrary: 'ionicons' },
+  { id: 'challenges', label: 'Défis', icon: 'trophy-outline', iconLibrary: 'ionicons' },
+];
+
 export interface Place {
-  id: number;
+  id: EntityId;
   name: string;
   category: {
-    id: number;
+    id: EntityId;
     name: string;
     icon?: string;
   };
@@ -56,6 +74,7 @@ export interface Place {
 
 export interface Region {
   id: number;
+  code?: string;
   name: string;
   description: string;
   places_count: number;
@@ -80,7 +99,7 @@ export interface SearchFilters {
 }
 
 export interface MapPlace {
-  id: number;
+  id: EntityId;
   name: string;
   coordinates: {
     latitude: number;
@@ -92,7 +111,7 @@ export interface MapPlace {
 }
 
 export interface UpcomingEvent {
-  id: number;
+  id: EntityId;
   title: string;
   date_start: string;
   date_end: string;
@@ -100,3 +119,4 @@ export interface UpcomingEvent {
   image_url: string;
   attendees_count: number;
 }
+import type { EntityId } from '@/types/api.types';

@@ -1,79 +1,63 @@
 import ENV from '@/config/env';
+import { isDemoSession } from '@/features/auth/auth.store';
 
 type MessageHandler = (event: string, data: unknown) => void;
-type SubscriptionMap = Map<string, Set<MessageHandler>>;
 
-interface ReverbMessage {
-  event: string;
-  channel: string;
-  data: unknown;
+interface MessagingEnvelope {
+  eventType: string;
+  payload: unknown;
 }
 
-// ─── Reverb WebSocket Client ──────────────────────────────────────────────────
-// Architecture-ready abstraction for Laravel Reverb.
-// Does NOT depend on Pusher JS — uses raw WebSocket for React Native compatibility.
-class ReverbClient {
+class StompMessagingClient {
   private socket: WebSocket | null = null;
-  private subscriptions: SubscriptionMap = new Map();
+  private handlers = new Map<string, Set<MessageHandler>>();
   private token: string | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectAttempts = 0;
-  private readonly MAX_RECONNECT = 5;
-  private readonly RECONNECT_DELAY_MS = 2_000;
-
-  // ─── Public API ─────────────────────────────────────────────────────────────
+  private manuallyClosed = false;
 
   connect(userToken: string): void {
-    if (ENV.USE_MOCKS) return;
-
+    if (isDemoSession()) return;
+    if (this.token === userToken && this.socket?.readyState === WebSocket.OPEN) return;
     this.token = userToken;
-    this._open();
+    this.manuallyClosed = false;
+    if (this.socket) {
+      this.socket.onclose = null;
+      this.socket.close();
+    }
+    this.open();
   }
 
   subscribe(channel: string, onMessage: MessageHandler): () => void {
-    if (ENV.USE_MOCKS) return () => {};
-
-    if (!this.subscriptions.has(channel)) {
-      this.subscriptions.set(channel, new Set());
-      this._sendSubscribe(channel);
-    }
-    this.subscriptions.get(channel)!.add(onMessage);
-
-    // Return unsubscribe function
+    if (isDemoSession()) return () => {};
+    const handlers = this.handlers.get(channel) ?? new Set<MessageHandler>();
+    handlers.add(onMessage);
+    this.handlers.set(channel, handlers);
     return () => this.unsubscribe(channel, onMessage);
   }
 
   unsubscribe(channel: string, handler?: MessageHandler): void {
-    if (!handler) {
-      this.subscriptions.delete(channel);
-      this._sendUnsubscribe(channel);
-      return;
-    }
-    const handlers = this.subscriptions.get(channel);
-    if (handlers) {
-      handlers.delete(handler);
-      if (handlers.size === 0) {
-        this.subscriptions.delete(channel);
-        this._sendUnsubscribe(channel);
-      }
-    }
+    const handlers = this.handlers.get(channel);
+    if (!handlers) return;
+    if (handler) handlers.delete(handler);
+    else handlers.clear();
+    if (handlers.size === 0) this.handlers.delete(channel);
   }
 
-  sendMessage(channel: string, event: string, payload: unknown): void {
-    if (this.socket?.readyState !== WebSocket.OPEN) {
-      console.warn('[Reverb] Socket not open, message dropped');
-      return;
-    }
-    this.socket.send(
-      JSON.stringify({ event, channel, data: payload }),
-    );
+  sendMessage(_channel: string, _event: string, _payload: unknown): void {
+    console.warn('[STOMP] Les messages applicatifs doivent être envoyés via l’API REST.');
   }
 
   disconnect(): void {
-    this._clearReconnectTimer();
-    this.subscriptions.clear();
+    this.manuallyClosed = true;
+    this.clearReconnectTimer();
+    this.clearHeartbeat();
+    this.handlers.clear();
     this.token = null;
-    this.reconnectAttempts = 0;
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send('DISCONNECT\nreceipt:mobile-disconnect\n\n\0');
+    }
     this.socket?.close();
     this.socket = null;
   }
@@ -82,72 +66,102 @@ class ReverbClient {
     return this.socket?.readyState === WebSocket.OPEN;
   }
 
-  // ─── Private internals ──────────────────────────────────────────────────────
+  private open(): void {
+    if (!this.token || this.manuallyClosed) return;
+    const socket = new WebSocket(ENV.MESSAGING_WS_URL, ['v12.stomp', 'v11.stomp']);
+    this.socket = socket;
 
-  private _open(): void {
-    if (!this.token) return;
-
-    const url = `${ENV.REVERB_SCHEME}://${ENV.REVERB_HOST}:${ENV.REVERB_PORT}/app/yeyamo?protocol=7&client=js&version=8.4.0&flash=false`;
-
-    this.socket = new WebSocket(url);
-
-    this.socket.onopen = () => {
-      this.reconnectAttempts = 0;
-      // Re-subscribe to all channels after reconnect
-      this.subscriptions.forEach((_, channel) => this._sendSubscribe(channel));
+    socket.onopen = () => {
+      socket.send(
+        [
+          'CONNECT',
+          'accept-version:1.2,1.1',
+          'heart-beat:10000,10000',
+          `Authorization:Bearer ${this.token}`,
+          '',
+          '\0',
+        ].join('\n'),
+      );
     };
 
-    this.socket.onmessage = (event: MessageEvent<string>) => {
-      try {
-        const msg: ReverbMessage = JSON.parse(event.data) as ReverbMessage;
-        const handlers = this.subscriptions.get(msg.channel);
-        handlers?.forEach((fn) => fn(msg.event, msg.data));
-      } catch {
-        // Malformed frame — ignore
+    socket.onmessage = (message: MessageEvent<string>) => {
+      this.handleFrames(String(message.data));
+    };
+
+    socket.onerror = () => {
+      // onclose effectue la reconnexion.
+    };
+
+    socket.onclose = () => {
+      this.clearHeartbeat();
+      this.scheduleReconnect();
+    };
+  }
+
+  private handleFrames(raw: string): void {
+    for (const rawFrame of raw.split('\0')) {
+      const frame = rawFrame.replace(/^\n+/, '');
+      if (!frame.trim()) continue;
+      const separator = frame.indexOf('\n\n');
+      const headerBlock = separator >= 0 ? frame.slice(0, separator) : frame;
+      const body = separator >= 0 ? frame.slice(separator + 2) : '';
+      const [command] = headerBlock.split('\n');
+
+      if (command === 'CONNECTED') {
+        this.reconnectAttempts = 0;
+        this.socket?.send(
+          [
+            'SUBSCRIBE',
+            'id:mobile-messaging',
+            'destination:/user/queue/messaging',
+            'ack:auto',
+            '',
+            '\0',
+          ].join('\n'),
+        );
+        this.startHeartbeat();
+      } else if (command === 'MESSAGE') {
+        try {
+          const envelope = JSON.parse(body) as MessagingEnvelope;
+          this.handlers.forEach((handlers) => {
+            handlers.forEach((handler) =>
+              handler(envelope.eventType, envelope.payload),
+            );
+          });
+        } catch {
+          // Une frame invalide est ignorée ; le rattrapage se fait par REST.
+        }
+      } else if (command === 'ERROR') {
+        this.socket?.close();
       }
-    };
-
-    this.socket.onerror = () => {
-      // onerror is always followed by onclose, handle in onclose
-    };
-
-    this.socket.onclose = () => {
-      this._scheduleReconnect();
-    };
-  }
-
-  private _sendSubscribe(channel: string): void {
-    if (this.socket?.readyState !== WebSocket.OPEN) return;
-    this.socket.send(
-      JSON.stringify({
-        event: 'pusher:subscribe',
-        data: { channel, auth: this.token ?? '' },
-      }),
-    );
-  }
-
-  private _sendUnsubscribe(channel: string): void {
-    if (this.socket?.readyState !== WebSocket.OPEN) return;
-    this.socket.send(
-      JSON.stringify({ event: 'pusher:unsubscribe', data: { channel } }),
-    );
-  }
-
-  private _scheduleReconnect(): void {
-    if (this.reconnectAttempts >= this.MAX_RECONNECT || !this.token) return;
-    this._clearReconnectTimer();
-    const delay = this.RECONNECT_DELAY_MS * Math.pow(2, this.reconnectAttempts);
-    this.reconnectAttempts += 1;
-    this.reconnectTimer = setTimeout(() => this._open(), delay);
-  }
-
-  private _clearReconnectTimer(): void {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
     }
+  }
+
+  private startHeartbeat(): void {
+    this.clearHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.socket?.readyState === WebSocket.OPEN) this.socket.send('\n');
+    }, 10_000);
+  }
+
+  private scheduleReconnect(): void {
+    if (this.manuallyClosed || !this.token || this.reconnectAttempts >= 8) return;
+    this.clearReconnectTimer();
+    const delay = Math.min(30_000, 1_000 * 2 ** this.reconnectAttempts);
+    this.reconnectAttempts += 1;
+    this.reconnectTimer = setTimeout(() => this.open(), delay);
+  }
+
+  private clearReconnectTimer(): void {
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+  }
+
+  private clearHeartbeat(): void {
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = null;
   }
 }
 
-// Singleton — one socket per app session
-export const reverbClient = new ReverbClient();
+// Nom conservé pour ne pas casser les imports existants ; le protocole est désormais STOMP.
+export const reverbClient = new StompMessagingClient();

@@ -1,7 +1,8 @@
-﻿import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from '@/components/ui/Avatar';
 import type { Notification } from '@/features/notifications/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -16,6 +17,17 @@ const iconConfig: Record<Notification['type'], { name: string; color: string }> 
   event_reminder: { name: 'notifications', color: '#F59E0B' },
   new_place: { name: 'location', color: '#06B6D4' },
   reservation_confirmed: { name: 'checkmark-circle', color: '#10B981' },
+  CULTURE_CONTRIBUTION_APPROVED: { name: 'leaf', color: '#16A34A' },
+  CULTURE_CONTRIBUTION_REJECTED: { name: 'close-circle', color: '#EF4444' },
+  TRANSLATION_VERIFIED: { name: 'language', color: '#2563EB' },
+  CHALLENGE_STARTED: { name: 'trophy', color: '#7C3AED' },
+  CHALLENGE_RESULT: { name: 'ribbon', color: '#F59E0B' },
+  ARTWORK_LIKED: { name: 'heart', color: '#EF4444' },
+  ARTWORK_SOLD: { name: 'pricetag', color: '#16A34A' },
+  ARTWORK_ORDER_CREATED: { name: 'receipt', color: '#2563EB' },
+  ARTWORK_ORDER_UPDATED: { name: 'refresh-circle', color: '#0EA5E9' },
+  ARTISAN_FOLLOWED: { name: 'person-add', color: '#DB2777' },
+  AUTHENTICITY_VERIFIED: { name: 'shield-checkmark', color: '#16A34A' },
 };
 
 function getTimeAgo(date: string) {
@@ -33,14 +45,17 @@ function getTimeAgo(date: string) {
 }
 
 export function NotificationItem({ notification, onPress }: NotificationItemProps) {
-  const icon = iconConfig[notification.type];
+  const icon = iconConfig[notification.type] ?? { name: 'notifications-outline', color: '#71717A' };
+  const colors = useThemeStore((state) => state.colors);
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-row items-start px-4 py-4 border-b border-[#27272A] ${
-        !notification.is_read ? 'bg-[#161616]' : 'bg-transparent'
-      }`}
+      className="flex-row items-start px-4 py-4 border-b"
+      style={{
+        borderColor: colors.border,
+        backgroundColor: notification.is_read ? 'transparent' : colors.card,
+      }}
       activeOpacity={0.7}
     >
       {notification.user?.avatar_url ? (
@@ -59,13 +74,13 @@ export function NotificationItem({ notification, onPress }: NotificationItemProp
       )}
 
       <View className="flex-1 ml-3">
-        <Text className="text-white text-sm font-semibold mb-0.5">
+        <Text className="text-sm font-semibold mb-0.5" style={{ color: colors.text }}>
           {notification.title ?? notification.user?.display_name ?? 'Yeyamo'}
         </Text>
-        <Text className="text-[#A1A1AA] text-sm" numberOfLines={2}>
+        <Text className="text-sm" style={{ color: colors.textSecondary }} numberOfLines={2}>
           {notification.content}
         </Text>
-        <Text className="text-[#71717A] text-xs mt-1">
+        <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
           {getTimeAgo(notification.created_at)}
         </Text>
       </View>

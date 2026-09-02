@@ -5,9 +5,11 @@ import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { usePartnerStore } from '@/features/partner/partner.store';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function AddEventStep4Screen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const { eventForm, resetEventForm } = usePartnerStore();
   const [showFullPreview, setShowFullPreview] = useState(false);
 
@@ -21,17 +23,17 @@ export default function AddEventStep4Screen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Ajouter un événement',
           headerTitleStyle: { fontSize: 18, fontWeight: '600' },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
@@ -47,16 +49,16 @@ export default function AddEventStep4Screen() {
             <View className="w-24 h-24 bg-[#EF4444]/20 rounded-full items-center justify-center mb-4">
               <Icon library="ionicons" name="checkmark-circle" size={48} color="#EF4444" />
             </View>
-            <Text className="text-white text-lg font-bold mb-2">Aperçu</Text>
-            <Text className="text-[#A1A1AA] text-sm text-center">
+            <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-2">Aperçu</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm text-center">
               Vérifiez les informations avant publication
             </Text>
           </View>
 
           {/* Preview Card */}
-          <View className="bg-[#161616] rounded-2xl overflow-hidden border border-[#27272A] mb-6">
+          <View className="bg-white dark:bg-[#161616] rounded-2xl overflow-hidden border border-[#E4E4E7] dark:border-[#27272A] mb-6">
             {/* Cover Image */}
-            <View className="bg-[#27272A] h-48 items-center justify-center">
+            <View className="bg-[#F4F4F5] dark:bg-[#27272A] h-48 items-center justify-center">
               <Icon library="ionicons" name="image-outline" size={48} color="#52525B" />
               <Text className="text-[#52525B] text-xs mt-2">Image de l'événement</Text>
             </View>
@@ -65,7 +67,7 @@ export default function AddEventStep4Screen() {
             <View className="p-4">
               {/* Name & Date Badge */}
               <View className="mb-3">
-                <Text className="text-white text-lg font-bold mb-2">
+                <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-2">
                   {eventForm.name || 'Festival Ngundo 2026'}
                 </Text>
                 
@@ -80,8 +82,8 @@ export default function AddEventStep4Screen() {
 
               {/* Tarif Badge */}
               {eventForm.ticket_price_enabled && eventForm.ticket_price && (
-                <View className="bg-[#0A0A0A] px-3 py-2 rounded-lg mb-3 self-start">
-                  <Text className="text-white text-sm font-semibold">
+                <View className="bg-white dark:bg-[#0A0A0A] px-3 py-2 rounded-lg mb-3 self-start">
+                  <Text className="text-[#18181B] dark:text-white text-sm font-semibold">
                     {eventForm.ticket_price} FCFA
                   </Text>
                 </View>
@@ -91,16 +93,16 @@ export default function AddEventStep4Screen() {
               <View className="space-y-3">
                 {/* Location */}
                 <View>
-                  <Text className="text-[#A1A1AA] text-xs font-medium mb-1">Lieu</Text>
-                  <Text className="text-white text-sm">
+                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Lieu</Text>
+                  <Text className="text-[#18181B] dark:text-white text-sm">
                     {eventForm.location || 'La Falaise Resort, Douala'}
                   </Text>
                 </View>
 
                 {/* Description */}
                 <View>
-                  <Text className="text-[#A1A1AA] text-xs font-medium mb-1">Description</Text>
-                  <Text className="text-white text-sm leading-5">
+                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Description</Text>
+                  <Text className="text-[#18181B] dark:text-white text-sm leading-5">
                     {eventForm.description || 'La Ngondo est un plus grand festival dans la ville culturelle du Sénégal, où les traditions se mêlent à la modernité. Ce moment unique rassemble 4 musiques, 4 danses et de la gastronomie locale.'}
                   </Text>
                 </View>
@@ -108,8 +110,8 @@ export default function AddEventStep4Screen() {
                 {/* Capacity */}
                 {showFullPreview && eventForm.max_seats && (
                   <View>
-                    <Text className="text-[#A1A1AA] text-xs font-medium mb-1">Capacité</Text>
-                    <Text className="text-white text-sm">{eventForm.max_seats} personnes</Text>
+                    <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Capacité</Text>
+                    <Text className="text-[#18181B] dark:text-white text-sm">{eventForm.max_seats} personnes</Text>
                   </View>
                 )}
               </View>
@@ -117,8 +119,8 @@ export default function AddEventStep4Screen() {
               {/* Voir plus button */}
               {showFullPreview ? (
                 <View className="mt-3">
-                  <Text className="text-[#A1A1AA] text-xs font-medium mb-1">Statut</Text>
-                  <Text className="text-white text-sm">Brouillon prêt pour validation</Text>
+                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Statut</Text>
+                  <Text className="text-[#18181B] dark:text-white text-sm">Brouillon prêt pour validation</Text>
                 </View>
               ) : null}
 
@@ -133,7 +135,7 @@ export default function AddEventStep4Screen() {
           {/* Info Message */}
           <View className="bg-[#EF4444]/10 border border-[#EF4444]/20 rounded-xl p-4 flex-row">
             <Icon library="ionicons" name="information-circle" size={20} color="#EF4444" />
-            <Text className="text-[#A1A1AA] text-xs ml-3 flex-1 leading-5">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs ml-3 flex-1 leading-5">
               Votre événement sera vérifié par notre équipe avant publication. Vous recevrez une notification dans les 24-48h.
             </Text>
           </View>
@@ -143,7 +145,7 @@ export default function AddEventStep4Screen() {
       </ScrollView>
 
       {/* Bottom Buttons */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
         <View className="flex-row gap-3">
           <View className="flex-1">
             <CTAButton

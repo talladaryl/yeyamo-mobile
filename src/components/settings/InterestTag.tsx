@@ -8,8 +8,8 @@ interface InterestTagProps {
 
 export function InterestTag({ label, onRemove }: InterestTagProps) {
   return (
-    <View className="flex-row items-center bg-[#27272A] rounded-full px-3 py-2">
-      <Text className="text-white text-sm font-medium mr-2">{label}</Text>
+    <View className="flex-row items-center bg-[#F4F4F5] dark:bg-[#27272A] rounded-full px-3 py-2">
+      <Text className="text-[#18181B] dark:text-white text-sm font-medium mr-2">{label}</Text>
       <TouchableOpacity onPress={onRemove} activeOpacity={0.7}>
         <Ionicons name="close-circle" size={18} color="#EF4444" />
       </TouchableOpacity>

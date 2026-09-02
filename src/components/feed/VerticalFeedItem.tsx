@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, Dimensions, Pressable } from 'react-native';
+import { useEffect } from 'react';
+import { View, Text, TouchableOpacity, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,11 +10,15 @@ import { formatCount } from '@/utils/format';
 import { useRouter } from 'expo-router';
 import type { FeedPost } from '@/features/feed/types';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 type VerticalFeedItemProps = {
   post: FeedPost;
+  height: number;
+  bottomOverlayInset: number;
   isActive: boolean;
+  isFollowing: boolean;
+  isSaved: boolean;
+  playbackRate: number;
+  onFollow: () => void;
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
@@ -22,7 +27,13 @@ type VerticalFeedItemProps = {
 
 export function VerticalFeedItem({
   post,
+  height,
+  bottomOverlayInset,
   isActive,
+  isFollowing,
+  isSaved,
+  playbackRate,
+  onFollow,
   onLike,
   onComment,
   onShare,
@@ -35,12 +46,17 @@ export function VerticalFeedItem({
     post.type === 'video' && isActive ? videoUri : null,
     (p) => {
       p.loop = true;
+      p.playbackRate = playbackRate;
       if (isActive) p.play();
     }
   );
 
+  useEffect(() => {
+    if (post.type === 'video') player.playbackRate = playbackRate;
+  }, [playbackRate, player, post.type]);
+
   return (
-    <View style={{ height: SCREEN_HEIGHT - 110 }} className="bg-[#0A0A0A]">
+    <View style={{ height }} className="bg-[#0A0A0A]">
       {/* Media */}
       {post.type === 'video' ? (
         <VideoView
@@ -59,36 +75,37 @@ export function VerticalFeedItem({
 
       {/* Bottom gradient overlay */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.8)']}
-        className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none"
+        colors={['transparent', 'rgba(0,0,0,0.88)']}
+        className="absolute bottom-0 left-0 right-0 h-72 pointer-events-none"
       />
 
       {/* Bottom info */}
-      <View className="absolute bottom-4 left-4 right-20">
-        <Pressable
-          onPress={() => router.push(`/(profile)/${post.author.username}`)}
-          className="flex-row items-center gap-2 mb-3"
-        >
-          <Avatar
-            uri={post.author.avatar_url}
-            displayName={post.author.display_name}
-            size={40}
-          />
-          <View className="flex-1">
-            <View className="flex-row items-center gap-1">
-              <Text className="text-white font-semibold text-sm">
-                {post.author.username}
-              </Text>
-              {post.author.is_verified && <VerifiedBadge size={14} />}
-            </View>
-          </View>
+      <View className="absolute left-4 right-20" style={{ bottom: bottomOverlayInset + 8 }}>
+        <Pressable onPress={() => router.push(`/(profile)/${post.author.username}`)} className="mb-2 flex-row items-center gap-1.5">
+          <Text className="text-[15px] font-extrabold text-white">@{post.author.username}</Text>
+          {post.author.is_verified && <VerifiedBadge size={15} />}
         </Pressable>
 
         {post.caption && (
-          <Text className="text-white text-sm mb-2" numberOfLines={3}>
+          <Text className="mb-2 text-sm leading-5 text-white" numberOfLines={4}>
             {post.caption}
           </Text>
         )}
+
+        {post.linked_content ? (
+          <TouchableOpacity
+            onPress={() => {
+              const linked = post.linked_content!;
+              const routes = { proverb: '/(explore)/proverbs/', recipe: '/(explore)/recipes/', artwork: '/(explore)/artworks/', artist: '/(explore)/artisans/', language: '/(explore)/languages/', culture: '/(explore)/culture/' } as const;
+              router.push(`${routes[linked.type]}${linked.id}` as never);
+            }}
+            className="mb-2 self-start flex-row items-center rounded-full bg-white/20 px-3 py-2"
+          >
+            <Icon name="book-outline" size={15} color="#FFFFFF" />
+            <Text className="ml-2 text-xs font-bold text-white">{post.linked_content.label}</Text>
+            <Icon name="chevron-forward" size={14} color="#FFFFFF" />
+          </TouchableOpacity>
+        ) : null}
 
         {post.place_tag && (
           <View className="flex-row items-center gap-1">
@@ -99,18 +116,26 @@ export function VerticalFeedItem({
       </View>
 
       {/* Right action buttons */}
-      <View className="absolute right-3 bottom-20 gap-6">
+      <View className="absolute right-3 gap-5" style={{ bottom: bottomOverlayInset + 18 }}>
         {/* Author avatar (clickable) */}
-        <TouchableOpacity
-          onPress={() => router.push(`/(profile)/${post.author.username}`)}
-          activeOpacity={0.8}
-        >
+        <View className="items-center pb-1">
+        <TouchableOpacity onPress={() => router.push(`/(profile)/${post.author.username}`)} activeOpacity={0.8}>
           <Avatar
             uri={post.author.avatar_url}
             displayName={post.author.display_name}
             size={44}
           />
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onFollow}
+          activeOpacity={0.8}
+          className="-mt-2 h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#EF4444]"
+          accessibilityRole="button"
+          accessibilityLabel={isFollowing ? `Ne plus suivre ${post.author.display_name}` : `Suivre ${post.author.display_name}`}
+        >
+          <Icon library="ionicons" name={isFollowing ? 'checkmark' : 'add'} size={16} color="#FFFFFF" />
+        </TouchableOpacity>
+        </View>
 
         {/* Like */}
         <TouchableOpacity
@@ -161,7 +186,7 @@ export function VerticalFeedItem({
         >
           <Icon
             library="ionicons"
-            name={post.is_saved ? 'bookmark' : 'bookmark-outline'}
+            name={isSaved ? 'bookmark' : 'bookmark-outline'}
             size={30}
             color="#FFFFFF"
           />

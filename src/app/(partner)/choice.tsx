@@ -1,121 +1,59 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
 import { CreationOptionCard } from '@/components/create/CreationOptionCard';
-import type { PartnerCreationOption } from '@/features/partner/types';
+import { useAuth } from '@/features/auth/useAuth';
+import { useThemeStore } from '@/features/theme/theme.store';
+import type { PartnerCreationOption, PartnerCreationType } from '@/features/partner/types';
 
-const partnerCreationOptions: PartnerCreationOption[] = [
-  {
-    id: 'publication',
-    title: 'Créer une publication',
-    description: 'Partagez une photo, vidéo ou texte avec vos clients',
-    icon: 'phone-portrait',
-    iconLibrary: 'ionicons',
-    color: '#EF4444',
-  },
-  {
-    id: 'story',
-    title: 'Créer une story',
-    description: 'Partagez un moment éphémère avec votre audience',
-    icon: 'book',
-    iconLibrary: 'ionicons',
-    color: '#F59E0B',
-  },
-  {
-    id: 'place',
-    title: 'Ajouter un lieu',
-    description: 'Ajoutez un nouvel établissement pour votre activité',
-    icon: 'business',
-    iconLibrary: 'ionicons',
-    color: '#10B981',
-  },
-  {
-    id: 'event',
-    title: 'Ajouter un événement',
-    description: 'Annoncez un événement pour attirer plus de monde',
-    icon: 'calendar',
-    iconLibrary: 'ionicons',
-    color: '#3B82F6',
-  },
-  {
-    id: 'offer',
-    title: 'Créer une offre',
-    description: 'Proposez une offre ou un package spécial',
-    icon: 'gift',
-    iconLibrary: 'ionicons',
-    color: '#8B5CF6',
-  },
+const OPTIONS: PartnerCreationOption[] = [
+  { id: 'publication', title: 'Créer une publication', description: 'Partagez une photo, une vidéo ou un carrousel', icon: 'images-outline', iconLibrary: 'ionicons', color: '#E60012' },
+  { id: 'story', title: 'Créer une story', description: 'Publiez un moment éphémère visible pendant 24 h', icon: 'radio-button-on-outline', iconLibrary: 'ionicons', color: '#2563EB' },
+  { id: 'place', title: 'Ajouter un lieu', description: 'Référencez votre établissement ou un nouveau lieu', icon: 'location-outline', iconLibrary: 'ionicons', color: '#E60012' },
+  { id: 'event', title: 'Ajouter un événement', description: 'Annoncez une activité et gérez ses informations', icon: 'calendar-outline', iconLibrary: 'ionicons', color: '#F59E0B' },
+  { id: 'offer', title: 'Créer une offre', description: 'Mettez en avant une promotion ou un package spécial', icon: 'pricetag-outline', iconLibrary: 'ionicons', color: '#16A34A' },
+  { id: 'artwork', title: 'Publier une œuvre', description: 'Présentez une création artisanale et son histoire', icon: 'color-palette-outline', iconLibrary: 'ionicons', color: '#7C3AED' },
 ];
 
 export default function PartnerChoiceScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const colors = useThemeStore((state) => state.colors);
 
-  const handleOptionPress = (optionId: string) => {
-    switch (optionId) {
-      case 'publication':
-        router.push('/(partner)/publication');
-        break;
-      case 'story':
-        router.push('/(partner)/story');
-        break;
-      case 'place':
-        router.push('/(partner)/add-place-step1');
-        break;
-      case 'event':
-        router.push('/(partner)/add-event-step1');
-        break;
-      case 'offer':
-        // TODO: Implement offer creation
-        console.log('Offer creation coming soon');
-        break;
-    }
+  const open = (id: PartnerCreationType) => {
+    const routes = {
+      publication: '/(partner)/publication',
+      story: '/(partner)/story',
+      place: '/(partner)/add-place-step1',
+      event: '/(partner)/add-event-step1',
+      offer: '/(partner)/offer',
+      artwork: '/(create)/artwork/basic-information',
+    } as const;
+    router.push(routes[id]);
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
-      <Stack.Screen
-        options={{
-          presentation: 'modal',
-          headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
-          headerTitle: 'Créer',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => null,
-        }}
-      />
-
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View className="pt-4 pb-6">
-          <Text className="text-white text-2xl font-bold mb-2">
-            Bonjour
-          </Text>
-          <Text className="text-white text-2xl font-bold">
-            Que souhaitez-vous créer aujourd'hui ?
-          </Text>
+    <SafeScreen>
+      <Stack.Screen options={{ headerShown: false, presentation: 'modal' }} />
+      <View className="flex-row items-center justify-between px-5 pb-3 pt-2">
+        <View className="rounded-full bg-[#FEE2E2] px-3 py-1.5"><Text className="text-xs font-extrabold text-[#E60012]">ESPACE PARTENAIRE</Text></View>
+        <TouchableOpacity onPress={() => router.replace('/(tabs)')} className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }} accessibilityLabel="Fermer">
+          <Icon name="close" size={22} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+        <View className="pb-6 pt-3">
+          <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>Bonjour {user?.display_name?.split(' ')[0] ?? 'partenaire'} 👋</Text>
+          <Text className="mt-2 text-3xl font-extrabold leading-9" style={{ color: colors.text }}>Que souhaitez-vous créer aujourd’hui ?</Text>
+          <Text className="mt-2 text-sm leading-5" style={{ color: colors.textSecondary }}>Développez votre activité et faites rayonner vos offres sur Yeyamo.</Text>
         </View>
-
-        {/* Options */}
-        <View className="pb-6">
-          {partnerCreationOptions.map((option) => (
-            <CreationOptionCard
-              key={option.id}
-              option={option}
-              onPress={() => handleOptionPress(option.id)}
-            />
-          ))}
+        {OPTIONS.map((option) => <CreationOptionCard key={option.id} option={option} onPress={() => open(option.id)} />)}
+        <View className="mt-2 flex-row rounded-2xl bg-[#FEE2E2] p-4">
+          <Icon name="shield-checkmark-outline" size={22} color="#E60012" />
+          <Text className="ml-3 flex-1 text-xs leading-5 text-[#991B1B]">Les lieux, événements et offres sont vérifiés avant leur publication afin de protéger la communauté.</Text>
         </View>
       </ScrollView>
-
-      {/* Close Button */}
-      <TouchableOpacity
-        onPress={() => router.back()}
-        className="absolute bottom-8 left-1/2 -ml-6 w-12 h-12 bg-[#27272A] rounded-full items-center justify-center"
-        activeOpacity={0.7}
-      >
-        <Icon library="ionicons" name="close" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
-    </View>
+    </SafeScreen>
   );
 }

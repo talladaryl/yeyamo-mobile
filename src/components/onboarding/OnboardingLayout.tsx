@@ -1,10 +1,11 @@
-﻿import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import type { ReactNode } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface OnboardingLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
   title?: string;
   subtitle?: string;
   currentStep?: number;
@@ -27,69 +28,70 @@ export function OnboardingLayout({
   onNext,
   onPrevious,
   onSkip,
-  nextButtonText = 'Suivant',
+  nextButtonText,
   showSkip = true,
   showProgress = true,
-  backgroundColor = '#0A0A0A',
+  backgroundColor,
 }: OnboardingLayoutProps) {
-  const buttonLabel = currentStep >= totalSteps ? 'Commencer' : nextButtonText;
-
+  const colors = useThemeStore((state) => state.colors);
   return (
-    <View className="flex-1" style={{ backgroundColor }}>
-      <SafeAreaView className="flex-1">
-        <View className="flex-row justify-between items-center px-6 py-4">
-          <TouchableOpacity onPress={onPrevious} className="w-10 h-10 items-center justify-center" activeOpacity={0.7}>
-            {currentStep > 1 ? <Icon name="arrow-back" size={20} color="#FFFFFF" /> : null}
+    <View className="flex-1" style={{ backgroundColor: backgroundColor ?? colors.background }}>
+      <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
+        <View className="h-14 flex-row items-center justify-between px-5">
+          <TouchableOpacity
+            onPress={onPrevious}
+            disabled={currentStep === 1}
+            className="h-10 w-10 items-center justify-center rounded-full"
+            activeOpacity={0.75}
+          >
+            {currentStep > 1 ? <Icon name="chevron-back" size={24} color={colors.text} /> : null}
           </TouchableOpacity>
-
           {showSkip ? (
-            <TouchableOpacity onPress={onSkip} activeOpacity={0.7}>
-              <Text className="text-[#A1A1AA] text-base">Passer</Text>
+            <TouchableOpacity onPress={onSkip} className="rounded-full px-4 py-2" style={{ backgroundColor: `${colors.card}E6` }} activeOpacity={0.75}>
+              <Text className="text-sm font-semibold" style={{ color: colors.textSecondary }}>Passer</Text>
             </TouchableOpacity>
-          ) : null}
+          ) : <View className="w-10" />}
         </View>
-
-        {showProgress ? (
-          <View className="flex-row justify-center items-center mb-8">
-            {Array.from({ length: totalSteps }).map((_, index) => (
-              <View
-                key={index}
-                className={`w-2 h-2 rounded-full mx-1 ${
-                  index === currentStep - 1
-                    ? 'bg-[#EF4444]'
-                    : index < currentStep - 1
-                      ? 'bg-[#EF4444]/60'
-                      : 'bg-[#27272A]'
-                }`}
-              />
-            ))}
-          </View>
-        ) : null}
 
         <View className="flex-1">{children}</View>
 
-        {(title || onNext) ? (
-          <View className="px-6 pb-8">
-            {title ? (
-              <View className="mb-8">
-                <Text className="text-white text-2xl font-bold mb-2">{title}</Text>
-                {subtitle ? <Text className="text-[#A1A1AA] text-base leading-6">{subtitle}</Text> : null}
+        <View className="rounded-t-[32px] px-6 pb-3 pt-6" style={{ backgroundColor: colors.card }}>
+          {title ? (
+            <>
+              <Text className="text-[28px] font-extrabold leading-8" style={{ color: colors.text }}>{title}</Text>
+              {subtitle ? <Text className="mt-3 text-[15px] leading-6" style={{ color: colors.textSecondary }}>{subtitle}</Text> : null}
+            </>
+          ) : null}
+
+          <View className="mt-6 flex-row items-center justify-between">
+            {showProgress ? (
+              <View className="flex-row items-center gap-2">
+                {Array.from({ length: totalSteps }).map((_, index) => {
+                  const active = index === currentStep - 1;
+                  return (
+                    <View
+                      key={index}
+                      className="h-2 rounded-full"
+                      style={{ width: active ? 24 : 8, backgroundColor: active ? colors.primary : colors.border }}
+                    />
+                  );
+                })}
               </View>
-            ) : null}
+            ) : <View />}
 
             {onNext ? (
               <TouchableOpacity
                 onPress={onNext}
-                className="bg-[#EF4444] rounded-full py-4 px-6 flex-row items-center justify-center gap-2"
-                style={{ minWidth: 150, height: 56, alignSelf: 'flex-end' }}
+                className="h-14 min-w-14 flex-row items-center justify-center rounded-full bg-[#EF4444] px-5"
                 activeOpacity={0.85}
+                accessibilityLabel={nextButtonText ?? 'Continuer'}
               >
-                <Text className="text-white text-base font-semibold">{buttonLabel}</Text>
-                <Icon name="arrow-forward" size={18} color="#FFFFFF" />
+                {nextButtonText ? <Text className="mr-2 font-bold text-white">{nextButtonText}</Text> : null}
+                <Icon name="arrow-forward" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             ) : null}
           </View>
-        ) : null}
+        </View>
       </SafeAreaView>
     </View>
   );

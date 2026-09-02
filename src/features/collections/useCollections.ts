@@ -1,20 +1,22 @@
 // Hooks personnalisés pour les collections
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import ENV from '@/config/env';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { collectionsApi } from './collections.api';
 import { MOCK_COLLECTIONS, MOCK_COLLECTION_SUMMARIES } from './mockData';
 import type { CreateCollectionInput, UpdateCollectionInput, AddToCollectionInput } from './types';
+import type { EntityId } from '@/types/api.types';
 
 /**
  * Hook pour récupérer toutes les collections de l'utilisateur
  */
 export function useUserCollections() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['collections', 'user'],
+    queryKey: ['collections', isDemo ? 'demo' : 'backend', 'user'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_COLLECTIONS) : collectionsApi.getUserCollections(),
+      isDemo ? Promise.resolve(MOCK_COLLECTIONS) : collectionsApi.getUserCollections(),
     staleTime: 1000 * 60 * 5, // 5 minutes
-    placeholderData: MOCK_COLLECTIONS,
+    placeholderData: isDemo ? MOCK_COLLECTIONS : undefined,
   });
 }
 
@@ -22,10 +24,11 @@ export function useUserCollections() {
  * Hook pour récupérer les collections publiques
  */
 export function usePublicCollections() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['collections', 'public'],
+    queryKey: ['collections', isDemo ? 'demo' : 'backend', 'public'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve([]) : collectionsApi.getPublicCollections(),
+      isDemo ? Promise.resolve([]) : collectionsApi.getPublicCollections(),
     staleTime: 1000 * 60 * 5,
     placeholderData: [],
   });
@@ -34,16 +37,17 @@ export function usePublicCollections() {
 /**
  * Hook pour récupérer une collection spécifique
  */
-export function useCollection(id: number) {
+export function useCollection(id: EntityId) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['collections', id],
+    queryKey: ['collections', isDemo ? 'demo' : 'backend', id],
     queryFn: () =>
-      ENV.USE_MOCKS
-        ? Promise.resolve(MOCK_COLLECTIONS.find((c) => c.id === id) ?? MOCK_COLLECTIONS[0])
+      isDemo
+        ? Promise.resolve(MOCK_COLLECTIONS.find((c) => String(c.id) === String(id)) ?? MOCK_COLLECTIONS[0])
         : collectionsApi.getCollection(id),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
-    placeholderData: MOCK_COLLECTIONS.find((c) => c.id === id),
+    placeholderData: isDemo ? MOCK_COLLECTIONS.find((c) => String(c.id) === String(id)) : undefined,
   });
 }
 
@@ -51,14 +55,15 @@ export function useCollection(id: number) {
  * Hook pour récupérer les résumés de collections
  */
 export function useCollectionSummaries() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['collections', 'summaries'],
+    queryKey: ['collections', isDemo ? 'demo' : 'backend', 'summaries'],
     queryFn: () =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve(MOCK_COLLECTION_SUMMARIES)
         : collectionsApi.getCollectionSummaries(),
     staleTime: 1000 * 60 * 5,
-    placeholderData: MOCK_COLLECTION_SUMMARIES,
+    placeholderData: isDemo ? MOCK_COLLECTION_SUMMARIES : undefined,
   });
 }
 
@@ -67,10 +72,11 @@ export function useCollectionSummaries() {
  */
 export function useCreateCollection() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useMutation({
     mutationFn: (input: CreateCollectionInput) =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve({
             ...MOCK_COLLECTIONS[0],
             ...input,
@@ -92,12 +98,13 @@ export function useCreateCollection() {
  */
 export function useUpdateCollection() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useMutation({
-    mutationFn: ({ id, input }: { id: number; input: UpdateCollectionInput }) =>
-      ENV.USE_MOCKS
+    mutationFn: ({ id, input }: { id: EntityId; input: UpdateCollectionInput }) =>
+      isDemo
         ? Promise.resolve({
-            ...(MOCK_COLLECTIONS.find((c) => c.id === id) ?? MOCK_COLLECTIONS[0]),
+            ...(MOCK_COLLECTIONS.find((c) => String(c.id) === String(id)) ?? MOCK_COLLECTIONS[0]),
             ...input,
             updated_at: new Date().toISOString(),
           })
@@ -114,10 +121,11 @@ export function useUpdateCollection() {
  */
 export function useDeleteCollection() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useMutation({
-    mutationFn: (id: number) =>
-      ENV.USE_MOCKS ? Promise.resolve() : collectionsApi.deleteCollection(id),
+    mutationFn: (id: EntityId) =>
+      isDemo ? Promise.resolve() : collectionsApi.deleteCollection(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
     },
@@ -129,10 +137,11 @@ export function useDeleteCollection() {
  */
 export function useAddPlaceToCollection() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useMutation({
     mutationFn: (input: AddToCollectionInput) =>
-      ENV.USE_MOCKS ? Promise.resolve() : collectionsApi.addPlaceToCollection(input),
+      isDemo ? Promise.resolve() : collectionsApi.addPlaceToCollection(input),
     onSuccess: (_, { collection_id }) => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['collections', collection_id] });
@@ -145,12 +154,42 @@ export function useAddPlaceToCollection() {
  */
 export function useRemovePlaceFromCollection() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 
   return useMutation({
-    mutationFn: ({ collectionId, placeId }: { collectionId: number; placeId: number }) =>
-      ENV.USE_MOCKS
+    mutationFn: ({ collectionId, placeId }: { collectionId: EntityId; placeId: EntityId }) =>
+      isDemo
         ? Promise.resolve()
         : collectionsApi.removePlaceFromCollection(collectionId, placeId),
+    onSuccess: (_, { collectionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['collections', collectionId] });
+    },
+  });
+}
+
+export function useUpdatePlaceInCollection() {
+  const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+
+  return useMutation({
+    mutationFn: ({
+      collectionId,
+      placeId,
+      isPriority,
+      note,
+    }: {
+      collectionId: EntityId;
+      placeId: EntityId;
+      isPriority: boolean;
+      note?: string;
+    }) =>
+      isDemo
+        ? Promise.resolve()
+        : collectionsApi.updatePlaceInCollection(collectionId, placeId, {
+            is_priority: isPriority,
+            note,
+          }),
     onSuccess: (_, { collectionId }) => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['collections', collectionId] });

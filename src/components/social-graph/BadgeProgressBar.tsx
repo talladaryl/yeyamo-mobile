@@ -1,31 +1,9 @@
-// Barre de progression de badge
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
+import { AnimatedProgressBar } from './AnimatedProgressBar';
+import { useThemeStore } from '@/features/theme/theme.store';
 
-interface BadgeProgressBarProps {
-  currentXP: number;
-  nextLevelXP: number;
-}
-
-export function BadgeProgressBar({ currentXP, nextLevelXP }: BadgeProgressBarProps) {
-  const percentage = Math.min((currentXP / nextLevelXP) * 100, 100);
-
-  return (
-    <View className="mt-4">
-      <View className="flex-row justify-between mb-2">
-        <Text className="text-[#A1A1AA] text-sm">Progression</Text>
-        <Text className="text-white font-semibold text-sm">
-          {currentXP} / {nextLevelXP} XP
-        </Text>
-      </View>
-      <View className="h-3 bg-[#27272A] rounded-full overflow-hidden">
-        <View
-          className="h-full bg-gradient-to-r from-[#EF4444] to-[#F87171] rounded-full"
-          style={{ width: `${percentage}%` }}
-        />
-      </View>
-      <Text className="text-[#10B981] text-xs mt-2 font-medium">
-        Plus que {nextLevelXP - currentXP} XP pour atteindre le niveau suivant
-      </Text>
-    </View>
-  );
+export function BadgeProgressBar({ currentXP, nextLevelXP }: { currentXP: number; nextLevelXP: number }) {
+  const colors = useThemeStore((state) => state.colors);
+  const safeTarget = Math.max(nextLevelXP, 1); const percentage = Math.min((currentXP / safeTarget) * 100, 100); const remaining = Math.max(nextLevelXP - currentXP, 0);
+  return <View><View className="mb-3 flex-row justify-between"><Text className="text-sm" style={{ color: colors.textSecondary }}>Progression</Text><Text className="text-sm font-bold" style={{ color: colors.text }}>{currentXP.toLocaleString('fr-FR')} / {nextLevelXP.toLocaleString('fr-FR')} XP</Text></View><AnimatedProgressBar value={percentage} height={11} /><Text className="mt-3 text-xs font-semibold text-[#16A34A]">{remaining > 0 ? `Plus que ${remaining.toLocaleString('fr-FR')} XP pour le prochain niveau` : 'Niveau accompli'}</Text></View>;
 }

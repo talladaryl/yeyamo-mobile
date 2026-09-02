@@ -12,6 +12,8 @@ export default function SocialGraphLayout() {
     >
       <Stack.Screen name="badges" />
       <Stack.Screen name="badges/[id]" />
+      <Stack.Screen name="passport" />
+      <Stack.Screen name="passport/[section]" />
     </Stack>
   );
 }

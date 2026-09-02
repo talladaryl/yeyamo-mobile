@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import type { Reservation } from '@/features/partner-dashboard/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface ReservationCardProps {
   reservation: Reservation;
@@ -9,6 +10,7 @@ interface ReservationCardProps {
 }
 
 export function ReservationCard({ reservation, onPress }: ReservationCardProps) {
+  const colors = useThemeStore((state) => state.colors);
   const statusColors = {
     confirmed: '#10B981',
     pending: '#F59E0B',
@@ -24,7 +26,8 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-[#161616] rounded-xl p-4 mb-3"
+      className="mb-3 rounded-xl border p-4"
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}
       activeOpacity={0.8}
     >
       <View className="flex-row items-start justify-between mb-3">
@@ -35,12 +38,12 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
             size={40}
           />
           <View>
-            <Text className="text-white font-semibold text-base">
+            <Text className="text-base font-semibold" style={{ color: colors.text }}>
               {reservation.customer_name}
             </Text>
             <View className="flex-row items-center gap-1 mt-0.5">
               <Icon library="ionicons" name="star" size={12} color="#F59E0B" />
-              <Text className="text-[#A1A1AA] text-xs">
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>
                 {reservation.establishment}
               </Text>
             </View>
@@ -59,28 +62,28 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
         </View>
       </View>
 
-      <View className="flex-row items-center justify-between border-t border-[#27272A] pt-3">
+      <View className="flex-row items-center justify-between border-t pt-3" style={{ borderColor: colors.border }}>
         <View className="flex-row items-center gap-4">
           <View className="flex-row items-center gap-1">
             <Icon library="ionicons" name="calendar-outline" size={14} color="#A1A1AA" />
-            <Text className="text-[#A1A1AA] text-xs">
+            <Text className="text-xs" style={{ color: colors.textSecondary }}>
               {reservation.date}
             </Text>
           </View>
           <View className="flex-row items-center gap-1">
             <Icon library="ionicons" name="time-outline" size={14} color="#A1A1AA" />
-            <Text className="text-[#A1A1AA] text-xs">
+            <Text className="text-xs" style={{ color: colors.textSecondary }}>
               {reservation.time}
             </Text>
           </View>
           <View className="flex-row items-center gap-1">
             <Icon library="ionicons" name="people-outline" size={14} color="#A1A1AA" />
-            <Text className="text-[#A1A1AA] text-xs">
+            <Text className="text-xs" style={{ color: colors.textSecondary }}>
               {reservation.guests}
             </Text>
           </View>
         </View>
-        <Text className="text-white font-bold text-sm">
+        <Text className="text-sm font-bold" style={{ color: colors.text }}>
           {reservation.amount.toLocaleString()} FCFA
         </Text>
       </View>

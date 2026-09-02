@@ -1,5 +1,6 @@
 ﻿import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface ThemeSelectorProps {
   value: 'light' | 'dark' | 'system';
@@ -7,6 +8,7 @@ interface ThemeSelectorProps {
 }
 
 export function ThemeSelector({ value, onChange }: ThemeSelectorProps) {
+  const colors = useThemeStore((state) => state.colors);
   const themes: Array<{
     key: 'light' | 'dark' | 'system';
     label: string;
@@ -20,7 +22,7 @@ export function ThemeSelector({ value, onChange }: ThemeSelectorProps) {
 
   return (
     <View className="px-4 py-4">
-      <Text className="text-white font-medium text-sm mb-3">Thème</Text>
+      <Text className="mb-3 text-sm font-medium" style={{ color: colors.text }}>Thème</Text>
       <View className="gap-3">
         {themes.map((theme) => {
           const isSelected = value === theme.key;
@@ -30,15 +32,15 @@ export function ThemeSelector({ value, onChange }: ThemeSelectorProps) {
               onPress={() => onChange(theme.key)}
               className="flex-row items-center p-4 rounded-xl border"
               style={{
-                backgroundColor: isSelected ? '#EF4444' : '#1F1F1F',
-                borderColor: isSelected ? '#EF4444' : '#27272A',
+                backgroundColor: isSelected ? colors.primary : colors.elevated,
+                borderColor: isSelected ? colors.primary : colors.border,
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name={theme.icon} size={24} color={isSelected ? '#FFFFFF' : '#A1A1AA'} />
+              <Ionicons name={theme.icon} size={24} color={isSelected ? '#FFFFFF' : colors.textSecondary} />
               <View className="flex-1 ml-3">
-                <Text className="text-white text-sm font-semibold">{theme.label}</Text>
-                <Text className="text-[#A1A1AA] text-xs mt-0.5">{theme.description}</Text>
+                <Text className="text-sm font-semibold" style={{ color: isSelected ? '#FFFFFF' : colors.text }}>{theme.label}</Text>
+                <Text className="mt-0.5 text-xs" style={{ color: isSelected ? '#FEE2E2' : colors.textSecondary }}>{theme.description}</Text>
               </View>
               {isSelected ? <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" /> : null}
             </TouchableOpacity>

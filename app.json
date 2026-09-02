@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "scheme": "yeyamo",
     "ios": {
       "supportsTablet": false,
@@ -20,12 +21,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0A0A0A",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.yeyamo.mobile",
+      "googleServicesFile": "./google-services.json",
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
@@ -67,7 +69,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#7C3AED"
+          "color": "#EF4444"
         }
       ],
       "expo-font",
@@ -75,8 +77,20 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "backgroundColor": "#0A0A0A",
+          "backgroundColor": "#FFFFFF",
           "imageWidth": 200
+        }
+      ],
+      "expo-video",
+      "expo-asset",
+      [
+        "expo-navigation-bar",
+        {
+          "visibility": "hidden",
+          "behavior": "overlay-swipe",
+          "position": "relative",
+          "backgroundColor": "#0A0A0A",
+          "barStyle": "light"
         }
       ]
     ],

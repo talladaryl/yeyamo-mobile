@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface DocumentPickerProps {
   value: string | null;
@@ -22,6 +23,7 @@ export function DocumentPicker({
   acceptedFormats = 'PDF, JPG ou PNG - Max 5 Mo',
   maxSize,
 }: DocumentPickerProps) {
+  const colors = useThemeStore((state) => state.colors);
   const helperText = maxSize ? `${acceptedFormats} - Max ${maxSize}` : acceptedFormats;
   const pickDocument = async () => {
     try {
@@ -42,7 +44,7 @@ export function DocumentPicker({
   return (
     <View className="mb-4">
       {label && (
-        <Text className="text-sm text-[#A1A1AA] font-medium mb-1">
+        <Text className="mb-1 text-sm font-medium" style={{ color: colors.textSecondary }}>
           {label}
         </Text>
       )}
@@ -50,28 +52,27 @@ export function DocumentPicker({
       <TouchableOpacity
         onPress={pickDocument}
         disabled={disabled}
-        className={`flex-row items-center justify-between px-4 py-4 rounded-xl ${
-          error ? 'border-2 border-[#EF4444]' : 'border border-[#27272A]'
-        } bg-[#1F1F1F]`}
+        className="flex-row items-center justify-between rounded-xl border px-4 py-4"
+        style={{ backgroundColor: colors.elevated, borderColor: error ? colors.primary : colors.border, borderWidth: error ? 2 : 1 }}
       >
         <View className="flex-1">
           {value ? (
-            <Text className="text-white text-base" numberOfLines={1}>
+            <Text className="text-base" style={{ color: colors.text }} numberOfLines={1}>
               Document sélectionné
             </Text>
           ) : (
             <View>
-              <Text className="text-[#52525B] text-base mb-1">
+              <Text className="mb-1 text-base" style={{ color: colors.textMuted }}>
                 Télécharger le document
               </Text>
-              <Text className="text-[#A1A1AA] text-xs">
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>
                 {helperText}
               </Text>
             </View>
           )}
         </View>
         <View className="ml-3">
-          <Icon name="cloud-upload-outline" size={24} color="#A1A1AA" />
+          <Icon name="cloud-upload-outline" size={24} color={colors.textSecondary} />
         </View>
       </TouchableOpacity>
 

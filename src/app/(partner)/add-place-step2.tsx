@@ -1,179 +1,21 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
-import { Icon } from '@/components/ui/Icon';
-import { CTAButton } from '@/components/ui/CTAButton';
-import { usePartnerStore } from '@/features/partner/partner.store';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { NativeMap, NativeMarker, PROVIDER_GOOGLE } from '@/components/maps/NativeMap';
+import { SafeScreen } from '@/components/ui/SafeScreen'; import { Icon } from '@/components/ui/Icon'; import { CTAButton } from '@/components/ui/CTAButton'; import { Input } from '@/components/ui/Input'; import { Stepper } from '@/components/ui/Stepper'; import { FormSelect } from '@/components/ui/FormSelect';
+import { usePartnerStore } from '@/features/partner/partner.store'; import { useThemeStore } from '@/features/theme/theme.store'; import { formValidation } from '@/utils/formValidation';
+
+const REGION_CITIES: Record<string, string[]> = { Centre: ['Yaoundé', 'Mbalmayo', 'Obala'], Littoral: ['Douala', 'Edéa', 'Nkongsamba'], Ouest: ['Bafoussam', 'Foumban', 'Dschang'], Sud: ['Kribi', 'Ebolowa', 'Sangmélima'], 'Sud-Ouest': ['Buea', 'Limbe', 'Kumba'], 'Nord-Ouest': ['Bamenda', 'Kumbo'], Est: ['Bertoua', 'Batouri'], Adamaoua: ['Ngaoundéré'], Nord: ['Garoua'], 'Extrême-Nord': ['Maroua'] };
+const REGIONS = Object.keys(REGION_CITIES).map((value) => ({ label: value, value }));
 
 export default function AddPlaceStep2Screen() {
-  const router = useRouter();
-  const { placeForm, setPlaceForm } = usePartnerStore();
-  
-  const [useMyPosition, setUseMyPosition] = useState(false);
-  const [exactAddress, setExactAddress] = useState(placeForm.exact_address || '');
-  const [region, setRegion] = useState(placeForm.region || '');
-  const [city, setCity] = useState(placeForm.city || '');
-  const [landmarks, setLandmarks] = useState(placeForm.landmarks || '');
-  const [selectedCoordinates, setSelectedCoordinates] = useState({
-    latitude: placeForm.coordinates?.latitude || 4.0511,
-    longitude: placeForm.coordinates?.longitude || 9.7679,
-  });
-
-  const handleMapPress = (event: any) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-    setSelectedCoordinates({ latitude, longitude });
-  };
-
-  const handleContinue = () => {
-    setPlaceForm({
-      use_my_position: useMyPosition,
-      exact_address: exactAddress,
-      region,
-      city,
-      landmarks,
-      coordinates: selectedCoordinates,
-    });
-    router.push('/(partner)/add-place-step3');
-  };
-
-  return (
-    <View className="flex-1 bg-[#0A0A0A]">
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
-          headerTitle: 'Ajouter un lieu',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Map */}
-        <View style={{ height: 250 }}>
-          <MapView
-            style={{ flex: 1 }}
-            initialRegion={{
-              latitude: selectedCoordinates.latitude,
-              longitude: selectedCoordinates.longitude,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            }}
-            onPress={handleMapPress}
-          >
-            <Marker
-              coordinate={selectedCoordinates}
-              pinColor="#EF4444"
-              draggable
-              onDragEnd={handleMapPress}
-            />
-          </MapView>
-        </View>
-
-        <View className="px-4 py-6">
-          {/* Section: Localisation */}
-          <Text className="text-white text-lg font-bold mb-4">
-            Localisation
-          </Text>
-
-          {/* Checkbox: Utiliser ma position */}
-          <TouchableOpacity
-            onPress={() => setUseMyPosition(!useMyPosition)}
-            className="flex-row items-center mb-4"
-            activeOpacity={0.7}
-          >
-            <View className={`w-5 h-5 rounded border-2 items-center justify-center mr-3 ${
-              useMyPosition ? 'bg-[#EF4444] border-[#EF4444]' : 'border-[#A1A1AA]'
-            }`}>
-              {useMyPosition && (
-                <Icon library="ionicons" name="checkmark" size={14} color="#FFFFFF" />
-              )}
-            </View>
-            <Text className="text-white text-sm">Utiliser ma position</Text>
-          </TouchableOpacity>
-
-          {/* Adresse exacte */}
-          <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
-              Adresse exacte <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
-              placeholder="Rue de Rim Arawak, Bonapriso, Douala"
-              placeholderTextColor="#A1A1AA"
-              value={exactAddress}
-              onChangeText={setExactAddress}
-              multiline
-            />
-          </View>
-
-          {/* Région */}
-          <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
-              Région <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <TouchableOpacity
-              className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <Text className={region ? 'text-white text-sm' : 'text-[#A1A1AA] text-sm'}>
-                {region || 'Sélectionner une région'}
-              </Text>
-              <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Ville */}
-          <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
-              Ville <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <TouchableOpacity
-              className="bg-[#161616] rounded-xl px-4 py-3 flex-row items-center justify-between border border-[#27272A]"
-              activeOpacity={0.7}
-            >
-              <Text className={city ? 'text-white text-sm' : 'text-[#A1A1AA] text-sm'}>
-                {city || 'Sélectionner une ville'}
-              </Text>
-              <Icon library="ionicons" name="chevron-down" size={18} color="#A1A1AA" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Points de repère */}
-          <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
-              Points de repère
-            </Text>
-            <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
-              placeholder="Ex: Près de la pharmacie du carrefour"
-              placeholderTextColor="#A1A1AA"
-              value={landmarks}
-              onChangeText={setLandmarks}
-              multiline
-              style={{ minHeight: 80, textAlignVertical: 'top' }}
-            />
-          </View>
-        </View>
-
-        <View className="h-24" />
-      </ScrollView>
-
-      {/* Bottom Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
-        <CTAButton
-          title="Continuer"
-          variant="primary"
-          onPress={handleContinue}
-          disabled={!exactAddress}
-        />
-      </View>
-    </View>
-  );
+  const router = useRouter(); const colors = useThemeStore((state) => state.colors); const { placeForm, setPlaceForm, setPlaceStep } = usePartnerStore();
+  const [useMyPosition, setUseMyPosition] = useState(placeForm.use_my_position ?? false); const [exactAddress, setExactAddress] = useState(placeForm.exact_address || ''); const [region, setRegion] = useState(placeForm.region || ''); const [city, setCity] = useState(placeForm.city || ''); const [landmarks, setLandmarks] = useState(placeForm.landmarks || ''); const [coordinates, setCoordinates] = useState(placeForm.coordinates ?? { latitude: 4.0511, longitude: 9.7679 }); const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+  const continueForm = () => { const next = { address: formValidation.required(exactAddress, 'Adresse'), region: formValidation.required(region, 'Région'), city: formValidation.required(city, 'Ville') }; setErrors(next); const first = Object.values(next).find(Boolean); if (first) return Alert.alert('Localisation à vérifier', first); setPlaceForm({ use_my_position: useMyPosition, exact_address: exactAddress.trim(), region, city, landmarks: landmarks.trim(), coordinates }); setPlaceStep(3); router.push('/(partner)/add-place-step3'); };
+  return <SafeScreen><Stack.Screen options={{ headerShown: false }} /><View className="flex-row items-center border-b px-4 py-3" style={{ borderColor: colors.border }}><TouchableOpacity onPress={() => router.back()} className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="arrow-back" size={22} color={colors.text} /></TouchableOpacity><View className="ml-3"><Text className="text-lg font-extrabold" style={{ color: colors.text }}>Ajouter un lieu</Text><Text className="text-xs" style={{ color: colors.textSecondary }}>Localisation précise</Text></View></View>
+    <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }} keyboardShouldPersistTaps="handled"><Stepper currentStep={2} totalSteps={4} /><View className="mb-6 h-52 overflow-hidden rounded-2xl border" style={{ borderColor: colors.border }}><NativeMap provider={PROVIDER_GOOGLE} style={{ flex: 1 }} initialRegion={{ ...coordinates, latitudeDelta: 0.05, longitudeDelta: 0.05 }} onPress={(event) => setCoordinates(event.nativeEvent.coordinate)}><NativeMarker coordinate={coordinates} pinColor="#EF4444" draggable onDragEnd={(event) => setCoordinates(event.nativeEvent.coordinate)} /></NativeMap></View>
+      <TouchableOpacity onPress={() => setUseMyPosition((value) => !value)} className="mb-5 flex-row items-center rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: useMyPosition ? colors.primary : colors.border }}><Icon name={useMyPosition ? 'checkbox' : 'square-outline'} size={22} color={useMyPosition ? colors.primary : colors.textMuted} /><Text className="ml-3 font-semibold" style={{ color: colors.text }}>Utiliser la position choisie sur la carte</Text></TouchableOpacity>
+      <View className="gap-4"><Input label="Adresse exacte *" value={exactAddress} onChangeText={setExactAddress} error={errors.address} placeholder="Rue, quartier et numéro" multiline /><FormSelect label="Région" value={region} options={REGIONS} onChange={(value) => { setRegion(value); setCity(''); }} error={errors.region} required /><FormSelect label="Ville" value={city} options={(REGION_CITIES[region] ?? []).map((value) => ({ label: value, value }))} onChange={setCity} placeholder={region ? 'Sélectionner une ville' : 'Choisissez d’abord une région'} error={errors.city} required /><Input label="Point de repère" value={landmarks} onChangeText={setLandmarks} placeholder="Ex. Près de la pharmacie du carrefour" multiline /></View>
+    </ScrollView><View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}><CTAButton title="Continuer" onPress={continueForm} /></View>
+  </SafeScreen>;
 }

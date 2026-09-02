@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 import type { EventData } from '@/features/chat/types';
 
 interface EventMessageCardProps {
@@ -8,36 +9,33 @@ interface EventMessageCardProps {
 }
 
 export function EventMessageCard({ event, onPress }: EventMessageCardProps) {
+  const colors = useThemeStore((state) => state.colors);
+
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-[#1F1F1F] rounded-2xl p-4 border border-[#27272A] my-1"
       activeOpacity={0.8}
+      className="my-1 rounded-2xl border p-4"
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}
     >
       <View className="flex-row items-start gap-3">
-        <View className="w-12 h-12 bg-[#EF4444]/20 rounded-xl items-center justify-center">
-          <Icon library="ionicons" name="calendar" size={24} color="#EF4444" />
+        <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#EF4444]/15">
+          <Icon name="calendar-outline" size={22} color={colors.primary} />
         </View>
-        
         <View className="flex-1">
-          <Text className="text-white font-bold text-base mb-2">
-            {event.title}
-          </Text>
-          
+          <Text className="mb-2 text-sm font-bold" style={{ color: colors.text }}>{event.title}</Text>
           <View className="gap-1.5">
             <View className="flex-row items-center gap-2">
-              <Icon library="ionicons" name="calendar-outline" size={14} color="#A1A1AA" />
-              <Text className="text-[#A1A1AA] text-sm">{event.date}</Text>
+              <Icon name="calendar-outline" size={13} color={colors.textSecondary} />
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>{event.date}</Text>
             </View>
-            
             <View className="flex-row items-center gap-2">
-              <Icon library="ionicons" name="time-outline" size={14} color="#A1A1AA" />
-              <Text className="text-[#A1A1AA] text-sm">{event.time}</Text>
+              <Icon name="time-outline" size={13} color={colors.textSecondary} />
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>{event.time}</Text>
             </View>
-            
             <View className="flex-row items-center gap-2">
-              <Icon library="ionicons" name="location-outline" size={14} color="#A1A1AA" />
-              <Text className="text-[#A1A1AA] text-sm">{event.location}</Text>
+              <Icon name="location-outline" size={13} color={colors.textSecondary} />
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>{event.location}</Text>
             </View>
           </View>
         </View>

@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type Amenity = {
   icon: string;
@@ -17,14 +18,15 @@ const amenitiesData: Amenity[] = [
 ];
 
 export function PlaceAmenities() {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <View className="px-4 py-4">
-      <Text className="text-white text-lg font-bold mb-4">Équipements</Text>
+      <Text className="mb-4 text-lg font-bold" style={{ color: colors.text }}>Équipements</Text>
       
       <View className="flex-row flex-wrap gap-4">
         {amenitiesData.map((amenity, index) => (
           <View key={index} className="items-center" style={{ width: 70 }}>
-            <View className="bg-[#161616] w-14 h-14 rounded-full items-center justify-center mb-2">
+            <View className="mb-2 h-14 w-14 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
               <Icon
                 library={amenity.library || 'ionicons'}
                 name={amenity.icon}
@@ -32,7 +34,7 @@ export function PlaceAmenities() {
                 color="#EF4444"
               />
             </View>
-            <Text className="text-white text-xs text-center">{amenity.label}</Text>
+            <Text className="text-center text-xs" style={{ color: colors.text }}>{amenity.label}</Text>
           </View>
         ))}
       </View>

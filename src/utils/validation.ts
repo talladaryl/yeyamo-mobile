@@ -2,7 +2,10 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().refine(
+    (value) => z.string().email().safeParse(value).success || /^\+?[0-9]{8,15}$/.test(value),
+    'Saisissez un email ou un téléphone valide',
+  ),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
@@ -15,10 +18,14 @@ export const registerSchema = z
       .max(30)
       .regex(/^[a-z0-9_]+$/, 'Only lowercase letters, numbers and underscores'),
     email: z.string().email('Invalid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: z.string().min(12, 'Password must be at least 12 characters'),
     password_confirmation: z.string(),
-    city: z.string().min(2, 'Please enter your city'),
+    city: z.string().optional(),
     phone: z.string().optional(),
+    countryCode: z.string().regex(/^[A-Z]{2}$/, 'Choisissez un pays disponible'),
+    cityId: z.string().uuid().optional(),
+    preferredLanguageCode: z.string().max(10).optional(),
+    timezone: z.string().max(50).optional(),
   })
   .refine((data) => data.password === data.password_confirmation, {
     message: 'Passwords do not match',
@@ -31,7 +38,7 @@ export const partnerRegisterSchema = z
     category: z.string().min(1, 'Please select a category'),
     email: z.string().email('Invalid email address'),
     phone: z.string().min(8, 'Please enter a valid phone number'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: z.string().min(12, 'Password must be at least 12 characters'),
     password_confirmation: z.string(),
     accept_terms: z.boolean().refine((val) => val === true, {
       message: 'You must accept the terms and conditions',

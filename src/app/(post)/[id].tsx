@@ -1,45 +1,95 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { mockFeedPosts } from '@/features/feed/mockData';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { usePostDetail } from '@/features/post/usePost';
+import { feedService } from '@/features/feed/feed.service';
+import { feedApi } from '@/features/feed/feed.api';
 
 const { width } = Dimensions.get('window');
 
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [likesCount, setLikesCount] = useState(24);
+  const [likesCount, setLikesCount] = useState(0);
   const [comment, setComment] = useState('');
-  
-  const post = mockFeedPosts.find(p => p.id === Number(id)) || mockFeedPosts[0];
+  const { data: post, isLoading, refetch } = usePostDetail(id);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+  useEffect(() => {
+    if (post) {
+      setIsLiked(post.is_liked);
+      setIsSaved(post.is_saved);
+      setLikesCount(post.likes_count);
+    }
+  }, [post]);
+
+  const handleLike = async () => {
+    const previous = isLiked;
+    setIsLiked(!previous);
+    setLikesCount((value) => value + (previous ? -1 : 1));
+    try {
+      await feedService.toggleLike(id, previous);
+    } catch {
+      setIsLiked(previous);
+      setLikesCount((value) => value + (previous ? 1 : -1));
+      Alert.alert('Action impossible', 'Le like n’a pas pu être enregistré.');
+    }
   };
 
+  const handleSave = async () => {
+    const previous = isSaved;
+    setIsSaved(!previous);
+    try {
+      await feedService.toggleSave(id, previous);
+    } catch {
+      setIsSaved(previous);
+      Alert.alert('Action impossible', 'La sauvegarde n’a pas pu être enregistrée.');
+    }
+  };
+
+  const handleComment = async () => {
+    const body = comment.trim();
+    if (!body) return;
+    try {
+      await feedApi.addComment(id, body);
+      setComment('');
+      await refetch();
+    } catch {
+      Alert.alert('Envoi impossible', 'Le commentaire n’a pas pu être publié.');
+    }
+  };
+
+  if (isLoading || !post) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           presentation: 'modal',
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Publication',
           headerTitleStyle: { fontWeight: '600' },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-2">
-              <Ionicons name="close" size={28} color="#FFFFFF" />
+              <Ionicons name="close" size={28} color={colors.text} />
             </TouchableOpacity>
           ),
           headerRight: () => (
             <TouchableOpacity className="mr-2">
-              <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
+              <Ionicons name="ellipsis-horizontal" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
@@ -56,16 +106,16 @@ export default function PostDetailScreen() {
             />
             <View>
               <View className="flex-row items-center gap-1">
-                <Text className="text-white font-semibold text-base">{post.author.display_name}</Text>
+                <Text className="font-semibold text-base" style={{ color: colors.text }}>{post.author.display_name}</Text>
                 {post.author.is_verified && (
                   <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />
                 )}
               </View>
-              <Text className="text-[#A1A1AA] text-xs">{post.created_at}</Text>
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>{post.created_at}</Text>
             </View>
           </View>
           <TouchableOpacity>
-            <Ionicons name="ellipsis-vertical" size={20} color="#A1A1AA" />
+            <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -83,30 +133,30 @@ export default function PostDetailScreen() {
               <Ionicons 
                 name={isLiked ? 'heart' : 'heart-outline'} 
                 size={26} 
-                color={isLiked ? '#EF4444' : '#FFFFFF'} 
+                color={isLiked ? '#EF4444' : colors.text}
               />
-              <Text className="text-white font-semibold">{likesCount}</Text>
+              <Text className="font-semibold" style={{ color: colors.text }}>{likesCount}</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="flex-row items-center gap-1">
-              <Ionicons name="chatbubble-outline" size={24} color="#FFFFFF" />
-              <Text className="text-white font-semibold">{post.comments_count}</Text>
+            <TouchableOpacity onPress={() => router.push(`/(post)/${id}/comments`)} className="flex-row items-center gap-1">
+              <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
+              <Text className="font-semibold" style={{ color: colors.text }}>{post.comments_count}</Text>
             </TouchableOpacity>
             <TouchableOpacity>
-              <Ionicons name="paper-plane-outline" size={24} color="#FFFFFF" />
+              <Ionicons name="paper-plane-outline" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => setIsSaved(!isSaved)}>
+          <TouchableOpacity onPress={handleSave}>
             <Ionicons 
               name={isSaved ? 'bookmark' : 'bookmark-outline'} 
               size={24} 
-              color="#FFFFFF" 
+              color={colors.text}
             />
           </TouchableOpacity>
         </View>
 
         {/* Caption */}
         <View className="px-4 pb-3">
-          <Text className="text-white text-sm leading-5">
+          <Text className="text-sm leading-5" style={{ color: colors.text }}>
             <Text className="font-semibold">{post.author.display_name} </Text>
             {post.caption}
           </Text>
@@ -115,15 +165,15 @@ export default function PostDetailScreen() {
               onPress={() => router.push(`/(places)/${post.place_tag?.id}`)}
               className="flex-row items-center gap-1 mt-2"
             >
-              <Ionicons name="location-outline" size={14} color="#A1A1AA" />
-              <Text className="text-[#A1A1AA] text-xs">{post.place_tag.name}</Text>
+              <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>{post.place_tag.name}</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {/* Comments Section */}
         <View className="px-4 pb-4">
-          <Text className="text-white font-semibold text-base mb-4">
+          <Text className="font-semibold text-base mb-4" style={{ color: colors.text }}>
             Commentaires ({post.comments_count})
           </Text>
 
@@ -135,30 +185,30 @@ export default function PostDetailScreen() {
                 className="rounded-full"
               />
               <View className="flex-1">
-                <View className="bg-[#161616] rounded-2xl px-3 py-2">
+                <View className="rounded-2xl px-3 py-2" style={{ backgroundColor: colors.elevated }}>
                   <View className="flex-row items-center gap-1 mb-1">
-                    <Text className="text-white font-semibold text-sm">
+                    <Text className="font-semibold text-sm" style={{ color: colors.text }}>
                       {commentItem.author.display_name}
                     </Text>
                     {commentItem.author.is_verified && (
                       <Ionicons name="checkmark-circle" size={12} color="#3B82F6" />
                     )}
                   </View>
-                  <Text className="text-white text-sm leading-5">{commentItem.text}</Text>
+                  <Text className="text-sm leading-5" style={{ color: colors.text }}>{commentItem.text}</Text>
                 </View>
                 <View className="flex-row items-center gap-4 mt-1 ml-3">
-                  <Text className="text-[#A1A1AA] text-xs">{commentItem.created_at}</Text>
+                  <Text className="text-xs" style={{ color: colors.textSecondary }}>{commentItem.created_at}</Text>
                   <TouchableOpacity>
-                    <Text className="text-[#A1A1AA] text-xs font-semibold">Répondre</Text>
+                    <Text className="text-xs font-semibold" style={{ color: colors.textSecondary }}>Répondre</Text>
                   </TouchableOpacity>
                   <TouchableOpacity className="flex-row items-center gap-1">
                     <Ionicons 
                       name={commentItem.is_liked ? 'heart' : 'heart-outline'} 
                       size={12} 
-                      color={commentItem.is_liked ? '#EF4444' : '#A1A1AA'} 
+                      color={commentItem.is_liked ? '#EF4444' : colors.textSecondary}
                     />
                     {commentItem.likes_count > 0 && (
-                      <Text className="text-[#A1A1AA] text-xs">{commentItem.likes_count}</Text>
+                      <Text className="text-xs" style={{ color: colors.textSecondary }}>{commentItem.likes_count}</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -171,23 +221,24 @@ export default function PostDetailScreen() {
       </ScrollView>
 
       {/* Comment Input - Fixed at bottom */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-3">
+      <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-3" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
         <View className="flex-row items-center gap-3">
           <Image
             source={{ uri: post.author.avatar_url || '' }}
             style={{ width: 32, height: 32 }}
             className="rounded-full"
           />
-          <View className="flex-1 bg-[#161616] rounded-full px-4 py-2.5 flex-row items-center">
+          <View className="flex-1 rounded-full px-4 py-2.5 flex-row items-center" style={{ backgroundColor: colors.elevated }}>
             <TextInput
               value={comment}
               onChangeText={setComment}
               placeholder="Ajouter un commentaire..."
-              placeholderTextColor="#52525B"
-              className="flex-1 text-white text-sm"
+              placeholderTextColor={colors.textMuted}
+              className="flex-1 text-sm"
+              style={{ color: colors.text }}
             />
             {comment.length > 0 && (
-              <TouchableOpacity onPress={() => setComment('')}>
+              <TouchableOpacity onPress={handleComment}>
                 <Ionicons name="send" size={20} color="#EF4444" />
               </TouchableOpacity>
             )}

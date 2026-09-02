@@ -1,32 +1,25 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { useThemeStore } from '@/features/theme/theme.store';
 import type { ChatTab } from '@/features/chat/types';
 
 interface ChatTabsProps {
   activeTab: ChatTab;
   onTabChange: (tab: ChatTab) => void;
-  counts?: {
-    recent: number;
-    main: number;
-    unread: number;
-    groups: number;
-  };
+  counts?: Record<ChatTab, number>;
 }
 
 const tabs: { id: ChatTab; label: string }[] = [
-  { id: 'recent', label: 'Récents' },
-  { id: 'main', label: 'Principaux' },
-  { id: 'unread', label: 'Non lus' },
+  { id: 'recent', label: 'Toutes' },
+  { id: 'main', label: 'Principales' },
+  { id: 'unread', label: 'Non lues' },
   { id: 'groups', label: 'Groupes' },
 ];
 
 export function ChatTabs({ activeTab, onTabChange, counts }: ChatTabsProps) {
+  const colors = useThemeStore((state) => state.colors);
+
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      className="px-4 py-3 border-b border-[#27272A]"
-      contentContainerClassName="gap-2"
-    >
+    <View className="flex-row gap-2 px-4 py-3">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         const count = counts?.[tab.id] ?? 0;
@@ -35,20 +28,25 @@ export function ChatTabs({ activeTab, onTabChange, counts }: ChatTabsProps) {
           <TouchableOpacity
             key={tab.id}
             onPress={() => onTabChange(tab.id)}
-            className={`px-4 py-2 rounded-full ${
-              isActive ? 'bg-[#EF4444]' : 'bg-[#27272A]'
-            }`}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isActive }}
+            className="min-h-9 flex-1 items-center justify-center rounded-full border px-1"
+            style={{
+              backgroundColor: isActive ? colors.primary : colors.elevated,
+              borderColor: isActive ? colors.primary : colors.border,
+            }}
           >
-            <Text className={`text-sm font-medium ${
-              isActive ? 'text-white' : 'text-[#A1A1AA]'
-            }`}>
-              {tab.label}
-              {count > 0 && ` (${count})`}
+            <Text
+              className="text-[11px] font-semibold"
+              numberOfLines={1}
+              style={{ color: isActive ? '#FFFFFF' : colors.textSecondary }}
+            >
+              {tab.label}{tab.id === 'unread' && count > 0 ? ` ${count}` : ''}
             </Text>
           </TouchableOpacity>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }

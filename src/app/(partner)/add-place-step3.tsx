@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { usePartnerStore } from '@/features/partner/partner.store';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { formValidation } from '@/utils/formValidation';
 
 export default function AddPlaceStep3Screen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const { placeForm, setPlaceForm, setPlaceStep } = usePartnerStore();
   
   const [phone, setPhone] = useState(placeForm.phone || '');
@@ -18,6 +21,8 @@ export default function AddPlaceStep3Screen() {
   const [twitter, setTwitter] = useState(placeForm.twitter || '');
 
   const handleContinue = () => {
+    const error = formValidation.phone(phone, true) ?? formValidation.email(email) ?? formValidation.url(website);
+    if (error) { Alert.alert('Coordonnées à vérifier', error); return; }
     setPlaceForm({
       phone,
       contact_email: email,
@@ -31,17 +36,17 @@ export default function AddPlaceStep3Screen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Ajouter un lieu',
           headerTitleStyle: { fontSize: 18, fontWeight: '600' },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
@@ -60,19 +65,19 @@ export default function AddPlaceStep3Screen() {
           </View>
 
           {/* Section: Détails du lieu */}
-          <Text className="text-white text-lg font-bold mb-4">
+          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">
             Détails du lieu
           </Text>
 
           {/* Téléphone */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Téléphone <Text className="text-[#EF4444]">*</Text>
             </Text>
-            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+            <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-3 border border-[#E4E4E7] dark:border-[#27272A]">
               <Icon library="ionicons" name="call-outline" size={20} color="#A1A1AA" />
               <TextInput
-                className="flex-1 text-white text-sm ml-3"
+                className="flex-1 text-[#18181B] dark:text-white text-sm ml-3"
                 placeholder="+237 6 74 38 50 76"
                 placeholderTextColor="#A1A1AA"
                 value={phone}
@@ -84,13 +89,13 @@ export default function AddPlaceStep3Screen() {
 
           {/* Email */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Email
             </Text>
-            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+            <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-3 border border-[#E4E4E7] dark:border-[#27272A]">
               <Icon library="ionicons" name="mail-outline" size={20} color="#A1A1AA" />
               <TextInput
-                className="flex-1 text-white text-sm ml-3"
+                className="flex-1 text-[#18181B] dark:text-white text-sm ml-3"
                 placeholder="contact@lafalaiseresort.com"
                 placeholderTextColor="#A1A1AA"
                 value={email}
@@ -103,13 +108,13 @@ export default function AddPlaceStep3Screen() {
 
           {/* Site web */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Site web (optionnel)
             </Text>
-            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+            <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-3 border border-[#E4E4E7] dark:border-[#27272A]">
               <Icon library="ionicons" name="globe-outline" size={20} color="#A1A1AA" />
               <TextInput
-                className="flex-1 text-white text-sm ml-3"
+                className="flex-1 text-[#18181B] dark:text-white text-sm ml-3"
                 placeholder="www.lafalaiseresort.com"
                 placeholderTextColor="#A1A1AA"
                 value={website}
@@ -121,19 +126,19 @@ export default function AddPlaceStep3Screen() {
           </View>
 
           {/* Section: Réseaux sociaux */}
-          <Text className="text-white text-base font-semibold mb-3 mt-4">
+          <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-3 mt-4">
             Site web et réseaux sociaux
           </Text>
-          <Text className="text-[#A1A1AA] text-xs mb-4">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mb-4">
             Ex: www.exemple.com ou @exemple
           </Text>
 
           {/* Facebook */}
           <View className="mb-4">
-            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+            <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-3 border border-[#E4E4E7] dark:border-[#27272A]">
               <Icon library="ionicons" name="logo-facebook" size={20} color="#1877F2" />
               <TextInput
-                className="flex-1 text-white text-sm ml-3"
+                className="flex-1 text-[#18181B] dark:text-white text-sm ml-3"
                 placeholder="Facebook"
                 placeholderTextColor="#A1A1AA"
                 value={facebook}
@@ -145,10 +150,10 @@ export default function AddPlaceStep3Screen() {
 
           {/* Instagram */}
           <View className="mb-4">
-            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+            <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-3 border border-[#E4E4E7] dark:border-[#27272A]">
               <Icon library="ionicons" name="logo-instagram" size={20} color="#E4405F" />
               <TextInput
-                className="flex-1 text-white text-sm ml-3"
+                className="flex-1 text-[#18181B] dark:text-white text-sm ml-3"
                 placeholder="Instagram"
                 placeholderTextColor="#A1A1AA"
                 value={instagram}
@@ -160,10 +165,10 @@ export default function AddPlaceStep3Screen() {
 
           {/* Twitter */}
           <View className="mb-4">
-            <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-3 border border-[#27272A]">
+            <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-3 border border-[#E4E4E7] dark:border-[#27272A]">
               <Icon library="ionicons" name="logo-twitter" size={20} color="#1DA1F2" />
               <TextInput
-                className="flex-1 text-white text-sm ml-3"
+                className="flex-1 text-[#18181B] dark:text-white text-sm ml-3"
                 placeholder="Twitter"
                 placeholderTextColor="#A1A1AA"
                 value={twitter}
@@ -178,7 +183,7 @@ export default function AddPlaceStep3Screen() {
       </ScrollView>
 
       {/* Bottom Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
         <CTAButton
           title="Continuer"
           variant="primary"

@@ -3,14 +3,15 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { SuggestionCard } from '@/components/social/SuggestionCard';
-import { mockSuggestions } from '@/features/social/mockData';
+import { useFollowActions, useFriendSuggestions } from '@/features/social/useSocial';
 
 export default function FindFriendsScreen() {
   const router = useRouter();
-  const friendSuggestions = mockSuggestions;
+  const { data: friendSuggestions = [] } = useFriendSuggestions();
+  const { follow } = useFollowActions();
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -21,9 +22,9 @@ export default function FindFriendsScreen() {
       />
 
       {/* Header Info */}
-      <View className="px-4 py-4 border-b border-[#27272A]">
-        <Text className="text-white font-bold text-lg mb-1">Trouvez vos amis</Text>
-        <Text className="text-[#A1A1AA] text-sm">
+      <View className="px-4 py-4 border-b border-[#E4E4E7] dark:border-[#27272A]">
+        <Text className="mb-1 text-lg font-bold text-[#18181B] dark:text-white">Trouvez vos amis</Text>
+        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">
           Connectez-vous avec vos contacts et amis en commun
         </Text>
       </View>
@@ -47,7 +48,7 @@ export default function FindFriendsScreen() {
 
       {/* Suggestions List */}
       <View className="px-4 py-2">
-        <Text className="text-white font-semibold text-sm mb-2">Amis en commun</Text>
+        <Text className="mb-2 text-sm font-semibold text-[#18181B] dark:text-white">Amis en commun</Text>
       </View>
 
       <FlatList
@@ -57,14 +58,14 @@ export default function FindFriendsScreen() {
           <SuggestionCard
             user={item}
             onPress={() => router.push(`/(profile)/${item.username}`)}
-            onFollowPress={() => console.log('Follow', item.username)}
+            onFollowPress={() => follow.mutate(item.id)}
             onDismiss={() => console.log('Dismiss', item.username)}
           />
         )}
         ListEmptyComponent={
           <View className="items-center justify-center py-12">
             <Icon library="ionicons" name="people-circle-outline" size={64} color="#27272A" />
-            <Text className="text-[#A1A1AA] text-sm mt-4 text-center px-8">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-4 text-center px-8">
               Synchronisez vos contacts pour trouver vos amis
             </Text>
           </View>

@@ -1,18 +1,23 @@
 // Grille de publications (style Instagram)
-import { View, Text, TouchableOpacity, Image, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { UserPublication } from '@/features/profile/types';
+import type { EntityId } from '@/types/api.types';
 
 interface PublicationGridProps {
   publications: UserPublication[];
-  onPressPublication: (id: number) => void;
+  onPressPublication: (id: EntityId) => void;
 }
 
 export function PublicationGrid({ publications, onPressPublication }: PublicationGridProps) {
-  const renderItem = ({ item }: { item: UserPublication }) => (
+  const { width } = useWindowDimensions();
+  const itemSize = (width - 4) / 3;
+  const renderItem = (item: UserPublication) => (
     <TouchableOpacity
+      key={item.id}
       onPress={() => onPressPublication(item.id)}
-      className="flex-1 aspect-square p-0.5"
+      className="p-0.5"
+      style={{ width: itemSize, height: itemSize }}
       activeOpacity={0.7}
     >
       <Image
@@ -38,13 +43,6 @@ export function PublicationGrid({ publications, onPressPublication }: Publicatio
   );
 
   return (
-    <FlatList
-      data={publications}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id.toString()}
-      numColumns={3}
-      scrollEnabled={false}
-      contentContainerClassName="p-0"
-    />
+    <View className="flex-row flex-wrap">{publications.map(renderItem)}</View>
   );
 }

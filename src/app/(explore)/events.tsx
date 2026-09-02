@@ -4,13 +4,17 @@ import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { FilterButton } from '@/components/ui/FilterButton';
 import { EventCard } from '@/components/events/EventCard';
-import { mockEvents } from '@/features/events/mockData';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { useUpcomingEvents } from '@/features/events/useEvents';
+import type { EntityId } from '@/types/api.types';
 
 type FilterType = 'all' | 'autumn' | 'later';
 
 export default function EventsListScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const { data: events = [] } = useUpcomingEvents();
   const [location, setLocation] = useState('Yaoundé, Centre');
 
   const filters = [
@@ -19,37 +23,37 @@ export default function EventsListScreen() {
     { id: 'later' as FilterType, label: 'Plus tard' },
   ];
 
-  const handleSaveToggle = (eventId: number) => {
+  const handleSaveToggle = (eventId: EntityId) => {
     console.log('Toggle save:', eventId);
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Événements',
           headerTitleStyle: { fontSize: 18, fontWeight: '600' },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
       />
 
       {/* Location Selector */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b" style={{ borderColor: colors.border }}>
         <TouchableOpacity
           onPress={() => console.log('Change location')}
           className="flex-row items-center justify-between"
           activeOpacity={0.7}
         >
           <View className="flex-1">
-            <Text className="text-[#A1A1AA] text-xs mb-1">Recherche</Text>
-            <Text className="text-white text-base font-medium">{location}</Text>
+            <Text className="text-xs mb-1" style={{ color: colors.textSecondary }}>Recherche</Text>
+            <Text className="text-base font-medium" style={{ color: colors.text }}>{location}</Text>
           </View>
           <Text className="text-[#EF4444] text-sm font-semibold">Changer</Text>
         </TouchableOpacity>
@@ -75,7 +79,7 @@ export default function EventsListScreen() {
 
       {/* Events List */}
       <FlatList
-        data={mockEvents}
+        data={events}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { useRef, useState } from 'react';
+import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,19 +7,24 @@ import { Icon } from '@/components/ui/Icon';
 import { Toggle } from '@/components/ui/Toggle';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { useCreateStore } from '@/features/create/create.store';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { DateTimeField } from '@/components/ui/DateTimeField';
+import { formValidation } from '@/utils/formValidation';
 
 export default function CreateEventScreen() {
   const router = useRouter();
-  const { eventForm, setEventForm } = useCreateStore();
+  const initialEventForm = useRef(useCreateStore.getState().eventForm).current;
+  const setEventForm = useCreateStore((state) => state.setEventForm);
+  const colors = useThemeStore((state) => state.colors);
   
-  const [coverImage, setCoverImage] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [maxParticipants, setMaxParticipants] = useState('20');
-  const [shareToFeed, setShareToFeed] = useState(true);
+  const [coverImage, setCoverImage] = useState<string | null>(initialEventForm.cover_image_url ?? null);
+  const [title, setTitle] = useState(initialEventForm.title ?? '');
+  const [description, setDescription] = useState(initialEventForm.description ?? '');
+  const [location, setLocation] = useState(initialEventForm.location ?? '');
+  const [date, setDate] = useState(initialEventForm.date ?? '');
+  const [time, setTime] = useState(initialEventForm.time ?? '');
+  const [maxParticipants, setMaxParticipants] = useState(String(initialEventForm.max_participants ?? 20));
+  const [shareToFeed, setShareToFeed] = useState(initialEventForm.share_to_feed ?? true);
 
   const pickCoverImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -36,6 +41,15 @@ export default function CreateEventScreen() {
   };
 
   const handleNext = () => {
+    const error = formValidation.required(title, 'Le titre')
+      ?? formValidation.required(location, 'Le lieu')
+      ?? formValidation.date(date, 'La date', true)
+      ?? formValidation.required(time, 'L’heure')
+      ?? formValidation.positiveNumber(maxParticipants, 'Le nombre de participants', true);
+    if (error) {
+      Alert.alert('Informations à vérifier', error);
+      return;
+    }
     setEventForm({
       title,
       description,
@@ -49,23 +63,30 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Créer une sortie',
           headerTitleStyle: { fontSize: 18, fontWeight: '600' },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
       />
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      >
         {/* Cover Image */}
         <TouchableOpacity
           onPress={pickCoverImage}
@@ -79,9 +100,9 @@ export default function CreateEventScreen() {
               contentFit="cover"
             />
           ) : (
-            <View className="w-full h-48 bg-[#161616] items-center justify-center">
+            <View className="w-full h-48 bg-white dark:bg-[#161616] items-center justify-center">
               <Icon library="ionicons" name="image" size={48} color="#52525B" />
-              <Text className="text-[#A1A1AA] text-sm mt-2">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-2">
                 Ajouter une photo de couverture
               </Text>
             </View>
@@ -91,11 +112,11 @@ export default function CreateEventScreen() {
         <View className="px-4 py-6">
           {/* Title */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Titre de votre sortie <Text className="text-[#EF4444]">*</Text>
             </Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="Ex: Randonnée au Mont Cameroun"
               placeholderTextColor="#A1A1AA"
               value={title}
@@ -106,9 +127,9 @@ export default function CreateEventScreen() {
 
           {/* Description */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">Description</Text>
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">Description</Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="Décrivez votre sortie..."
               placeholderTextColor="#A1A1AA"
               value={description}
@@ -122,11 +143,11 @@ export default function CreateEventScreen() {
           {/* Location, Date, Time */}
           <View className="flex-row gap-3 mb-4">
             <View className="flex-1">
-              <Text className="text-white text-sm font-medium mb-2">
+              <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
                 Lieu <Text className="text-[#EF4444]">*</Text>
               </Text>
               <TextInput
-                className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+                className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
                 placeholder="Lieu"
                 placeholderTextColor="#A1A1AA"
                 value={location}
@@ -135,37 +156,18 @@ export default function CreateEventScreen() {
             </View>
           </View>
 
-          <View className="flex-row gap-3 mb-4">
-            <View className="flex-1">
-              <Text className="text-white text-sm font-medium mb-2">Date</Text>
-              <TextInput
-                className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
-                placeholder="JJ/MM/AAAA"
-                placeholderTextColor="#A1A1AA"
-                value={date}
-                onChangeText={setDate}
-              />
-            </View>
-
-            <View className="flex-1">
-              <Text className="text-white text-sm font-medium mb-2">Heure</Text>
-              <TextInput
-                className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
-                placeholder="HH:MM"
-                placeholderTextColor="#A1A1AA"
-                value={time}
-                onChangeText={setTime}
-              />
-            </View>
+          <View className="mb-4 gap-4">
+            <DateTimeField label="Date" value={date} onChange={setDate} mode="date" required minimumDate={new Date()} />
+            <DateTimeField label="Heure" value={time} onChange={setTime} mode="time" required />
           </View>
 
           {/* Max Participants */}
           <View className="mb-4">
-            <Text className="text-white text-sm font-medium mb-2">
+            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
               Nombre de participants
             </Text>
             <TextInput
-              className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm border border-[#27272A]"
+              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
               placeholder="20"
               placeholderTextColor="#A1A1AA"
               value={maxParticipants}
@@ -175,11 +177,14 @@ export default function CreateEventScreen() {
           </View>
 
           {/* Share to Feed Toggle */}
-          <View className="bg-[#161616] rounded-xl px-4 py-2 mb-4">
+          <View className="bg-white dark:bg-[#161616] rounded-xl px-4 py-2 mb-4">
             <Toggle
               label="Partager mon post dans Sortie"
               value={shareToFeed}
-              onValueChange={setShareToFeed}
+              onValueChange={(value) => {
+                setShareToFeed(value);
+                setEventForm({ share_to_feed: value });
+              }}
             />
           </View>
 
@@ -194,18 +199,18 @@ export default function CreateEventScreen() {
           </View>
         </View>
 
-        <View className="h-24" />
+        <View className="h-4" />
       </ScrollView>
 
       {/* Bottom Buttons */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+      <View className="border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
         <View className="flex-row gap-3">
           <TouchableOpacity
             onPress={() => router.back()}
-            className="flex-1 bg-[#27272A] rounded-xl py-4 items-center"
+            className="flex-1 bg-[#F4F4F5] dark:bg-[#27272A] rounded-xl py-4 items-center"
             activeOpacity={0.7}
           >
-            <Text className="text-white text-sm font-semibold">Annuler</Text>
+            <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Annuler</Text>
           </TouchableOpacity>
           
           <View className="flex-1">
@@ -218,6 +223,7 @@ export default function CreateEventScreen() {
           </View>
         </View>
       </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }

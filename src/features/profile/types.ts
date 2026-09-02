@@ -1,10 +1,10 @@
-import type { MediaAttachment } from '@/types/api.types';
+import type { EntityId, MediaAttachment } from '@/types/api.types';
 
 export interface PlaceSummary {
-  id: number;
+  id: EntityId;
   name: string;
   category: {
-    id: number;
+    id: EntityId;
     name: string;
     icon: string;
   };
@@ -29,7 +29,7 @@ export interface PlaceSummary {
 }
 
 export interface UserProfile {
-  id: number;
+  id: EntityId;
   username: string;
   display_name: string;
   avatar_url: string | null;
@@ -47,7 +47,7 @@ export interface UserProfile {
 }
 
 export interface ProfilePost {
-  id: number;
+  id: EntityId;
   type: 'video' | 'image' | 'carousel';
   thumbnail_url: string;
   media: MediaAttachment[];
@@ -57,7 +57,7 @@ export interface ProfilePost {
 }
 
 export interface UserPublication {
-  id: number;
+  id: EntityId;
   type: 'video' | 'image' | 'carousel';
   media_url: string;
   likes_count: number;
@@ -74,13 +74,13 @@ export interface FavoritePlace extends PlaceSummary {
 }
 
 export interface UserEvent {
-  id: number;
+  id: EntityId;
   title: string;
   description: string | null;
   cover_image_url: string | null;
   place: Pick<PlaceSummary, 'id' | 'name' | 'city'>;
   organizer: {
-    id: number;
+    id: EntityId;
     username: string;
     display_name: string;
     avatar_url: string | null;
@@ -100,12 +100,12 @@ export interface UserEvent {
 }
 
 export interface EventParticipation {
-  id: number;
+  id: EntityId;
   event: UserEvent;
   status: 'confirmed' | 'pending' | 'cancelled';
   participants: unknown[];
   participants_preview?: Array<{
-    id: number;
+    id: EntityId;
     avatar_url: string | null;
   }>;
   participants_count: number;
@@ -114,7 +114,7 @@ export interface EventParticipation {
 }
 
 export interface Reservation {
-  id: number;
+  id: EntityId;
   place: PlaceSummary;
   reservation_date: string;
   guests_count: number;
@@ -123,7 +123,7 @@ export interface Reservation {
 }
 
 export interface UserReview {
-  id: number;
+  id: EntityId;
   place: PlaceSummary;
   rating: number;
   comment: string;

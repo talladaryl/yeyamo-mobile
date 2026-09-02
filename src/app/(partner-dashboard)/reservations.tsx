@@ -1,47 +1,23 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/Icon';
+import { useMemo, useState } from 'react';
+import { FilterChips, PartnerPage } from '@/components/partner-dashboard/PartnerPage';
 import { ReservationCard } from '@/components/partner-dashboard/ReservationCard';
 import { reservations } from '@/features/partner-dashboard/mockData';
+import { useAuthStore } from '@/features/auth/auth.store';
 
+const FILTERS = ['Toutes (3)', 'Confirmées', 'En attente', 'Annulées'] as const;
 export default function ReservationsScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-
+  const [filter, setFilter] = useState<string>(FILTERS[0]);
+  const isDemo = useAuthStore((state) => state.sessionMode === 'demo-partner');
+  const data = useMemo(() => {
+    if (filter === 'Confirmées') return reservations.filter((item) => item.status === 'confirmed');
+    if (filter === 'En attente') return reservations.filter((item) => item.status === 'pending');
+    if (filter === 'Annulées') return reservations.filter((item) => item.status === 'cancelled');
+    return reservations;
+  }, [filter]);
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
-      {/* Header */}
-      <View style={{ paddingTop: insets.top }} className="px-4 pt-3 pb-4 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-            <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View>
-            <Text className="text-white text-2xl font-bold">MES RÉSERVATIONS</Text>
-            <Text className="text-[#A1A1AA] text-sm">Suivez toutes vos réservations</Text>
-          </View>
-        </View>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} className="px-4">
-        {reservations.map((reservation) => (
-          <ReservationCard
-            key={reservation.id}
-            reservation={reservation}
-            onPress={() => console.log('View reservation:', reservation.id)}
-          />
-        ))}
-
-        <TouchableOpacity
-          className="bg-[#161616] rounded-xl p-4 mb-6 items-center"
-          activeOpacity={0.8}
-        >
-          <Text className="text-[#EF4444] font-semibold">Voir toutes les réservations</Text>
-        </TouchableOpacity>
-
-        <View className="h-6" />
-      </ScrollView>
-    </View>
+    <PartnerPage title="Mes réservations" subtitle="Suivez les réservations et demandes reçues">
+      <FilterChips values={FILTERS} selected={filter} onSelect={setFilter} />
+      {(isDemo ? data : []).map((item) => <ReservationCard key={item.id} reservation={item} onPress={() => {}} />)}
+    </PartnerPage>
   );
 }

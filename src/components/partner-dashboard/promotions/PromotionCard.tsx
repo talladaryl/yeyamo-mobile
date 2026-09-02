@@ -1,0 +1,12 @@
+import { Text, View } from 'react-native';
+import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
+import type { DiscountType, Promotion, PromotionStatus } from '@/features/promotions/types';
+
+const STATUS: Record<PromotionStatus, { label: string; color: string }> = { ACTIVE: { label: 'Active', color: '#22C55E' }, SCHEDULED: { label: 'Programmée', color: '#F59E0B' }, COMPLETED: { label: 'Terminée', color: '#71717A' } };
+const DISCOUNT: Record<DiscountType, (value: number) => string> = { PERCENTAGE: (value) => `-${value} %`, FIXED_AMOUNT: (value) => `-${value.toLocaleString('fr-FR')} FCFA`, FREE_SERVICE_FEE: () => 'Frais offerts' };
+
+export function PromotionCard({ promotion }: { promotion: Promotion }) {
+  const colors = useThemeStore((state) => state.colors); const status = STATUS[promotion.status]; const progress = promotion.globalLimit ? promotion.usageCount / promotion.globalLimit * 100 : 0;
+  return <View className="mb-3 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><View className="flex-row items-start justify-between"><View className="flex-1"><Text className="text-base font-extrabold" style={{ color: colors.text }}>{promotion.name}</Text><View className="mt-2 self-start rounded-lg bg-[#EF444420] px-2.5 py-1"><Text className="font-bold text-[#EF4444]">{promotion.code}</Text></View></View><View className="rounded-full px-2.5 py-1" style={{ backgroundColor: `${status.color}20` }}><Text className="text-[10px] font-bold" style={{ color: status.color }}>{status.label}</Text></View></View><Text className="mt-3 text-lg font-extrabold text-[#EF4444]">{DISCOUNT[promotion.discountType](promotion.value)}</Text><View className="mt-3 flex-row items-center gap-1"><Icon name="calendar-outline" size={13} color={colors.textSecondary} /><Text className="text-xs" style={{ color: colors.textSecondary }}>{promotion.startsAt} — {promotion.endsAt}</Text></View><View className="mt-4 flex-row justify-between"><Text className="text-xs" style={{ color: colors.textSecondary }}>Utilisation</Text><Text className="text-xs font-bold" style={{ color: colors.text }}>{promotion.usageCount} / {promotion.globalLimit}</Text></View><View className="mt-2 h-2 overflow-hidden rounded-full" style={{ backgroundColor: colors.elevated }}><View className="h-full rounded-full bg-[#EF4444]" style={{ width: `${Math.min(100, progress)}%` }} /></View></View>;
+}

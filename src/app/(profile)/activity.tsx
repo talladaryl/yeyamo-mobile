@@ -4,7 +4,7 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { ActivityItem } from '@/components/social/ActivityItem';
-import { mockActivity } from '@/features/social/mockData';
+import { useNetworkActivity } from '@/features/social/useSocial';
 
 type ActivityFilter = 'all' | 'likes' | 'comments' | 'follows' | 'posts';
 
@@ -12,7 +12,7 @@ export default function ActivityScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState<ActivityFilter>('all');
 
-  const activities = mockActivity;
+  const { data: activities = [] } = useNetworkActivity();
 
   const filteredActivities =
     filter === 'all'
@@ -34,7 +34,7 @@ export default function ActivityScreen() {
   ];
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -45,15 +45,15 @@ export default function ActivityScreen() {
       />
 
       {/* Header Info */}
-      <View className="px-4 py-4 border-b border-[#27272A]">
-        <Text className="text-white font-bold text-lg mb-1">Réseau</Text>
-        <Text className="text-[#A1A1AA] text-sm">
+      <View className="px-4 py-4 border-b border-[#E4E4E7] dark:border-[#27272A]">
+        <Text className="mb-1 text-lg font-bold text-[#18181B] dark:text-white">Réseau</Text>
+        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">
           Activité des personnes que vous suivez
         </Text>
       </View>
 
       {/* Filters */}
-      <View className="border-b border-[#27272A]">
+      <View className="border-b border-[#E4E4E7] dark:border-[#27272A]">
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -64,7 +64,7 @@ export default function ActivityScreen() {
             <TouchableOpacity
               onPress={() => setFilter(item.key)}
               className={`mr-3 px-4 py-2 rounded-full flex-row items-center gap-2 ${
-                filter === item.key ? 'bg-[#EF4444]' : 'bg-[#27272A]'
+                filter === item.key ? 'bg-[#EF4444]' : 'bg-[#F4F4F5] dark:bg-[#27272A]'
               }`}
               activeOpacity={0.8}
             >
@@ -76,7 +76,7 @@ export default function ActivityScreen() {
               />
               <Text
                 className={`text-sm font-semibold ${
-                  filter === item.key ? 'text-white' : 'text-[#A1A1AA]'
+                  filter === item.key ? 'text-white' : 'text-[#52525B] dark:text-[#A1A1AA]'
                 }`}
               >
                 {item.label}
@@ -106,7 +106,7 @@ export default function ActivityScreen() {
         ListEmptyComponent={
           <View className="items-center justify-center py-12">
             <Icon library="ionicons" name="notifications-outline" size={64} color="#27272A" />
-            <Text className="text-[#A1A1AA] text-sm mt-4">Aucune activité récente</Text>
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-4">Aucune activité récente</Text>
           </View>
         }
       />

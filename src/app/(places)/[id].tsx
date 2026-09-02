@@ -1,19 +1,34 @@
-import { View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { mockPlaces } from '@/features/places/mockData';
 import { useState } from 'react';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { usePlaceDetail } from '@/features/places/usePlaces';
 
 const { width } = Dimensions.get('window');
 
 export default function PlaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [isSaved, setIsSaved] = useState(false);
   
-  const place = mockPlaces.find(p => p.id === Number(id)) || mockPlaces[0];
+  const { data: place, isLoading } = usePlaceDetail(id);
+
+  if (isLoading || !place) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
   const openDirections = () => router.push(`/(places)/route/${place.id}`);
+  const explainBookingBlock = () => Alert.alert(
+    'Réservation indisponible',
+    'BLOCKED_BY_BACKEND — le contrat disponible ne relie pas encore ce lieu à une activité réservable et ne publie pas le DTO nécessaire au formulaire de réservation.',
+  );
 
   const sharePlace = async () => {
     await Share.share({
@@ -22,7 +37,7 @@ export default function PlaceDetailScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -66,7 +81,7 @@ export default function PlaceDetailScreen() {
             contentFit="cover"
           />
           <View className="absolute bottom-3 right-3 bg-black/70 px-3 py-1.5 rounded-full">
-            <Text className="text-white text-xs font-medium">1/{place.photos?.length || 1}</Text>
+            <Text className="text-xs font-medium text-white">1/{place.photos?.length || 1}</Text>
           </View>
         </View>
 
@@ -74,64 +89,66 @@ export default function PlaceDetailScreen() {
           {/* Title & Location */}
           <View className="flex-row items-start justify-between mt-4 mb-3">
             <View className="flex-1">
-              <Text className="text-white text-2xl font-bold mb-1">{place.name}</Text>
-              <Text className="text-[#A1A1AA] text-sm">{place.category} • {place.city}</Text>
+              <Text style={{ color: colors.text }} className=" text-2xl font-bold mb-1">{place.name}</Text>
+              <Text style={{ color: colors.textSecondary }} className=" text-sm">{place.category} • {place.city}</Text>
             </View>
           </View>
 
           {/* Rating */}
           <View className="flex-row items-center gap-1 mb-4">
             <Ionicons name="star" size={18} color="#F59E0B" />
-            <Text className="text-white text-base font-semibold">{place.rating?.toFixed(1)}</Text>
-            <Text className="text-[#A1A1AA] text-sm">({place.reviews_count} avis)</Text>
+            <Text style={{ color: colors.text }} className=" text-base font-semibold">{place.rating?.toFixed(1)}</Text>
+            <Text style={{ color: colors.textSecondary }} className=" text-sm">({place.reviews_count} avis)</Text>
           </View>
 
           {/* Address */}
           <View className="flex-row items-start gap-2 mb-4">
             <Ionicons name="location-outline" size={20} color="#A1A1AA" />
-            <Text className="text-white text-sm flex-1">{place.address}</Text>
+            <Text style={{ color: colors.text }} className=" text-sm flex-1">{place.address}</Text>
           </View>
 
           {/* Opening Hours */}
           <View className="flex-row items-center gap-2 mb-5">
             <Ionicons name="time-outline" size={20} color="#A1A1AA" />
-            <Text className="text-white text-sm">Ouvert • {place.opening_hours}</Text>
+            <Text style={{ color: colors.text }} className=" text-sm">Ouvert • {place.opening_hours}</Text>
           </View>
 
           {/* Price Range */}
-          <View className="bg-[#161616] rounded-2xl p-4 mb-5">
-            <Text className="text-[#A1A1AA] text-xs mb-1">Prix par nuit</Text>
-            <Text className="text-white text-xl font-bold">
+          <View className="rounded-2xl border p-4 mb-5" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            <Text style={{ color: colors.textSecondary }} className=" text-xs mb-1">Prix par nuit</Text>
+            <Text style={{ color: colors.text }} className=" text-xl font-bold">
               {place.price_from?.toLocaleString()} - {place.price_to?.toLocaleString()} {place.currency}
-              <Text className="text-sm font-normal text-[#A1A1AA]"> / nuit</Text>
+              <Text className="text-sm font-normal text-[#52525B] dark:text-[#A1A1AA]"> / nuit</Text>
             </Text>
           </View>
 
           {/* Action Buttons */}
           <View className="flex-row gap-3 mb-6">
-            <TouchableOpacity className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
-              <Text className="text-white font-semibold text-base">Réserver</Text>
+            <TouchableOpacity onPress={explainBookingBlock} className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
+              <Text className="text-base font-semibold text-white">Réserver</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={openDirections}
-              className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center"
+              className="border px-5 py-3.5 rounded-xl items-center justify-center"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
               activeOpacity={0.8}
             >
-              <Ionicons name="navigate-outline" size={20} color="#FFFFFF" />
+              <Ionicons name="navigate-outline" size={20} color={colors.text} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={sharePlace}
-              className="bg-[#161616] px-5 py-3.5 rounded-xl items-center justify-center"
+              className="border px-5 py-3.5 rounded-xl items-center justify-center"
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
               activeOpacity={0.8}
             >
-              <Ionicons name="share-social-outline" size={20} color="#FFFFFF" />
+              <Ionicons name="share-social-outline" size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           {/* Avis récents Section */}
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-white text-lg font-bold">Avis récents</Text>
+              <Text style={{ color: colors.text }} className=" text-lg font-bold">Avis récents</Text>
               <TouchableOpacity onPress={() => router.push('/(profile)/reviews')}>
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
@@ -147,8 +164,8 @@ export default function PlaceDetailScreen() {
                   />
                   <View className="flex-1">
                     <View className="flex-row items-center justify-between mb-1">
-                      <Text className="text-white font-semibold">{review.user_name}</Text>
-                      <Text className="text-[#A1A1AA] text-xs">{review.date}</Text>
+                      <Text style={{ color: colors.text }} className=" font-semibold">{review.user_name}</Text>
+                      <Text style={{ color: colors.textSecondary }} className=" text-xs">{review.date}</Text>
                     </View>
                     <View className="flex-row items-center gap-1 mb-2">
                       {[...Array(5)].map((_, i) => (
@@ -160,7 +177,7 @@ export default function PlaceDetailScreen() {
                         />
                       ))}
                     </View>
-                    <Text className="text-[#A1A1AA] text-sm leading-5">{review.comment}</Text>
+                    <Text style={{ color: colors.textSecondary }} className=" text-sm leading-5">{review.comment}</Text>
                     {review.photos && review.photos.length > 0 && (
                       <View className="flex-row gap-2 mt-2">
                         {review.photos.map((photo, idx) => (
@@ -182,7 +199,7 @@ export default function PlaceDetailScreen() {
           {/* Événements liés Section */}
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-white text-lg font-bold">Événements liés</Text>
+              <Text style={{ color: colors.text }} className=" text-lg font-bold">Événements liés</Text>
               <TouchableOpacity onPress={() => router.push('/(explore)/events')}>
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
@@ -200,10 +217,10 @@ export default function PlaceDetailScreen() {
                     style={{ width: 160, height: 120 }}
                     className="rounded-xl mb-2"
                   />
-                  <Text className="text-white font-semibold text-sm" numberOfLines={1}>
+                  <Text style={{ color: colors.text }} className=" font-semibold text-sm" numberOfLines={1}>
                     {event.title}
                   </Text>
-                  <Text className="text-[#A1A1AA] text-xs mt-0.5">{event.date} • {event.time}</Text>
+                  <Text style={{ color: colors.textSecondary }} className=" text-xs mt-0.5">{event.date} • {event.time}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -212,7 +229,7 @@ export default function PlaceDetailScreen() {
           {/* Événements similaires Section */}
           <View className="mb-5">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-white text-lg font-bold">Événements similaires</Text>
+              <Text style={{ color: colors.text }} className=" text-lg font-bold">Événements similaires</Text>
               <TouchableOpacity onPress={() => router.push('/(explore)/events')}>
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
@@ -230,10 +247,10 @@ export default function PlaceDetailScreen() {
                     style={{ width: 160, height: 120 }}
                     className="rounded-xl mb-2"
                   />
-                  <Text className="text-white font-semibold text-sm" numberOfLines={1}>
+                  <Text style={{ color: colors.text }} className=" font-semibold text-sm" numberOfLines={1}>
                     {event.title}
                   </Text>
-                  <Text className="text-[#A1A1AA] text-xs mt-0.5">{event.date}</Text>
+                  <Text style={{ color: colors.textSecondary }} className=" text-xs mt-0.5">{event.date}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>

@@ -1,9 +1,11 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
+import type { EntityId } from '@/types/api.types';
 
 interface EventCardProps {
-  id: number;
+  id: EntityId;
   title: string;
   date: string;
   location: string;
@@ -24,11 +26,14 @@ export function EventCard({
   onPress,
   onSavePress,
 }: EventCardProps) {
+  const colors = useThemeStore((state) => state.colors);
+
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.9}
-      className="bg-[#161616] rounded-2xl overflow-hidden mb-4"
+      className="rounded-2xl overflow-hidden mb-4 border"
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}
     >
       <View className="relative">
         {imageUrl ? (
@@ -38,8 +43,8 @@ export function EventCard({
             contentFit="cover"
           />
         ) : (
-          <View className="w-full h-40 bg-[#27272A] items-center justify-center">
-            <Icon library="ionicons" name="calendar" size={48} color="#52525B" />
+          <View className="w-full h-40 items-center justify-center" style={{ backgroundColor: colors.elevated }}>
+            <Icon library="ionicons" name="calendar" size={48} color={colors.textSecondary} />
           </View>
         )}
         
@@ -58,18 +63,18 @@ export function EventCard({
       </View>
 
       <View className="p-4">
-        <Text className="text-white text-base font-semibold mb-2" numberOfLines={2}>
+        <Text className="text-base font-semibold mb-2" style={{ color: colors.text }} numberOfLines={2}>
           {title}
         </Text>
         
         <View className="flex-row items-center gap-1 mb-1">
-          <Icon library="ionicons" name="calendar-outline" size={14} color="#A1A1AA" />
-          <Text className="text-[#A1A1AA] text-xs">{date}</Text>
+          <Icon library="ionicons" name="calendar-outline" size={14} color={colors.textSecondary} />
+          <Text className="text-xs" style={{ color: colors.textSecondary }}>{date}</Text>
         </View>
         
         <View className="flex-row items-center gap-1">
-          <Icon library="ionicons" name="location-outline" size={14} color="#A1A1AA" />
-          <Text className="text-[#A1A1AA] text-xs">{location}</Text>
+          <Icon library="ionicons" name="location-outline" size={14} color={colors.textSecondary} />
+          <Text className="text-xs" style={{ color: colors.textSecondary }}>{location}</Text>
         </View>
       </View>
     </TouchableOpacity>

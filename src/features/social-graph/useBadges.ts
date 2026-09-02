@@ -1,37 +1,41 @@
 // Hook personnalisé pour la gestion des badges
 import { useQuery } from '@tanstack/react-query';
-import ENV from '@/config/env';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { badgesApi } from './badges.api';
-import { MOCK_BADGES, MOCK_USER_STATS } from './mockData';
+import { MOCK_USER_STATS } from './mockData';
+import { PREMIUM_BADGES } from './passport.badges';
+import type { EntityId } from '@/types/api.types';
 
 /**
  * Hook pour récupérer tous les badges de l'utilisateur
  */
 export function useUserBadges() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['badges', 'user'],
+    queryKey: ['badges', isDemo ? 'demo' : 'backend', 'user'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_BADGES) : badgesApi.getUserBadges(),
+      isDemo ? Promise.resolve(PREMIUM_BADGES) : badgesApi.getUserBadges(),
     staleTime: 1000 * 60 * 5, // 5 minutes
     // En développement, utiliser les mock data
-    placeholderData: MOCK_BADGES,
+    placeholderData: isDemo ? PREMIUM_BADGES : undefined,
   });
 }
 
 /**
  * Hook pour récupérer les détails d'un badge
  */
-export function useBadgeDetails(badgeId: number) {
+export function useBadgeDetails(badgeId: EntityId) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['badges', badgeId],
+    queryKey: ['badges', isDemo ? 'demo' : 'backend', badgeId],
     queryFn: () =>
-      ENV.USE_MOCKS
-        ? Promise.resolve(MOCK_BADGES.find((b) => b.id === badgeId) ?? MOCK_BADGES[0])
+      isDemo
+        ? Promise.resolve(PREMIUM_BADGES.find((b) => String(b.id) === String(badgeId)) ?? PREMIUM_BADGES[0])
         : badgesApi.getBadgeDetails(badgeId),
     enabled: !!badgeId,
     staleTime: 1000 * 60 * 5,
     // En développement, utiliser les mock data
-    placeholderData: MOCK_BADGES.find((b) => b.id === badgeId),
+    placeholderData: isDemo ? PREMIUM_BADGES.find((b) => String(b.id) === String(badgeId)) : undefined,
   });
 }
 
@@ -39,13 +43,14 @@ export function useBadgeDetails(badgeId: number) {
  * Hook pour récupérer les statistiques des badges
  */
 export function useUserBadgeStats() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['badges', 'stats'],
+    queryKey: ['badges', isDemo ? 'demo' : 'backend', 'stats'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_USER_STATS) : badgesApi.getUserBadgeStats(),
+      isDemo ? Promise.resolve(MOCK_USER_STATS) : badgesApi.getUserBadgeStats(),
     staleTime: 1000 * 60 * 5,
     // En développement, utiliser les mock data
-    placeholderData: MOCK_USER_STATS,
+    placeholderData: isDemo ? MOCK_USER_STATS : undefined,
   });
 }
 
@@ -53,11 +58,12 @@ export function useUserBadgeStats() {
  * Hook pour récupérer tous les badges disponibles
  */
 export function useAllBadges() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['badges', 'all'],
+    queryKey: ['badges', isDemo ? 'demo' : 'backend', 'all'],
     queryFn: () =>
-      ENV.USE_MOCKS ? Promise.resolve(MOCK_BADGES) : badgesApi.getAllBadges(),
+      isDemo ? Promise.resolve(PREMIUM_BADGES) : badgesApi.getAllBadges(),
     staleTime: 1000 * 60 * 10, // 10 minutes
-    placeholderData: MOCK_BADGES,
+    placeholderData: isDemo ? PREMIUM_BADGES : undefined,
   });
 }

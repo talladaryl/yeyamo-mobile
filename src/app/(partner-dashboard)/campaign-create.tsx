@@ -1,0 +1,196 @@
+import { isAxiosError } from 'axios';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { PartnerPage } from '@/components/partner-dashboard/PartnerPage';
+import { campaignDraftToCreateRequest } from '@/features/campaigns/campaigns.mapper';
+import {
+  type CampaignDraft,
+  useCampaignDraftStore,
+} from '@/features/campaigns/campaign-draft.store';
+import { useCreateCampaign } from '@/features/campaigns/useCampaigns';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { getSuggestedCampaignActions } from '@/features/campaigns/campaign-actions';
+import { Stepper } from '@/components/ui/Stepper';
+import { DateTimeField } from '@/components/ui/DateTimeField';
+import { formValidation } from '@/utils/formValidation';
+
+type FieldErrors = Partial<Record<keyof CampaignDraft, string>>;
+
+export default function CampaignCreateScreen() {
+  const colors = useThemeStore((state) => state.colors);
+  const router = useRouter();
+  const { draft, step, update, setStep, reset } = useCampaignDraftStore();
+  const createCampaign = useCreateCampaign();
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const suggestedActions = getSuggestedCampaignActions({
+    promotedEntityType: draft.promotedEntityType,
+    objective: draft.objective,
+  });
+
+  const continueToNextStep = () => {
+    setFormError(null);
+    if (step === 1 && (!draft.name.trim() || !draft.promotedEntityId.trim())) return setFormError('Le nom et le contenu promu sont requis.');
+    if (step === 3) {
+      const error = formValidation.positiveNumber(draft.totalBudget, 'Budget total', true)
+        ?? formValidation.positiveNumber(draft.dailyBudget, 'Budget journalier', true)
+        ?? formValidation.date(draft.startAt, 'Date de début', true)
+        ?? formValidation.date(draft.endAt, 'Date de fin', true)
+        ?? formValidation.dateOrder(draft.startAt, draft.endAt);
+      if (error) return setFormError(error);
+      if (Number(draft.dailyBudget) > Number(draft.totalBudget)) return setFormError('Le budget journalier ne peut pas dépasser le budget total.');
+    }
+    if (step === 4 && draft.minimumAge && draft.maximumAge && Number(draft.minimumAge) > Number(draft.maximumAge)) return setFormError('L’âge maximum doit être supérieur ou égal à l’âge minimum.');
+    if (step === 5 && draft.destinationUrl && formValidation.url(draft.destinationUrl)) return setFormError(formValidation.url(draft.destinationUrl) ?? 'Lien invalide.');
+    setStep(step + 1);
+  };
+
+  const submit = () => {
+    setFieldErrors({});
+    setFormError(null);
+    let payload;
+    try {
+      payload = campaignDraftToCreateRequest(draft);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Formulaire invalide.');
+      return;
+    }
+    createCampaign.mutate(payload, {
+      onSuccess: (campaign) => {
+        reset();
+        Alert.alert('Campagne créée', 'La campagne a été enregistrée comme brouillon.');
+        router.replace(`/(partner-dashboard)/campaign/${campaign.id}`);
+      },
+      onError: (error) => {
+        if (isAxiosError(error)) {
+          const body = error.response?.data as {
+            detail?: string;
+            message?: string;
+            validationErrors?: Record<string, string>;
+          } | undefined;
+          if (error.response?.status === 422 || error.response?.status === 400) {
+            const backendFields = body?.validationErrors ?? {};
+            setFieldErrors(backendFields as FieldErrors);
+          }
+          setFormError(body?.detail ?? body?.message ?? `Erreur serveur (${error.response?.status ?? 'réseau'}).`);
+          return;
+        }
+        setFormError(error instanceof Error ? error.message : 'Création impossible.');
+      },
+    });
+  };
+
+  return (
+    <PartnerPage title="Créer une campagne" subtitle={`Étape ${step} sur 6`}>
+      <View className="mt-3"><Stepper currentStep={step} totalSteps={6} /></View>
+      <View className="mt-3 rounded-2xl border p-5" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+        {step === 1 ? (
+          <>
+            <Field label="Nom" value={draft.name} onChangeText={(name) => update({ name })} error={fieldErrors.name} />
+            <Field label="ID du contenu promu" value={draft.promotedEntityId} onChangeText={(promotedEntityId) => update({ promotedEntityId })} error={fieldErrors.promotedEntityId} />
+            <Choice label="Objectif" value={draft.objective} values={['AWARENESS', 'TRAFFIC', 'ENGAGEMENT', 'EVENT_TICKET_SALES', 'BOOKING', 'STORE_VISIT', 'FOLLOW_PARTNER']} onChange={(objective) => update({ objective })} />
+          </>
+        ) : null}
+        {step === 2 ? (
+          <>
+            <Choice label="Type de contenu" value={draft.promotedEntityType} values={['PLACE', 'EVENT', 'POST', 'PARTNER_PROFILE', 'EXPERIENCE']} onChange={(promotedEntityType) => update({ promotedEntityType })} />
+            <Choice label="Facturation" value={draft.billingModel} values={['CPM', 'CPC', 'CPA', 'FIXED_BUDGET']} onChange={(billingModel) => update({ billingModel })} />
+          </>
+        ) : null}
+        {step === 3 ? (
+          <>
+            <Field label="Budget total (XAF)" value={draft.totalBudget} onChangeText={(totalBudget) => update({ totalBudget })} keyboardType="numeric" error={fieldErrors.totalBudget} />
+            <Field label="Budget journalier (XAF)" value={draft.dailyBudget} onChangeText={(dailyBudget) => update({ dailyBudget })} keyboardType="numeric" error={fieldErrors.dailyBudget} />
+            <DateTimeField label="Date de début" value={draft.startAt} onChange={(startAt) => update({ startAt })} minimumDate={new Date()} error={fieldErrors.startAt} required />
+            <DateTimeField label="Date de fin" value={draft.endAt} onChange={(endAt) => update({ endAt })} minimumDate={draft.startAt ? new Date(`${draft.startAt}T12:00:00`) : new Date()} error={fieldErrors.endAt} required />
+          </>
+        ) : null}
+        {step === 4 ? (
+          <>
+            <Field label="Pays (codes séparés par des virgules)" value={draft.countryCodes} onChangeText={(countryCodes) => update({ countryCodes })} />
+            <Field label="IDs villes" value={draft.cityIds} onChangeText={(cityIds) => update({ cityIds })} />
+            <Field label="Âge minimum" value={draft.minimumAge} onChangeText={(minimumAge) => update({ minimumAge })} keyboardType="numeric" />
+            <Field label="Âge maximum" value={draft.maximumAge} onChangeText={(maximumAge) => update({ maximumAge })} keyboardType="numeric" />
+            <Field label="IDs centres d'intérêt" value={draft.interestIds} onChangeText={(interestIds) => update({ interestIds })} />
+          </>
+        ) : null}
+        {step === 5 ? (
+          <>
+            <Field label="Titre créatif" value={draft.title} onChangeText={(title) => update({ title })} />
+            <Field label="Description" value={draft.description} onChangeText={(description) => update({ description })} multiline />
+            <Field label="Image — URL média" value={draft.imageUrl} onChangeText={(imageUrl) => update({ imageUrl })} autoCapitalize="none" />
+            <Text className="-mt-2 mb-4 text-xs" style={{ color: colors.textMuted }}>L’API Campaign attend actuellement une URL. L’association d’un upload média à une campagne n’est pas encore publiée par le backend.</Text>
+            <Text className="mb-2 text-xs font-bold" style={{ color: colors.textSecondary }}>Action suggérée</Text>
+            <View className="mb-4 flex-row flex-wrap gap-2">
+              {suggestedActions.map((action) => <TouchableOpacity key={action.label} onPress={() => update({ callToAction: action.label })} className="rounded-full border px-3 py-2" style={{ borderColor: action.label === draft.callToAction ? colors.primary : colors.borderSoft, backgroundColor: action.recommended ? colors.accentSoft : colors.surface }}><Text className="text-xs font-bold" style={{ color: action.label === draft.callToAction ? colors.primary : colors.text }}>{action.label}{action.recommended ? ' · Recommandé' : ''}</Text></TouchableOpacity>)}
+            </View>
+            <Field label="Call to action" value={draft.callToAction} onChangeText={(callToAction) => update({ callToAction })} />
+            <Field label="Lien externe (facultatif)" value={draft.destinationUrl} onChangeText={(destinationUrl) => update({ destinationUrl })} autoCapitalize="none" />
+          </>
+        ) : null}
+        {step === 6 ? (
+          <View>
+            <Text className="text-lg font-extrabold" style={{ color: colors.text }}>Aperçu</Text>
+            <Preview label="Campagne" value={draft.name} />
+            <Preview label="Contenu" value={`${draft.promotedEntityType} · ${draft.promotedEntityId}`} />
+            <Preview label="Budget" value={`${draft.totalBudget || '0'} XAF · ${draft.dailyBudget || '0'} XAF/jour`} />
+            <Preview label="Période" value={`${draft.startAt} — ${draft.endAt}`} />
+            <Preview label="Ciblage" value={draft.countryCodes || 'Non renseigné'} />
+          </View>
+        ) : null}
+
+        {formError ? <Text className="mt-3 text-sm font-semibold text-red-500">{formError}</Text> : null}
+        <View className="mt-6 flex-row gap-3">
+          {step > 1 ? <Action label="Retour" secondary onPress={() => setStep(step - 1)} disabled={createCampaign.isPending} /> : null}
+          <Action
+            label={step === 6 ? 'Créer le brouillon' : 'Continuer'}
+            onPress={step === 6 ? submit : continueToNextStep}
+            disabled={createCampaign.isPending}
+            pending={step === 6 && createCampaign.isPending}
+          />
+        </View>
+      </View>
+    </PartnerPage>
+  );
+}
+
+function Field({ label, error, ...props }: React.ComponentProps<typeof TextInput> & { label: string; error?: string }) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <View className="mb-4">
+      <Text className="mb-1.5 text-xs font-bold" style={{ color: colors.textSecondary }}>{label}</Text>
+      <TextInput {...props} placeholderTextColor={colors.textMuted} className="rounded-xl border px-4 py-3" style={{ color: colors.text, borderColor: error ? '#EF4444' : colors.border, backgroundColor: colors.elevated }} />
+      {error ? <Text className="mt-1 text-xs text-red-500">{error}</Text> : null}
+    </View>
+  );
+}
+
+function Choice<T extends string>({ label, value, values, onChange }: { label: string; value: T; values: readonly T[]; onChange: (value: T) => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <View className="mb-4">
+      <Text className="mb-2 text-xs font-bold" style={{ color: colors.textSecondary }}>{label}</Text>
+      <View className="flex-row flex-wrap gap-2">
+        {values.map((item) => <TouchableOpacity key={item} onPress={() => onChange(item)} className="rounded-full border px-3 py-2" style={{ borderColor: item === value ? '#EF4444' : colors.border, backgroundColor: item === value ? '#EF444420' : colors.elevated }}><Text className="text-xs font-semibold" style={{ color: item === value ? '#EF4444' : colors.text }}>{item}</Text></TouchableOpacity>)}
+      </View>
+    </View>
+  );
+}
+
+function Preview({ label, value }: { label: string; value: string }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <View className="mt-4"><Text className="text-xs" style={{ color: colors.textMuted }}>{label}</Text><Text className="mt-1 font-semibold" style={{ color: colors.text }}>{value}</Text></View>;
+}
+
+function Action({ label, secondary, pending, ...props }: { label: string; secondary?: boolean; pending?: boolean; onPress: () => void; disabled?: boolean }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <TouchableOpacity {...props} className="flex-1 items-center rounded-xl px-4 py-3.5" style={{ backgroundColor: secondary ? colors.elevated : '#EF4444', opacity: props.disabled ? 0.6 : 1 }}>{pending ? <ActivityIndicator color="#FFFFFF" /> : <Text className="font-bold" style={{ color: secondary ? colors.text : '#FFFFFF' }}>{label}</Text>}</TouchableOpacity>;
+}

@@ -18,7 +18,7 @@ export function UserReviewCard({ review, onPress }: UserReviewCardProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-[#161616] rounded-xl p-4 mb-3"
+      className="bg-white dark:bg-[#161616] rounded-xl p-4 mb-3"
       activeOpacity={0.7}
     >
       <View className="flex-row items-start mb-3">
@@ -29,7 +29,7 @@ export function UserReviewCard({ review, onPress }: UserReviewCardProps) {
         />
 
         <View className="flex-1 ml-3">
-          <Text className="text-white font-semibold text-base" numberOfLines={1}>
+          <Text className="text-[#18181B] dark:text-white font-semibold text-base" numberOfLines={1}>
             {review.place.name}
           </Text>
           <View className="flex-row items-center mt-1">
@@ -48,7 +48,7 @@ export function UserReviewCard({ review, onPress }: UserReviewCardProps) {
         </View>
       </View>
 
-      <Text className="text-[#A1A1AA] text-sm" numberOfLines={3}>
+      <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm" numberOfLines={3}>
         {review.comment}
       </Text>
 

@@ -2,9 +2,11 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function AuthAccountTypeScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
 
   return (
     <SafeScreen>
@@ -16,19 +18,20 @@ export default function AuthAccountTypeScreen() {
         <View className="flex-row items-center justify-between mb-8">
           <TouchableOpacity
             onPress={() => router.back()}
-            className="w-10 h-10 rounded-full bg-[#161616] items-center justify-center"
+            className="h-10 w-10 items-center justify-center rounded-full"
+            style={{ backgroundColor: colors.elevated }}
             activeOpacity={0.7}
           >
-            <Icon name="arrow-back" size={22} color="#FFFFFF" />
+            <Icon name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text className="text-[#A1A1AA] text-sm">Nouveau compte</Text>
+          <Text className="text-sm" style={{ color: colors.textSecondary }}>Nouveau compte</Text>
         </View>
 
         <View className="mb-7">
-          <Text className="text-white text-3xl font-bold leading-9 mb-3">
+          <Text className="mb-3 text-3xl font-bold leading-9" style={{ color: colors.text }}>
             Quel type de compte voulez-vous créer ?
           </Text>
-          <Text className="text-[#A1A1AA] text-base leading-6">
+          <Text className="text-base leading-6" style={{ color: colors.textSecondary }}>
             Choisissez le parcours adapté. Explorateur pour découvrir et partager, Partenaire pour présenter une activité.
           </Text>
         </View>
@@ -72,10 +75,12 @@ function ChoiceCard({
   benefits: string[];
   onPress: () => void;
 }) {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="bg-[#161616] border border-[#27272A] rounded-2xl p-5"
+      className="rounded-2xl border p-5"
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}
       activeOpacity={0.85}
     >
       <View className="flex-row gap-4">
@@ -83,8 +88,8 @@ function ChoiceCard({
           <Icon name={icon} size={28} color={accent} />
         </View>
         <View className="flex-1">
-          <Text className="text-white text-xl font-bold">{title}</Text>
-          <Text className="text-[#A1A1AA] text-sm leading-5 mt-2">{subtitle}</Text>
+          <Text className="text-xl font-bold" style={{ color: colors.text }}>{title}</Text>
+          <Text className="mt-2 text-sm leading-5" style={{ color: colors.textSecondary }}>{subtitle}</Text>
         </View>
       </View>
 
@@ -92,13 +97,13 @@ function ChoiceCard({
         {benefits.map((benefit) => (
           <View key={benefit} className="flex-row items-center gap-2">
             <Icon name="checkmark-circle" size={15} color="#22C55E" />
-            <Text className="text-[#D4D4D8] text-xs flex-1">{benefit}</Text>
+            <Text className="flex-1 text-xs" style={{ color: colors.textSecondary }}>{benefit}</Text>
           </View>
         ))}
       </View>
 
-      <View className="flex-row items-center justify-between mt-5 pt-4 border-t border-[#27272A]">
-        <Text className="text-[#A1A1AA] text-xs">Continuer</Text>
+      <View className="mt-5 flex-row items-center justify-between border-t pt-4" style={{ borderColor: colors.border }}>
+        <Text className="text-xs" style={{ color: colors.textSecondary }}>Continuer</Text>
         <Icon name="arrow-forward" size={18} color={accent} />
       </View>
     </TouchableOpacity>

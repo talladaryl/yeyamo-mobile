@@ -1,10 +1,10 @@
-import { View, Text, TouchableOpacity, Dimensions, StatusBar, Pressable } from 'react-native';
+import { ActivityIndicator, View, Text, TouchableOpacity, Dimensions, StatusBar, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { mockStories } from '@/features/story/mockData';
 import { useState, useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useMarkStoryViewed, useStoryDetail } from '@/features/story/useStory';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,14 +13,20 @@ export default function StoryViewerScreen() {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [showReply, setShowReply] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
-  const story = mockStories.find(s => s.id === Number(id)) || mockStories[0];
+  const { data: story, isLoading } = useStoryDetail(id);
+  const { mutate: markViewed } = useMarkStoryViewed();
   const STORY_DURATION = 5000; // 5 seconds
 
   useEffect(() => {
-    if (!isPaused) {
+    if (story && !story.viewed) {
+      markViewed(story.id);
+    }
+  }, [markViewed, story]);
+
+  useEffect(() => {
+    if (story && !isPaused) {
       intervalRef.current = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 100) {
@@ -42,7 +48,7 @@ export default function StoryViewerScreen() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPaused]);
+  }, [isPaused, router, story]);
 
   const handlePressIn = () => {
     setIsPaused(true);
@@ -61,6 +67,14 @@ export default function StoryViewerScreen() {
     // Go to next story
     router.back();
   };
+
+  if (isLoading || !story) {
+    return (
+      <View className="flex-1 items-center justify-center bg-black">
+        <ActivityIndicator color="#FFFFFF" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-black">
@@ -167,28 +181,6 @@ export default function StoryViewerScreen() {
         </View>
       )}
 
-      {/* Bottom Actions */}
-      <View className="absolute bottom-8 left-4 right-4">
-        <View className="flex-row items-center justify-between">
-          {/* Reply Input */}
-          <TouchableOpacity 
-            onPress={() => setShowReply(true)}
-            className="flex-1 mr-3 bg-white/20 backdrop-blur-lg border border-white/30 rounded-full px-5 py-3"
-          >
-            <Text className="text-white/80 text-sm">Répondre à cette story</Text>
-          </TouchableOpacity>
-
-          {/* Action Buttons */}
-          <View className="flex-row items-center gap-3">
-            <TouchableOpacity>
-              <Ionicons name="heart-outline" size={28} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Ionicons name="paper-plane-outline" size={26} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
     </View>
   );
 }

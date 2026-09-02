@@ -1,15 +1,16 @@
 // Types pour le système de collections
 import type { Place } from '@/features/explore/types';
+import type { EntityId } from '@/types/api.types';
 
 export interface Collection {
-  id: number;
+  id: EntityId;
   name: string;
   description?: string;
   cover_image_url?: string;
   places: CollectionPlace[];
   places_count: number;
-  visibility: 'private' | 'friends' | 'public';
-  owner_id: number;
+  visibility: 'private' | 'public';
+  owner_id: EntityId;
   created_at: string;
   updated_at: string;
 }
@@ -21,30 +22,30 @@ export interface CollectionPlace extends Place {
 }
 
 export interface CollectionSummary {
-  id: number;
+  id: EntityId;
   name: string;
   cover_image_url?: string;
   places_count: number;
-  visibility: 'private' | 'friends' | 'public';
+  visibility: 'private' | 'public';
 }
 
 export interface CreateCollectionInput {
   name: string;
   description?: string;
   cover_image_url?: string;
-  visibility: 'private' | 'friends' | 'public';
+  visibility: 'private' | 'public';
 }
 
 export interface UpdateCollectionInput {
   name?: string;
   description?: string;
   cover_image_url?: string;
-  visibility?: 'private' | 'friends' | 'public';
+  visibility?: 'private' | 'public';
 }
 
 export interface AddToCollectionInput {
-  collection_id: number;
-  place_id: number;
+  collection_id: EntityId;
+  place_id: EntityId;
   is_priority?: boolean;
   note?: string;
 }
@@ -57,12 +58,6 @@ export const VISIBILITY_OPTIONS = [
     label: 'Privée',
     description: 'Seulement vous',
     icon: 'lock-closed',
-  },
-  {
-    value: 'friends' as const,
-    label: 'Amis',
-    description: 'Visible pour vos amis',
-    icon: 'people',
   },
   {
     value: 'public' as const,

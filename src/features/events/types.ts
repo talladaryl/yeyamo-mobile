@@ -1,7 +1,8 @@
-import type { UserSummary } from '@/types/api.types';
+import type { EntityId, UserSummary } from '@/types/api.types';
 
 export interface Event {
-  id: number;
+  id: EntityId;
+  place_id?: EntityId;
   title: string;
   description: string | null;
   cover_image_url: string | null;

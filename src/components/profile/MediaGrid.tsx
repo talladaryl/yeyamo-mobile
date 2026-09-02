@@ -1,27 +1,24 @@
-import { FlatList, View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Icon } from '@/components/ui/Icon';
 import { formatCount } from '@/utils/format';
 import type { ProfilePost } from '@/features/profile/types';
+import type { EntityId } from '@/types/api.types';
 
 const { width } = Dimensions.get('window');
 const itemSize = (width - 6) / 3; // 3 columns with 2px gap
 
 type MediaGridProps = {
   posts: ProfilePost[];
-  onPostPress: (postId: number) => void;
+  onPostPress: (postId: EntityId) => void;
 };
 
 export function MediaGrid({ posts, onPostPress }: MediaGridProps) {
   return (
-    <FlatList
-      data={posts}
-      keyExtractor={(item) => String(item.id)}
-      numColumns={3}
-      columnWrapperStyle={{ gap: 2 }}
-      contentContainerStyle={{ gap: 2 }}
-      renderItem={({ item }) => (
+    <View className="flex-row flex-wrap" style={{ gap: 2 }}>
+      {posts.map((item) => (
         <TouchableOpacity
+          key={item.id}
           onPress={() => onPostPress(item.id)}
           activeOpacity={0.9}
           style={{ width: itemSize, height: itemSize }}
@@ -62,7 +59,7 @@ export function MediaGrid({ posts, onPostPress }: MediaGridProps) {
             </View>
           </View>
         </TouchableOpacity>
-      )}
-    />
+      ))}
+    </View>
   );
 }

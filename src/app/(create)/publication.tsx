@@ -1,74 +1,121 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '@/components/ui/Icon';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { useCreateStore } from '@/features/create/create.store';
+import { useCreatePost, useUploadMedia } from '@/features/post/usePost';
+import { useSubmitChallenge } from '@/features/culture/culture.hooks';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function CreatePublicationScreen() {
   const router = useRouter();
+  const { challengeId } = useLocalSearchParams<{ challengeId?: string }>();
   const { publicationData, setPublicationData } = useCreateStore();
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
-  const [caption, setCaption] = useState('');
+  const uploadMedia = useUploadMedia();
+  const createPost = useCreatePost();
+  const submitChallenge = useSubmitChallenge();
+  const colors = useThemeStore((state) => state.colors);
+  const [selectedImages, setSelectedImages] = useState<string[]>(publicationData.media_urls ?? []);
+  // L'éditeur reste non contrôlé pendant la saisie : cela évite qu'un
+  // rerender du formulaire ne réinitialise le focus et ne ferme le clavier.
+  const captionRef = useRef(publicationData.caption ?? '');
 
-  const pickImage = async (mediaTypes: Array<'images' | 'videos'> = ['images']) => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes,
-      allowsMultipleSelection: true,
-      quality: 1,
+  const applyAssets = useCallback((assets: ImagePicker.ImagePickerAsset[]) => {
+    if (!assets.length) return;
+    const uris = assets.map((asset) => asset.uri);
+    setSelectedImages(uris);
+    setPublicationData({
+      media_urls: uris,
+      media_type: assets[0]?.type === 'video' ? 'video' : 'image',
     });
+  }, [setPublicationData]);
 
-    if (!result.canceled && result.assets) {
-      const uris = result.assets.map(asset => asset.uri);
-      setSelectedImages(uris);
-      setPublicationData({
-        media_urls: uris,
-        media_type: result.assets[0]?.type === 'video' ? 'video' : 'image',
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    ImagePicker.getPendingResultAsync().then((pending) => {
+      if (pending && 'canceled' in pending && !pending.canceled && pending.assets) applyAssets(pending.assets);
+    }).catch(() => undefined);
+  }, [applyAssets]);
+
+  const pickImage = async (mediaTypes: ('images' | 'videos')[] = ['images']) => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Accès aux photos requis', 'Autorisez Yeyamo à accéder à vos photos et vidéos dans les réglages de l’iPhone.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes,
+        allowsMultipleSelection: true,
+        selectionLimit: 10,
+        quality: 0.9,
       });
+      if (!result.canceled && result.assets) applyAssets(result.assets);
+    } catch {
+      Alert.alert('Ajout impossible', 'Le sélecteur de médias n’a pas pu être ouvert. Réessayez.');
     }
   };
 
   const takePhoto = async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      const uri = result.assets[0].uri;
-      setSelectedImages([uri]);
-      setPublicationData({ media_urls: [uri], media_type: 'image' });
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Accès à la caméra requis', 'Autorisez Yeyamo à utiliser la caméra dans les réglages.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.9 });
+      if (!result.canceled && result.assets) applyAssets(result.assets);
+    } catch {
+      Alert.alert('Caméra indisponible', 'La caméra n’a pas pu être ouverte.');
     }
   };
 
-  const handlePublish = () => {
-    setPublicationData({ caption });
-    // TODO: API call to create post
-    console.log('Publishing:', publicationData);
-    router.back();
+  const handlePublish = async () => {
+    setPublicationData({ caption: captionRef.current });
+    try {
+      const uploads = await Promise.all(selectedImages.map(async (uri, index) => {
+        const formData = new FormData();
+        formData.append('file', {
+          uri,
+          name: `publication-${index}.jpg`,
+          type: 'image/jpeg',
+        } as unknown as Blob);
+        return (await uploadMedia.mutateAsync(formData)).data.id;
+      }));
+      const created = await createPost.mutateAsync({
+        type: publicationData.media_type ?? 'image',
+        caption: captionRef.current,
+        media_ids: uploads,
+      });
+      if (challengeId) await submitChallenge.mutateAsync({ id: challengeId, postId: String(created.data.id) });
+      router.back();
+    } catch {
+      Alert.alert('Publication impossible', 'Les médias ou la publication n’ont pas pu être envoyés.');
+    }
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Nouvelle publication',
           headerTitleStyle: { fontSize: 18, fontWeight: '600' },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="close" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
       />
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" keyboardDismissMode="none" automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}>
         {/* Main Image Area */}
         <TouchableOpacity
           onPress={() => pickImage(['images'])}
@@ -82,9 +129,9 @@ export default function CreatePublicationScreen() {
               contentFit="cover"
             />
           ) : (
-            <View className="w-full h-96 bg-[#161616] items-center justify-center">
+            <View className="h-96 w-full items-center justify-center" style={{ backgroundColor: colors.card }}>
               <Icon library="ionicons" name="images" size={64} color="#52525B" />
-              <Text className="text-[#A1A1AA] text-sm mt-4">
+              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-4">
                 Appuyez pour ajouter des photos
               </Text>
             </View>
@@ -114,63 +161,65 @@ export default function CreatePublicationScreen() {
         {/* Caption */}
         <View className="px-4 py-4">
           <TextInput
-            className="bg-[#161616] text-white rounded-xl px-4 py-3 text-sm"
+            className="rounded-xl border px-4 py-3 text-sm"
             placeholder="Ajoutez une légende..."
             placeholderTextColor="#A1A1AA"
-            value={caption}
-            onChangeText={setCaption}
+            defaultValue={captionRef.current}
+            onChangeText={(value) => { captionRef.current = value; }}
             multiline
             maxLength={500}
-            style={{ minHeight: 100, textAlignVertical: 'top' }}
+            blurOnSubmit={false}
+            style={{ minHeight: 100, textAlignVertical: 'top', backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
           />
         </View>
 
         {/* Action Buttons */}
         <View className="px-4 pb-6">
-          <View className="flex-row justify-around py-4 bg-[#161616] rounded-xl">
+          <View className="flex-row justify-around rounded-xl border py-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
             <TouchableOpacity
               onPress={() => pickImage(['images', 'videos'])}
               className="items-center flex-1"
               activeOpacity={0.7}
             >
-              <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
                 <Icon library="ionicons" name="images" size={24} color="#EF4444" />
               </View>
-              <Text className="text-white text-xs">Média</Text>
+              <Text className="text-xs" style={{ color: colors.text }}>Média</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={takePhoto} className="items-center flex-1" activeOpacity={0.7}>
-              <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
                 <Icon library="ionicons" name="camera" size={24} color="#EF4444" />
               </View>
-              <Text className="text-white text-xs">Photo</Text>
+              <Text className="text-xs" style={{ color: colors.text }}>Photo</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => pickImage(['videos'])} className="items-center flex-1" activeOpacity={0.7}>
-              <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
                 <Icon library="ionicons" name="videocam" size={24} color="#EF4444" />
               </View>
-              <Text className="text-white text-xs">Vidéo</Text>
+              <Text className="text-xs" style={{ color: colors.text }}>Vidéo</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => pickImage(['images'])} className="items-center flex-1" activeOpacity={0.7}>
-              <View className="w-12 h-12 bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
                 <Icon library="ionicons" name="albums" size={24} color="#EF4444" />
               </View>
-              <Text className="text-white text-xs">Carrousel</Text>
+              <Text className="text-xs" style={{ color: colors.text }}>Carrousel</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View className="h-20" />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Fixed Bottom Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+      <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
         <CTAButton
           title="Publier"
           variant="primary"
-          onPress={handlePublish}
+          onPress={() => void handlePublish()}
           disabled={selectedImages.length === 0}
         />
       </View>

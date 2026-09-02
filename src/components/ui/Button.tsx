@@ -1,4 +1,5 @@
 import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type Variant = 'primary' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -38,6 +39,7 @@ export function Button({
   disabled = false,
   className = '',
 }: ButtonProps) {
+  const colors = useThemeStore((state) => state.colors);
   const vc = variantClasses[variant];
   const sc = sizeClasses[size];
   const isDisabled = disabled || isLoading;
@@ -52,7 +54,12 @@ export function Button({
       {isLoading ? (
         <ActivityIndicator size="small" color="#FFFFFF" />
       ) : (
-        <Text className={`${vc.text} ${sc.text}`}>{label}</Text>
+        <Text
+          className={`${vc.text} ${sc.text}`}
+          style={variant === 'ghost' ? { color: colors.textSecondary } : undefined}
+        >
+          {label}
+        </Text>
       )}
     </TouchableOpacity>
   );

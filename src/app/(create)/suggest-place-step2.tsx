@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, View, Text, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
+import { NativeMap, NativeMarker, PROVIDER_GOOGLE } from '@/components/maps/NativeMap';
 import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
@@ -40,7 +40,7 @@ export default function SuggestPlaceStep2Screen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -58,13 +58,14 @@ export default function SuggestPlaceStep2Screen() {
 
       <View className="flex-1">
         {/* Stepper */}
-        <View className="px-4 pt-4 pb-3 bg-[#0A0A0A]">
-          <Stepper currentStep={2} totalSteps={5} />
+        <View className="px-4 pt-4 pb-3 bg-white dark:bg-[#0A0A0A]">
+          <Stepper currentStep={2} totalSteps={2} />
         </View>
 
         {/* Map */}
         <View className="flex-1 relative">
-          <MapView
+          <NativeMap
+            provider={PROVIDER_GOOGLE}
             style={{ flex: 1 }}
             initialRegion={{
               latitude: selectedCoordinates.latitude,
@@ -74,13 +75,13 @@ export default function SuggestPlaceStep2Screen() {
             }}
             onPress={handleMapPress}
           >
-            <Marker
+            <NativeMarker
               coordinate={selectedCoordinates}
               pinColor="#EF4444"
               draggable
               onDragEnd={handleMapPress}
             />
-          </MapView>
+          </NativeMap>
 
           {/* Legend Overlay */}
           <View className="absolute top-4 left-4 right-4 bg-white/95 rounded-2xl p-4 shadow-lg">
@@ -164,7 +165,7 @@ export default function SuggestPlaceStep2Screen() {
         </View>
 
         {/* Bottom Button */}
-        <View className="bg-[#0A0A0A] border-t border-[#27272A] px-4 py-4">
+        <View className="bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
           <CTAButton
             title="Continuer"
             variant="primary"

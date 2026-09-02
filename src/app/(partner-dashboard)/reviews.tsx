@@ -1,51 +1,7 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/Icon';
-import { ReviewCard } from '@/components/partner-dashboard/ReviewCard';
-import { customerReviews } from '@/features/partner-dashboard/mockData';
-
-export default function ReviewsScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-
-  const handleReply = (reviewId: string) => {
-    console.log('Reply to review:', reviewId);
-  };
-
-  return (
-    <View className="flex-1 bg-[#0A0A0A]">
-      {/* Header */}
-      <View style={{ paddingTop: insets.top }} className="px-4 pt-3 pb-4 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-            <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View>
-            <Text className="text-white text-2xl font-bold">AVIS CLIENTS</Text>
-            <Text className="text-[#A1A1AA] text-sm">Consultez et répondez aux avis</Text>
-          </View>
-        </View>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} className="px-4">
-        {customerReviews.map((review) => (
-          <ReviewCard
-            key={review.id}
-            review={review}
-            onReply={() => handleReply(review.id)}
-          />
-        ))}
-
-        <TouchableOpacity
-          className="bg-[#161616] rounded-xl p-4 mb-6 items-center"
-          activeOpacity={0.8}
-        >
-          <Text className="text-[#EF4444] font-semibold">Voir tous les avis</Text>
-        </TouchableOpacity>
-
-        <View className="h-6" />
-      </ScrollView>
-    </View>
-  );
+import { useMemo, useState } from 'react';
+import { Alert, Modal, Pressable, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FilterChips, PartnerPage } from '@/components/partner-dashboard/PartnerPage'; import { ReviewCard } from '@/components/partner-dashboard/ReviewCard'; import { customerReviews } from '@/features/partner-dashboard/mockData'; import { useAuthStore } from '@/features/auth/auth.store'; import { useThemeStore } from '@/features/theme/theme.store'; import type { CustomerReview } from '@/features/partner-dashboard/types'; import { Icon } from '@/components/ui/Icon';
+const FILTERS = ['Tous', 'À répondre', '5 étoiles', '4 étoiles'] as const;
+export default function ReviewsScreen() { const colors = useThemeStore((state) => state.colors); const [filter, setFilter] = useState<string>(FILTERS[0]); const isDemo = useAuthStore((state) => state.sessionMode === 'demo-partner'); const [reviews, setReviews] = useState<CustomerReview[]>(customerReviews); const [selected, setSelected] = useState<CustomerReview>(); const [reply, setReply] = useState(''); const data = useMemo(() => filter === 'À répondre' ? reviews.filter((item) => !item.partner_reply) : filter.includes('5') ? reviews.filter((item) => item.rating === 5) : filter.includes('4') ? reviews.filter((item) => item.rating === 4) : reviews, [filter, reviews]); const open = (review: CustomerReview) => { setSelected(review); setReply(review.partner_reply ?? ''); }; const submit = () => { if (!selected || reply.trim().length < 3) return Alert.alert('Réponse trop courte', 'Écrivez au moins trois caractères.'); setReviews((current) => current.map((item) => item.id === selected.id ? { ...item, partner_reply: reply.trim() } : item)); setSelected(undefined); setReply(''); };
+  return <><PartnerPage title="Avis clients" subtitle="Consultez les avis et répondez à vos clients"><FilterChips values={FILTERS} selected={filter} onSelect={setFilter} />{(isDemo ? data : []).map((item) => <ReviewCard key={item.id} review={item} onReply={() => open(item)} />)}{isDemo && data.length === 0 ? <View className="items-center py-16"><Icon name="chatbubble-ellipses-outline" size={36} color={colors.textMuted} /><Text className="mt-3" style={{ color: colors.textSecondary }}>Aucun avis dans ce filtre.</Text></View> : null}</PartnerPage><Modal visible={Boolean(selected)} transparent animationType="slide" onRequestClose={() => setSelected(undefined)}><View className="flex-1 justify-end"><Pressable className="absolute inset-0" style={{ backgroundColor: colors.overlay }} onPress={() => setSelected(undefined)} /><View className="rounded-t-[28px] border-t p-5 pb-9" style={{ backgroundColor: colors.card, borderColor: colors.border }}><View className="mb-4 flex-row items-center"><Text className="flex-1 text-xl font-extrabold" style={{ color: colors.text }}>Répondre à l’avis</Text><TouchableOpacity onPress={() => setSelected(undefined)} className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="close" size={22} color={colors.text} /></TouchableOpacity></View><Text className="text-sm" style={{ color: colors.textSecondary }}>{selected?.customer_name} · {selected?.establishment}</Text><TextInput value={reply} onChangeText={setReply} multiline maxLength={500} placeholder="Votre réponse publique…" placeholderTextColor={colors.textMuted} className="mt-4 min-h-32 rounded-2xl border p-4" style={{ backgroundColor: colors.surface, borderColor: colors.border, color: colors.text, textAlignVertical: 'top' }} /><Text className="mt-1 text-right text-xs" style={{ color: colors.textMuted }}>{reply.length}/500</Text><TouchableOpacity onPress={submit} className="mt-4 items-center rounded-2xl py-4" style={{ backgroundColor: colors.primary }}><Text className="font-bold text-white">Publier la réponse</Text></TouchableOpacity></View></View></Modal></>;
 }

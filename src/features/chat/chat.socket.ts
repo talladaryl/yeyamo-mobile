@@ -1,21 +1,30 @@
 import { reverbClient } from '@/services/socket/reverb.client';
 import { useChatStore } from './chat.store';
-import type { ChatMessage } from './types';
+import type { EntityId } from '@/types/api.types';
+import { mapBackendMessage, type BackendMessage } from './chat.api';
 
-const CHAT_EVENT = 'MessageSent';
+const CHAT_EVENTS = new Set([
+  'messaging.message.sent',
+  'messaging.message.edited',
+  'messaging.message.deleted',
+  'messaging.message.read',
+]);
 
 export const chatSocket = {
   /**
    * Subscribe to a private conversation channel.
    * Returns an unsubscribe function — call it on cleanup.
    */
-  subscribeToConversation(conversationId: number): () => void {
-    const channel = `private-conversation.${conversationId}`;
+  subscribeToConversation(conversationId: EntityId): () => void {
+    const channel = `conversation.${conversationId}`;
 
     return reverbClient.subscribe(channel, (event, data) => {
-      if (event === CHAT_EVENT) {
-        const message = data as ChatMessage;
-        useChatStore.getState().appendMessage(conversationId, message);
+      if (CHAT_EVENTS.has(event)) {
+        const payload = data as BackendMessage;
+        const eventConversationId = payload.conversationId;
+        if (String(eventConversationId) === String(conversationId) && event === 'messaging.message.sent') {
+          useChatStore.getState().appendMessage(conversationId, mapBackendMessage(payload));
+        }
       }
     });
   },
@@ -23,8 +32,8 @@ export const chatSocket = {
   /**
    * Subscribe to the user's own notification channel (new convos, etc.)
    */
-  subscribeToUser(userId: number): () => void {
-    const channel = `private-user.${userId}`;
+  subscribeToUser(userId: EntityId): () => void {
+    const channel = `user.${userId}`;
     // Extend event handling here as needed
     return reverbClient.subscribe(channel, () => {});
   },

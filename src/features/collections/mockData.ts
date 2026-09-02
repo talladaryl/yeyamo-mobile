@@ -69,7 +69,7 @@ export const MOCK_COLLECTIONS: Collection[] = [
     description: 'Destinations de rêve',
     cover_image_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
     places_count: 8,
-    visibility: 'friends',
+    visibility: 'private',
     owner_id: 1,
     created_at: '2024-02-01T10:00:00Z',
     updated_at: '2024-03-05T12:00:00Z',

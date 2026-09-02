@@ -1,14 +1,16 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import ENV from '@/config/env';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { placesApi } from './places.api';
 import { mockPlaces } from './mockData';
 import type { PlacesQuery } from './types';
+import type { EntityId } from '@/types/api.types';
 
 export function usePlaces(query: Omit<PlacesQuery, 'page'>) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useInfiniteQuery({
-    queryKey: ['places', query],
+    queryKey: ['places', isDemo ? 'demo' : 'backend', query],
     queryFn: ({ pageParam }) =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve({
             data: mockPlaces,
             meta: {
@@ -33,12 +35,13 @@ export function usePlaces(query: Omit<PlacesQuery, 'page'>) {
   });
 }
 
-export function usePlaceDetail(placeId: number) {
+export function usePlaceDetail(placeId: EntityId) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['place', placeId],
+    queryKey: ['place', isDemo ? 'demo' : 'backend', placeId],
     queryFn: () =>
-      ENV.USE_MOCKS
-        ? Promise.resolve({ data: mockPlaces.find((place) => place.id === placeId) ?? mockPlaces[0] })
+      isDemo
+        ? Promise.resolve({ data: mockPlaces.find((place) => String(place.id) === String(placeId)) ?? mockPlaces[0] })
         : placesApi.getPlace(placeId),
     select: (res) => res.data,
   });

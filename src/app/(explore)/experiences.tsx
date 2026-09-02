@@ -5,11 +5,15 @@ import { Icon } from '@/components/ui/Icon';
 import { FilterButton } from '@/components/ui/FilterButton';
 import { ExperienceCard } from '@/components/experiences/ExperienceCard';
 import { mockExperiences } from '@/features/experiences/mockData';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 type FilterType = 'all' | 'adventure' | 'culture' | 'relaxation';
 
 export default function ExperiencesListScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [location, setLocation] = useState('Cameroun');
 
@@ -25,36 +29,36 @@ export default function ExperiencesListScreen() {
   };
 
   const filteredExperiences = activeFilter === 'all'
-    ? mockExperiences
-    : mockExperiences.filter(exp => exp.category === activeFilter);
+    ? (isDemo ? mockExperiences : [])
+    : (isDemo ? mockExperiences : []).filter(exp => exp.category === activeFilter);
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Expériences',
           headerTitleStyle: { fontSize: 18, fontWeight: '600' },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
       />
 
       {/* Location Selector */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b" style={{ borderColor: colors.border }}>
         <TouchableOpacity
           onPress={() => console.log('Change location')}
           className="flex-row items-center justify-between"
           activeOpacity={0.7}
         >
           <View className="flex-1">
-            <Text className="text-[#A1A1AA] text-xs mb-1">Recherche</Text>
-            <Text className="text-white text-base font-medium">{location}</Text>
+            <Text className="text-xs mb-1" style={{ color: colors.textSecondary }}>Recherche</Text>
+            <Text className="text-base font-medium" style={{ color: colors.text }}>{location}</Text>
           </View>
           <Text className="text-[#EF4444] text-sm font-semibold">Changer</Text>
         </TouchableOpacity>

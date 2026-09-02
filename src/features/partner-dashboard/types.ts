@@ -33,6 +33,7 @@ export interface PartnerEvent {
   location: string;
   participants: number;
   status: 'published' | 'draft' | 'archived';
+  supports_ticketing: boolean;
 }
 
 export interface Reservation {
@@ -55,6 +56,7 @@ export interface CustomerReview {
   date: string;
   comment: string;
   establishment: string;
+  partner_reply?: string;
 }
 
 export interface StatisticCard {

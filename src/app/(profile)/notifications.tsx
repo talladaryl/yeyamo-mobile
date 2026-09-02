@@ -1,19 +1,23 @@
 // ÉCRAN 7 - Notifications
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { Alert, View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { NotificationItem } from '@/components/profile/NotificationItem';
-import { useNotifications, useUnreadNotifications, useMarkAllAsRead } from '@/features/notifications/useNotifications';
+import { useNotifications, useUnreadNotifications, useMarkAllAsRead, useMarkAsRead } from '@/features/notifications/useNotifications';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { resolveResourceRoute } from '@/utils/resource-route';
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
   const { data: allNotifications } = useNotifications();
   const { data: unreadNotifications } = useUnreadNotifications();
   const markAllAsRead = useMarkAllAsRead();
+  const markAsRead = useMarkAsRead();
 
   const displayedNotifications = activeTab === 'all' ? allNotifications : unreadNotifications;
 
@@ -22,14 +26,14 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }} edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b" style={{ borderColor: colors.border }}>
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold">Notifications</Text>
+          <Text className="text-xl font-bold" style={{ color: colors.text }}>Notifications</Text>
           <TouchableOpacity onPress={handleMarkAllAsRead} className="p-2">
             <Text className="text-[#EF4444] text-sm font-semibold">Tout lire</Text>
           </TouchableOpacity>
@@ -37,7 +41,7 @@ export default function NotificationsScreen() {
       </View>
 
       {/* Onglets */}
-      <View className="flex-row px-4 pt-4 pb-2 border-b border-[#27272A]">
+      <View className="flex-row px-4 pt-4 pb-2 border-b" style={{ borderColor: colors.border }}>
         <TouchableOpacity
           onPress={() => setActiveTab('all')}
           className={`flex-1 pb-3 border-b-2 ${
@@ -46,7 +50,7 @@ export default function NotificationsScreen() {
         >
           <Text
             className={`text-center font-semibold ${
-              activeTab === 'all' ? 'text-[#EF4444]' : 'text-[#A1A1AA]'
+              activeTab === 'all' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
             }`}
           >
             Toutes
@@ -61,7 +65,7 @@ export default function NotificationsScreen() {
         >
           <Text
             className={`text-center font-semibold ${
-              activeTab === 'unread' ? 'text-[#EF4444]' : 'text-[#A1A1AA]'
+              activeTab === 'unread' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
             }`}
           >
             Non lues
@@ -82,25 +86,28 @@ export default function NotificationsScreen() {
             <NotificationItem
               notification={item}
               onPress={() => {
-                // Navigation selon le type de notification
-                if (item.target_type === 'post' && item.target_id) {
-                  router.push(`/(post)/${item.target_id}`);
-                } else if (item.target_type === 'event' && item.target_id) {
-                  router.push(`/(events)/${item.target_id}`);
-                } else if (item.target_type === 'place' && item.target_id) {
-                  router.push(`/(places)/${item.target_id}`);
+                markAsRead.mutate(item.id);
+                const resolution = resolveResourceRoute({
+                  type: item.target_type,
+                  id: item.target_id,
+                  metadata: item.target_metadata,
+                });
+                if (resolution.href) {
+                  router.push(resolution.href as never);
+                  return;
                 }
+                Alert.alert('Contenu indisponible', "Ce contenu n'est plus disponible ou ne peut pas être ouvert depuis cette notification.");
               }}
             />
           )}
         />
       ) : (
         <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="notifications-outline" size={64} color="#52525B" />
-          <Text className="text-white text-lg font-semibold mt-4 text-center">
+          <Ionicons name="notifications-outline" size={64} color={colors.textSecondary} />
+          <Text className="text-lg font-semibold mt-4 text-center" style={{ color: colors.text }}>
             {activeTab === 'all' ? 'Aucune notification' : 'Aucune notification non lue'}
           </Text>
-          <Text className="text-[#A1A1AA] text-center mt-2">
+          <Text className="text-center mt-2" style={{ color: colors.textSecondary }}>
             Restez informé de toutes vos activités ici
           </Text>
         </View>

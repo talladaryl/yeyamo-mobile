@@ -1,6 +1,7 @@
-import { TouchableOpacity, View, Text } from 'react-native';
-import { Avatar } from '@/components/ui/Avatar';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { useThemeStore } from '@/features/theme/theme.store';
 import { timeAgo, truncate } from '@/utils/format';
+import { ConversationAvatar } from './ConversationAvatar';
 import type { Conversation } from '@/features/chat/types';
 
 interface ChatListItemProps {
@@ -9,62 +10,39 @@ interface ChatListItemProps {
 }
 
 export function ChatListItem({ conversation, onPress }: ChatListItemProps) {
-  const { last_message, unread_count, type, participant, participants, group_name } = conversation;
-
-  const displayName = type === 'group' ? group_name : participant?.display_name;
-  const avatarUrl = type === 'group' ? participants[0]?.avatar_url : participant?.avatar_url;
-  const isGroup = type === 'group';
+  const colors = useThemeStore((state) => state.colors);
+  const { last_message: lastMessage, unread_count: unreadCount } = conversation;
+  const displayName = conversation.type === 'group'
+    ? conversation.group_name
+    : conversation.participant?.display_name;
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.7}
-      className="flex-row items-center px-4 py-3 gap-3"
+      activeOpacity={0.75}
+      className="mx-4 mb-2 flex-row items-center gap-3 rounded-2xl border px-3 py-3"
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}
     >
-      {/* Avatar or Group Avatars */}
-      {isGroup && participants.length > 1 ? (
-        <View className="relative w-12 h-12">
-          <Avatar
-            uri={participants[0]?.avatar_url}
-            displayName={participants[0]?.display_name}
-            size={32}
-            className="absolute top-0 left-0"
-          />
-          <Avatar
-            uri={participants[1]?.avatar_url}
-            displayName={participants[1]?.display_name}
-            size={32}
-            className="absolute bottom-0 right-0 border-2 border-[#0A0A0A]"
-          />
-        </View>
-      ) : (
-        <Avatar
-          uri={avatarUrl}
-          displayName={displayName || ''}
-          size={48}
-        />
-      )}
+      <ConversationAvatar conversation={conversation} size={52} />
 
       <View className="flex-1">
-        <View className="flex-row justify-between items-center">
-          <Text className="text-white font-semibold text-sm">
+        <View className="flex-row items-center justify-between gap-2">
+          <Text className="flex-1 text-sm font-bold" style={{ color: colors.text }} numberOfLines={1}>
             {displayName}
           </Text>
-          {last_message ? (
-            <Text className="text-[#52525B] text-xs">
-              {timeAgo(last_message.created_at)}
+          {lastMessage ? (
+            <Text className="text-[11px]" style={{ color: colors.textMuted }}>
+              {timeAgo(lastMessage.created_at)}
             </Text>
           ) : null}
         </View>
-        <View className="flex-row justify-between items-center mt-0.5">
-          <Text className="text-[#A1A1AA] text-sm flex-1" numberOfLines={1}>
-            {last_message ? truncate(last_message.body, 40) : 'Aucun message'}
+        <View className="mt-1 flex-row items-center justify-between">
+          <Text className="flex-1 text-sm" style={{ color: colors.textSecondary }} numberOfLines={1}>
+            {lastMessage ? truncate(lastMessage.body, 46) : 'Aucun message'}
           </Text>
-          {unread_count > 0 ? (
-            <View className="bg-[#EF4444] rounded-full min-w-5 h-5 px-1.5 items-center justify-center ml-2">
-              <Text className="text-white text-xs font-bold">
-                {unread_count > 9 ? '9+' : unread_count}
-              </Text>
+          {unreadCount > 0 ? (
+            <View className="ml-2 h-5 min-w-5 items-center justify-center rounded-full bg-[#EF4444] px-1.5">
+              <Text className="text-xs font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</Text>
             </View>
           ) : null}
         </View>

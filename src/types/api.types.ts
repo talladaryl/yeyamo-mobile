@@ -23,15 +23,33 @@ export interface PaginatedResponse<T> {
 }
 
 export interface ApiError {
+  code?: string;
   message: string;
+  details?: Array<{ field?: string; message?: string }>;
+  correlationId?: string;
   errors?: Record<string, string[]>;
   status?: number;
+}
+export interface AppApiError {
+  status?: number;
+  code?: string;
+  message: string;
+  fieldErrors?: Record<string, string>;
+  correlationId?: string;
+}
+
+declare module '@tanstack/react-query' {
+  interface Register {
+    defaultError: AppApiError;
+  }
 }
 
 // ─── Shared Entities ────────────────────────────────────────────────────────
 
+export type EntityId = string | number;
+
 export interface UserSummary {
-  id: number;
+  id: EntityId;
   username: string;
   display_name: string;
   avatar_url: string | null;
@@ -40,7 +58,7 @@ export interface UserSummary {
 }
 
 export interface MediaAttachment {
-  id: number;
+  id: EntityId;
   url: string;
   thumbnail_url: string | null;
   type: 'image' | 'video';

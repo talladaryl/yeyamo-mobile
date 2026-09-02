@@ -72,6 +72,11 @@ export const establishments: Establishment[] = [
     reviews_count: 56,
     address: 'Bastos, Yaoundé',
   },
+  { id: '4', name: 'Maison du Café', category: 'Café • Coworking', image_url: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800', rating: 4.6, reviews_count: 64, address: 'Bonamoussadi, Douala' },
+  { id: '5', name: 'Jardin des Saveurs', category: 'Restaurant • Gastronomie', image_url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800', rating: 4.9, reviews_count: 112, address: 'Odza, Yaoundé' },
+  { id: '6', name: 'Galerie Mboa', category: 'Culture • Galerie', image_url: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=800', rating: 4.7, reviews_count: 39, address: 'Bonanjo, Douala' },
+  { id: '7', name: 'Lodge des Chutes', category: 'Hébergement • Nature', image_url: 'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=800', rating: 4.8, reviews_count: 87, address: 'Kribi, Sud' },
+  { id: '8', name: 'Atelier Foumban', category: 'Artisanat • Culture', image_url: 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=800', rating: 4.9, reviews_count: 51, address: 'Foumban, Ouest' },
 ];
 
 export const partnerEvents: PartnerEvent[] = [
@@ -83,6 +88,7 @@ export const partnerEvents: PartnerEvent[] = [
     location: 'La Falaise Resort',
     participants: 8,
     status: 'published',
+    supports_ticketing: true,
   },
   {
     id: '2',
@@ -92,6 +98,7 @@ export const partnerEvents: PartnerEvent[] = [
     location: 'Bistro Douala',
     participants: 0,
     status: 'draft',
+    supports_ticketing: false,
   },
   {
     id: '3',
@@ -101,7 +108,13 @@ export const partnerEvents: PartnerEvent[] = [
     location: 'Espace Sunshine',
     participants: 15,
     status: 'published',
+    supports_ticketing: true,
   },
+  { id: '4', name: 'Nuit des Contes', date: '12 Sep 2026', time: '18:30', location: 'Galerie Mboa', participants: 86, status: 'published', supports_ticketing: true },
+  { id: '5', name: 'Marché des Créateurs', date: '26 Sep 2026', time: '09:00', location: 'Atelier Foumban', participants: 42, status: 'published', supports_ticketing: false },
+  { id: '6', name: 'Brunch Culturel', date: '04 Oct 2026', time: '11:00', location: 'Jardin des Saveurs', participants: 55, status: 'draft', supports_ticketing: true },
+  { id: '7', name: 'Festival des Langues', date: '18 Oct 2026', time: '10:00', location: 'Espace Sunshine', participants: 210, status: 'published', supports_ticketing: true },
+  { id: '8', name: 'Rencontre Artisans', date: '02 Nov 2026', time: '15:00', location: 'Galerie Mboa', participants: 73, status: 'published', supports_ticketing: false },
 ];
 
 export const reservations: Reservation[] = [
@@ -135,20 +148,27 @@ export const reservations: Reservation[] = [
     status: 'pending',
     establishment: 'Espace Sunshine',
   },
+  { id: '4', customer_name: 'Amina F.', customer_avatar: 'https://i.pravatar.cc/150?img=25', date: '12 Sep 2026', time: '18:00', guests: 3, amount: 36000, status: 'confirmed', establishment: 'Jardin des Saveurs' },
+  { id: '5', customer_name: 'Brice N.', customer_avatar: 'https://i.pravatar.cc/150?img=15', date: '18 Sep 2026', time: '20:00', guests: 5, amount: 90000, status: 'pending', establishment: 'La Falaise Resort' },
+  { id: '6', customer_name: 'Carine M.', customer_avatar: 'https://i.pravatar.cc/150?img=32', date: '26 Sep 2026', time: '12:30', guests: 2, amount: 24000, status: 'confirmed', establishment: 'Bistro Douala' },
+  { id: '7', customer_name: 'Éric T.', customer_avatar: 'https://i.pravatar.cc/150?img=13', date: '04 Oct 2026', time: '10:30', guests: 8, amount: 128000, status: 'pending', establishment: 'Espace Sunshine' },
 ];
 
 export const customerReviews: CustomerReview[] = [
   {
     id: '1',
     customer_name: 'Sylvia K.',
+    customer_avatar: 'https://i.pravatar.cc/150?img=47',
     rating: 5,
     date: 'Il y a 2 jours',
     comment: 'Parfait pour une soirée en amoureux magnifique! Le service était impeccable et l\'ambiance...',
     establishment: 'La Falaise Resort',
+    partner_reply: 'Merci Sylvia ! Toute l’équipe est heureuse que votre soirée vous ait plu.',
   },
   {
     id: '2',
     customer_name: 'Alex T.',
+    customer_avatar: 'https://i.pravatar.cc/150?img=12',
     rating: 4,
     date: 'Il y a 1 semaine',
     comment: 'Très bon accueil, la cuisine était excellente. Juste un peu d\'attente lors du service mais sinon...',
@@ -157,11 +177,17 @@ export const customerReviews: CustomerReview[] = [
   {
     id: '3',
     customer_name: 'Sophie L.',
+    customer_avatar: 'https://i.pravatar.cc/150?img=44',
     rating: 5,
     date: 'Il y a 3 jours',
     comment: 'L\'endroit parfait pour organiser un événement ! L\'équipe est professionnelle et à l\'écoute...',
     establishment: 'Espace Sunshine',
   },
+  { id: '4', customer_name: 'Nadia B.', customer_avatar: 'https://i.pravatar.cc/150?img=45', rating: 5, date: 'Il y a 4 jours', comment: 'Une équipe attentionnée et un cadre superbe. Nous reviendrons avec plaisir.', establishment: 'Jardin des Saveurs' },
+  { id: '5', customer_name: 'Patrick O.', customer_avatar: 'https://i.pravatar.cc/150?img=14', rating: 3, date: 'Il y a 6 jours', comment: 'Le lieu est très agréable mais le temps d’attente peut encore être amélioré.', establishment: 'Maison du Café' },
+  { id: '6', customer_name: 'Estelle M.', customer_avatar: 'https://i.pravatar.cc/150?img=48', rating: 5, date: 'Il y a 1 semaine', comment: 'Magnifique sélection et médiation culturelle très intéressante.', establishment: 'Galerie Mboa', partner_reply: 'Merci pour votre visite et votre retour. À très bientôt pour notre prochaine exposition !' },
+  { id: '7', customer_name: 'Yannick S.', customer_avatar: 'https://i.pravatar.cc/150?img=11', rating: 4, date: 'Il y a 9 jours', comment: 'Très belle expérience au calme, avec un accueil professionnel.', establishment: 'Lodge des Chutes' },
+  { id: '8', customer_name: 'Fatou D.', customer_avatar: 'https://i.pravatar.cc/150?img=49', rating: 5, date: 'Il y a 2 semaines', comment: 'Les artisans prennent le temps d’expliquer chaque technique. Une vraie découverte.', establishment: 'Atelier Foumban' },
 ];
 
 export const statisticCards: StatisticCard[] = [

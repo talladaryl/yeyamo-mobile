@@ -1,20 +1,51 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { NativeMap, NativeMarker, PROVIDER_GOOGLE, type NativeMapRef } from '@/components/maps/NativeMap';
 import { Image } from 'expo-image';
 import { Icon } from '@/components/ui/Icon';
-import { mapPlaces, CAMEROON_CENTER } from '@/features/explore/mockData';
+import { CAMEROON_CENTER } from '@/features/explore/mockData';
 import type { MapPlace } from '@/features/explore/types';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { usePlaces } from '@/features/places/usePlaces';
+import { useLocation } from '@/hooks/useLocation';
 
 const { height } = Dimensions.get('window');
 
 export default function MapScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
+  const mapRef = useRef<NativeMapRef>(null);
+  const currentLocation = useLocation();
+  const { data } = usePlaces({
+    lat: CAMEROON_CENTER.latitude,
+    lng: CAMEROON_CENTER.longitude,
+    radius_km: 1_000,
+  });
+  const mapPlaces = useMemo<MapPlace[]>(() =>
+    (data?.pages.flatMap((page) => page.data) ?? [])
+      .filter((place) => Number.isFinite(place.lat) && Number.isFinite(place.lng))
+      .map((place) => ({
+        id: place.id,
+        name: place.name,
+        coordinates: { latitude: place.lat, longitude: place.lng },
+        rating: place.rating ?? 0,
+        image_url: place.cover_image_url ?? '',
+        category: place.category,
+      })),
+  [data]);
+
+  useEffect(() => { void currentLocation.requestLocation(); }, [currentLocation.requestLocation]);
+
+  const recenter = async () => {
+    const location = currentLocation.location ?? await currentLocation.requestLocation();
+    if (location) mapRef.current?.animateToRegion({ ...location, latitudeDelta: 0.04, longitudeDelta: 0.04 }, 500);
+  };
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: false,
@@ -22,7 +53,8 @@ export default function MapScreen() {
       />
 
       {/* Map */}
-      <MapView
+      <NativeMap
+        ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={CAMEROON_CENTER}
@@ -30,7 +62,7 @@ export default function MapScreen() {
         showsMyLocationButton={false}
       >
         {mapPlaces.map((place) => (
-          <Marker
+          <NativeMarker
             key={place.id}
             coordinate={place.coordinates}
             onPress={() => setSelectedPlace(place)}
@@ -38,9 +70,9 @@ export default function MapScreen() {
             <View className="bg-[#EF4444] w-10 h-10 rounded-full items-center justify-center border-2 border-white">
               <Icon library="ionicons" name="location" size={20} color="#FFFFFF" />
             </View>
-          </Marker>
+          </NativeMarker>
         ))}
-      </MapView>
+      </NativeMap>
 
       {/* Top Controls */}
       <SafeAreaView className="absolute top-0 left-0 right-0">
@@ -96,7 +128,7 @@ export default function MapScreen() {
 
       {/* Place Preview Card */}
       {selectedPlace && (
-        <View className="absolute bottom-0 left-0 right-0 bg-[#161616] rounded-t-3xl p-4">
+        <View className="absolute bottom-0 left-0 right-0 rounded-t-3xl border-t p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
           <TouchableOpacity
             onPress={() => router.push(`/(places)/${selectedPlace.id}`)}
             activeOpacity={0.9}
@@ -109,14 +141,14 @@ export default function MapScreen() {
             />
 
             <View className="flex-1 justify-center">
-              <Text className="text-white font-bold text-lg mb-1">
+              <Text className="font-bold text-lg mb-1" style={{ color: colors.text }}>
                 {selectedPlace.name}
               </Text>
 
               <View className="flex-row items-center gap-1 mb-2">
                 <Icon library="ionicons" name="star" size={16} color="#F59E0B" />
-                <Text className="text-white text-sm">{selectedPlace.rating}</Text>
-                <Text className="text-[#A1A1AA] text-sm">(105 avis)</Text>
+                <Text className="text-sm" style={{ color: colors.text }}>{selectedPlace.rating}</Text>
+                <Text className="text-sm" style={{ color: colors.textSecondary }}>(105 avis)</Text>
               </View>
 
               <TouchableOpacity
@@ -132,6 +164,7 @@ export default function MapScreen() {
 
       {/* My Location Button */}
       <TouchableOpacity
+        onPress={recenter}
         className="absolute bottom-32 right-4 bg-white w-12 h-12 rounded-full items-center justify-center shadow-lg"
         activeOpacity={0.8}
       >

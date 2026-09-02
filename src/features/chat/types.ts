@@ -1,7 +1,7 @@
-import type { UserSummary } from '@/types/api.types';
+import type { EntityId, UserSummary } from '@/types/api.types';
 
 export interface Conversation {
-  id: number;
+  id: EntityId;
   type: 'user' | 'partner' | 'group';
   is_pinned: boolean;
   participant: UserSummary | null; // null for groups
@@ -13,8 +13,8 @@ export interface Conversation {
 }
 
 export interface ChatMessage {
-  id: number;
-  conversation_id: number;
+  id: EntityId;
+  conversation_id: EntityId;
   sender: UserSummary;
   body: string;
   message_type: 'text' | 'system' | 'event';
@@ -27,7 +27,7 @@ export interface ChatMessage {
 }
 
 export interface Attachment {
-  id: number;
+  id: EntityId;
   type: 'pdf' | 'image' | 'video' | 'file';
   name: string;
   url: string;
@@ -36,7 +36,7 @@ export interface Attachment {
 }
 
 export interface EventData {
-  id: number;
+  id: EntityId;
   title: string;
   date: string;
   time: string;
@@ -45,7 +45,7 @@ export interface EventData {
 }
 
 export interface SendMessagePayload {
-  conversation_id: number;
+  conversation_id: EntityId;
   body: string;
   type?: ChatMessage['type'];
   media_url?: string;

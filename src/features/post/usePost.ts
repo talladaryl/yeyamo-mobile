@@ -1,18 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import ENV from '@/config/env';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { MOCK_FEED_POSTS } from '@/features/mock/mockData';
 import { feedApi } from '../feed/feed.api';
 import { postApi } from './post.api';
 import type { CreatePostPayload } from './types';
 import { FEED_QUERY_KEY } from '../feed/useFeed';
+import type { EntityId } from '@/types/api.types';
 
-export function usePostDetail(postId: number) {
+export function usePostDetail(postId: EntityId) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
-    queryKey: ['post', postId],
+    queryKey: ['post', isDemo ? 'demo' : 'backend', postId],
     queryFn: () =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve({
-            data: MOCK_FEED_POSTS.find((post) => post.id === postId) ?? MOCK_FEED_POSTS[0],
+            data: MOCK_FEED_POSTS.find((post) => String(post.id) === String(postId)) ?? MOCK_FEED_POSTS[0],
           })
         : feedApi.getPost(postId),
     select: (res) => res.data,
@@ -21,9 +23,10 @@ export function usePostDetail(postId: number) {
 
 export function useCreatePost() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useMutation({
     mutationFn: (payload: CreatePostPayload) =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve({ data: { id: Date.now() } })
         : postApi.createPost(payload),
     onSuccess: () => {
@@ -33,9 +36,10 @@ export function useCreatePost() {
 }
 
 export function useUploadMedia() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useMutation({
     mutationFn: (formData: FormData) =>
-      ENV.USE_MOCKS
+      isDemo
         ? Promise.resolve({
             data: {
               id: Date.now(),
@@ -47,11 +51,26 @@ export function useUploadMedia() {
   });
 }
 
+export function useCreateStory() {
+  const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  return useMutation({
+    mutationFn: ({ mediaId, durationSeconds }: { mediaId: EntityId; durationSeconds: number }) =>
+      isDemo
+        ? Promise.resolve({ data: { id: `demo-story-${Date.now()}` } })
+        : postApi.createStory(mediaId, durationSeconds),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['stories'] });
+    },
+  });
+}
+
 export function useDeletePost() {
   const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useMutation({
-    mutationFn: (postId: number) =>
-      ENV.USE_MOCKS ? Promise.resolve() : postApi.deletePost(postId),
+    mutationFn: (postId: EntityId) =>
+      isDemo ? Promise.resolve() : postApi.deletePost(postId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
     },

@@ -1,5 +1,6 @@
-﻿import { Text, TouchableOpacity, Switch } from 'react-native';
+import { Text, TouchableOpacity, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface SettingsItemProps {
   icon: string;
@@ -24,19 +25,19 @@ export function SettingsItem({
   destructive = false,
   showBorder = true,
 }: SettingsItemProps) {
-  const borderClass = showBorder ? 'border-b border-[#27272A]' : '';
-  const textClass = destructive ? 'text-[#EF4444]' : 'text-white';
-  const iconColor = destructive ? '#EF4444' : '#A1A1AA';
+  const colors = useThemeStore((state) => state.colors);
+  const iconColor = destructive ? colors.primary : colors.textSecondary;
 
   return (
     <TouchableOpacity
       onPress={type === 'toggle' ? undefined : onPress}
       disabled={type === 'toggle' && !onToggle}
-      className={`flex-row items-center px-4 py-4 ${borderClass}`}
+      className="flex-row items-center px-4 py-4"
+      style={{ borderBottomWidth: showBorder ? 1 : 0, borderBottomColor: colors.border }}
       activeOpacity={0.7}
     >
       <Ionicons name={icon as any} size={20} color={iconColor} />
-      <Text className={`flex-1 text-base font-medium ml-3 ${textClass}`}>
+      <Text className="ml-3 flex-1 text-base font-medium" style={{ color: destructive ? colors.primary : colors.text }}>
         {label}
       </Text>
 
@@ -44,14 +45,14 @@ export function SettingsItem({
         <Switch
           value={toggleValue}
           onValueChange={onToggle}
-          trackColor={{ false: '#27272A', true: '#EF4444' }}
+          trackColor={{ false: colors.border, true: colors.primary }}
           thumbColor="#FFFFFF"
         />
       ) : (
         <>
-          {value ? <Text className="text-[#A1A1AA] text-sm mr-2">{value}</Text> : null}
+          {value ? <Text className="mr-2 text-sm" style={{ color: colors.textSecondary }}>{value}</Text> : null}
           {type === 'navigation' ? (
-            <Ionicons name="chevron-forward" size={18} color="#52525B" />
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           ) : null}
         </>
       )}

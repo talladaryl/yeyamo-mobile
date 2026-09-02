@@ -1,17 +1,22 @@
-import { SafeAreaView } from 'react-native';
-import { cssInterop } from 'nativewind';
-
-// Make SafeAreaView NativeWind-compatible
-cssInterop(SafeAreaView, { className: 'style' });
+import { SafeAreaView } from 'react-native-safe-area-context';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface SafeScreenProps {
   children: React.ReactNode;
   className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function SafeScreen({ children, className = '' }: SafeScreenProps) {
+export function SafeScreen({ children, className = '', style }: SafeScreenProps) {
+  const backgroundColor = useThemeStore((state) => state.colors.background);
+
   return (
-    <SafeAreaView className={`flex-1 bg-[#0A0A0A] ${className}`}>
+    <SafeAreaView
+      className={`flex-1 ${className}`}
+      edges={['top']}
+      style={[{ backgroundColor }, style]}
+    >
       {children}
     </SafeAreaView>
   );

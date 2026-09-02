@@ -5,7 +5,7 @@ import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { UserSearchCard } from '@/components/social/UserSearchCard';
-import { mockSearchResults } from '@/features/social/mockData';
+import { useFollowActions, useUserSearch } from '@/features/social/useSocial';
 
 export default function SearchUsersScreen() {
   const router = useRouter();
@@ -13,10 +13,11 @@ export default function SearchUsersScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  const results = mockSearchResults;
+  const { data: results = [] } = useUserSearch(searchQuery);
+  const { follow } = useFollowActions();
 
   return (
-    <View className="flex-1 bg-[#0A0A0A]">
+    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
       <Stack.Screen
         options={{
           headerShown: true,
@@ -27,15 +28,15 @@ export default function SearchUsersScreen() {
       />
 
       {/* Search Bar */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
-        <View className="flex-row items-center bg-[#161616] rounded-xl px-4 py-2.5 gap-3">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
+        <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-2.5 gap-3">
           <Icon library="ionicons" name="search" size={20} color="#A1A1AA" />
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Rechercher des utilisateurs..."
             placeholderTextColor="#A1A1AA"
-            className="flex-1 text-white text-sm"
+            className="flex-1 text-[#18181B] dark:text-white text-sm"
             autoFocus
           />
           {searchQuery.length > 0 && (
@@ -53,7 +54,7 @@ export default function SearchUsersScreen() {
         >
           <View className="flex-row items-center gap-2">
             <Icon library="ionicons" name="options" size={18} color="#EF4444" />
-            <Text className="text-white text-sm font-semibold">Filtres</Text>
+            <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Filtres</Text>
           </View>
           <Icon
             library="ionicons"
@@ -65,29 +66,29 @@ export default function SearchUsersScreen() {
 
         {/* Filters Panel */}
         {showFilters && (
-          <View className="mt-3 p-3 bg-[#161616] rounded-xl">
-            <Text className="text-white text-sm font-semibold mb-2">Localisation</Text>
+          <View className="mt-3 p-3 bg-white dark:bg-[#161616] rounded-xl">
+            <Text className="text-[#18181B] dark:text-white text-sm font-semibold mb-2">Localisation</Text>
             <View className="flex-row flex-wrap gap-2 mb-3">
               {['Toutes', 'Yaoundé', 'Douala', 'Bafoussam'].map((location) => (
                 <TouchableOpacity
                   key={location}
-                  className="px-3 py-1.5 rounded-full bg-[#27272A]"
+                  className="px-3 py-1.5 rounded-full bg-[#F4F4F5] dark:bg-[#27272A]"
                   activeOpacity={0.8}
                 >
-                  <Text className="text-white text-xs">{location}</Text>
+                  <Text className="text-[#18181B] dark:text-white text-xs">{location}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text className="text-white text-sm font-semibold mb-2">Centres d'intérêt</Text>
+            <Text className="text-[#18181B] dark:text-white text-sm font-semibold mb-2">Centres d'intérêt</Text>
             <View className="flex-row flex-wrap gap-2">
               {['Voyages', 'Food', 'Sports', 'Culture', 'Nature'].map((interest) => (
                 <TouchableOpacity
                   key={interest}
-                  className="px-3 py-1.5 rounded-full bg-[#27272A]"
+                  className="px-3 py-1.5 rounded-full bg-[#F4F4F5] dark:bg-[#27272A]"
                   activeOpacity={0.8}
                 >
-                  <Text className="text-white text-xs">{interest}</Text>
+                  <Text className="text-[#18181B] dark:text-white text-xs">{interest}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -103,13 +104,13 @@ export default function SearchUsersScreen() {
           <UserSearchCard
             user={item}
             onPress={() => router.push(`/(profile)/${item.username}`)}
-            onFollowPress={() => console.log('Follow', item.username)}
+            onFollowPress={() => follow.mutate(item.id)}
           />
         )}
         ListEmptyComponent={
           <View className="items-center justify-center py-12">
             <Icon library="ionicons" name="search" size={64} color="#27272A" />
-            <Text className="text-[#A1A1AA] text-sm mt-4">
+            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-4">
               {searchQuery ? 'Aucun résultat trouvé' : 'Recherchez des utilisateurs'}
             </Text>
           </View>

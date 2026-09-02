@@ -15,14 +15,14 @@ export default function EventsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#27272A]">
+      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
             <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold">Mes sorties</Text>
+          <Text className="text-xl font-bold text-[#18181B] dark:text-white">Mes sorties</Text>
           <TouchableOpacity className="p-2">
             <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
           </TouchableOpacity>
@@ -32,7 +32,7 @@ export default function EventsScreen() {
       {/* Liste des événements */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <Text className="text-[#A1A1AA]">Chargement...</Text>
+          <Text className="text-[#52525B] dark:text-[#A1A1AA]">Chargement...</Text>
         </View>
       ) : events && events.length > 0 ? (
         <FlatList
@@ -49,10 +49,10 @@ export default function EventsScreen() {
       ) : (
         <View className="flex-1 items-center justify-center px-8">
           <Ionicons name="calendar-outline" size={64} color="#52525B" />
-          <Text className="text-white text-lg font-semibold mt-4 text-center">
+          <Text className="mt-4 text-center text-lg font-semibold text-[#18181B] dark:text-white">
             Aucune sortie prévue
           </Text>
-          <Text className="text-[#A1A1AA] text-center mt-2">
+          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center mt-2">
             Rejoignez des événements pour les voir ici
           </Text>
         </View>
@@ -63,11 +63,11 @@ export default function EventsScreen() {
         <View className="absolute bottom-6 left-0 right-0 px-4">
           <TouchableOpacity
             onPress={handleCreateEvent}
-            className="bg-[#EF4444] py-4 rounded-xl flex-row items-center justify-center shadow-lg"
+            className="h-14 w-14 self-end rounded-full bg-[#EF4444] items-center justify-center shadow-lg"
             activeOpacity={0.8}
+            accessibilityLabel="Créer une sortie"
           >
-            <Ionicons name="add-circle-outline" size={24} color="#FFFFFF" />
-            <Text className="text-white font-bold text-base ml-2">Créer une sortie</Text>
+            <Ionicons name="add" size={30} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       )}
