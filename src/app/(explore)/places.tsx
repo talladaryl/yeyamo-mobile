@@ -1,19 +1,24 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
-import { PlaceListItem } from '@/components/explore/PlaceListItem';
+import { PlaceListItem, type PlaceListItemModel } from '@/components/explore/PlaceListItem';
 import { useTrendingPlaces } from '@/features/explore/useExplore';
+import { usePlaces } from '@/features/places/usePlaces';
+import { useLocation } from '@/hooks/useLocation';
+import { useAuthStore } from '@/features/auth/auth.store';
 import { useThemeStore } from '@/features/theme/theme.store';
 
-type FilterTab = 'all' | 'popular' | 'new' | 'nearby';
+type FilterTab = 'all' | 'popular' | 'nearby';
 
 export default function PlacesListScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const params = useLocalSearchParams();
   const { data: trendingPlaces = [] } = useTrendingPlaces();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const currentLocation = useLocation();
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const regionId = typeof params.regionId === 'string' ? Number(params.regionId) : null;
   const regionCode = typeof params.regionCode === 'string' ? params.regionCode : null;
@@ -23,22 +28,16 @@ export default function PlacesListScreen() {
   const filters: { id: FilterTab; label: string }[] = [
     { id: 'all', label: 'Tous' },
     { id: 'popular', label: 'Populaire' },
-    { id: 'new', label: 'Nouveaux' },
     { id: 'nearby', label: 'Près de moi' },
   ];
 
-  const filteredPlaces = useMemo(
-    () =>
-      trendingPlaces.filter((place) => {
-        const matchesRegion = regionCode
-          ? String(place.region_id) === regionCode || String(place.region_id) === String(regionId)
-          : regionId ? String(place.region_id) === String(regionId) : true;
-        const matchesCategory = category ? place.category === category : true;
+  const allPlacesQuery = usePlaces({ city: regionCode ?? undefined, categoryCode: category ?? undefined });
+  const nearbyPlacesQuery = usePlaces({ lat: currentLocation.location?.latitude, lng: currentLocation.location?.longitude, radius_km: 25 });
+  const remoteAllPlaces = allPlacesQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const nearbyPlaces = nearbyPlacesQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const popularPlaces = trendingPlaces.filter((place) => !regionCode || String(place.region_id) === String(regionCode));
 
-        return matchesRegion && matchesCategory;
-      }),
-    [category, regionCode, regionId, trendingPlaces]
-  );
+  const filteredPlaces: PlaceListItemModel[] = isDemo ? trendingPlaces.filter((place) => (!regionCode || String(place.region_id) === String(regionCode) || String(place.region_id) === String(regionId)) && (!category || place.category === category)) : activeFilter === 'nearby' ? nearbyPlaces : activeFilter === 'popular' ? popularPlaces : remoteAllPlaces;
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -67,7 +66,7 @@ export default function PlacesListScreen() {
           {filters.map((filter) => (
             <TouchableOpacity
               key={filter.id}
-              onPress={() => setActiveFilter(filter.id)}
+              onPress={() => { setActiveFilter(filter.id); if (filter.id === 'nearby' && !currentLocation.location) void currentLocation.requestLocation(); }}
               className={`px-4 py-2 rounded-full ${
                 activeFilter === filter.id
                   ? 'bg-[#EF4444]'
@@ -92,22 +91,21 @@ export default function PlacesListScreen() {
       </View>
 
       {/* Places List */}
-      <FlatList
+      <FlatList<PlaceListItemModel>
         data={filteredPlaces}
         keyExtractor={(item) => String(item.id)}
         contentContainerClassName="px-4 pb-20"
         renderItem={({ item }) => (
-          <PlaceListItem
-            place={item}
-            onPress={() => router.push(`/(places)/${item.id}`)}
-            onBookmark={() => console.log('Bookmark', item.id)}
-          />
+              <PlaceListItem
+                place={item}
+                onPress={() => router.push(`/(places)/${item.id}`)}
+              />
         )}
         ListHeaderComponent={
-          <Text className="text-sm mb-4" style={{ color: colors.textSecondary }}>
+          <View><Text className="text-sm mb-4" style={{ color: colors.textSecondary }}>
             {filteredPlaces.length} lieu{filteredPlaces.length > 1 ? 'x' : ''}
             {regionName ? ` dans ${regionName}` : ''}
-          </Text>
+          </Text>{activeFilter === 'nearby' && !isDemo && !currentLocation.location ? <Text className="mb-4 text-sm" style={{ color: colors.textSecondary }}>{currentLocation.error ?? 'Autorisez la localisation pour afficher les lieux proches.'}</Text> : null}</View>
         }
       />
 

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
@@ -178,7 +178,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const colors = useThemeStore((state) => state.colors);
   const { width } = useWindowDimensions();
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useYeyamoTabBarHeight();
   const { data: publications = [] } = useUserPublications();
   const { data: stats } = useProfileStats();
   const { data: unreadNotifications = 0 } = useUnreadCount();

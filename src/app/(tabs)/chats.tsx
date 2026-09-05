@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
 import { ChatListItem } from '@/components/chat/ChatListItem';
 import { ChatTabs } from '@/components/chat/ChatTabs';
@@ -26,7 +26,7 @@ function conversationName(conversation: Conversation) {
 export default function ChatsScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useYeyamoTabBarHeight();
   const [inboxSection, setInboxSection] = useState<InboxSection>('messages');
   const [activeTab, setActiveTab] = useState<ChatTab>('recent');
   const [search, setSearch] = useState('');

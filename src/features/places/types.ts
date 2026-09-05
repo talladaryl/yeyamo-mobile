@@ -4,18 +4,18 @@ export interface Place {
   id: EntityId;
   name: string;
   description: string | null;
-  city: string;
-  address: string;
-  lat: number;
-  lng: number;
+  city?: string | null;
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
   cover_image_url: string | null;
-  category: string;
+  category?: string | null;
   rating: number | null;
-  reviews_count: number;
-  events_count: number;
-  posts_count: number;
+  reviews_count?: number | null;
+  events_count?: number | null;
+  posts_count?: number | null;
   equipment?: PlaceEquipment[];
-  is_saved: boolean;
+  is_saved?: boolean;
   opening_hours?: string;
   phone?: string;
   website?: string;
@@ -62,4 +62,48 @@ export interface PlacesQuery {
   lng?: number;
   radius_km?: number;
   page?: number;
+  categoryCode?: string;
+}
+
+/** Créneau réservable exposé par booking-service. */
+export interface BackendActivity {
+  id: string;
+  activityId: string;
+  placeId: string | null;
+  startsAt: string;
+  endsAt: string;
+  capacity: number;
+  reserved: number;
+  available: number;
+  unitPrice: number;
+  isPaid: boolean;
+  amount: number;
+  currency: string | null;
+  countryCode: string | null;
+  status: string;
+}
+
+/** Réponse Spring Data de GET /activities. */
+export interface BackendActivityPage {
+  content: BackendActivity[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+}
+
+export interface BackendBooking {
+  id: string;
+  reference: string;
+  activityId: string;
+  slotId: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  currency: string | null;
+  status: string;
+  paymentStatus: string;
+  createdAt: string;
 }

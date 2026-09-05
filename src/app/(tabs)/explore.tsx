@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { CategoryCard } from '@/components/explore/CategoryCard';
@@ -23,6 +23,7 @@ import { useArtisans } from '@/features/artisans/artisans.hooks';
 import { ArtisanCard } from '@/features/artisans/components/ArtisanCard';
 import { useDiscoveryTrending } from '@/features/discovery/discovery.hooks';
 import type { DiscoveryItem, DiscoveryType } from '@/features/discovery/discovery.types';
+import { discoveryHref } from '@/features/discovery/discovery.navigation';
 import { recommendationAsDiscoveryItem } from '@/features/recommendations/recommendations.types';
 import { useRecommendations } from '@/features/recommendations/recommendations.hooks';
 import { useUpcomingEvents } from '@/features/events/useEvents';
@@ -33,7 +34,7 @@ const HERO_FALLBACK_COLORS = ['#7F1D1D', '#EF4444', '#F59E0B'] as const;
 export default function ExploreHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useYeyamoTabBarHeight();
   const colors = useThemeStore((state) => state.colors);
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const countryCode = useCountryStore((state) => state.selectedCountryCode ?? undefined);
@@ -41,10 +42,8 @@ export default function ExploreHomeScreen() {
 
   const categoriesQuery = useCategories();
   const regionsQuery = useRegions();
-  const trendingPlacesQuery = useTrendingPlaces();
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const regions = useMemo(() => regionsQuery.data ?? [], [regionsQuery.data]);
-  const trendingPlaces = useMemo(() => trendingPlacesQuery.data ?? [], [trendingPlacesQuery.data]);
   const [selectedRegionId, setSelectedRegionId] = useState<number>();
   const [isRegionPickerOpen, setIsRegionPickerOpen] = useState(false);
 
@@ -53,7 +52,9 @@ export default function ExploreHomeScreen() {
     [regions, selectedRegionId],
   );
   const regionCode = selectedRegion?.code ?? (selectedRegion ? String(selectedRegion.id) : undefined);
-  const selectedLocationLabel = selectedRegion?.name === 'Centre' ? 'Yaoundé' : selectedRegion?.name ?? 'Cameroun';
+  const trendingPlacesQuery = useTrendingPlaces({ regionCode });
+  const trendingPlaces = useMemo(() => trendingPlacesQuery.data ?? [], [trendingPlacesQuery.data]);
+  const selectedLocationLabel = selectedRegion?.name ?? 'Cameroun';
 
   useEffect(() => {
     if (selectedRegionId === undefined && regions[0]) setSelectedRegionId(regions[0].id);
@@ -112,12 +113,9 @@ export default function ExploreHomeScreen() {
   };
 
   const openDiscovery = (item: DiscoveryItem) => {
-    const id = item.sourceId.replace(/^[^:]+:/, '');
-    if (item.type === 'ARTWORK') return router.push(`/(explore)/artworks/${id}`);
-    if (item.type === 'ARTISAN') return router.push(`/(explore)/artisans/${id}`);
-    if (item.type === 'CULTURE' || item.type === 'LANGUAGE' || item.type === 'TRADITION') return router.push(`/(explore)/culture/${id}`);
-    if (item.type === 'EVENT') return router.push(`/(events)/${id}`);
-    return router.push(`/(places)/${id}`);
+    const href = discoveryHref(item);
+    if (href) return router.push(href);
+    Alert.alert('Contenu indisponible', 'Ce type de découverte ne possède pas encore d’écran de détail dans l’application.');
   };
 
   const openQuickFilter = ({ type, nearby }: { type?: DiscoveryType; nearby: boolean }) => {

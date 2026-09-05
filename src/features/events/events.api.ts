@@ -1,5 +1,4 @@
 import { apiDelete, apiGet, apiPost } from '@/services/api/client';
-import { fallbackUser } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
 import type { Event } from './types';
 
@@ -15,6 +14,7 @@ interface BackendEvent {
   createdAt?: string;
 }
 
+/** Maps only fields returned by EventResponse/EventSummaryResponse. */
 function mapEvent(event: BackendEvent): Event {
   return {
     id: event.id,
@@ -26,17 +26,10 @@ function mapEvent(event: BackendEvent): Event {
     end_date: event.endAt,
     start_time: new Date(event.startAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     end_time: new Date(event.endAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-    location: 'Lieu associé',
-    address: '',
-    city: '',
-    organizer: fallbackUser('organizer'),
     participants_count: event.registeredCount,
     max_participants: event.capacity ?? undefined,
-    participants: [],
     is_participating: false,
-    is_saved: false,
     price: null,
-    currency: 'XAF',
     created_at: event.createdAt ?? event.startAt,
   };
 }

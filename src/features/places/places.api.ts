@@ -1,7 +1,14 @@
-import { apiGet } from '@/services/api/client';
-import { toPaginatedResponse } from '@/services/api/contracts';
+import { apiGet, apiPost } from '@/services/api/client';
+import { normalizeDiscoveryId } from '@/features/discovery/discovery.navigation';
+import { createIdempotencyKey, toPaginatedResponse } from '@/services/api/contracts';
 import type { EntityId, PaginatedResponse } from '@/types/api.types';
-import type { Place, PlacesQuery } from './types';
+import type {
+  BackendActivity,
+  BackendActivityPage,
+  BackendBooking,
+  Place,
+  PlacesQuery,
+} from './types';
 
 interface BackendPlaceSummary {
   id: string;
@@ -47,17 +54,16 @@ function basePlace(item: BackendPlaceSummary): Place {
     id: item.id,
     name: item.name,
     description: null,
-    city: '',
-    address: item.address ?? '',
+    city: null,
+    address: item.address,
     lat: item.latitude,
     lng: item.longitude,
     cover_image_url: null,
-    category: item.categoryName ?? 'Autre',
+    category: item.categoryName,
     rating: null,
-    reviews_count: 0,
-    events_count: 0,
-    posts_count: 0,
-    is_saved: false,
+    reviews_count: null,
+    events_count: null,
+    posts_count: null,
   };
 }
 
@@ -78,11 +84,12 @@ export const placesApi = {
     const params = new URLSearchParams({ type: 'PLACE', page: String(page), size: '20' });
     if (query.search) params.set('q', query.search);
     if (query.city) params.set('regionCode', query.city);
+    if (query.categoryCode) params.set('categoryCode', query.categoryCode);
     const response = await apiGet<DiscoveryPage>(`/discovery/search?${params}`);
     return toPaginatedResponse(
       response.items.map((item) => ({
         ...basePlace({
-          id: item.sourceId,
+          id: normalizeDiscoveryId(item.sourceId),
           name: item.title,
           latitude: item.latitude ?? 0,
           longitude: item.longitude ?? 0,
@@ -116,4 +123,19 @@ export const placesApi = {
       },
     };
   },
+
+  getPlaceActivities: (placeId: EntityId, page = 0): Promise<BackendActivityPage> =>
+    apiGet<BackendActivityPage>('/activities', {
+      params: { placeId: String(placeId), page, size: 20 },
+    }),
+
+  getActivityAvailability: (activityId: EntityId): Promise<BackendActivity[]> =>
+    apiGet<BackendActivity[]>(`/activities/${encodeURIComponent(String(activityId))}/availability`),
+
+  createActivityBooking: (slotId: EntityId, quantity: number): Promise<BackendBooking> =>
+    apiPost<BackendBooking>(
+      '/bookings',
+      { slotId: String(slotId), quantity },
+      { headers: { 'Idempotency-Key': createIdempotencyKey() } },
+    ),
 };

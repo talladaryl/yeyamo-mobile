@@ -23,11 +23,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
       style={{ backgroundColor: colors.card, borderColor: colors.border }}
       activeOpacity={0.9}
     >
-      <Image
-        source={{ uri: event.image_url }}
-        style={{ width: '100%', height: 140 }}
-        contentFit="cover"
-      />
+      {event.image_url ? <Image source={{ uri: event.image_url }} style={{ width: '100%', height: 140 }} contentFit="cover" /> : <View className="h-[140px] items-center justify-center" style={{ backgroundColor: colors.elevated }}><Icon name="calendar-outline" size={32} color={colors.textMuted} /></View>}
 
       <View className="p-3">
         <Text className="mb-1 text-sm font-semibold" style={{ color: colors.text }} numberOfLines={1}>
@@ -39,10 +35,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
           <Text className="text-xs" style={{ color: colors.textSecondary }}>{dateRange}</Text>
         </View>
 
-        <View className="flex-row items-center gap-1">
-          <Icon library="ionicons" name="location-outline" size={14} color={colors.textSecondary} />
-          <Text className="text-xs" style={{ color: colors.textSecondary }}>{event.location}</Text>
-        </View>
+        {event.location ? <View className="flex-row items-center gap-1"><Icon library="ionicons" name="location-outline" size={14} color={colors.textSecondary} /><Text className="text-xs" style={{ color: colors.textSecondary }}>{event.location}</Text></View> : null}
       </View>
     </TouchableOpacity>
   );

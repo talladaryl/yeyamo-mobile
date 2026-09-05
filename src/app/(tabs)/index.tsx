@@ -33,7 +33,7 @@ export default function FeedScreen() {
 
   return (
     <View className="flex-1 bg-black">
-      <StatusBar style="light" translucent backgroundColor="transparent" />
+      <StatusBar style="light" />
       <VerticalFeedList
         posts={posts.filter((item, index, all) => all.findIndex((candidate) => String(candidate.id) === String(item.id) && isSponsoredFeedItem(candidate) === isSponsoredFeedItem(item)) === index)}
         onEndReached={() => {

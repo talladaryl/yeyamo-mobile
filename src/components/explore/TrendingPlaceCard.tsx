@@ -18,11 +18,13 @@ export function TrendingPlaceCard({ place, onPress }: TrendingPlaceCardProps) {
       activeOpacity={0.9}
     >
       <View className="overflow-hidden rounded-2xl" style={{ backgroundColor: colors.card }}>
-        <Image
-          source={{ uri: place.image_url }}
-          style={{ width: '100%', height: 148 }}
-          contentFit="cover"
-        />
+        {place.image_url ? (
+          <Image source={{ uri: place.image_url }} style={{ width: '100%', height: 148 }} contentFit="cover" />
+        ) : (
+          <View className="h-[148px] items-center justify-center" style={{ backgroundColor: colors.elevated }}>
+            <Icon name="location-outline" size={28} color={colors.textMuted} />
+          </View>
+        )}
       </View>
       
       <View className="mt-3 px-1">
@@ -34,16 +36,10 @@ export function TrendingPlaceCard({ place, onPress }: TrendingPlaceCardProps) {
         </Text>
         
         <View className="flex-row items-center justify-between mt-2">
-          <View className="flex-row items-center gap-1">
-            <Icon library="ionicons" name="star" size={14} color="#F59E0B" />
-            <Text className="text-xs" style={{ color: colors.text }}>{place.rating}</Text>
-          </View>
-          
-          <Text className="text-xs" style={{ color: colors.textSecondary }}>
-            {place.distance_km < 1 
-              ? `${(place.distance_km * 1000).toFixed(0)}m` 
-              : `${place.distance_km}km`}
-          </Text>
+          {place.rating != null ? (
+            <View className="flex-row items-center gap-1"><Icon library="ionicons" name="star" size={14} color="#F59E0B" /><Text className="text-xs" style={{ color: colors.text }}>{place.rating}</Text></View>
+          ) : <Text className="text-xs" style={{ color: colors.textSecondary }}>Informations à découvrir</Text>}
+          {place.distance_km != null ? <Text className="text-xs" style={{ color: colors.textSecondary }}>{place.distance_km < 1 ? `${(place.distance_km * 1000).toFixed(0)}m` : `${place.distance_km}km`}</Text> : null}
         </View>
       </View>
     </TouchableOpacity>

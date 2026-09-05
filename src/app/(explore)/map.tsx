@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { NativeMap, NativeMarker, PROVIDER_GOOGLE, type NativeMapRef } from '@/components/maps/NativeMap';
@@ -10,23 +10,31 @@ import type { MapPlace } from '@/features/explore/types';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { usePlaces } from '@/features/places/usePlaces';
 import { useLocation } from '@/hooks/useLocation';
+import { useAuthStore } from '@/features/auth/auth.store';
 
-const { height } = Dimensions.get('window');
+const MAP_RADIUS_OPTIONS_KM = [10, 25, 50, 100] as const;
 
 export default function MapScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
+  const [radiusKm, setRadiusKm] = useState<(typeof MAP_RADIUS_OPTIONS_KM)[number]>(25);
   const mapRef = useRef<NativeMapRef>(null);
-  const currentLocation = useLocation();
+  const {
+    location: currentLocation,
+    error: locationError,
+    requestLocation,
+  } = useLocation();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const searchLocation = isDemo ? CAMEROON_CENTER : currentLocation;
   const { data } = usePlaces({
-    lat: CAMEROON_CENTER.latitude,
-    lng: CAMEROON_CENTER.longitude,
-    radius_km: 1_000,
+    lat: searchLocation?.latitude,
+    lng: searchLocation?.longitude,
+    radius_km: radiusKm,
   });
   const mapPlaces = useMemo<MapPlace[]>(() =>
     (data?.pages.flatMap((page) => page.data) ?? [])
-      .filter((place) => Number.isFinite(place.lat) && Number.isFinite(place.lng))
+      .filter((place): place is typeof place & { lat: number; lng: number } => Number.isFinite(place.lat) && Number.isFinite(place.lng))
       .map((place) => ({
         id: place.id,
         name: place.name,
@@ -37,11 +45,19 @@ export default function MapScreen() {
       })),
   [data]);
 
-  useEffect(() => { void currentLocation.requestLocation(); }, [currentLocation.requestLocation]);
+  useEffect(() => { void requestLocation(); }, [requestLocation]);
+
+  if (!isDemo && !currentLocation) {
+    return <View className="flex-1 items-center justify-center px-7" style={{ backgroundColor: colors.background }}><Icon name="location-outline" size={46} color={colors.textMuted}/><Text className="mt-4 text-center text-lg font-bold" style={{ color: colors.text }}>Localisation requise</Text><Text className="mt-2 text-center" style={{ color: colors.textSecondary }}>{locationError ?? 'Autorisez la localisation pour afficher les lieux réels autour de vous.'}</Text><TouchableOpacity onPress={() => void requestLocation()} className="mt-5 rounded-xl px-5 py-3" style={{ backgroundColor: colors.primary }}><Text className="font-bold text-white">Réessayer</Text></TouchableOpacity></View>;
+  }
 
   const recenter = async () => {
-    const location = currentLocation.location ?? await currentLocation.requestLocation();
+    const location = currentLocation ?? await requestLocation();
     if (location) mapRef.current?.animateToRegion({ ...location, latitudeDelta: 0.04, longitudeDelta: 0.04 }, 500);
+  };
+  const nextRadius = () => {
+    const index = MAP_RADIUS_OPTIONS_KM.indexOf(radiusKm);
+    setRadiusKm(MAP_RADIUS_OPTIONS_KM[(index + 1) % MAP_RADIUS_OPTIONS_KM.length]);
   };
 
   return (
@@ -95,10 +111,13 @@ export default function MapScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
+              onPress={nextRadius}
               className="bg-white w-10 h-10 rounded-full items-center justify-center"
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={`Changer le rayon de la carte. Rayon actuel ${radiusKm} kilomètres`}
             >
-              <Icon library="ionicons" name="options" size={24} color="#0A0A0A" />
+              <Text className="text-xs font-extrabold text-[#EF4444]">{radiusKm}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -134,22 +153,14 @@ export default function MapScreen() {
             activeOpacity={0.9}
             className="flex-row gap-3"
           >
-            <Image
-              source={{ uri: selectedPlace.image_url }}
-              style={{ width: 100, height: 100, borderRadius: 12 }}
-              contentFit="cover"
-            />
+            {selectedPlace.image_url ? <Image source={{ uri: selectedPlace.image_url }} style={{ width: 100, height: 100, borderRadius: 12 }} contentFit="cover" /> : <View className="h-[100px] w-[100px] items-center justify-center rounded-xl" style={{ backgroundColor: colors.elevated }}><Icon name="location-outline" size={26} color={colors.textMuted} /></View>}
 
             <View className="flex-1 justify-center">
               <Text className="font-bold text-lg mb-1" style={{ color: colors.text }}>
                 {selectedPlace.name}
               </Text>
 
-              <View className="flex-row items-center gap-1 mb-2">
-                <Icon library="ionicons" name="star" size={16} color="#F59E0B" />
-                <Text className="text-sm" style={{ color: colors.text }}>{selectedPlace.rating}</Text>
-                <Text className="text-sm" style={{ color: colors.textSecondary }}>(105 avis)</Text>
-              </View>
+              {selectedPlace.rating != null ? <View className="flex-row items-center gap-1 mb-2"><Icon library="ionicons" name="star" size={16} color="#F59E0B" /><Text className="text-sm" style={{ color: colors.text }}>{selectedPlace.rating}</Text></View> : null}
 
               <TouchableOpacity
                 onPress={() => setSelectedPlace(null)}
@@ -161,6 +172,14 @@ export default function MapScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {!isDemo && !currentLocation ? (
+        <View className="absolute bottom-24 left-4 right-4 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+          <Text className="font-bold" style={{ color: colors.text }}>Localisation requise</Text>
+          <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{locationError ?? 'Autorisez la localisation pour afficher les lieux réels autour de vous.'}</Text>
+          <TouchableOpacity onPress={() => void requestLocation()} className="mt-3 self-start rounded-xl px-4 py-2" style={{ backgroundColor: colors.primary }}><Text className="font-bold text-white">Réessayer</Text></TouchableOpacity>
+        </View>
+      ) : null}
 
       {/* My Location Button */}
       <TouchableOpacity

@@ -1,10 +1,12 @@
-import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
+import { ActivityIndicator, Modal, View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
+import { useState } from 'react';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { usePlaceDetail } from '@/features/places/usePlaces';
+import { usePlaceActivities } from '@/features/places/usePlaceActivities';
+import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
 
 const { width } = Dimensions.get('window');
 
@@ -12,9 +14,11 @@ export default function PlaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const [isSaved, setIsSaved] = useState(false);
-  
   const { data: place, isLoading } = usePlaceDetail(id);
+  const activities = usePlaceActivities(id);
+  const favorite = useInteractionStatus('PLACE', id);
+  const toggleFavorite = useToggleInteraction('PLACE', id);
+  const [activityPickerOpen, setActivityPickerOpen] = useState(false);
 
   if (isLoading || !place) {
     return (
@@ -25,11 +29,15 @@ export default function PlaceDetailScreen() {
   }
 
   const openDirections = () => router.push(`/(places)/route/${place.id}`);
-  const explainBookingBlock = () => Alert.alert(
-    'Réservation indisponible',
-    'BLOCKED_BY_BACKEND — le contrat disponible ne relie pas encore ce lieu à une activité réservable et ne publie pas le DTO nécessaire au formulaire de réservation.',
-  );
-
+  const availableActivities = activities.data?.content ?? [];
+  const openBooking = (activityId: string) => {
+    setActivityPickerOpen(false);
+    router.push(`/(bookings)/activity/${activityId}`);
+  };
+  const reserve = () => {
+    if (availableActivities.length === 1) return openBooking(availableActivities[0].activityId);
+    if (availableActivities.length > 1) setActivityPickerOpen(true);
+  };
   const sharePlace = async () => {
     await Share.share({
       message: `${place.name} - ${place.address || place.city}`,
@@ -56,10 +64,11 @@ export default function PlaceDetailScreen() {
           headerRight: () => (
             <View className="flex-row gap-2 mr-4">
               <TouchableOpacity 
-                onPress={() => setIsSaved(!isSaved)}
+                onPress={() => toggleFavorite.mutate(Boolean(favorite.data))}
+                disabled={toggleFavorite.isPending}
                 className="bg-black/50 w-10 h-10 rounded-full items-center justify-center"
               >
-                <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
+                <Ionicons name={favorite.data ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={sharePlace}
@@ -124,7 +133,9 @@ export default function PlaceDetailScreen() {
 
           {/* Action Buttons */}
           <View className="flex-row gap-3 mb-6">
-            <TouchableOpacity onPress={explainBookingBlock} className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
+            {activities.isLoading ? <View className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center"><ActivityIndicator color="#FFFFFF" /></View> : null}
+            {!activities.isLoading && availableActivities.length === 0 ? <View className="flex-1 justify-center"><Text className="text-sm" style={{ color: colors.textSecondary }}>Aucune activité réservable pour ce lieu actuellement.</Text></View> : null}
+            <TouchableOpacity onPress={reserve} disabled={activities.isLoading || availableActivities.length === 0} className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center" style={{ display: activities.isLoading || availableActivities.length === 0 ? 'none' : 'flex' }}>
               <Text className="text-base font-semibold text-white">Réserver</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -259,6 +270,25 @@ export default function PlaceDetailScreen() {
 
         <View className="h-20" />
       </ScrollView>
+
+      <Modal visible={activityPickerOpen} transparent animationType="slide" onRequestClose={() => setActivityPickerOpen(false)}>
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="rounded-t-3xl p-5" style={{ backgroundColor: colors.card }}>
+            <View className="mb-4 flex-row items-center justify-between">
+              <Text className="text-lg font-bold" style={{ color: colors.text }}>Choisir une activité</Text>
+              <TouchableOpacity onPress={() => setActivityPickerOpen(false)} accessibilityLabel="Fermer"><Ionicons name="close" size={24} color={colors.text} /></TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 360 }}>
+              {availableActivities.map((activity) => (
+                <TouchableOpacity key={activity.id} onPress={() => openBooking(activity.activityId)} className="mb-3 rounded-xl border p-4" style={{ borderColor: colors.border }}>
+                  <Text className="font-semibold" style={{ color: colors.text }}>{new Date(activity.startsAt).toLocaleString()}</Text>
+                  <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{activity.available} place(s) disponible(s) · {activity.unitPrice.toLocaleString()} {activity.currency ?? ''}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

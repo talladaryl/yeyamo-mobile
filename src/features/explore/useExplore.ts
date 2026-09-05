@@ -25,11 +25,11 @@ export function useCategories() {
   });
 }
 
-export function useTrendingPlaces() {
+export function useTrendingPlaces(filters: { regionCode?: string } = {}) {
   const isDemo = useDemoMode();
   return useQuery({
-    queryKey: ['explore', isDemo ? 'demo' : 'backend', 'trending'],
-    queryFn: () => isDemo ? Promise.resolve(trendingPlaces) : exploreApi.getTrending(),
+    queryKey: ['explore', isDemo ? 'demo' : 'backend', 'trending', filters],
+    queryFn: () => isDemo ? Promise.resolve(trendingPlaces) : exploreApi.getTrending(filters.regionCode),
     placeholderData: isDemo ? trendingPlaces : undefined,
   });
 }

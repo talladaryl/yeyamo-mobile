@@ -1,5 +1,6 @@
 import { apiGet } from '@/services/api/client';
-import { EXPLORE_CATEGORY_DEFINITIONS, type Category, type Region, type TrendingPlace } from './types';
+import { normalizeDiscoveryId } from '@/features/discovery/discovery.navigation';
+import { type Category, type Region, type TrendingPlace } from './types';
 
 interface BackendRegion {
   id: number;
@@ -39,13 +40,9 @@ function mapCategory(item: BackendCategory): Category {
 }
 
 function mergeCategories(remote: Category[]): Category[] {
-  const byId = new Map(remote.map((item) => [item.id.toLowerCase(), item]));
-  const curated = EXPLORE_CATEGORY_DEFINITIONS.map((definition) => {
-    const remoteItem = byId.get(definition.id.toLowerCase());
-    return remoteItem ? { ...definition, ...remoteItem, id: definition.id } : definition;
-  });
-  const curatedIds = new Set(curated.map((item) => item.id));
-  return [...curated, ...remote.filter((item) => !curatedIds.has(item.id))];
+  // In a real session, only categories returned by the backend are displayed.
+  // Editorial/demo definitions stay in the explicit demo data path.
+  return remote;
 }
 
 export const exploreApi = {
@@ -67,18 +64,14 @@ export const exploreApi = {
     return mergeCategories(items.flatMap((item) => [mapCategory(item), ...item.children.map(mapCategory)]));
   },
 
-  getTrending: async (): Promise<TrendingPlace[]> =>
-    (await apiGet<DiscoveryPage>('/discovery/trending?type=PLACE&size=20')).items.map(
+  getTrending: async (regionCode?: string): Promise<TrendingPlace[]> =>
+    (await apiGet<DiscoveryPage>('/discovery/trending', { params: { type: 'PLACE', size: 20, ...(regionCode ? { regionCode } : {}) } })).items.map(
       (item) => ({
-        id: item.sourceId,
+        id: normalizeDiscoveryId(item.sourceId),
         name: item.title,
         city: item.city ?? '',
         region_id: item.regionCode ?? '',
-        rating: 0,
-        reviews_count: 0,
-        distance_km: 0,
-        image_url: '',
-        category: item.categoryCode ?? 'place',
+        category: item.categoryCode ?? '',
       }),
     ),
 };

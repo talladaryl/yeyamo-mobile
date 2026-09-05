@@ -142,4 +142,11 @@ export const chatApi = {
     );
     return { data: mapConversation(conversation) };
   },
+
+  contactPartner: async (partnerId: EntityId): Promise<{ data: Conversation }> => {
+    const conversation = await apiPost<BackendConversation>(
+      `/messaging/conversations/partner/${encodeURIComponent(String(partnerId))}`,
+    );
+    return { data: mapConversation(conversation) };
+  },
 };

@@ -14,6 +14,9 @@ export interface DiscoverySearchParams {
   cultureType?: string;
   availability?: boolean;
   verified?: boolean;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
   page?: number;
   size?: number;
 }

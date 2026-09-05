@@ -146,3 +146,14 @@ export function useCreateConversation() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
   });
 }
+
+export function useContactPartner() {
+  const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  return useMutation({
+    mutationFn: (partnerId: EntityId) => isDemo
+      ? Promise.resolve({ data: MOCK_CONVERSATIONS[0] })
+      : chatApi.contactPartner(partnerId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
+  });
+}

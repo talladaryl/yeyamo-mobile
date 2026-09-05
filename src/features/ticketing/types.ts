@@ -46,7 +46,7 @@ export interface PublicTicketType {
 
 export interface PublicEventTickets {
   eventId: string;
-  eventName: string;
+  eventName?: string | null;
   currency: string;
   tickets: PublicTicketType[];
 }

@@ -1,109 +1,17 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
-import { FilterButton } from '@/components/ui/FilterButton';
 import { ExperienceCard } from '@/components/experiences/ExperienceCard';
 import { mockExperiences } from '@/features/experiences/mockData';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useAuthStore } from '@/features/auth/auth.store';
-
-type FilterType = 'all' | 'adventure' | 'culture' | 'relaxation';
+import { useDiscoverySearch } from '@/features/discovery/discovery.hooks';
+import type { DiscoveryItem } from '@/features/discovery/discovery.types';
 
 export default function ExperiencesListScreen() {
-  const router = useRouter();
-  const colors = useThemeStore((state) => state.colors);
-  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [location, setLocation] = useState('Cameroun');
-
-  const filters = [
-    { id: 'all' as FilterType, label: 'Tous' },
-    { id: 'adventure' as FilterType, label: 'Aventure' },
-    { id: 'culture' as FilterType, label: 'Culture' },
-    { id: 'relaxation' as FilterType, label: 'Détente' },
-  ];
-
-  const handleSaveToggle = (experienceId: number) => {
-    console.log('Toggle save:', experienceId);
-  };
-
-  const filteredExperiences = activeFilter === 'all'
-    ? (isDemo ? mockExperiences : [])
-    : (isDemo ? mockExperiences : []).filter(exp => exp.category === activeFilter);
-
-  return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerTitle: 'Expériences',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
-      {/* Location Selector */}
-      <View className="px-4 py-3 border-b" style={{ borderColor: colors.border }}>
-        <TouchableOpacity
-          onPress={() => console.log('Change location')}
-          className="flex-row items-center justify-between"
-          activeOpacity={0.7}
-        >
-          <View className="flex-1">
-            <Text className="text-xs mb-1" style={{ color: colors.textSecondary }}>Recherche</Text>
-            <Text className="text-base font-medium" style={{ color: colors.text }}>{location}</Text>
-          </View>
-          <Text className="text-[#EF4444] text-sm font-semibold">Changer</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Filters */}
-      <View className="py-4">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16 }}
-        >
-          {filters.map((filter) => (
-            <FilterButton
-              key={filter.id}
-              label={filter.label}
-              isActive={activeFilter === filter.id}
-              onPress={() => setActiveFilter(filter.id)}
-            />
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Experiences List */}
-      <FlatList
-        data={filteredExperiences}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <ExperienceCard
-            id={item.id}
-            title={item.title}
-            location={item.location}
-            rating={item.rating}
-            reviewsCount={item.reviews_count}
-            priceFrom={item.price_from}
-            currency={item.currency}
-            imageUrl={item.cover_image_url}
-            isSaved={item.is_saved}
-            onPress={() => router.push(`/(experiences)/${item.id}`)}
-            onSavePress={() => handleSaveToggle(item.id)}
-          />
-        )}
-      />
-    </View>
-  );
+  const router = useRouter(); const colors = useThemeStore((state) => state.colors); const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false); const query = useDiscoverySearch('', 'EXPERIENCE');
+  const header = <Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerTitle: 'Expériences', headerLeft: () => <TouchableOpacity onPress={() => router.back()} className="ml-4"><Icon name="arrow-back" size={24} color={colors.text} /></TouchableOpacity> }} />;
+  if (isDemo) return <View className="flex-1" style={{ backgroundColor: colors.background }}>{header}<FlatList data={mockExperiences} keyExtractor={(item) => String(item.id)} contentContainerStyle={{ padding: 16, paddingBottom: 32 }} renderItem={({ item }) => <ExperienceCard id={item.id} title={item.title} location={item.location} rating={item.rating} reviewsCount={item.reviews_count} priceFrom={item.price_from} currency={item.currency} imageUrl={item.cover_image_url} isSaved={item.is_saved} onPress={() => router.push(`/(experiences)/${item.id}`)} />}/></View>;
+  if (query.isLoading) return <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>{header}<ActivityIndicator color={colors.primary} /></View>;
+  return <View className="flex-1" style={{ backgroundColor: colors.background }}>{header}<FlatList<DiscoveryItem> data={query.data?.items ?? []} keyExtractor={(item) => item.id} contentContainerStyle={{ padding: 16, paddingBottom: 32 }} renderItem={({ item }) => <TouchableOpacity onPress={() => router.push(`/(explore)/search?type=EXPERIENCE`)} className="mb-3 rounded-2xl border p-4" style={{backgroundColor:colors.card,borderColor:colors.border}}><Text className="text-xs font-bold" style={{color:colors.primary}}>EXPÉRIENCE</Text><Text className="mt-2 text-lg font-extrabold" style={{color:colors.text}}>{item.title}</Text>{item.description?<Text className="mt-1" style={{color:colors.textSecondary}} numberOfLines={2}>{item.description}</Text>:null}</TouchableOpacity>} ListEmptyComponent={<View className="items-center py-20"><Text style={{color:colors.textSecondary}}>Aucune expérience publiée.</Text></View>} /></View>;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
@@ -13,12 +13,20 @@ import type { DiscoveryType } from '@/features/discovery/discovery.types';
 import { useRegions } from '@/features/explore/useExplore';
 import { useCountryStore } from '@/features/country/country.store';
 import { useCultureLanguages } from '@/features/culture/culture.hooks';
+import { useLocation } from '@/hooks/useLocation';
+import { discoveryHref } from '@/features/discovery/discovery.navigation';
 import { i18n } from '@/i18n';
 
 export default function SearchScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const defaultCountryCode = useCountryStore((state) => state.selectedCountryCode ?? undefined);
+  const {
+    location: currentLocation,
+    isLoading: isLocationLoading,
+    error: locationError,
+    requestLocation,
+  } = useLocation();
   const { data: regions = [] } = useRegions();
   const { data: languages = [] } = useCultureLanguages();
   const params = useLocalSearchParams<{ type?: DiscoveryType; nearby?: string; regionCode?: string; filters?: string }>();
@@ -33,6 +41,14 @@ export default function SearchScreen() {
     const frame = requestAnimationFrame(() => advancedSheetRef.current?.open());
     return () => cancelAnimationFrame(frame);
   }, [params.filters]);
+  useEffect(() => {
+    if (nearby && !currentLocation && !isLocationLoading) void requestLocation();
+  }, [
+    nearby,
+    isLocationLoading,
+    currentLocation,
+    requestLocation,
+  ]);
   const debounced = useDebounce(query, 400);
   const selectedRegion = regions.find((region) => region.code === advancedFilters.regionCode || String(region.id) === advancedFilters.regionCode);
   const regionCode = nearby
@@ -48,19 +64,27 @@ export default function SearchScreen() {
     cultureType: advancedFilters.cultureType,
     availability: advancedFilters.availability || advancedFilters.availableForSale ? true : undefined,
     verified: advancedFilters.verified,
-  }), [advancedFilters, defaultCountryCode, regionCode]);
-  const results = useDiscoverySearch(debounced, activeType, filters);
+    ...(nearby && currentLocation ? {
+      lat: currentLocation.latitude,
+      lng: currentLocation.longitude,
+      radiusKm: Math.min(Math.max(advancedFilters.distanceKm ?? 25, 1), 200),
+    } : {}),
+  }), [advancedFilters, currentLocation, defaultCountryCode, nearby, regionCode]);
+  const results = useDiscoverySearch(debounced, activeType, filters, !nearby || Boolean(currentLocation));
   const activeFilterCount = Number(nearby)
     + [advancedFilters.regionCode, advancedFilters.cityId, advancedFilters.distanceKm, advancedFilters.categoryCode, advancedFilters.languageCode, advancedFilters.cultureType, advancedFilters.availability, advancedFilters.verified, advancedFilters.availableForSale]
       .filter(Boolean).length;
 
   const open = (item: { type: DiscoveryType; sourceId: string }) => {
-    const id = item.sourceId.replace(/^[^:]+:/, '');
-    if (item.type === 'ARTWORK') return router.push(`/(explore)/artworks/${id}`);
-    if (item.type === 'ARTISAN') return router.push(`/(explore)/artisans/${id}`);
-    if (item.type === 'CULTURE' || item.type === 'LANGUAGE' || item.type === 'TRADITION') return router.push(`/(explore)/culture/${id}`);
-    if (item.type === 'EVENT') return router.push(`/(events)/${id}`);
-    return router.push(`/(places)/${id}`);
+    const href = discoveryHref(item);
+    if (href) {
+      router.push(href);
+      return;
+    }
+    Alert.alert(
+      'Contenu indisponible',
+      "La page de détail de ce type de contenu n'est pas encore disponible dans l'application.",
+    );
   };
 
   const selectQuickFilter = ({ type: nextType, nearby: nextNearby }: { type?: DiscoveryType; nearby: boolean }) => {
@@ -106,6 +130,8 @@ export default function SearchScreen() {
           <Text className="mt-4 text-center text-lg font-bold" style={{ color: colors.text }}>{i18n.t('explore.searchEmptyTitle')}</Text>
           <Text className="mt-2 text-center" style={{ color: colors.textSecondary }}>{i18n.t('explore.searchEmptyDescription')}</Text>
         </View>
+      ) : nearby && !currentLocation ? (
+        <View className="flex-1 items-center justify-center px-8"><Icon name="location-outline" size={48} color={colors.textMuted} /><Text className="mt-4 text-center" style={{ color: colors.textSecondary }}>{locationError ?? 'Autorisez la localisation pour rechercher près de vous.'}</Text><TouchableOpacity onPress={() => void requestLocation()} className="mt-4 h-11 justify-center"><Text className="font-bold" style={{ color: colors.primary }}>Réessayer</Text></TouchableOpacity></View>
       ) : results.isLoading ? (
         <View className="flex-1 items-center justify-center"><ActivityIndicator color={colors.primary} /></View>
       ) : results.isError ? (

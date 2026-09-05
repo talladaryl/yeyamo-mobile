@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { Alert, FlatList, Text, View } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
 import type { ViewToken } from 'react-native';
 import { FeedShareSheet } from './FeedShareSheet';
@@ -39,7 +39,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
   const { data: conversations = [] } = useConversations();
   const sendMessage = useSendMessage();
   const trackImpression = useTrackAdImpression();
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useYeyamoTabBarHeight();
   const bottomOverlayInset = tabBarHeight + 18;
 
   const onViewableItemsChanged = useCallback(

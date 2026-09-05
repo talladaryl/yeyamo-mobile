@@ -1,11 +1,12 @@
-import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Linking, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useEventDetail, useUpcomingEvents } from '@/features/events/useEvents';
 import { useEventTickets } from '@/features/ticketing/useTicketing';
+import { usePlaceDetail } from '@/features/places/usePlaces';
+import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
 
 const { width } = Dimensions.get('window');
 
@@ -13,11 +14,14 @@ export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const [isSaved, setIsSaved] = useState(false);
-  
-  const { data: event, isLoading } = useEventDetail(id);
+  const eventQuery = useEventDetail(id);
+  const event = eventQuery.data;
+  const { data: eventPlace } = usePlaceDetail(event?.place_id ?? '');
+  const isLoading = eventQuery.isLoading;
   const { data: upcomingEvents = [] } = useUpcomingEvents();
   const { data: ticketing } = useEventTickets(String(id));
+  const favorite = useInteractionStatus('EVENT', id);
+  const toggleFavorite = useToggleInteraction('EVENT', id);
 
   if (isLoading || !event) {
     return (
@@ -26,6 +30,13 @@ export default function EventDetailScreen() {
       </View>
     );
   }
+
+  const shareEvent = () => Share.share({ message: `${event.title}\n${new Date(event.start_date).toLocaleString('fr-FR')}` });
+  const addToCalendar = () => {
+    const dates = `${event.start_date.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')}/${event.end_date.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')}`;
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${encodeURIComponent(dates)}&details=${encodeURIComponent(event.description ?? '')}`;
+    void Linking.openURL(url).catch(() => Alert.alert('Calendrier indisponible', "L'événement ne peut pas être ouvert dans le calendrier."));
+  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -47,12 +58,13 @@ export default function EventDetailScreen() {
           headerRight: () => (
             <View className="flex-row gap-2 mr-4">
               <TouchableOpacity 
-                onPress={() => setIsSaved(!isSaved)}
+                onPress={() => toggleFavorite.mutate(Boolean(favorite.data))}
+                disabled={toggleFavorite.isPending}
                 className="bg-black/50 w-10 h-10 rounded-full items-center justify-center"
               >
-                <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
+                <Ionicons name={favorite.data ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity className="bg-black/50 w-10 h-10 rounded-full items-center justify-center">
+              <TouchableOpacity onPress={() => void shareEvent()} className="bg-black/50 w-10 h-10 rounded-full items-center justify-center">
                 <Ionicons name="share-outline" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
@@ -63,11 +75,7 @@ export default function EventDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Image with Date Badge */}
         <View className="relative">
-          <Image
-            source={{ uri: event.cover_image_url || '' }}
-            style={{ width, height: 280 }}
-            contentFit="cover"
-          />
+          {event.cover_image_url ? <Image source={{ uri: event.cover_image_url }} style={{ width, height: 280 }} contentFit="cover" /> : <View style={{ width, height: 280, backgroundColor: colors.elevated }} className="items-center justify-center"><Ionicons name="calendar-outline" size={52} color={colors.textMuted} /></View>}
           {/* Date Badge */}
           <View className="absolute top-4 left-4 bg-[#EF4444] rounded-2xl items-center justify-center px-3 py-2">
             <Text className="text-2xl font-bold text-white">
@@ -84,13 +92,7 @@ export default function EventDetailScreen() {
           <Text style={{ color: colors.text }} className=" text-2xl font-bold mt-4 mb-2">{event.title}</Text>
           
           {/* Location */}
-          <TouchableOpacity 
-            onPress={() => event.place_id && router.push(`/(places)/${event.place_id}`)}
-            className="flex-row items-center gap-2 mb-3"
-          >
-            <Ionicons name="location-outline" size={18} color="#A1A1AA" />
-            <Text style={{ color: colors.textSecondary }} className=" text-sm">{event.location}</Text>
-          </TouchableOpacity>
+          {eventPlace ? <TouchableOpacity onPress={() => event.place_id && router.push(`/(places)/${event.place_id}`)} className="flex-row items-center gap-2 mb-3"><Ionicons name="location-outline" size={18} color="#A1A1AA" /><Text style={{ color: colors.textSecondary }} className=" text-sm">{[eventPlace.name, eventPlace.address, eventPlace.city].filter(Boolean).join(' · ')}</Text></TouchableOpacity> : null}
 
           {/* Date & Time */}
           <View className="flex-row items-center gap-2 mb-4">
@@ -114,9 +116,9 @@ export default function EventDetailScreen() {
           </View>
 
           {/* Description */}
-          <View className="mb-5">
+          {event.description ? <View className="mb-5">
             <Text style={{ color: colors.text }} className=" text-base leading-6">{event.description}</Text>
-          </View>
+          </View> : null}
 
           {/* Ticket Types */}
           {event.ticket_types && event.ticket_types.length > 0 && (
@@ -153,10 +155,10 @@ export default function EventDetailScreen() {
               >
                 <Text className="text-base font-semibold text-white">Participer</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              <TouchableOpacity onPress={() => void shareEvent()} className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
                 <Ionicons name="share-social-outline" size={20} color={colors.text} />
               </TouchableOpacity>
-              <TouchableOpacity className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              <TouchableOpacity onPress={addToCalendar} className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
                 <Ionicons name="add-outline" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -205,7 +207,7 @@ export default function EventDetailScreen() {
             <View className="flex-row items-center">
               {/* Participant Avatars */}
               <View className="flex-row -space-x-3 mr-3">
-                {event.participants.slice(0, 4).map((participant, index) => (
+                {(event.participants ?? []).slice(0, 4).map((participant, index) => (
                   <Image
                     key={participant.id}
                     source={{ uri: participant.avatar_url || '' }}

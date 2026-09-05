@@ -11,7 +11,7 @@ export interface CatalogListItem {
   title: string;
   subtitle: string;
   category: string;
-  imageUrl: string;
+  imageUrl?: string;
 }
 
 export function CatalogListScreen({ title, subtitle, items, categories, detailBase }: { title: string; subtitle: string; items: CatalogListItem[]; categories: string[]; detailBase: string }) {
