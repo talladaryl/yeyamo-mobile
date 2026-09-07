@@ -3,11 +3,28 @@ import type { SpringPage } from '@/services/api/contracts';
 export type CultureContentType = 'WORD' | 'EXPRESSION' | 'PROVERB' | 'STORY' | 'ORAL_HISTORY' | 'TRADITION' | 'HISTORICAL_FIGURE' | 'HISTORICAL_EVENT' | 'RECIPE' | 'DANCE' | 'SONG' | 'SYMBOL';
 export type CultureSensitivity = 'PUBLIC' | 'SENSITIVE' | 'SACRED' | string;
 
+export interface CultureRecipeIngredient { name: string; quantity: string | null; unit: string | null; }
+export interface CultureRecipeStep { instruction: string; }
+export interface CultureRecipeDetails {
+  ingredients: CultureRecipeIngredient[];
+  steps: CultureRecipeStep[];
+  prepTimeMinutes: number | null;
+  servings: number | null;
+}
+export interface CultureProverbDetails {
+  literalTranslation: string | null;
+  meaning: string | null;
+  originLanguageCode: string | null;
+  audioUrl: string | null;
+}
+
 export interface CultureContent {
   id: string; type: CultureContentType; slug: string; status: string; visibility: string;
   primaryLanguageCode: string; countryCode: string; adminLevel1Id: string | null; cityId: string | null;
   communityName: string | null; sourceType: string; verificationStatus: string; sensitivityLevel: CultureSensitivity;
   createdAt: string; updatedAt: string; publishedAt: string | null;
+  recipeDetails?: CultureRecipeDetails | null;
+  proverbDetails?: CultureProverbDetails | null;
 }
 
 export interface CultureTranslation { id: string; languageCode: string; title: string; summary: string | null; body: string | null; translatorId: string | null; status: string; createdAt: string; }
@@ -27,4 +44,6 @@ export interface CultureContributionInput {
   type: CultureContentType; slug: string; primaryLanguageCode: string; countryCode: string;
   adminLevel1Id?: string; cityId?: string; communityName?: string; sourceType: string; sensitivityLevel: string;
   title: string; summary?: string; body?: string;
+  recipeDetails?: CultureRecipeDetails;
+  proverbDetails?: CultureProverbDetails;
 }

@@ -7,7 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { useCreateStore } from '@/features/create/create.store';
 import { useCreatePost, useUploadMedia } from '@/features/post/usePost';
-import { useSubmitChallenge } from '@/features/culture/culture.hooks';
+import { useCultureContents, useSubmitChallenge } from '@/features/culture/culture.hooks';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function CreatePublicationScreen() {
@@ -17,8 +17,12 @@ export default function CreatePublicationScreen() {
   const uploadMedia = useUploadMedia();
   const createPost = useCreatePost();
   const submitChallenge = useSubmitChallenge();
+  const proverbs = useCultureContents({ type: 'PROVERB', size: 20 });
+  const recipes = useCultureContents({ type: 'RECIPE', size: 20 });
   const colors = useThemeStore((state) => state.colors);
   const [selectedImages, setSelectedImages] = useState<string[]>(publicationData.media_urls ?? []);
+  const [linkedTarget, setLinkedTarget] = useState<{ id: string; type: 'PROVERB' | 'RECIPE'; title: string } | null>(null);
+  const [culturePickerVisible, setCulturePickerVisible] = useState(false);
   // L'éditeur reste non contrôlé pendant la saisie : cela évite qu'un
   // rerender du formulaire ne réinitialise le focus et ne ferme le clavier.
   const captionRef = useRef(publicationData.caption ?? '');
@@ -89,6 +93,7 @@ export default function CreatePublicationScreen() {
         type: publicationData.media_type ?? 'image',
         caption: captionRef.current,
         media_ids: uploads,
+        ...(linkedTarget ? { target_type: linkedTarget.type, target_id: linkedTarget.id } : {}),
       });
       if (challengeId) await submitChallenge.mutateAsync({ id: challengeId, postId: String(created.data.id) });
       router.back();
@@ -173,6 +178,21 @@ export default function CreatePublicationScreen() {
           />
         </View>
 
+        <View className="px-4 pb-4">
+          <TouchableOpacity onPress={() => setCulturePickerVisible((visible) => !visible)} className="flex-row items-center justify-between rounded-xl border px-4 py-3" style={{ backgroundColor: colors.card, borderColor: colors.border }} accessibilityRole="button" accessibilityLabel="Associer un contenu culturel">
+            <View className="flex-1"><Text className="text-sm font-semibold" style={{ color: colors.text }}>Contenu culturel (facultatif)</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{linkedTarget ? linkedTarget.title : 'Associer un proverbe ou une recette réelle'}</Text></View><Icon library="ionicons" name={culturePickerVisible ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+          {culturePickerVisible ? <View className="mt-2 rounded-xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.elevated }}>
+            <Text className="text-xs font-bold" style={{ color: colors.textSecondary }}>PROVERBES</Text>
+            {(proverbs.data?.content ?? []).map((content) => <CultureOption key={content.id} title={content.slug} selected={linkedTarget?.id === content.id} onPress={() => { setLinkedTarget({ id: content.id, type: 'PROVERB', title: content.slug }); setCulturePickerVisible(false); }} />)}
+            <Text className="mt-4 text-xs font-bold" style={{ color: colors.textSecondary }}>RECETTES</Text>
+            {(recipes.data?.content ?? []).map((content) => <CultureOption key={content.id} title={content.slug} selected={linkedTarget?.id === content.id} onPress={() => { setLinkedTarget({ id: content.id, type: 'RECIPE', title: content.slug }); setCulturePickerVisible(false); }} />)}
+            {proverbs.isLoading || recipes.isLoading ? <Text className="mt-3 text-xs" style={{ color: colors.textSecondary }}>Chargement des contenus culturels…</Text> : null}
+            {!proverbs.isLoading && !recipes.isLoading && !(proverbs.data?.content.length || recipes.data?.content.length) ? <Text className="mt-3 text-xs" style={{ color: colors.textSecondary }}>Aucun proverbe ou recette publiés n’est disponible.</Text> : null}
+            {linkedTarget ? <TouchableOpacity onPress={() => setLinkedTarget(null)}><Text className="mt-4 text-sm font-semibold text-[#B91C1C]">Retirer l’association</Text></TouchableOpacity> : null}
+          </View> : null}
+        </View>
+
         {/* Action Buttons */}
         <View className="px-4 pb-6">
           <View className="flex-row justify-around rounded-xl border py-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
@@ -225,4 +245,9 @@ export default function CreatePublicationScreen() {
       </View>
     </View>
   );
+}
+
+function CultureOption({ title, selected, onPress }: { title: string; selected: boolean; onPress: () => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <TouchableOpacity onPress={onPress} className="mt-2 rounded-lg px-3 py-2" style={{ backgroundColor: selected ? colors.primary : colors.card }}><Text numberOfLines={1} style={{ color: selected ? '#FFFFFF' : colors.text }}>{title}</Text></TouchableOpacity>;
 }

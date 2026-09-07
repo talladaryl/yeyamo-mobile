@@ -78,12 +78,22 @@ export interface TicketScanResult {
 export interface TicketOrder {
   id: string; eventId: string; reference: string; total: number; currency: string; status: 'PENDING' | 'PAID' | 'CANCELLED';
 }
-export interface CreateTicketOrderInput { ticketTypeId: string; quantity: number }
+export interface CreateTicketOrderInput {
+  ticketTypeId: string;
+  quantity: number;
+  operator: 'mtn' | 'orange';
+  phoneNumber: string;
+}
 export interface TicketAnalytics { sold: number; revenue: number; checkedIn: number; entryRate: number }
 
 export interface CreateHoldRequest { eventId: string; ticketTypeId: string; quantity: number }
 export interface HoldResponse { holdId: string; quantity: number; expiresAt: string; status: string }
-export interface CreateOrderRequest { holdId: string; promotionCode: string | null }
+export interface CreateOrderRequest {
+  holdId: string;
+  promotionCode: string | null;
+  operator: 'mtn' | 'orange';
+  phoneNumber: string;
+}
 export interface TicketOrderResponse {
   orderId: string; reference: string; status: TicketOrderStatus; paymentStatus: string;
   totalAmount: number; currency: string; expiresAt: string;

@@ -34,6 +34,7 @@ export const postApi = {
       catalogAssetId: payload.place_id ?? null,
       mediaIds: payload.media_ids,
       hashtags: [],
+      ...(payload.target_type && payload.target_id ? { targetType: payload.target_type, targetId: payload.target_id } : {}),
     });
     const published = await apiPost<BackendPost>(`/posts/${draft.id}/publish`);
     return { data: { id: published.id } };

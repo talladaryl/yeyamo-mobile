@@ -12,6 +12,10 @@ export interface PartnerCreationOption {
 }
 
 export interface AddPlaceForm {
+  partnerId?: string;
+  categoryId?: number;
+  regionId?: number;
+  cityId?: string;
   // Step 1 - Basic Info
   name: string;
   email: string;
@@ -41,6 +45,7 @@ export interface AddPlaceForm {
 }
 
 export interface AddEventForm {
+  placeId?: string;
   // Step 1 - Basic Info
   name: string;
   location: string;

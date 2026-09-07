@@ -1,4 +1,5 @@
 import { apiDelete, apiGet, apiPost } from '@/services/api/client';
+import { mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
 import type { Event } from './types';
 
@@ -11,8 +12,11 @@ interface BackendEvent {
   endAt: string;
   capacity: number | null;
   registeredCount: number;
+  coverMediaId?: string | null;
   createdAt?: string;
 }
+
+export interface CreateEventInput { placeId: string; title: string; description?: string; startAt: string; endAt: string; capacity: number; status: 'DRAFT' | 'PENDING'; }
 
 /** Maps only fields returned by EventResponse/EventSummaryResponse. */
 function mapEvent(event: BackendEvent): Event {
@@ -21,7 +25,7 @@ function mapEvent(event: BackendEvent): Event {
     place_id: event.placeId,
     title: event.title,
     description: event.description ?? null,
-    cover_image_url: null,
+    cover_image_url: event.coverMediaId ? mediaContentUrl(event.coverMediaId) : null,
     start_date: event.startAt,
     end_date: event.endAt,
     start_time: new Date(event.startAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
@@ -35,6 +39,7 @@ function mapEvent(event: BackendEvent): Event {
 }
 
 export const eventsApi = {
+  createEvent: (input: CreateEventInput) => apiPost<BackendEvent>('/events', input).then(mapEvent),
   upcoming: async (): Promise<Event[]> =>
     (await apiGet<BackendEvent[]>('/events/upcoming')).map(mapEvent),
 

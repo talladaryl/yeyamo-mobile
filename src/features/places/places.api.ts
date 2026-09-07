@@ -6,6 +6,7 @@ import type {
   BackendActivity,
   BackendActivityPage,
   BackendBooking,
+  CreateActivityBookingInput,
   Place,
   PlacesQuery,
 } from './types';
@@ -28,6 +29,16 @@ interface BackendPlace extends BackendPlaceSummary {
   status: string;
   media: Array<{ url: string }>;
   schedules: Array<{ dayOfWeek: number; openTime: string; closeTime: string }>;
+}
+
+export interface PlaceCategoryReference { id: number; name: string; active: boolean; }
+export interface PlaceRegionReference { id: number; name: string; active: boolean; }
+export interface PlaceCityReference { id: string; regionId: number; name: string; active: boolean; }
+export interface CreatePlaceInput { partnerId: string; categoryId: number; regionId: number; cityId: string; name: string; latitude: number; longitude: number; address?: string; phone?: string; website?: string; status: 'DRAFT' | 'PENDING'; }
+export interface PartnerPlaceReference { id: string; name: string; status: 'PUBLISHED'; }
+export interface PartnerPlacePage {
+  content: PartnerPlaceReference[];
+  page?: { size: number; number: number; totalElements: number; totalPages: number };
 }
 
 interface DiscoveryDocument {
@@ -68,6 +79,11 @@ function basePlace(item: BackendPlaceSummary): Place {
 }
 
 export const placesApi = {
+  categories: () => apiGet<PlaceCategoryReference[]>('/categories'),
+  regions: () => apiGet<PlaceRegionReference[]>('/regions'),
+  cities: (regionId: number) => apiGet<PlaceCityReference[]>(`/cities/region/${regionId}`),
+  myPlaces: () => apiGet<PartnerPlacePage>('/places/me?page=0&size=20'),
+  createPlace: (input: CreatePlaceInput) => apiPost<BackendPlace>('/places', input),
   getPlaces: async (query: PlacesQuery): Promise<PaginatedResponse<Place>> => {
     const page = query.page ?? 0;
     if (query.lat != null && query.lng != null) {
@@ -132,10 +148,17 @@ export const placesApi = {
   getActivityAvailability: (activityId: EntityId): Promise<BackendActivity[]> =>
     apiGet<BackendActivity[]>(`/activities/${encodeURIComponent(String(activityId))}/availability`),
 
-  createActivityBooking: (slotId: EntityId, quantity: number): Promise<BackendBooking> =>
+  getActivityBooking: (bookingId: EntityId): Promise<BackendBooking> =>
+    apiGet<BackendBooking>(`/bookings/${encodeURIComponent(String(bookingId))}`),
+
+  createActivityBooking: ({ slotId, quantity, operator, phoneNumber }: CreateActivityBookingInput): Promise<BackendBooking> =>
     apiPost<BackendBooking>(
       '/bookings',
-      { slotId: String(slotId), quantity },
+      {
+        slotId: String(slotId),
+        quantity,
+        ...(operator && phoneNumber ? { operator, phoneNumber } : {}),
+      },
       { headers: { 'Idempotency-Key': createIdempotencyKey() } },
     ),
 };

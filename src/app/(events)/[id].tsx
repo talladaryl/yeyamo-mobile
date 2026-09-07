@@ -248,11 +248,21 @@ export default function EventDetailScreen() {
                     onPress={() => router.push(`/(events)/${similarEvent.id}`)}
                     className="mr-3"
                   >
-                    <Image
-                      source={{ uri: similarEvent.cover_image_url || '' }}
-                      style={{ width: 160, height: 120 }}
-                      className="rounded-xl mb-2"
-                    />
+                    {similarEvent.cover_image_url ? (
+                      <Image
+                        source={{ uri: similarEvent.cover_image_url }}
+                        style={{ width: 160, height: 120 }}
+                        className="rounded-xl mb-2"
+                        contentFit="cover"
+                      />
+                    ) : (
+                      <View
+                        style={{ width: 160, height: 120, backgroundColor: colors.elevated }}
+                        className="mb-2 items-center justify-center rounded-xl"
+                      >
+                        <Ionicons name="calendar-outline" size={30} color={colors.textMuted} />
+                      </View>
+                    )}
                     <Text style={{ color: colors.text }} className=" font-semibold text-sm w-[160px]" numberOfLines={1}>
                       {similarEvent.title}
                     </Text>

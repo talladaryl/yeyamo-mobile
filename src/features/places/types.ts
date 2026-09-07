@@ -107,3 +107,10 @@ export interface BackendBooking {
   paymentStatus: string;
   createdAt: string;
 }
+
+export interface CreateActivityBookingInput {
+  slotId: EntityId;
+  quantity: number;
+  operator?: 'mtn' | 'orange';
+  phoneNumber?: string;
+}

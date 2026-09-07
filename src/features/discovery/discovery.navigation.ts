@@ -4,8 +4,8 @@ import type { DiscoveryItem, DiscoveryType } from './discovery.types';
 /** Returns the target service identifier from a UUID or a prefixed Discovery source id. */
 export function normalizeDiscoveryId(value: string): string {
   const normalized = value.trim();
-  const separator = normalized.indexOf(':');
-  return separator >= 0 ? normalized.slice(separator + 1) : normalized;
+  const parts = normalized.split(':').filter(Boolean);
+  return parts.at(-1) ?? '';
 }
 
 /**
@@ -25,9 +25,8 @@ export function discoveryHref(item: Pick<DiscoveryItem, 'sourceId' | 'type'>): H
     case 'CONTENT':
     case 'TRADITION': return `/(explore)/culture/${id}` as Href;
     case 'LANGUAGE': return `/(explore)/languages/${id}` as Href;
-    // Experience and destination detail routes are not present in this mobile app.
+    case 'EXPERIENCE': return `/(experiences)/${id}` as Href;
     case 'DESTINATION':
-    case 'EXPERIENCE':
     default: return null;
   }
 }

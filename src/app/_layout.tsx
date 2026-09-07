@@ -1,7 +1,7 @@
 import '../../global.css';
 import '@/i18n'; // Initialiser i18n
 import { useEffect } from 'react';
-import { AppState, Appearance, Platform, View } from 'react-native';
+import { Alert, AppState, Appearance, Platform, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
@@ -82,6 +82,7 @@ function RootNavigator() {
   useEffect(() => {
     registerUnauthenticatedHandler(() => {
       clearAuth();
+      Alert.alert('Session expirée', 'Reconnectez-vous pour continuer.');
       router.replace('/(auth)/login');
     });
   }, [clearAuth, router]);

@@ -41,6 +41,13 @@ export function VerticalFeedItem({
 }: VerticalFeedItemProps) {
   const router = useRouter();
   const videoUri = post.type === 'video' ? (post.media[0]?.url ?? '') : '';
+  const backendLinked = post.linkedContent;
+  const legacyLinked = post.linked_content;
+  const linkedRoute = backendLinked
+    ? (backendLinked.type === 'PROVERB' ? '/(explore)/proverbs/' : '/(explore)/recipes/')
+    : legacyLinked ? ({ proverb: '/(explore)/proverbs/', recipe: '/(explore)/recipes/', artwork: '/(explore)/artworks/', artist: '/(explore)/artisans/', language: '/(explore)/languages/', culture: '/(explore)/culture/' } as const)[legacyLinked.type] : null;
+  const linkedId = backendLinked?.id ?? legacyLinked?.id;
+  const linkedLabel = backendLinked ? backendLinked.title ?? (backendLinked.type === 'PROVERB' ? 'Voir le proverbe' : 'Voir la recette') : legacyLinked?.label;
   
   const player = useVideoPlayer(
     post.type === 'video' && isActive ? videoUri : null,
@@ -92,17 +99,15 @@ export function VerticalFeedItem({
           </Text>
         )}
 
-        {post.linked_content ? (
+        {linkedRoute && linkedId && linkedLabel ? (
           <TouchableOpacity
             onPress={() => {
-              const linked = post.linked_content!;
-              const routes = { proverb: '/(explore)/proverbs/', recipe: '/(explore)/recipes/', artwork: '/(explore)/artworks/', artist: '/(explore)/artisans/', language: '/(explore)/languages/', culture: '/(explore)/culture/' } as const;
-              router.push(`${routes[linked.type]}${linked.id}` as never);
+              router.push(`${linkedRoute}${linkedId}` as never);
             }}
             className="mb-2 self-start flex-row items-center rounded-full bg-white/20 px-3 py-2"
           >
             <Icon name="book-outline" size={15} color="#FFFFFF" />
-            <Text className="ml-2 text-xs font-bold text-white">{post.linked_content.label}</Text>
+            <Text className="ml-2 text-xs font-bold text-white">{linkedLabel}</Text>
             <Icon name="chevron-forward" size={14} color="#FFFFFF" />
           </TouchableOpacity>
         ) : null}

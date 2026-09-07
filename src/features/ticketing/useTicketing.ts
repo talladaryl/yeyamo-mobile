@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { usePartnerProfile } from '@/features/partner-dashboard/usePartnerDashboard';
+import { useAuthStore } from '@/features/auth/auth.store';
 import {
   type CreatePartnerTicketTypePayload,
   type StaffScanPayload,
@@ -52,6 +53,33 @@ export interface TicketingAnalyticsSummary {
   checkedIn: number;
   attendanceRate: number;
   rows: TicketAnalyticsMetric[];
+}
+
+function useIsDemoSession() {
+  return useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+}
+
+function demoAvailableTickets(eventId: string): PublicEventTickets {
+  return {
+    eventId,
+    eventName: 'Événement démo',
+    currency: 'XAF',
+    tickets: [
+      { id: `demo-ticket-${eventId}`, name: 'Pass découverte', price: 5000, remaining: 20, available: true },
+    ],
+  };
+}
+
+function demoTicketOrder(eventId: string, payload: CreateTicketOrderInput): TicketOrderResponse {
+  return {
+    orderId: `demo-order-${eventId}-${payload.ticketTypeId}`,
+    reference: 'DEMO-TICKET-ORDER',
+    status: 'ISSUED',
+    paymentStatus: 'PAID',
+    totalAmount: payload.quantity * 5000,
+    currency: 'XAF',
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+  };
 }
 
 export function useEventTicketTypes(eventId: string) {
@@ -148,9 +176,10 @@ export function useTicketAnalytics(
 }
 
 export function useAvailableTicketTypes(eventId: string) {
+  const isDemo = useIsDemoSession();
   return useQuery<PublicEventTickets>({
-    queryKey: [...ticketingKeys.eventTypes(eventId), 'available'],
-    queryFn: () => ticketingApi.getAvailableTicketTypes(eventId),
+    queryKey: [...ticketingKeys.eventTypes(eventId), isDemo ? 'demo' : 'backend', 'available'],
+    queryFn: () => isDemo ? Promise.resolve(demoAvailableTickets(eventId)) : ticketingApi.getAvailableTicketTypes(eventId),
     enabled: FEATURE_FLAGS.ticketing_enabled && Boolean(eventId),
   });
 }
@@ -158,8 +187,11 @@ export const useEventTickets = useAvailableTicketTypes;
 
 export function useCreateTicketOrder(eventId: string) {
   const client = useQueryClient();
+  const isDemo = useIsDemoSession();
   return useMutation({
-    mutationFn: (payload: CreateTicketOrderInput) => FEATURE_FLAGS.ticketing_enabled
+    mutationFn: (payload: CreateTicketOrderInput) => isDemo
+      ? Promise.resolve(demoTicketOrder(eventId, payload))
+      : FEATURE_FLAGS.ticketing_enabled
       ? ticketingApi.createTicketOrder(eventId, payload) : Promise.reject({ code: 'FEATURE_DISABLED', message: 'La billetterie est désactivée.' }),
     onSuccess: (order: TicketOrderResponse) => {
       if (order.status === 'PAID' || order.status === 'ISSUED') {
@@ -169,16 +201,27 @@ export function useCreateTicketOrder(eventId: string) {
   });
 }
 
-export function useTicketOrderStatus(orderId: string) {
+export function useTicketOrderStatus(orderId: string, shouldPoll = true) {
+  const isDemo = useIsDemoSession();
   return useQuery({
-    queryKey: ticketingKeys.order(orderId),
-    queryFn: () => ticketingApi.getTicketOrder(orderId),
-    enabled: FEATURE_FLAGS.ticketing_enabled && Boolean(orderId),
+    queryKey: [...ticketingKeys.order(orderId), isDemo ? 'demo' : 'backend'],
+    queryFn: () => isDemo
+      ? Promise.resolve({
+        orderId,
+        reference: 'DEMO-TICKET-ORDER',
+        status: 'ISSUED' as const,
+        paymentStatus: 'PAID',
+        totalAmount: 5000,
+        currency: 'XAF',
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      })
+      : ticketingApi.getTicketOrder(orderId),
+    enabled: FEATURE_FLAGS.ticketing_enabled && Boolean(orderId) && shouldPoll,
     refetchInterval: (query) => {
       const order = query.state.data;
       return order && ['PAID', 'ISSUED', 'CANCELLED', 'EXPIRED', 'REFUNDED'].includes(order.status)
         ? false
-        : 2_000;
+        : isDemo ? false : 5_000;
     },
     staleTime: 0,
   });

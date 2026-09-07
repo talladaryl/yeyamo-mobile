@@ -21,6 +21,7 @@ interface BackendFeedItem {
   likes: number;
   comments: number;
   shares: number;
+  linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
 }
 
 interface BackendFeedPage {
@@ -37,6 +38,7 @@ interface BackendPost {
   mediaIds: string[];
   publishedAt: string | null;
   createdAt: string;
+  linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
 }
 
 interface InteractionSummary {
@@ -89,6 +91,7 @@ function mapFeedItem(item: BackendFeedItem): FeedPost {
       ? { id: item.catalogAssetId, name: 'Lieu associé' }
       : null,
     created_at: item.publishedAt,
+    linkedContent: item.linkedContent ?? null,
   };
 }
 
@@ -141,6 +144,7 @@ export const feedApi = {
       likes: summary.likes,
       comments: summary.comments,
       shares: summary.shares,
+      linkedContent: post.linkedContent ?? null,
     });
     feedPost.is_liked = summary.likedByViewer;
     feedPost.is_saved = summary.favoriteByViewer;

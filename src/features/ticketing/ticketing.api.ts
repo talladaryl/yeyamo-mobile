@@ -182,6 +182,8 @@ export const ticketingApi = {
         {
           holdId: hold.holdId,
           promotionCode: payload.promotionCode ?? null,
+          operator: payload.operator,
+          phoneNumber: payload.phoneNumber,
         } satisfies CreateOrderRequest,
       );
     } catch (error) {

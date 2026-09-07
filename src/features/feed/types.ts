@@ -14,6 +14,7 @@ export interface FeedPost {
   place_tag: { id: EntityId; name: string; location?: string; region_id?: number } | null;
   comments?: PostComment[];
   linked_content?: { type: 'proverb' | 'recipe' | 'artwork' | 'artist' | 'language' | 'culture'; id: string; label: string };
+  linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
   created_at: string;
 }
 
