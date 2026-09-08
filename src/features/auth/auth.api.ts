@@ -10,14 +10,14 @@ import type {
 } from './types';
 
 export const authApi = {
-  login: (credentials: LoginCredentials, turnstileToken?: string) =>
+  login: (credentials: LoginCredentials, turnstileToken: string) =>
     apiPost<AuthResponse>('/auth/login', {
       identifier: credentials.email.trim(),
       password: credentials.password,
       turnstileToken,
     }),
 
-  register: (credentials: RegisterCredentials, turnstileToken?: string) =>
+  register: (credentials: RegisterCredentials, turnstileToken: string) =>
     apiPost<AuthResponse>('/auth/register', {
       email: credentials.email.trim() || null,
       phone: credentials.phone || null,
@@ -60,6 +60,9 @@ export const authApi = {
     apiPost<AuthResponse>(`/auth/oauth/${credentials.provider}`, {
       idToken: credentials.token,
     }),
+
+  oauthGoogle: (idToken: string) =>
+    apiPost<AuthResponse>('/auth/oauth/google', { idToken }),
 
   changePassword: (currentPassword: string, newPassword: string) =>
     apiPut<void>('/auth/password', { currentPassword, newPassword }),

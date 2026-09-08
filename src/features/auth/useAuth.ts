@@ -3,7 +3,6 @@ import { isAxiosError } from 'axios';
 import { useAuthStore } from './auth.store';
 import { authService } from './auth.service';
 import { authApi } from './auth.api';
-import { googleSignInErrorMessage, signInWithGoogle } from './google-auth';
 import type { 
   LoginCredentials, 
   RegisterCredentials, 
@@ -26,7 +25,7 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function login(credentials: LoginCredentials, turnstileToken?: string) {
+  async function login(credentials: LoginCredentials, turnstileToken: string) {
     setIsLoading(true);
     setError(null);
     try {
@@ -39,7 +38,7 @@ export function useAuth() {
     }
   }
 
-  async function register(credentials: RegisterCredentials, turnstileToken?: string) {
+  async function register(credentials: RegisterCredentials, turnstileToken: string) {
     setIsLoading(true);
     setError(null);
     try {
@@ -111,16 +110,15 @@ export function useAuth() {
     }
   }
 
-  async function googleLogin(): Promise<boolean> {
+  async function googleLogin(idToken?: string): Promise<boolean> {
     setIsLoading(true);
     setError(null);
     try {
-      const { idToken } = await signInWithGoogle();
-      await authService.socialLogin({ provider: 'google', token: idToken });
+      if (!idToken) throw new Error('Le jeton Google est absent.');
+      await authService.googleLogin(idToken);
       return true;
     } catch (err: unknown) {
-      const message = googleSignInErrorMessage(err);
-      if (message) setError(authErrorMessage(err, message));
+      setError(authErrorMessage(err, 'Connexion Google impossible. Réessayez.'));
       return false;
     } finally {
       setIsLoading(false);

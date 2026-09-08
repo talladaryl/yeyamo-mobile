@@ -3,8 +3,6 @@ import appJson from './app.json';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const base = appJson.expo as ExpoConfig;
-  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? 'CHANGE_ME.apps.googleusercontent.com';
-  const iosUrlScheme = `com.googleusercontent.apps.${iosClientId.split('.')[0]}`;
   return ({
     ...config,
     ...base,
@@ -22,10 +20,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY ?? '',
       },
     },
-    plugins: [
-      ...(base.plugins ?? []),
-      '@react-native-community/datetimepicker',
-      ['@react-native-google-signin/google-signin', { iosUrlScheme }],
+  plugins: [
+    ...(base.plugins ?? []),
+    [
+      'react-native-maps',
+      {
+        androidGoogleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY ?? '',
+        iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY ?? '',
+      },
+    ],
+    '@react-native-community/datetimepicker',
+    'expo-web-browser',
     ],
   });
 };

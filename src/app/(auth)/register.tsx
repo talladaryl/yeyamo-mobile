@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
@@ -12,7 +12,8 @@ import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { registerSchema, type RegisterForm } from '@/utils/validation';
-import { useTurnstileChallenge } from '@/features/auth/useTurnstileChallenge';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
+import { useGoogleIdToken } from '@/features/auth/useGoogleIdToken';
 import { CountryStatusPill } from '@/features/country/components/CountryStatusPill';
 import { useCountries, useCountryCities, useCountryConfiguration } from '@/features/country/country.hooks';
 import { useCountryStore } from '@/features/country/country.store';
@@ -36,7 +37,10 @@ export default function RegisterScreen() {
   const countries = useCountries();
   const configuration = useCountryConfiguration(selectedCountryCode);
   const cities = useCountryCities(selectedCountryCode);
-  const { requestToken, challenge } = useTurnstileChallenge();
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileVersion, setTurnstileVersion] = useState(0);
+  const [turnstileMessage, setTurnstileMessage] = useState<string | null>(null);
+  const { googleRequest, requestGoogleIdToken, googleError } = useGoogleIdToken();
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: { display_name: '', username: '', email: '', password: '', password_confirmation: '', city: '', phone: '', countryCode: '', cityId: undefined, preferredLanguageCode: undefined, timezone: undefined },
@@ -59,13 +63,22 @@ export default function RegisterScreen() {
     }
     try {
       const phone = data.phone ? `${configuration.data.callingCode ?? ''}${data.phone.replace(/^0+/, '')}` : undefined;
-      const turnstileToken = await requestToken('register');
+      if (!turnstileToken) return;
       await registerUser({ ...data, phone }, turnstileToken);
       router.replace({ pathname: '/(auth)/verify-code', params: { email: data.email.trim() } });
-    } catch { /* useAuth exposes the normalized error */ }
+    } catch (requestError: unknown) {
+      const code = typeof requestError === 'object' && requestError !== null && 'code' in requestError
+        ? String(requestError.code)
+        : undefined;
+      if (code === 'TURNSTILE_VERIFICATION_FAILED' || code === 'TURNSTILE_REQUIRED') {
+        setTurnstileToken(null);
+        setTurnstileVersion((value) => value + 1);
+        setTurnstileMessage('La vérification a expiré. Veuillez la recommencer.');
+      }
+    }
   };
 
-  return <SafeScreen>{challenge}<KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1"><ScrollView contentContainerClassName="flex-grow px-6 py-8" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+  return <SafeScreen><KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1"><ScrollView contentContainerClassName="flex-grow px-6 py-8" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
     <View className="mb-8 items-center"><Logo size="medium" /><Text className="mb-2 mt-3 text-center text-2xl font-extrabold" style={{ color: colors.text }}>Rejoignez la{`\n`}communauté Yeyamo ✨</Text><Text className="text-center text-sm leading-5" style={{ color: colors.textSecondary }}>Choisissez votre pays, puis personnalisez votre découverte.</Text></View>
     <View className="mb-4 gap-4">
       <Controller control={control} name="display_name" render={({ field: { value, onChange, onBlur } }) => <Input label="Nom complet" value={value} onChangeText={onChange} onBlur={onBlur} placeholder="Nom complet" error={errors.display_name?.message} />} />
@@ -83,11 +96,19 @@ export default function RegisterScreen() {
       <Controller control={control} name="password" render={({ field: { value, onChange, onBlur } }) => <Input label="Mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} placeholder="••••••••••••" secureTextEntry textContentType="newPassword" error={errors.password?.message} />} />
       <Controller control={control} name="password_confirmation" render={({ field: { value, onChange, onBlur } }) => <Input label="Confirmer le mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} placeholder="••••••••••••" secureTextEntry textContentType="newPassword" error={errors.password_confirmation?.message} />} />
       <Controller control={control} name="username" render={({ field: { value, onChange, onBlur } }) => <Input label="Nom d'utilisateur" value={value || watch('display_name')?.toLowerCase().replace(/\s+/g, '_')} onChangeText={onChange} onBlur={onBlur} placeholder="nom_utilisateur" error={errors.username?.message} />} />
-      {error ? <Text className="text-center text-sm text-[#EF4444]">{error}</Text> : null}
-      <Button label="Créer mon compte" onPress={handleSubmit(onSubmit)} isLoading={isLoading} disabled={!configuration.data || configuration.isLoading} className="mt-2" />
+      <TurnstileWidget
+        key={turnstileVersion}
+        action="register"
+        onVerify={(token) => { setTurnstileToken(token); setTurnstileMessage(null); }}
+        onExpire={() => { setTurnstileToken(null); setTurnstileMessage('La vérification a expiré. Veuillez la recommencer.'); }}
+        onError={(message) => { setTurnstileToken(null); setTurnstileMessage(message); }}
+      />
+      {turnstileMessage ? <Text className="text-center text-xs text-[#B45309]">{turnstileMessage}</Text> : null}
+      {error || googleError ? <Text className="text-center text-sm text-[#EF4444]">{error ?? googleError}</Text> : null}
+      <Button label="Créer mon compte" onPress={handleSubmit(onSubmit)} isLoading={isLoading} disabled={!configuration.data || configuration.isLoading || !turnstileToken || isLoading} className="mt-2" />
     </View>
     <View className="mb-6 flex-row items-center justify-center gap-1"><Text className="text-sm" style={{ color: colors.textSecondary }}>Vous avez déjà un compte ?</Text><TouchableOpacity onPress={() => router.back()}><Text className="text-sm font-semibold text-[#EF4444]">Se connecter</Text></TouchableOpacity></View>
     <View className="mb-6 flex-row items-center"><View className="h-px flex-1" style={{ backgroundColor: colors.border }} /><Text className="mx-4 text-sm" style={{ color: colors.textSecondary }}>ou continuer avec</Text><View className="h-px flex-1" style={{ backgroundColor: colors.border }} /></View>
-    <View className="mb-6 gap-3"><SocialButton provider="google" onPress={async () => { if (await googleLogin()) router.replace('/interests'); }} disabled={isLoading} /><SocialButton provider="apple" onPress={() => undefined} disabled /></View>
+    <View className="mb-6 gap-3"><SocialButton provider="google" onPress={() => { void (async () => { const idToken = await requestGoogleIdToken(); if (idToken && await googleLogin(idToken)) router.replace('/interests'); })(); }} disabled={isLoading || !googleRequest} /><SocialButton provider="apple" onPress={() => undefined} disabled /></View>
   </ScrollView></KeyboardAvoidingView></SafeScreen>;
 }

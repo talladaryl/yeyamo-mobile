@@ -94,16 +94,20 @@ export const authService = {
     }
   },
 
-  async login(credentials: LoginCredentials, turnstileToken?: string): Promise<void> {
+  async login(credentials: LoginCredentials, turnstileToken: string): Promise<void> {
     await persistSession(await authApi.login(credentials, turnstileToken));
   },
 
-  async register(credentials: RegisterCredentials, turnstileToken?: string): Promise<void> {
+  async register(credentials: RegisterCredentials, turnstileToken: string): Promise<void> {
     await persistSession(await authApi.register(credentials, turnstileToken), credentials.display_name);
   },
 
   async socialLogin(credentials: SocialLoginCredentials): Promise<void> {
     await persistSession(await authApi.socialLogin(credentials));
+  },
+
+  async googleLogin(idToken: string): Promise<void> {
+    await persistSession(await authApi.oauthGoogle(idToken));
   },
 
   async loginDemo(kind: 'user' | 'partner'): Promise<void> {

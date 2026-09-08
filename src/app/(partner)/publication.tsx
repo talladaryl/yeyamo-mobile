@@ -5,9 +5,11 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '@/components/ui/Icon';
 import { CTAButton } from '@/components/ui/CTAButton';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function PartnerPublicationScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const captionRef = useRef('');
 
@@ -42,17 +44,17 @@ export default function PartnerPublicationScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Nouvelle publication',
           headerTitleStyle: { fontSize: 18, fontWeight: '600' },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="close" size={24} color="#FFFFFF" />
+              <Icon library="ionicons" name="close" size={24} color={colors.text} />
             </TouchableOpacity>
           ),
           headerRight: () => (
@@ -77,8 +79,8 @@ export default function PartnerPublicationScreen() {
               contentFit="cover"
             />
           ) : (
-            <View className="w-full h-96 bg-white dark:bg-[#161616] items-center justify-center">
-              <Icon library="ionicons" name="images" size={64} color="#52525B" />
+            <View className="h-96 w-full items-center justify-center" style={{ backgroundColor: colors.card }}>
+              <Icon library="ionicons" name="images" size={64} color={colors.textSecondary} />
               <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-4">
                 Créez une publication avec le meilleur contenu
               </Text>
@@ -112,48 +114,48 @@ export default function PartnerPublicationScreen() {
         {/* Caption */}
         <View className="px-4 py-4">
           <TextInput
-            className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm"
+            className="rounded-xl px-4 py-3 text-sm"
             placeholder="Ajoutez une légende..."
-            placeholderTextColor="#A1A1AA"
+            placeholderTextColor={colors.textMuted}
             defaultValue={captionRef.current}
             onChangeText={(value) => { captionRef.current = value; }}
             multiline
             maxLength={500}
             blurOnSubmit={false}
-            style={{ minHeight: 100, textAlignVertical: 'top' }}
+            style={{ minHeight: 100, textAlignVertical: 'top', backgroundColor: colors.card, color: colors.text }}
           />
         </View>
 
         {/* Action Buttons */}
         <View className="px-4 pb-6">
-          <View className="flex-row justify-around py-4 bg-white dark:bg-[#161616] rounded-xl">
+          <View className="flex-row justify-around rounded-xl py-4" style={{ backgroundColor: colors.card }}>
             <TouchableOpacity
               onPress={() => pickImage(['images', 'videos'])}
               className="items-center flex-1"
               activeOpacity={0.7}
             >
-              <View className="w-12 h-12 bg-white dark:bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
                 <Icon library="ionicons" name="images" size={24} color="#EF4444" />
               </View>
               <Text className="text-[#18181B] dark:text-white text-xs">Média</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={takePhoto} className="items-center flex-1" activeOpacity={0.7}>
-              <View className="w-12 h-12 bg-white dark:bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
                 <Icon library="ionicons" name="camera" size={24} color="#EF4444" />
               </View>
               <Text className="text-[#18181B] dark:text-white text-xs">Photo</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => pickImage(['videos'])} className="items-center flex-1" activeOpacity={0.7}>
-              <View className="w-12 h-12 bg-white dark:bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
                 <Icon library="ionicons" name="videocam" size={24} color="#EF4444" />
               </View>
               <Text className="text-[#18181B] dark:text-white text-xs">Vidéo</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => pickImage(['images'])} className="items-center flex-1" activeOpacity={0.7}>
-              <View className="w-12 h-12 bg-white dark:bg-[#0A0A0A] rounded-full items-center justify-center mb-2">
+              <View className="mb-2 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
                 <Icon library="ionicons" name="albums" size={24} color="#EF4444" />
               </View>
               <Text className="text-[#18181B] dark:text-white text-xs">Carrousel</Text>

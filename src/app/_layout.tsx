@@ -109,7 +109,7 @@ function RootNavigator() {
 
     const hideAndroidNavigation = async () => {
       try {
-        await NavigationBar.setVisibilityAsync('hidden');
+        NavigationBar.NavigationBar.setHidden(true);
       } catch {
         // Some vendor ROMs can refuse immersive mode; the app remains usable.
       }

@@ -1,6 +1,6 @@
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { isAxiosError } from 'axios';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,13 +14,17 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { loginSchema, type LoginForm } from '@/utils/validation';
 import { useInterestsStore } from '@/features/interests/interests.store';
-import { useTurnstileChallenge } from '@/features/auth/useTurnstileChallenge';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
+import { useGoogleIdToken } from '@/features/auth/useGoogleIdToken';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, loginDemo, googleLogin, isLoading, error } = useAuth();
   const colors = useThemeStore((state) => state.colors);
-  const { requestToken, challenge } = useTurnstileChallenge();
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileVersion, setTurnstileVersion] = useState(0);
+  const [turnstileMessage, setTurnstileMessage] = useState<string | null>(null);
+  const { googleRequest, requestGoogleIdToken, googleError } = useGoogleIdToken();
   const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
@@ -28,31 +32,25 @@ export default function LoginScreen() {
 
   const signIn = async (data: LoginForm) => {
     try {
-      await login(data);
+      if (!turnstileToken) return;
+      await login(data, turnstileToken);
       router.replace('/interests');
     } catch (requestError: unknown) {
-      if (
-        isAxiosError<{ code?: string }>(requestError)
-        && requestError.response?.data?.code === 'TURNSTILE_REQUIRED'
-      ) {
-        try {
-          const turnstileToken = await requestToken('login');
-          await login(data, turnstileToken);
-          router.replace('/interests');
-        } catch {
-          // The challenge can be cancelled without blocking normal navigation.
-        }
+      const code = typeof requestError === 'object' && requestError !== null && 'code' in requestError
+        ? String(requestError.code)
+        : undefined;
+      if (code === 'TURNSTILE_VERIFICATION_FAILED' || code === 'TURNSTILE_REQUIRED') {
+        setTurnstileToken(null);
+        setTurnstileVersion((value) => value + 1);
+        setTurnstileMessage('La vérification a expiré. Veuillez la recommencer.');
         return;
       }
-      if (
-        isAxiosError<{ code?: string }>(requestError)
-        && requestError.response?.data?.code === 'EMAIL_NOT_VERIFIED'
-      ) {
+      if (code === 'EMAIL_NOT_VERIFIED') {
         router.push({
           pathname: '/(auth)/verify-code',
           params: { email: data.email.trim() },
         });
-      }
+      } else Alert.alert('Connexion impossible', 'Veuillez vérifier vos informations puis réessayer.');
     }
   };
 
@@ -66,7 +64,8 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
-    if (await googleLogin()) router.replace('/interests');
+    const idToken = await requestGoogleIdToken();
+    if (idToken && await googleLogin(idToken)) router.replace('/interests');
   };
 
   const partnerDemoLogin = async () => {
@@ -85,7 +84,6 @@ export default function LoginScreen() {
 
   return (
     <SafeScreen>
-      {challenge}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
           <LinearGradient colors={['#EF4444', '#DC2626', '#991B1B']} className="h-48 overflow-hidden px-6 pt-3">
@@ -152,8 +150,16 @@ export default function LoginScreen() {
               <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')} className="self-end">
                 <Text className="text-sm font-semibold" style={{ color: colors.primary }}>Mot de passe oublié ?</Text>
               </TouchableOpacity>
-              {error ? <Text className="text-center text-sm" style={{ color: colors.primary }}>{error}</Text> : null}
-              <Button label="Se connecter" onPress={handleSubmit(signIn)} isLoading={isLoading} />
+              <TurnstileWidget
+                key={turnstileVersion}
+                action="login"
+                onVerify={(token) => { setTurnstileToken(token); setTurnstileMessage(null); }}
+                onExpire={() => { setTurnstileToken(null); setTurnstileMessage('La vérification a expiré. Veuillez la recommencer.'); }}
+                onError={(message) => { setTurnstileToken(null); setTurnstileMessage(message); }}
+              />
+              {turnstileMessage ? <Text className="text-center text-xs text-[#B45309]">{turnstileMessage}</Text> : null}
+              {error || googleError ? <Text className="text-center text-sm" style={{ color: colors.primary }}>{error ?? googleError}</Text> : null}
+              <Button label="Se connecter" onPress={handleSubmit(signIn)} isLoading={isLoading} disabled={!turnstileToken || isLoading} />
               <TouchableOpacity
                 onPress={demoLogin}
                 disabled={isLoading}
@@ -183,7 +189,7 @@ export default function LoginScreen() {
               <View className="h-px flex-1" style={{ backgroundColor: colors.border }} />
             </View>
             <View className="gap-3">
-              <SocialButton provider="google" onPress={handleGoogleLogin} disabled={isLoading} />
+              <SocialButton provider="google" onPress={() => void handleGoogleLogin()} disabled={isLoading || !googleRequest} />
               <SocialButton provider="apple" onPress={() => undefined} disabled={isLoading} />
             </View>
 
