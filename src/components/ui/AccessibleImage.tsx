@@ -27,16 +27,13 @@ export function AccessibleImage({
 }: AccessibleImageProps) {
   const colors = useThemeStore((state) => state.colors);
   const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   const handleLoad = () => {
-    setIsLoading(false);
     onLoad?.();
   };
 
   const handleError = () => {
     setHasError(true);
-    setIsLoading(false);
     onError?.();
   };
 

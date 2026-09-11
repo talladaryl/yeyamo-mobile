@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Input } from '@/components/ui/Input';
@@ -41,12 +41,13 @@ export default function RegisterScreen() {
   const [turnstileVersion, setTurnstileVersion] = useState(0);
   const [turnstileMessage, setTurnstileMessage] = useState<string | null>(null);
   const { googleRequest, requestGoogleIdToken, googleError } = useGoogleIdToken();
-  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<RegisterForm>({
+  const { control, handleSubmit, setValue, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: { display_name: '', username: '', email: '', password: '', password_confirmation: '', city: '', phone: '', countryCode: '', cityId: undefined, preferredLanguageCode: undefined, timezone: undefined },
   });
-  const phoneValue = watch('phone') || '';
-  const preferredLanguageCode = watch('preferredLanguageCode');
+  const phoneValue = useWatch({ control, name: 'phone' }) || '';
+  const preferredLanguageCode = useWatch({ control, name: 'preferredLanguageCode' });
+  const displayName = useWatch({ control, name: 'display_name' });
 
   useEffect(() => {
     if (!configuration.data) return;
@@ -95,7 +96,7 @@ export default function RegisterScreen() {
       <PhoneInput label={configuration.data?.callingCode ? `Téléphone (${configuration.data.callingCode})` : 'Téléphone'} value={phoneValue} onChangeText={(text) => setValue('phone', text)} countryCode={configuration.data?.callingCode ?? ''} onCountryCodeChange={() => undefined} placeholder="6XX XX XX XX" error={errors.phone?.message} disabled={!configuration.data} />
       <Controller control={control} name="password" render={({ field: { value, onChange, onBlur } }) => <Input label="Mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} placeholder="••••••••••••" secureTextEntry textContentType="newPassword" error={errors.password?.message} />} />
       <Controller control={control} name="password_confirmation" render={({ field: { value, onChange, onBlur } }) => <Input label="Confirmer le mot de passe" value={value} onChangeText={onChange} onBlur={onBlur} placeholder="••••••••••••" secureTextEntry textContentType="newPassword" error={errors.password_confirmation?.message} />} />
-      <Controller control={control} name="username" render={({ field: { value, onChange, onBlur } }) => <Input label="Nom d'utilisateur" value={value || watch('display_name')?.toLowerCase().replace(/\s+/g, '_')} onChangeText={onChange} onBlur={onBlur} placeholder="nom_utilisateur" error={errors.username?.message} />} />
+      <Controller control={control} name="username" render={({ field: { value, onChange, onBlur } }) => <Input label="Nom d'utilisateur" value={value || displayName?.toLowerCase().replace(/\s+/g, '_')} onChangeText={onChange} onBlur={onBlur} placeholder="nom_utilisateur" error={errors.username?.message} />} />
       <TurnstileWidget
         key={turnstileVersion}
         action="register"
@@ -109,6 +110,6 @@ export default function RegisterScreen() {
     </View>
     <View className="mb-6 flex-row items-center justify-center gap-1"><Text className="text-sm" style={{ color: colors.textSecondary }}>Vous avez déjà un compte ?</Text><TouchableOpacity onPress={() => router.back()}><Text className="text-sm font-semibold text-[#EF4444]">Se connecter</Text></TouchableOpacity></View>
     <View className="mb-6 flex-row items-center"><View className="h-px flex-1" style={{ backgroundColor: colors.border }} /><Text className="mx-4 text-sm" style={{ color: colors.textSecondary }}>ou continuer avec</Text><View className="h-px flex-1" style={{ backgroundColor: colors.border }} /></View>
-    <View className="mb-6 gap-3"><SocialButton provider="google" onPress={() => { void (async () => { const idToken = await requestGoogleIdToken(); if (idToken && await googleLogin(idToken)) router.replace('/interests'); })(); }} disabled={isLoading || !googleRequest} /><SocialButton provider="apple" onPress={() => undefined} disabled /></View>
+    <View className="mb-6 gap-3"><SocialButton provider="google" onPress={() => { void (async () => { const idToken = await requestGoogleIdToken(); if (idToken && await googleLogin(idToken)) router.replace('/interests'); })(); }} disabled={isLoading || !googleRequest} /></View>
   </ScrollView></KeyboardAvoidingView></SafeScreen>;
 }

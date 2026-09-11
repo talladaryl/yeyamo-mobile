@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import { Dimensions, TouchableOpacity, View, Text } from 'react-native';
-import { useEvent } from 'expo';
+import { Dimensions, Share, TouchableOpacity, View, Text } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Image } from 'expo-image';
 import { Avatar } from '@/components/ui/Avatar';
@@ -17,16 +17,13 @@ interface VideoCardProps {
 }
 
 export function VideoCard({ post, isActive }: VideoCardProps) {
+  const router = useRouter();
   const videoUri = post.media[0]?.url ?? '';
   const isVideo = post.type === 'video';
 
   const player = useVideoPlayer(isVideo ? videoUri : null, (p) => {
     p.loop = true;
     p.muted = false;
-  });
-
-  const { isPlaying } = useEvent(player, 'playingChange', {
-    isPlaying: player.playing,
   });
 
   // Auto-play / pause based on whether card is the active one in the feed
@@ -51,6 +48,14 @@ export function VideoCard({ post, isActive }: VideoCardProps) {
   const handleLike = useCallback(() => {
     toggleLike({ postId: post.id, isLiked: post.is_liked });
   }, [post.id, post.is_liked, toggleLike]);
+
+  const handleShare = useCallback(() => {
+    void Share.share({
+      title: 'Yeyamo',
+      message: `Découvre cette publication sur Yeyamo\nhttps://yeyamo.app/posts/${post.id}`,
+      url: `https://yeyamo.app/posts/${post.id}`,
+    }).catch(() => undefined);
+  }, [post.id]);
 
   return (
     <View style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}>
@@ -88,8 +93,8 @@ export function VideoCard({ post, isActive }: VideoCardProps) {
           count={formatCount(post.likes_count)}
           onPress={handleLike}
         />
-        <ActionButton icon="chatbubble-outline" count={formatCount(post.comments_count)} onPress={() => {}} />
-        <ActionButton icon="paper-plane-outline" count={formatCount(post.shares_count)} onPress={() => {}} />
+        <ActionButton icon="chatbubble-outline" count={formatCount(post.comments_count)} onPress={() => router.push(`/(post)/${post.id}/comments`)} />
+        <ActionButton icon="paper-plane-outline" count={formatCount(post.shares_count)} onPress={handleShare} />
         {isVideo && (
           <ActionButton icon={muted ? 'volume-mute-outline' : 'volume-high-outline'} onPress={handleMute} />
         )}

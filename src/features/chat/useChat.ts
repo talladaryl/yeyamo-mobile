@@ -9,8 +9,7 @@ import {
 import { chatApi } from './chat.api';
 import { chatSocket } from './chat.socket';
 import { useChatStore } from './chat.store';
-import type { PaginatedResponse } from '@/types/api.types';
-import type { EntityId } from '@/types/api.types';
+import type { PaginatedResponse , EntityId } from '@/types/api.types';
 import type { ChatMessage, Conversation, SendMessagePayload } from './types';
 
 const EMPTY_MESSAGES: ChatMessage[] = [];

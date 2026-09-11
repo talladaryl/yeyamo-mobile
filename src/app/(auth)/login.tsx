@@ -16,6 +16,7 @@ import { loginSchema, type LoginForm } from '@/utils/validation';
 import { useInterestsStore } from '@/features/interests/interests.store';
 import { TurnstileWidget } from '@/components/security/TurnstileWidget';
 import { useGoogleIdToken } from '@/features/auth/useGoogleIdToken';
+import ENV from '@/config/env';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -160,7 +161,7 @@ export default function LoginScreen() {
               {turnstileMessage ? <Text className="text-center text-xs text-[#B45309]">{turnstileMessage}</Text> : null}
               {error || googleError ? <Text className="text-center text-sm" style={{ color: colors.primary }}>{error ?? googleError}</Text> : null}
               <Button label="Se connecter" onPress={handleSubmit(signIn)} isLoading={isLoading} disabled={!turnstileToken || isLoading} />
-              <TouchableOpacity
+              {ENV.APP_ENV !== 'production' ? <TouchableOpacity
                 onPress={demoLogin}
                 disabled={isLoading}
                 activeOpacity={0.8}
@@ -168,8 +169,8 @@ export default function LoginScreen() {
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
               >
                 <Text className="font-semibold" style={{ color: colors.text }}>Entrer en mode démo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </TouchableOpacity> : null}
+              {ENV.APP_ENV !== 'production' ? <TouchableOpacity
                 onPress={partnerDemoLogin}
                 disabled={isLoading}
                 activeOpacity={0.8}
@@ -180,7 +181,7 @@ export default function LoginScreen() {
                 <Text className="font-semibold" style={{ color: colors.text }}>
                   Se connecter en tant que partenaire démo
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> : null}
             </View>
 
             <View className="my-6 flex-row items-center">
@@ -190,7 +191,6 @@ export default function LoginScreen() {
             </View>
             <View className="gap-3">
               <SocialButton provider="google" onPress={() => void handleGoogleLogin()} disabled={isLoading || !googleRequest} />
-              <SocialButton provider="apple" onPress={() => undefined} disabled={isLoading} />
             </View>
 
             <View className="mt-7 flex-row items-center justify-center">

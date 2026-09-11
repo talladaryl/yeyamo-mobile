@@ -151,7 +151,7 @@ export const ticketingApi = {
     unavailable('Historique détaillé des scans'),
 
   async getAvailableTicketTypes(eventId: string): Promise<PublicEventTickets> {
-    const response = await apiGet<{ eventId: string; currency: string; tickets: Array<{ id: string; name: string; price: number; quantityAvailable: number }> }>(`/tickets/events/${eventId}/types`);
+    const response = await apiGet<{ eventId: string; currency: string; tickets: { id: string; name: string; price: number; quantityAvailable: number }[] }>(`/tickets/events/${eventId}/types`);
     return {
       eventId: response.eventId,
       currency: response.currency,

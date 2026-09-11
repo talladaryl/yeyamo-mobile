@@ -1,4 +1,4 @@
-import { Controller, useForm, type Control } from 'react-hook-form';
+import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -32,8 +32,8 @@ const APPS: { value: PromotionApplication; label: string }[] = [{ value: 'TICKET
 
 export default function PromotionCreateScreen() {
   const router = useRouter(); const colors = useThemeStore((state) => state.colors); const mutation = useCreatePromotion(); const profile = usePartnerProfile();
-  const { control, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: '', code: '', description: '', discountType: 'PERCENTAGE', value: '', maximumDiscount: '', minimumOrder: '0', startsAt: '', endsAt: '', globalLimit: '100', userLimit: '1', applications: ['TICKETS'] } });
-  const values = watch();
+  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: '', code: '', description: '', discountType: 'PERCENTAGE', value: '', maximumDiscount: '', minimumOrder: '0', startsAt: '', endsAt: '', globalLimit: '100', userLimit: '1', applications: ['TICKETS'] } });
+  const values = useWatch({ control }) as FormValues;
   const submit = handleSubmit(async (form) => {
     if (!profile.data?.id) return;
     try { await mutation.mutateAsync(promotionFormToCreateRequest(form, profile.data.id)); reset(); Alert.alert('Promotion créée', 'La promotion est maintenant disponible dans votre liste.', [{ text: 'OK', onPress: () => router.back() }]); }

@@ -13,7 +13,7 @@ interface BackendConversation {
 }
 
 interface BackendConversationView extends BackendConversation {
-  members: Array<{ userId: string }>;
+  members: { userId: string }[];
 }
 
 export interface BackendMessage {

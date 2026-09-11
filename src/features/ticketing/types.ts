@@ -1,3 +1,5 @@
+import type { CashInOperator } from '@/features/payments/cash-in';
+
 export type TicketTypeStatus = 'ACTIVE' | 'SOLD_OUT' | 'DRAFT' | 'SALES_CLOSED';
 export type TicketStatus = 'PENDING_PAYMENT' | 'VALID' | 'USED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED' | 'REVOKED';
 export type TicketOrderStatus = 'CREATED' | 'AWAITING_PAYMENT' | 'PAID' | 'ISSUED' | 'CANCELLED' | 'EXPIRED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
@@ -81,7 +83,7 @@ export interface TicketOrder {
 export interface CreateTicketOrderInput {
   ticketTypeId: string;
   quantity: number;
-  operator: 'mtn' | 'orange';
+  operator: CashInOperator;
   phoneNumber: string;
 }
 export interface TicketAnalytics { sold: number; revenue: number; checkedIn: number; entryRate: number }
@@ -91,7 +93,7 @@ export interface HoldResponse { holdId: string; quantity: number; expiresAt: str
 export interface CreateOrderRequest {
   holdId: string;
   promotionCode: string | null;
-  operator: 'mtn' | 'orange';
+  operator: CashInOperator;
   phoneNumber: string;
 }
 export interface TicketOrderResponse {

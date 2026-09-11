@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { isAxiosError } from 'axios';
 import type { AppApiError } from '@/types/api.types';
 
 type JsonObject = Record<string, unknown>;
@@ -25,8 +25,8 @@ function fields(body?: JsonObject): Record<string, string> | undefined {
 
 export function normalizeApiError(error: unknown): AppApiError {
   const normalized = object(error);
-  if (!axios.isAxiosError(error) && text(normalized?.message) && (normalized?.status !== undefined || normalized?.code !== undefined)) return error as AppApiError;
-  if (!axios.isAxiosError(error)) return { message: 'Une erreur inattendue est survenue.' };
+  if (!isAxiosError(error) && text(normalized?.message) && (normalized?.status !== undefined || normalized?.code !== undefined)) return error as AppApiError;
+  if (!isAxiosError(error)) return { message: 'Une erreur inattendue est survenue.' };
   const status = error.response?.status;
   const body = object(error.response?.data);
   const code = text(body?.code) ?? text(body?.errorCode) ?? text(body?.scanResult) ?? text(body?.title);

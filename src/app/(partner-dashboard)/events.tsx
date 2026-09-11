@@ -25,8 +25,7 @@ export default function EventsScreen() {
         <EventCard
           key={item.id}
           event={item}
-          onPress={() => {}}
-          onTicketingPress={FEATURE_FLAGS.ticketing_enabled && isPartner && item.supports_ticketing
+          onTicketingPress={!isDemo && FEATURE_FLAGS.ticketing_enabled && isPartner && item.supports_ticketing
             ? () => router.push(`/(partner-dashboard)/event/${item.id}/tickets` as Href)
             : undefined}
         />

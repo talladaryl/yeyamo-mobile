@@ -2,14 +2,12 @@
 import { useState } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { UserSearchCard } from '@/components/social/UserSearchCard';
 import { useFollowActions, useUserSearch } from '@/features/social/useSocial';
 
 export default function SearchUsersScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 

@@ -26,6 +26,11 @@
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.yeyamo.com",
+        "EXPO_PUBLIC_MESSAGING_WS_URL": "wss://api.yeyamo.com/ws/messaging"
+      },
       "android": {
         "buildType": "app-bundle"
       }

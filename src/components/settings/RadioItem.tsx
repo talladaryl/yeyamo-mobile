@@ -1,5 +1,4 @@
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 interface RadioItemProps {

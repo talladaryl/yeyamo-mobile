@@ -4,7 +4,6 @@ import { useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '@/components/ui/Icon';
-import { CTAButton } from '@/components/ui/CTAButton';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function PartnerPublicationScreen() {
@@ -13,7 +12,7 @@ export default function PartnerPublicationScreen() {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const captionRef = useRef('');
 
-  const pickImage = async (mediaTypes: Array<'images' | 'videos'> = ['images']) => {
+  const pickImage = async (mediaTypes: ('images' | 'videos')[] = ['images']) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes,
       allowsMultipleSelection: true,

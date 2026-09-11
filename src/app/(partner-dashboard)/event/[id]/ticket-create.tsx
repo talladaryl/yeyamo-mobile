@@ -1,4 +1,4 @@
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { isAxiosError } from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -49,8 +49,8 @@ export default function TicketCreateScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const mutation = useCreateTicketType(id);
-  const { control, handleSubmit, watch, setError, setValue, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults });
-  const preview = watch();
+  const { control, handleSubmit, setError, setValue, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: defaults });
+  const preview = useWatch({ control, defaultValue: defaults }) as FormValues;
   const goBack = () => router.canGoBack() ? router.back() : router.replace(`/(partner-dashboard)/event/${id}/tickets` as never);
 
   const submit = handleSubmit(async (values) => {

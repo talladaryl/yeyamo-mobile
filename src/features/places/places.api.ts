@@ -27,8 +27,8 @@ interface BackendPlace extends BackendPlaceSummary {
   phone: string | null;
   website: string | null;
   status: string;
-  media: Array<{ url: string }>;
-  schedules: Array<{ dayOfWeek: number; openTime: string; closeTime: string }>;
+  media: { url: string }[];
+  schedules: { dayOfWeek: number; openTime: string; closeTime: string }[];
 }
 
 export interface PlaceCategoryReference { id: number; name: string; active: boolean; }

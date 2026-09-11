@@ -22,7 +22,7 @@ export default function PlaceRouteScreen() {
     Number.isFinite(place?.lat) && Number.isFinite(place?.lng)
       ? { latitude: place!.lat!, longitude: place!.lng! }
       : null
-  ), [place?.lat, place?.lng]);
+  ), [place]);
   const [origin, setOrigin] = useState<Coordinate | null>(null);
   const [route, setRoute] = useState<Coordinate[]>([]);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);

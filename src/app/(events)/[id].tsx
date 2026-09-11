@@ -136,7 +136,7 @@ export default function EventDetailScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => router.push({ pathname: '/(bookings)/event/[id]' as never, params: { id: String(event.id), ticketId: ticket.id } } as never)}
+                    onPress={() => router.push({ pathname: '/(events)/[id]/checkout' as never, params: { id: String(event.id), ticketId: ticket.id } } as never)}
                     className="bg-[#EF4444] px-6 py-2.5 rounded-xl"
                   >
                     <Text className="font-semibold text-white">Participer</Text>

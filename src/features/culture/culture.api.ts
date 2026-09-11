@@ -47,7 +47,7 @@ export const cultureApi = {
   }),
   submitContribution: (id: string) => apiPost<CultureContent>(`/culture/contributions/${id}/submit`),
   myContributions: (page = 0, size = 20) => apiGet<SpringPage<CultureContent>>('/culture/contributions/me', { params: { page, size } }),
-  myChallenges: () => apiGet<Array<{ challengeId: string; joinedAt: string; completedAt: string | null }>>('/culture/challenges/me'),
+  myChallenges: () => apiGet<{ challengeId: string; joinedAt: string; completedAt: string | null }[]>('/culture/challenges/me'),
   relatedCulture: (id: string) => apiGet<CultureRelation[]>(`/culture-graph/cultures/${id}/explore`),
   relatedLanguage: (code: string) => apiGet<CultureRelation[]>(`/culture-graph/languages/${encodeURIComponent(code)}/related`),
   discover: (countryCode?: string | null, languageCode?: string | null) => apiGet<CultureRelation[]>('/culture-graph/discover', { params: query({ countryCode, languageCode }) }),

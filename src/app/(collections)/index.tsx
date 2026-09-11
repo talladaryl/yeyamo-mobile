@@ -1,5 +1,5 @@
 // ÉCRAN 1 - Liste des collections de l'utilisateur
-import { View, Text, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';

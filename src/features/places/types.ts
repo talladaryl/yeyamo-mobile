@@ -1,4 +1,5 @@
 import type { EntityId } from '@/types/api.types';
+import type { CashInOperator } from '@/features/payments/cash-in';
 
 export interface Place {
   id: EntityId;
@@ -111,6 +112,6 @@ export interface BackendBooking {
 export interface CreateActivityBookingInput {
   slotId: EntityId;
   quantity: number;
-  operator?: 'mtn' | 'orange';
+  operator?: CashInOperator;
   phoneNumber?: string;
 }

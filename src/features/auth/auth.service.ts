@@ -7,6 +7,7 @@ import type { AuthApiUser, AuthUser, LoginCredentials, RegisterCredentials, Soci
 import { useInterestsStore } from '@/features/interests/interests.store';
 import { registerTokenRefreshedHandler } from '@/services/api/client';
 import { synchronizePushToken, unregisterCurrentPushToken } from '@/features/notifications/push.service';
+import ENV from '@/config/env';
 
 function toAuthUser(user: AuthApiUser, displayName?: string): AuthUser {
   const identifier = user.email ?? user.phone ?? `user-${user.id}`;
@@ -69,6 +70,11 @@ export const authService = {
       if (token) {
         const storedMode = await secureStore.get(secureStore.KEYS.SESSION_MODE);
         if (storedMode === 'demo-user' || storedMode === 'demo-partner') {
+          if (ENV.APP_ENV === 'production') {
+            await secureStore.clearAuthSession();
+            useAuthStore.getState().clearAuth();
+            return;
+          }
           const mockUser = storedMode === 'demo-partner' ? MOCK_PARTNER_USER : MOCK_USER;
           useAuthStore.getState().setAuth(mockUser, MOCK_TOKEN, storedMode);
           return;
@@ -111,6 +117,7 @@ export const authService = {
   },
 
   async loginDemo(kind: 'user' | 'partner'): Promise<void> {
+    if (ENV.APP_ENV === 'production') throw new Error('DEMO_DISABLED_IN_PRODUCTION');
     await persistDemoSession(kind === 'partner' ? 'demo-partner' : 'demo-user');
   },
 

@@ -1,4 +1,4 @@
-﻿import fr from './locales/fr.json';
+import fr from './locales/fr.json';
 import en from './locales/en.json';
 
 const resources = {

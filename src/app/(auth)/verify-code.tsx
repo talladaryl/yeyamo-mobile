@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Button } from '@/components/ui/Button';
@@ -29,14 +29,13 @@ export default function VerifyCodeScreen() {
     control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<VerifyCodeForm>({
     resolver: zodResolver(verifyCodeSchema),
     defaultValues: { code: '' },
   });
 
-  const codeValue = watch('code');
+  const codeValue = useWatch({ control, name: 'code' });
 
   useEffect(() => {
     if (timer > 0) {

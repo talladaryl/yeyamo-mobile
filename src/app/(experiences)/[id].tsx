@@ -270,7 +270,7 @@ function Unavailable() {
   return <View className="flex-1 items-center justify-center px-8" style={{ backgroundColor: colors.background }}><Text className="text-center text-base" style={{ color: colors.text }}>Cette expérience n’est pas encore disponible.</Text></View>;
 }
 
-function CatalogExperienceDetail({ experience }: { experience: CatalogExperience }) {
+export function CatalogExperienceDetail({ experience }: { experience: CatalogExperience }) {
   const colors = useThemeStore((state) => state.colors);
   const router = useRouter();
   const location = [experience.city, experience.district, experience.address].filter((value): value is string => Boolean(value?.trim())).join(' · ');

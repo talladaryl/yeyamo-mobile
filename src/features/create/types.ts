@@ -130,5 +130,5 @@ export interface ArtworkDraft {
   availableQuantity?: number;
   internationalShipping?: boolean;
   customOrderAllowed?: boolean;
-  mediaIds: Array<{ mediaId: string; type: 'PRIMARY_IMAGE' | 'GALLERY_IMAGE' | 'VIDEO' | 'CREATION_PROCESS' | 'ARTISAN_AUDIO' | 'HISTORY_AUDIO' | 'CERTIFICATE'; displayOrder: number }>;
+  mediaIds: { mediaId: string; type: 'PRIMARY_IMAGE' | 'GALLERY_IMAGE' | 'VIDEO' | 'CREATION_PROCESS' | 'ARTISAN_AUDIO' | 'HISTORY_AUDIO' | 'CERTIFICATE'; displayOrder: number }[];
 }

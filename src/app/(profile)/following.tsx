@@ -1,6 +1,6 @@
 // ÉCRAN 3 - Liste des abonnements (Following)
 import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, FlatList, TextInput } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { UserListItem } from '@/components/social/UserListItem';

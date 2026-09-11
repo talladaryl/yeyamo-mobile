@@ -1,5 +1,5 @@
 import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import type { Control, FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,8 +31,8 @@ type ContributionValues = z.infer<typeof contributionSchema>;
 export default function CultureContributionScreen() {
   const router = useRouter(); const colors = useThemeStore((state) => state.colors); const countryCode = useCountryStore((state) => state.selectedCountryCode); const languageCode = useCountryStore((state) => state.preferredLanguageCode);
   const cultureEnabled = useCountryFeature('cultureModuleEnabled'); const contentPublishingEnabled = useCountryFeature('contentPublishingEnabled'); const languages = useCultureLanguages(); const create = useCreateCultureContribution(); const submit = useSubmitContribution();
-  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<ContributionValues>({ resolver: zodResolver(contributionSchema), defaultValues: { type: 'STORY', title: '', primaryLanguageCode: languageCode ?? '', communityName: '', summary: '', body: '', ingredients: [], steps: [], literalTranslation: '', meaning: '', originLanguageCode: '', audioUrl: '' } });
-  const ingredients = useFieldArray({ control, name: 'ingredients' }); const steps = useFieldArray({ control, name: 'steps' }); const type = watch('type'); const contentLanguage = watch('primaryLanguageCode');
+  const { control, handleSubmit, setValue, formState: { errors } } = useForm<ContributionValues>({ resolver: zodResolver(contributionSchema), defaultValues: { type: 'STORY', title: '', primaryLanguageCode: languageCode ?? '', communityName: '', summary: '', body: '', ingredients: [], steps: [], literalTranslation: '', meaning: '', originLanguageCode: '', audioUrl: '' } });
+  const ingredients = useFieldArray({ control, name: 'ingredients' }); const steps = useFieldArray({ control, name: 'steps' }); const type = useWatch({ control, name: 'type' }); const contentLanguage = useWatch({ control, name: 'primaryLanguageCode' });
   const publish = handleSubmit(async (values) => {
     if (!cultureEnabled || !contentPublishingEnabled) { Alert.alert('Contribution indisponible', 'La publication culturelle n’est pas activée pour ce pays.'); return; }
     if (!countryCode) { Alert.alert('Informations manquantes', 'Choisissez un pays dans vos préférences avant de publier.'); return; }

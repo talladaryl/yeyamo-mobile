@@ -104,10 +104,10 @@ export interface EventParticipation {
   event: UserEvent;
   status: 'confirmed' | 'pending' | 'cancelled';
   participants: unknown[];
-  participants_preview?: Array<{
+  participants_preview?: {
     id: EntityId;
     avatar_url: string | null;
-  }>;
+  }[];
   participants_count: number;
   total_participants?: number;
   joined_at: string;

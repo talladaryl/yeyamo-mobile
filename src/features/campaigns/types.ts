@@ -170,7 +170,7 @@ export interface CampaignAnalytics {
   cpm: number;
   cpa: number;
   points: CampaignAnalyticsPoint[];
-  cities: Array<{ label: string; percentage: number }>;
-  placements: Array<{ label: string; percentage: number }>;
-  devices: Array<{ label: string; percentage: number }>;
+  cities: { label: string; percentage: number }[];
+  placements: { label: string; percentage: number }[];
+  devices: { label: string; percentage: number }[];
 }

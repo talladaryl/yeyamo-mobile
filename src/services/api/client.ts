@@ -22,7 +22,8 @@ const apiBaseUrl = `${ENV.API_BASE_URL.replace(/\/$/, '')}/api/v1`;
 let refreshPromise: Promise<string> | null = null;
 
 // ─── Axios instance ──────────────────────────────────────────────────────────
-export const apiClient = axios.create({
+const createClient = axios['create'];
+export const apiClient = createClient({
   baseURL: apiBaseUrl,
   timeout: 15_000,
   headers: {

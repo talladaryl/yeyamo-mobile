@@ -33,7 +33,7 @@ async function loadNotifications(): Promise<NotificationsModule | null> {
 
 async function configureAndroidChannels(notifications: NotificationsModule) {
   if (Platform.OS !== 'android') return;
-  const channels: Array<[string, string, number]> = [
+  const channels: [string, string, number][] = [
     ['default', 'YeYamo', notifications.AndroidImportance.DEFAULT],
     ['messages', 'Messages', notifications.AndroidImportance.HIGH],
     ['social', 'Activité sociale', notifications.AndroidImportance.DEFAULT],

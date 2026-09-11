@@ -1,8 +1,9 @@
 import '../../global.css';
 import '@/i18n'; // Initialiser i18n
 import { useEffect } from 'react';
-import { Alert, AppState, Appearance, Platform, View } from 'react-native';
+import { Alert, AppState, Appearance, Platform, TouchableOpacity, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -228,7 +229,25 @@ function RootNavigator() {
         <Stack.Screen name="interests" />
         <Stack.Screen
           name="(post)/[id]"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+            headerShown: true,
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            headerTitle: 'Publication',
+            headerTitleStyle: { fontWeight: '600' },
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} className="ml-2">
+                <Ionicons name="close" size={28} color={colors.text} />
+              </TouchableOpacity>
+            ),
+            headerRight: () => (
+              <TouchableOpacity className="mr-2">
+                <Ionicons name="ellipsis-horizontal" size={24} color={colors.text} />
+              </TouchableOpacity>
+            ),
+          }}
         />
         <Stack.Screen
           name="(post)/[id]/comments"

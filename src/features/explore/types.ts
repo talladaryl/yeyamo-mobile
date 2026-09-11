@@ -1,5 +1,6 @@
 // ─── Explorer Types ─────────────────────────────────────────────────────────
 
+import type { EntityId } from '@/types/api.types';
 export type ExploreCategory = 
   | 'attractions' 
   | 'events' 
@@ -119,4 +120,3 @@ export interface UpcomingEvent {
   image_url?: string | null;
   attendees_count: number;
 }
-import type { EntityId } from '@/types/api.types';

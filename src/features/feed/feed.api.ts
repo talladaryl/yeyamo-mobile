@@ -1,5 +1,4 @@
 import { apiDelete, apiGet, apiPost, apiPut } from '@/services/api/client';
-import type { PaginatedResponse } from '@/types/api.types';
 import type { EntityId } from '@/types/api.types';
 import {
   createIdempotencyKey,
@@ -7,8 +6,7 @@ import {
   mediaContentUrl,
   toPaginatedResponse,
 } from '@/services/api/contracts';
-import type { FeedPost } from './types';
-import type { PostComment } from './types';
+import type { FeedPost , PostComment } from './types';
 
 interface BackendFeedItem {
   postId: string;

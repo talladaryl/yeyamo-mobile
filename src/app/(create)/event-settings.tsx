@@ -19,7 +19,7 @@ const mockParticipants = [
 
 export default function EventSettingsScreen() {
   const router = useRouter();
-  const { eventSettings, setEventSettings } = useCreateStore();
+  const { setEventSettings } = useCreateStore();
   
   const [visibility, setVisibility] = useState<'public' | 'friends' | 'close_friends'>('public');
   const [allowStrangers, setAllowStrangers] = useState(true);

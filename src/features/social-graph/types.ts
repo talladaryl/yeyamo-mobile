@@ -1,5 +1,6 @@
 // Types pour le système de badges et graphe social
 
+import type { EntityId } from '@/types/api.types';
 export type BadgeCategory = 'exploration' | 'culture' | 'gastronomy' | 'nature' | 'events' | 'community' | 'photography' | 'travel' | 'partner' | 'seasonal' | 'creation' | 'social' | 'contribution';
 export type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
 
@@ -58,4 +59,3 @@ export interface BadgeSummary {
   progress_percentage: number;
   is_unlocked: boolean;
 }
-import type { EntityId } from '@/types/api.types';

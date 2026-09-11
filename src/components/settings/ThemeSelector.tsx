@@ -1,4 +1,4 @@
-﻿import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '@/features/theme/theme.store';
 
@@ -9,12 +9,12 @@ interface ThemeSelectorProps {
 
 export function ThemeSelector({ value, onChange }: ThemeSelectorProps) {
   const colors = useThemeStore((state) => state.colors);
-  const themes: Array<{
+  const themes: {
     key: 'light' | 'dark' | 'system';
     label: string;
     description: string;
     icon: keyof typeof Ionicons.glyphMap;
-  }> = [
+  }[] = [
     { key: 'light', label: 'Clair', description: 'Interface lumineuse et lisible', icon: 'sunny' },
     { key: 'dark', label: 'Sombre', description: 'Interface sombre et élégante', icon: 'moon' },
     { key: 'system', label: 'Système', description: 'Suit le thème du téléphone', icon: 'phone-portrait' },

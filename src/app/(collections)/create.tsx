@@ -48,7 +48,7 @@ export default function CreateCollectionScreen() {
       });
 
       router.back();
-    } catch (error) {
+    } catch {
       Alert.alert('Erreur', 'Impossible de créer la collection');
     } finally {
       setIsSubmitting(false);

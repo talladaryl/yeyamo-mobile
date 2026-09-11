@@ -1,13 +1,12 @@
 // ÉCRAN 8 - Paramètres Social Graph
 import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { useSocialSettings, useUpdateSocialSettings } from '@/features/social/useSocial';
 import type { SocialSettings } from '@/features/social/types';
 
 export default function SocialSettingsScreen() {
-  const router = useRouter();
   const { data } = useSocialSettings();
   const updateSettings = useUpdateSocialSettings();
   const [settings, setSettings] = useState<SocialSettings | null>(null);

@@ -1,9 +1,17 @@
 import { useCallback, useState } from 'react';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 import ENV from '@/config/env';
 
 WebBrowser.maybeCompleteAuthSession();
+
+const platformClientId = Platform.select({
+  android: ENV.GOOGLE_ANDROID_CLIENT_ID,
+  ios: ENV.GOOGLE_IOS_CLIENT_ID,
+  default: ENV.GOOGLE_WEB_CLIENT_ID,
+});
+const missingClientIdMessage = `Connexion Google non configurée pour ${Platform.OS}.`;
 
 /** Requests an OpenID Connect ID token: the backend exchanges this exact token with Google. */
 export function useGoogleIdToken() {
@@ -12,11 +20,17 @@ export function useGoogleIdToken() {
     webClientId: ENV.GOOGLE_WEB_CLIENT_ID || undefined,
     iosClientId: ENV.GOOGLE_IOS_CLIENT_ID || undefined,
     androidClientId: ENV.GOOGLE_ANDROID_CLIENT_ID || undefined,
+    clientId: platformClientId || 'google-auth-not-configured',
     selectAccount: true,
   });
 
   const requestIdToken = useCallback(async (): Promise<string | null> => {
     setError(null);
+    if (!platformClientId) {
+      setError(missingClientIdMessage);
+      return null;
+    }
+
     const result = await promptAsync();
     if (result.type === 'cancel' || result.type === 'dismiss') return null;
     if (result.type !== 'success') {
@@ -31,5 +45,9 @@ export function useGoogleIdToken() {
     return idToken;
   }, [promptAsync]);
 
-  return { googleRequest: request, requestGoogleIdToken: requestIdToken, googleError: error };
+  return {
+    googleRequest: platformClientId ? request : null,
+    requestGoogleIdToken: requestIdToken,
+    googleError: error,
+  };
 }
