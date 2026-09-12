@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { PartnerPage } from '@/components/partner-dashboard/PartnerPage';
 import { StatCard } from '@/components/partner-dashboard/StatCard';
 import { trafficSources } from '@/features/partner-dashboard/mockData';
@@ -34,7 +34,6 @@ export default function StatisticsScreen() {
           </View>
         ))}
       </View> : null}
-      <TouchableOpacity className="items-center rounded-xl border p-4" style={{ borderColor: '#EF4444' }}><Text className="font-bold text-[#E60012]">Voir le rapport complet</Text></TouchableOpacity>
     </PartnerPage>
   );
 }

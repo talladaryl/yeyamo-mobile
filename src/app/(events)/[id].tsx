@@ -188,20 +188,10 @@ export default function EventDetailScreen() {
 
           {/* Participants Section */}
           <View className="mb-5">
-            <View className="flex-row items-center justify-between mb-3">
+            <View className="mb-3">
               <Text style={{ color: colors.text }} className=" text-lg font-bold">
                 Participants ({event.participants_count})
               </Text>
-              <TouchableOpacity
-                onPress={() =>
-                  Alert.alert(
-                    'Participants',
-                    'Liste complète disponible en mode démo lors du branchement backend.'
-                  )
-                }
-              >
-                <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
-              </TouchableOpacity>
             </View>
 
             <View className="flex-row items-center">

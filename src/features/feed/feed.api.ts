@@ -156,4 +156,11 @@ export const feedApi = {
       { parentId: null, body },
       { headers: { 'Idempotency-Key': createIdempotencyKey() } },
     )),
+
+  recordShare: (postId: EntityId) =>
+    apiPost<void>(
+      `/interactions/posts/${postId}/shares`,
+      { channel: 'NATIVE_SHARE' },
+      { headers: { 'Idempotency-Key': createIdempotencyKey() } },
+    ),
 };

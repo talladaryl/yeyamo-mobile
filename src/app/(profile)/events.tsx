@@ -5,9 +5,11 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { EventParticipantItem } from '@/components/profile/EventParticipantItem';
 import { useUserEvents } from '@/features/profile/useProfile';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function EventsScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const { data: events, isLoading } = useUserEvents();
 
   const handleCreateEvent = () => {
@@ -20,12 +22,10 @@ export default function EventsScreen() {
       <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-[#18181B] dark:text-white">Mes sorties</Text>
-          <TouchableOpacity className="p-2">
-            <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View className="w-10" />
         </View>
       </View>
 

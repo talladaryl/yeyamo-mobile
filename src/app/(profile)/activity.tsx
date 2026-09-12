@@ -5,11 +5,13 @@ import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { ActivityItem } from '@/components/social/ActivityItem';
 import { useNetworkActivity } from '@/features/social/useSocial';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 type ActivityFilter = 'all' | 'likes' | 'comments' | 'follows' | 'posts';
 
 export default function ActivityScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [filter, setFilter] = useState<ActivityFilter>('all');
 
   const { data: activities = [] } = useNetworkActivity();
@@ -34,12 +36,12 @@ export default function ActivityScreen() {
   ];
 
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Activité',
         }}
       />

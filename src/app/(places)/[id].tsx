@@ -1,4 +1,4 @@
-import { ActivityIndicator, Modal, View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
+import { ActivityIndicator, Alert, Modal, View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
@@ -7,6 +7,7 @@ import { useThemeStore } from '@/features/theme/theme.store';
 import { usePlaceDetail } from '@/features/places/usePlaces';
 import { usePlaceActivities } from '@/features/places/usePlaceActivities';
 import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
+import { reviewsApi, usePublicReviews } from '@/features/reviews/reviews.api';
 
 const { width } = Dimensions.get('window');
 
@@ -19,6 +20,7 @@ export default function PlaceDetailScreen() {
   const favorite = useInteractionStatus('PLACE', id);
   const toggleFavorite = useToggleInteraction('PLACE', id);
   const [activityPickerOpen, setActivityPickerOpen] = useState(false);
+  const verifiedReviews = usePublicReviews('PLACE', id);
 
   if (isLoading || !place) {
     return (
@@ -106,8 +108,8 @@ export default function PlaceDetailScreen() {
           {/* Rating */}
           <View className="flex-row items-center gap-1 mb-4">
             <Ionicons name="star" size={18} color="#F59E0B" />
-            <Text style={{ color: colors.text }} className=" text-base font-semibold">{place.rating?.toFixed(1)}</Text>
-            <Text style={{ color: colors.textSecondary }} className=" text-sm">({place.reviews_count} avis)</Text>
+            <Text style={{ color: colors.text }} className=" text-base font-semibold">{verifiedReviews.aggregate.data?.averageRating?.toFixed(1) ?? place.rating?.toFixed(1) ?? '—'}</Text>
+            <Text style={{ color: colors.textSecondary }} className=" text-sm">({verifiedReviews.aggregate.data?.count ?? place.reviews_count ?? 0} avis)</Text>
           </View>
 
           {/* Address */}
@@ -164,19 +166,20 @@ export default function PlaceDetailScreen() {
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity onPress={() => router.push(`/(profile)/create-review/PLACE/${place.id}`)} className="mb-4 self-start rounded-xl border px-3 py-2" style={{ borderColor: colors.primary }}><Text className="text-sm font-semibold" style={{ color: colors.primary }}>Laisser un avis vérifié</Text></TouchableOpacity>
 
-            {place.recent_reviews?.map((review) => (
+            {(verifiedReviews.reviews.data?.content ?? place.recent_reviews ?? []).map((review: any) => (
               <View key={review.id} className="mb-4">
                 <View className="flex-row items-start gap-3">
                   <Image
-                    source={{ uri: review.user_avatar }}
+                    source={{ uri: review.user_avatar || '' }}
                     style={{ width: 40, height: 40 }}
                     className="rounded-full"
                   />
                   <View className="flex-1">
                     <View className="flex-row items-center justify-between mb-1">
-                      <Text style={{ color: colors.text }} className=" font-semibold">{review.user_name}</Text>
-                      <Text style={{ color: colors.textSecondary }} className=" text-xs">{review.date}</Text>
+                      <Text style={{ color: colors.text }} className=" font-semibold">{review.user_name || 'Utilisateur vérifié'}</Text>
+                      <Text style={{ color: colors.textSecondary }} className=" text-xs">{review.date || new Date(review.createdAt).toLocaleDateString('fr-FR')}</Text>
                     </View>
                     <View className="flex-row items-center gap-1 mb-2">
                       {[...Array(5)].map((_, i) => (
@@ -188,10 +191,11 @@ export default function PlaceDetailScreen() {
                         />
                       ))}
                     </View>
-                    <Text style={{ color: colors.textSecondary }} className=" text-sm leading-5">{review.comment}</Text>
+                    {review.comment ? <Text style={{ color: colors.textSecondary }} className=" text-sm leading-5">{review.comment}</Text> : null}
+                    {review.userId ? <TouchableOpacity onPress={() => void reviewsApi.report(String(review.id)).then(() => Alert.alert('Signalement envoyé', 'Cet avis a été transmis à la modération.')).catch((error) => Alert.alert('Signalement impossible', error instanceof Error ? error.message : 'Réessayez plus tard.'))} className="mt-2 self-start"><Text className="text-xs font-semibold text-[#EF4444]">Signaler</Text></TouchableOpacity> : null}
                     {review.photos && review.photos.length > 0 && (
                       <View className="flex-row gap-2 mt-2">
-                        {review.photos.map((photo, idx) => (
+                        {review.photos.map((photo: string, idx: number) => (
                           <Image
                             key={idx}
                             source={{ uri: photo }}

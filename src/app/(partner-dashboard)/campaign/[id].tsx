@@ -139,7 +139,7 @@ export default function CampaignDetailScreen() {
 
 function Header({ title, subtitle, onBack }: { title: string; subtitle: string; onBack: () => void }) {
   const colors = useThemeStore((state) => state.colors);
-  return <View className="flex-row items-center px-4 pb-3 pt-2"><TouchableOpacity onPress={onBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="arrow-back" size={22} color={colors.text} /></TouchableOpacity><View className="min-w-0 flex-1"><Text numberOfLines={1} className="text-xl font-extrabold" style={{ color: colors.text }}>{title}</Text><Text className="text-xs font-semibold text-[#EF4444]">{subtitle}</Text></View><TouchableOpacity accessibilityLabel="Actions de la campagne" className="h-10 w-10 items-center justify-center"><Icon name="ellipsis-vertical" size={21} color={colors.text} /></TouchableOpacity></View>;
+  return <View className="flex-row items-center px-4 pb-3 pt-2"><TouchableOpacity onPress={onBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="arrow-back" size={22} color={colors.text} /></TouchableOpacity><View className="min-w-0 flex-1"><Text numberOfLines={1} className="text-xl font-extrabold" style={{ color: colors.text }}>{title}</Text><Text className="text-xs font-semibold text-[#EF4444]">{subtitle}</Text></View></View>;
 }
 
 function ActionRow({ campaign, pending, onEdit, onSubmit, onPause, onResume, onCancel }: { campaign: Campaign; pending: boolean; onEdit: () => void; onSubmit: () => void; onPause: () => void; onResume: () => void; onCancel: () => void }) {

@@ -27,6 +27,25 @@ export interface PartnerAnalyticsPoint {
   totalCheckIns: number;
 }
 
+export interface ArtisanAnalytics {
+  artisanId: string;
+  period: { days: number; from: string; to: string };
+  dataAvailable: boolean;
+  totalSales: number | null;
+  revenue: number | null;
+  totalViews: number | null;
+  newFollowers: number | null;
+  dailyKpis: Array<{
+    date: string;
+    sales: number | null;
+    revenue: number | null;
+    totalViews: number | null;
+    newFollowers: number | null;
+    engagementRate: number | null;
+    reachCountries: number | null;
+  }>;
+}
+
 export interface CreatePartnerInput {
   legalName: string;
   tradeName: string | null;
@@ -46,4 +65,6 @@ export const partnerApi = {
   submit: () => apiPost<PartnerProfile>('/partners/me/submit'),
   analytics: (partnerId: string) =>
     apiGet<PartnerAnalyticsPoint[]>(`/analytics/partners/${partnerId}/dashboard`),
+  artisanAnalytics: (periodDays: 7 | 30 | 90) =>
+    apiGet<ArtisanAnalytics>(`/analytics/artisans/me?periodDays=${periodDays}`),
 };

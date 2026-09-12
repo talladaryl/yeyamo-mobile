@@ -1,7 +1,7 @@
 import { apiDelete, apiGet, apiPost } from '@/services/api/client';
 
 export type InteractionTarget = 'PLACE' | 'EVENT' | 'EXPERIENCE' | 'ARTWORK' | 'CULTURE_CONTENT' | 'ARTISAN';
-export type InteractionType = 'FAVORITE' | 'LIKE' | 'COMMENT';
+export type InteractionType = 'FAVORITE' | 'LIKE' | 'COMMENT' | 'FOLLOW';
 
 export interface GenericInteraction {
   id: string;
@@ -26,4 +26,6 @@ export const genericInteractionsApi = {
     apiGet<GenericInteraction[]>(`/interactions/${target}/${encodeURIComponent(targetId)}/comments`),
   comment: (target: InteractionTarget, targetId: string, body: string) =>
     apiPost<GenericInteraction>(`/interactions/${target}/${encodeURIComponent(targetId)}/COMMENT`, { body }),
+  mine: (target: InteractionTarget, type: InteractionType, limit = 50) =>
+    apiGet<GenericInteraction[]>(`/interactions/${target}/${type}/me`, { params: { limit } }),
 };

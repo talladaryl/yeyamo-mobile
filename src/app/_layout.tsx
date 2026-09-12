@@ -242,11 +242,6 @@ function RootNavigator() {
                 <Ionicons name="close" size={28} color={colors.text} />
               </TouchableOpacity>
             ),
-            headerRight: () => (
-              <TouchableOpacity className="mr-2">
-                <Ionicons name="ellipsis-horizontal" size={24} color={colors.text} />
-              </TouchableOpacity>
-            ),
           }}
         />
         <Stack.Screen
@@ -335,6 +330,7 @@ function RootNavigator() {
         <Stack.Screen name="(profile)/events" />
         <Stack.Screen name="(profile)/reservations" />
         <Stack.Screen name="(profile)/reviews" />
+        <Stack.Screen name="(profile)/create-review/[targetType]/[targetId]" />
         <Stack.Screen name="(profile)/notifications" />
         <Stack.Screen name="(profile)/settings" />
         <Stack.Screen name="(profile)/help" />

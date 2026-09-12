@@ -15,9 +15,13 @@ export interface CreateEventForm {
   title: string;
   description: string;
   cover_image_url: string | null;
+  cover_image_mime_type?: string | null;
   location: string;
+  latitude?: string;
+  longitude?: string;
   date: string;
   time: string;
+  end_time: string;
   max_participants: number;
   share_to_feed: boolean;
 }

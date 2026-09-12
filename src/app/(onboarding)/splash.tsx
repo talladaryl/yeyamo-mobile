@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Asset } from 'expo-asset';
+import { useCallback, useEffect, useRef } from 'react';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
-
-const logoAnimationAsset = require('../../../assets/yeyamo_logo_animation.html');
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function SplashScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.92)).current;
   const hasNavigated = useRef(false);
-  const [animationHtml, setAnimationHtml] = useState<string>();
 
   const continueToOnboarding = useCallback(() => {
     if (hasNavigated.current) return;
@@ -19,63 +18,89 @@ export default function SplashScreen() {
   }, [router]);
 
   useEffect(() => {
-    let isMounted = true;
+    const animation = Animated.sequence([
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 350,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 450,
+          easing: Easing.out(Easing.back(1.2)),
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.delay(1_050),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 400,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]);
 
-    const loadAnimation = async () => {
-      const asset = await Asset.fromModule(logoAnimationAsset).downloadAsync();
-      const response = await fetch(asset.localUri ?? asset.uri);
-      const html = await response.text();
-
-      if (isMounted) setAnimationHtml(html);
-    };
-
-    loadAnimation().catch((error) => {
-      console.error('Unable to load the Yeyamo logo animation.', error);
+    animation.start(({ finished }) => {
+      if (finished) continueToOnboarding();
     });
 
-    const timer = setTimeout(continueToOnboarding, 30_000);
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-    };
-  }, [continueToOnboarding]);
+    return () => animation.stop();
+  }, [continueToOnboarding, opacity, scale]);
 
   return (
-    <View className="flex-1 bg-white">
-      <SafeAreaView className="flex-1 bg-white">
-        <TouchableOpacity
-          className="flex-1"
-          onPress={continueToOnboarding}
-          activeOpacity={1}
-          accessibilityLabel="Commencer l'onboarding"
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={styles.screen}>
+        <Animated.View
+          accessibilityLabel="Yeyamo"
+          accessibilityRole="image"
+          style={[styles.logo, { opacity, transform: [{ scale }] }]}
         >
-          {animationHtml ? (
-            <WebView
-              pointerEvents="none"
-              originWhitelist={['*']}
-              source={{ html: animationHtml }}
-              javaScriptEnabled
-              scrollEnabled={false}
-              showsHorizontalScrollIndicator={false}
-              showsVerticalScrollIndicator={false}
-              style={styles.animation}
-            />
-          ) : (
-            <View className="flex-1 bg-white" />
-          )}
-
-          <View className="absolute bottom-6 left-0 right-0 items-center">
-            <Text className="text-xs text-[#71717A]">Touchez pour continuer</Text>
+          <View style={styles.mark}>
+            <Text style={styles.markLetter}>Y</Text>
           </View>
-        </TouchableOpacity>
+          <Text style={styles.wordmark}>Yeyamo</Text>
+          <Text style={[styles.tagline, { color: colors.textSecondary }]}>Je découvre mon pays</Text>
+        </Animated.View>
       </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  animation: {
+  screen: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mark: {
+    width: 104,
+    height: 104,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 52,
+    backgroundColor: '#E02020',
+  },
+  markLetter: {
+    color: '#FFFFFF',
+    fontSize: 58,
+    fontWeight: '800',
+  },
+  wordmark: {
+    marginTop: 16,
+    color: '#E02020',
+    fontSize: 42,
+    fontWeight: '800',
+    letterSpacing: -2,
+  },
+  tagline: {
+    marginTop: 3,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

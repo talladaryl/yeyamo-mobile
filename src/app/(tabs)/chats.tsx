@@ -66,11 +66,6 @@ export default function ChatsScreen() {
           <Text className="text-3xl font-extrabold" style={{ color: colors.text }}>Boîte de réception</Text>
           <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>Messages, activités et informations Yeyamo</Text>
         </View>
-        {inboxSection === 'messages' ? (
-          <TouchableOpacity className="h-11 w-11 items-center justify-center rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }} accessibilityLabel="Filtrer les conversations">
-            <Icon name="options-outline" size={22} color={colors.text} />
-          </TouchableOpacity>
-        ) : null}
       </View>
 
       <View className="mx-4 my-2 flex-row rounded-2xl p-1" style={{ backgroundColor: colors.elevated }}>

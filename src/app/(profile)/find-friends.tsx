@@ -1,22 +1,27 @@
-// ÉCRAN 6 - Suggestions d'amis (via contacts)
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+// ÉCRAN 6 - Suggestions d'amis
+import { useState } from 'react';
+import { View, Text, FlatList } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { SuggestionCard } from '@/components/social/SuggestionCard';
 import { useFollowActions, useFriendSuggestions } from '@/features/social/useSocial';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function FindFriendsScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const { data: friendSuggestions = [] } = useFriendSuggestions();
   const { follow } = useFollowActions();
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const visibleSuggestions = friendSuggestions.filter((item) => !dismissedIds.includes(String(item.id)));
 
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: "Trouver des amis",
         }}
       />
@@ -25,26 +30,9 @@ export default function FindFriendsScreen() {
       <View className="px-4 py-4 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <Text className="mb-1 text-lg font-bold text-[#18181B] dark:text-white">Trouvez vos amis</Text>
         <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">
-          Connectez-vous avec vos contacts et amis en commun
+          Découvrez les suggestions calculées par Yeyamo
         </Text>
       </View>
-
-      {/* Sync Contacts Button */}
-      <TouchableOpacity
-        className="mx-4 my-3 bg-[#EF4444] rounded-xl p-4 flex-row items-center justify-between"
-        activeOpacity={0.8}
-      >
-        <View className="flex-row items-center gap-3">
-          <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
-            <Icon library="ionicons" name="phone-portrait" size={24} color="#FFFFFF" />
-          </View>
-          <View>
-            <Text className="text-white font-bold text-base">Synchroniser les contacts</Text>
-            <Text className="text-white/80 text-xs">Trouvez qui est sur Yeyamo</Text>
-          </View>
-        </View>
-        <Icon library="ionicons" name="chevron-forward" size={20} color="#FFFFFF" />
-      </TouchableOpacity>
 
       {/* Suggestions List */}
       <View className="px-4 py-2">
@@ -52,21 +40,21 @@ export default function FindFriendsScreen() {
       </View>
 
       <FlatList
-        data={friendSuggestions}
+        data={visibleSuggestions}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <SuggestionCard
             user={item}
             onPress={() => router.push(`/(profile)/${item.username}`)}
             onFollowPress={() => follow.mutate(item.id)}
-            onDismiss={() => console.log('Dismiss', item.username)}
+            onDismiss={() => setDismissedIds((current) => [...current, String(item.id)])}
           />
         )}
         ListEmptyComponent={
           <View className="items-center justify-center py-12">
             <Icon library="ionicons" name="people-circle-outline" size={64} color="#27272A" />
             <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-4 text-center px-8">
-              Synchronisez vos contacts pour trouver vos amis
+              Aucune suggestion disponible pour le moment.
             </Text>
           </View>
         }

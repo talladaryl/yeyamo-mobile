@@ -1,4 +1,4 @@
-import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,6 +68,17 @@ export default function PostDetailScreen() {
     }
   };
 
+  const handleShare = async () => {
+    const result = await Share.share({ message: `https://yeyamo.com/posts/${id}` });
+    if (result.action === Share.sharedAction) {
+      try {
+        await feedApi.recordShare(id);
+      } catch {
+        // The native share succeeded; analytics failure must not mislead the user.
+      }
+    }
+  };
+
   if (isLoading || !post) {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
@@ -97,9 +108,6 @@ export default function PostDetailScreen() {
               <Text className="text-xs" style={{ color: colors.textSecondary }}>{post.created_at}</Text>
             </View>
           </View>
-          <TouchableOpacity>
-            <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
         </View>
 
         {/* Post Image */}
@@ -124,7 +132,7 @@ export default function PostDetailScreen() {
               <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
               <Text className="font-semibold" style={{ color: colors.text }}>{post.comments_count}</Text>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => void handleShare()} accessibilityLabel="Partager la publication">
               <Ionicons name="paper-plane-outline" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
@@ -181,19 +189,6 @@ export default function PostDetailScreen() {
                 </View>
                 <View className="flex-row items-center gap-4 mt-1 ml-3">
                   <Text className="text-xs" style={{ color: colors.textSecondary }}>{commentItem.created_at}</Text>
-                  <TouchableOpacity>
-                    <Text className="text-xs font-semibold" style={{ color: colors.textSecondary }}>Répondre</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity className="flex-row items-center gap-1">
-                    <Ionicons 
-                      name={commentItem.is_liked ? 'heart' : 'heart-outline'} 
-                      size={12} 
-                      color={commentItem.is_liked ? '#EF4444' : colors.textSecondary}
-                    />
-                    {commentItem.likes_count > 0 && (
-                      <Text className="text-xs" style={{ color: colors.textSecondary }}>{commentItem.likes_count}</Text>
-                    )}
-                  </TouchableOpacity>
                 </View>
               </View>
             </View>

@@ -5,9 +5,11 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FavoritePlaceCard } from '@/components/profile/FavoritePlaceCard';
 import { useUserFavorites } from '@/features/profile/useProfile';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function FavoritesScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const { data: favorites, isLoading } = useUserFavorites();
 
   return (
@@ -16,12 +18,10 @@ export default function FavoritesScreen() {
       <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text className="text-[#18181B] dark:text-white text-xl font-bold">Mes favoris</Text>
-          <TouchableOpacity className="p-2">
-            <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View className="w-10" />
         </View>
       </View>
 

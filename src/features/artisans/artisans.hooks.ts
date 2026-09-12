@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { toSpringPage } from '@/services/api/contracts';
 import { artworksApi } from '@/features/artworks/artworks.api';
+import { genericInteractionsApi } from '@/features/interactions/generic-interactions.api';
 import { demoArtworks } from '@/features/artworks/artworks.demo';
 import { artisansApi } from './artisans.api';
 import { demoArtisan, demoArtisans } from './artisans.demo';
@@ -14,3 +15,4 @@ export function useArtisanSpecialties() { const demo = useDemo(); return useQuer
 export function useArtisanArtworks(id?: string) { const demo = useDemo(); return useQuery({ queryKey: artisanKeys.artworks(id ?? ''), enabled: Boolean(id), queryFn: () => demo ? Promise.resolve(toSpringPage(demoArtworks.filter((item) => item.artisanPartnerId === id))) : artworksApi.byArtisan(id!) }); }
 export function useMyArtisan() { const demo = useDemo(); return useQuery({ queryKey: [...artisanKeys.all, 'me'], queryFn: () => demo ? Promise.resolve(demoArtisan) : artisansApi.myProfile() }); }
 export function useCreateMyArtisan() { const demo = useDemo(); return useMutation({ mutationFn: (input: import('./artisans.api').ArtisanProfileInput) => demo ? Promise.reject(new Error('Compte démo')) : artisansApi.createMyProfile(input) }); }
+export function useFollowedArtisans() { const demo = useDemo(); return useQuery({ queryKey: [...artisanKeys.all, 'followed'], queryFn: async () => { if (demo) return demoArtisans; const interactions = await genericInteractionsApi.mine('ARTISAN', 'FOLLOW', 100); return Promise.all(interactions.map((interaction) => artisansApi.detail(interaction.targetId))); } }); }

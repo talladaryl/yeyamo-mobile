@@ -1,16 +1,19 @@
 import { useRef, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '@/components/ui/Icon';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useCreatePost, useUploadMedia } from '@/features/post/usePost';
 
 export default function PartnerPublicationScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const captionRef = useRef('');
+  const uploadMedia = useUploadMedia();
+  const createPost = useCreatePost();
 
   const pickImage = async (mediaTypes: ('images' | 'videos')[] = ['images']) => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -37,9 +40,27 @@ export default function PartnerPublicationScreen() {
     }
   };
 
-  const handlePublish = () => {
-    console.log('Publishing partner post');
-    router.back();
+  const handlePublish = async () => {
+    if (!selectedImages.length || uploadMedia.isPending || createPost.isPending) return;
+    try {
+      const mediaIds = await Promise.all(selectedImages.map(async (uri, index) => {
+        const formData = new FormData();
+        formData.append('file', {
+          uri,
+          name: `partner-publication-${index}.jpg`,
+          type: 'image/jpeg',
+        } as unknown as Blob);
+        return (await uploadMedia.mutateAsync(formData)).data.id;
+      }));
+      await createPost.mutateAsync({
+        type: 'image',
+        caption: captionRef.current,
+        media_ids: mediaIds,
+      });
+      router.back();
+    } catch {
+      Alert.alert('Publication impossible', 'Les médias ou la publication n’ont pas pu être envoyés.');
+    }
   };
 
   return (
@@ -57,8 +78,8 @@ export default function PartnerPublicationScreen() {
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <TouchableOpacity onPress={handlePublish} className="mr-4">
-              <Text className="text-[#EF4444] text-base font-semibold">Publier</Text>
+            <TouchableOpacity onPress={() => void handlePublish()} disabled={!selectedImages.length || uploadMedia.isPending || createPost.isPending} className="mr-4">
+              <Text className="text-[#EF4444] text-base font-semibold" style={{ opacity: !selectedImages.length || uploadMedia.isPending || createPost.isPending ? 0.45 : 1 }}>{uploadMedia.isPending || createPost.isPending ? 'Envoi…' : 'Publier'}</Text>
             </TouchableOpacity>
           ),
         }}

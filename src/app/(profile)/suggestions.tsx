@@ -1,22 +1,27 @@
 // ÉCRAN 5 - Suggestions à suivre
+import { useState } from 'react';
 import { View, Text, FlatList } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { SuggestionCard } from '@/components/social/SuggestionCard';
 import { useFollowActions, useSocialSuggestions } from '@/features/social/useSocial';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function SuggestionsScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const { data: suggestions = [] } = useSocialSuggestions();
   const { follow } = useFollowActions();
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const visibleSuggestions = suggestions.filter((item) => !dismissedIds.includes(String(item.id)));
 
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Suggestions à suivre',
         }}
       />
@@ -31,14 +36,14 @@ export default function SuggestionsScreen() {
 
       {/* Suggestions List */}
       <FlatList
-        data={suggestions}
+        data={visibleSuggestions}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <SuggestionCard
             user={item}
             onPress={() => router.push(`/(profile)/${item.username}`)}
             onFollowPress={() => follow.mutate(item.id)}
-            onDismiss={() => console.log('Dismiss', item.username)}
+            onDismiss={() => setDismissedIds((current) => [...current, String(item.id)])}
           />
         )}
         ListEmptyComponent={

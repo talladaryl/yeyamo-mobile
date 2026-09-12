@@ -6,9 +6,10 @@ import type { UserReview } from '@/features/profile/types';
 interface UserReviewCardProps {
   review: UserReview;
   onPress: () => void;
+  onDelete?: () => void;
 }
 
-export function UserReviewCard({ review, onPress }: UserReviewCardProps) {
+export function UserReviewCard({ review, onPress, onDelete }: UserReviewCardProps) {
   const formattedDate = new Date(review.created_at).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'short',
@@ -62,6 +63,7 @@ export function UserReviewCard({ review, onPress }: UserReviewCardProps) {
             </Text>
           </View>
         )}
+        {onDelete ? <TouchableOpacity onPress={onDelete} className="ml-auto"><Text className="text-xs font-semibold text-[#EF4444]">Supprimer</Text></TouchableOpacity> : null}
       </View>
     </TouchableOpacity>
   );

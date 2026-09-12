@@ -52,11 +52,6 @@ export default function PlacesListScreen() {
               <Icon library="ionicons" name="arrow-back" size={28} color={colors.text} />
             </TouchableOpacity>
           ),
-          headerRight: () => (
-            <TouchableOpacity className="pr-4">
-              <Icon library="ionicons" name="ellipsis-vertical" size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
         }}
       />
 

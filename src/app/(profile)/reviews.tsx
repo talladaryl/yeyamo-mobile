@@ -1,17 +1,28 @@
 // ÉCRAN 6 - Mes avis
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { Alert, View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { UserReviewCard } from '@/components/profile/UserReviewCard';
 import { useUserReviews } from '@/features/profile/useProfile';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { reviewsApi } from '@/features/reviews/reviews.api';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function ReviewsScreen() {
   const router = useRouter();
-  const { data: reviews, isLoading } = useUserReviews();
+  const colors = useThemeStore((state) => state.colors);
+  const { data: reviews, isLoading, refetch } = useUserReviews();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+
+  const remove = (reviewId: string) => {
+    Alert.alert('Supprimer cet avis ?', 'Cette action retire votre avis public.', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Supprimer', style: 'destructive', onPress: () => void reviewsApi.remove(reviewId).then(() => refetch()).catch((error) => Alert.alert('Suppression impossible', error instanceof Error ? error.message : 'Réessayez plus tard.')) },
+    ]);
+  };
 
   const handleWriteReview = () => {
-    // TODO: Implémenter la navigation vers le formulaire d'avis
     router.push('/(explore)/places');
   };
 
@@ -21,12 +32,10 @@ export default function ReviewsScreen() {
       <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-[#18181B] dark:text-white">Mes avis</Text>
-          <TouchableOpacity className="p-2">
-            <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View className="w-10" />
         </View>
       </View>
 
@@ -44,6 +53,7 @@ export default function ReviewsScreen() {
             <UserReviewCard
               review={item}
               onPress={() => router.push(`/(places)/${item.place.id}`)}
+              onDelete={isDemo ? undefined : () => remove(String(item.id))}
             />
           )}
         />
@@ -67,7 +77,7 @@ export default function ReviewsScreen() {
           activeOpacity={0.8}
         >
           <Ionicons name="create-outline" size={24} color="#FFFFFF" />
-          <Text className="text-white font-bold text-base ml-2">Écrire un avis</Text>
+          <Text className="text-white font-bold text-base ml-2">Choisir un lieu à évaluer</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

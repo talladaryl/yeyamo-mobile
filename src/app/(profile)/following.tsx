@@ -5,9 +5,11 @@ import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { UserListItem } from '@/components/social/UserListItem';
 import { useFollowActions, useFollowing } from '@/features/social/useSocial';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function FollowingScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: following = [] } = useFollowing();
@@ -22,12 +24,12 @@ export default function FollowingScreen() {
     : following;
 
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Abonnements',
         }}
       />
@@ -40,7 +42,7 @@ export default function FollowingScreen() {
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Rechercher dans les abonnements..."
-            placeholderTextColor="#A1A1AA"
+            placeholderTextColor={colors.textMuted}
             className="flex-1 text-[#18181B] dark:text-white text-sm"
           />
         </View>

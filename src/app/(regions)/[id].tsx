@@ -45,11 +45,6 @@ export default function RegionDetailScreen() {
               <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           ),
-          headerRight: () => (
-            <TouchableOpacity className="mr-4 bg-black/50 w-10 h-10 rounded-full items-center justify-center">
-              <Icon library="ionicons" name="ellipsis-vertical" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          ),
         }}
       />
 

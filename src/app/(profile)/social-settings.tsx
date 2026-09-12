@@ -5,21 +5,29 @@ import { Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { useSocialSettings, useUpdateSocialSettings } from '@/features/social/useSocial';
 import type { SocialSettings } from '@/features/social/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function SocialSettingsScreen() {
   const { data } = useSocialSettings();
   const updateSettings = useUpdateSocialSettings();
+  const colors = useThemeStore((state) => state.colors);
   const [settings, setSettings] = useState<SocialSettings | null>(null);
 
   useEffect(() => {
     if (data) setSettings(data);
   }, [data]);
 
-  const updatePrivacy = (key: keyof SocialSettings['privacy'], value: any) => {
+  function updatePrivacy<Key extends keyof SocialSettings['privacy']>(key: Key, value: SocialSettings['privacy'][Key]) {
     if (!settings) return;
     const next = { ...settings, privacy: { ...settings.privacy, [key]: value } };
     setSettings(next);
     updateSettings.mutate({ privacy: next.privacy });
+  }
+
+  const cycleProfileVisibility = () => {
+    const order: SocialSettings['privacy']['profile_visibility'][] = ['public', 'followers', 'private'];
+    const current = order.indexOf(settings?.privacy.profile_visibility ?? 'public');
+    updatePrivacy('profile_visibility', order[(current + 1) % order.length]);
   };
 
   const updateNotifications = (key: keyof SocialSettings['notifications'], value: boolean) => {
@@ -39,12 +47,12 @@ export default function SocialSettingsScreen() {
   if (!settings) return null;
 
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitle: 'Paramètres réseau social',
         }}
       />
@@ -57,6 +65,7 @@ export default function SocialSettingsScreen() {
           {/* Profile Visibility */}
           <View className="bg-white dark:bg-[#161616] mx-4 rounded-xl overflow-hidden mb-3">
             <TouchableOpacity
+              onPress={cycleProfileVisibility}
               className="flex-row items-center justify-between p-4"
               activeOpacity={0.7}
             >
@@ -245,24 +254,6 @@ export default function SocialSettingsScreen() {
               />
             </View>
           </View>
-        </View>
-
-        {/* Blocked Users */}
-        <View className="mt-6 mb-6">
-          <Text className="text-[#18181B] dark:text-white font-bold text-base px-4 mb-3">Comptes bloqués</Text>
-
-          <TouchableOpacity
-            className="bg-white dark:bg-[#161616] mx-4 rounded-xl p-4 flex-row items-center justify-between"
-            activeOpacity={0.7}
-          >
-            <View className="flex-row items-center gap-3">
-              <View className="w-10 h-10 bg-[#F4F4F5] dark:bg-[#27272A] rounded-full items-center justify-center">
-                <Icon library="ionicons" name="ban" size={20} color="#EF4444" />
-              </View>
-              <Text className="text-[#18181B] dark:text-white font-semibold text-sm">Utilisateurs bloqués</Text>
-            </View>
-            <Icon library="ionicons" name="chevron-forward" size={20} color="#A1A1AA" />
-          </TouchableOpacity>
         </View>
 
         {/* Spacer for bottom safe area */}

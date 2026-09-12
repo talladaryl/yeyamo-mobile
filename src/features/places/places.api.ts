@@ -35,6 +35,7 @@ export interface PlaceCategoryReference { id: number; name: string; active: bool
 export interface PlaceRegionReference { id: number; name: string; active: boolean; }
 export interface PlaceCityReference { id: string; regionId: number; name: string; active: boolean; }
 export interface CreatePlaceInput { partnerId: string; categoryId: number; regionId: number; cityId: string; name: string; latitude: number; longitude: number; address?: string; phone?: string; website?: string; status: 'DRAFT' | 'PENDING'; }
+export interface PlaceSuggestionInput { name: string; address: string; description?: string; category?: string; placeType?: string; region?: string; latitude: number; longitude: number; }
 export interface PartnerPlaceReference { id: string; name: string; status: 'PUBLISHED'; }
 export interface PartnerPlacePage {
   content: PartnerPlaceReference[];
@@ -84,6 +85,8 @@ export const placesApi = {
   cities: (regionId: number) => apiGet<PlaceCityReference[]>(`/cities/region/${regionId}`),
   myPlaces: () => apiGet<PartnerPlacePage>('/places/me?page=0&size=20'),
   createPlace: (input: CreatePlaceInput) => apiPost<BackendPlace>('/places', input),
+  suggestPlace: (input: PlaceSuggestionInput) => apiPost('/place-suggestions', input),
+  myPlaceSuggestions: () => apiGet('/place-suggestions/me?page=0&size=20'),
   getPlaces: async (query: PlacesQuery): Promise<PaginatedResponse<Place>> => {
     const page = query.page ?? 0;
     if (query.lat != null && query.lng != null) {

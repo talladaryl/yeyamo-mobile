@@ -82,6 +82,7 @@ export interface BackendActivity {
   currency: string | null;
   countryCode: string | null;
   status: string;
+  activityType?: 'ACTIVITY' | 'EXPERIENCE';
 }
 
 /** Réponse Spring Data de GET /activities. */
@@ -107,6 +108,8 @@ export interface BackendBooking {
   status: string;
   paymentStatus: string;
   createdAt: string;
+  activityType?: 'ACTIVITY' | 'EXPERIENCE';
+  automaticRefundAvailable?: boolean;
 }
 
 export interface CreateActivityBookingInput {

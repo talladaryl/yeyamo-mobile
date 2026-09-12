@@ -1,240 +1,126 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { Toggle } from '@/components/ui/Toggle';
-import { ParticipantItem } from '@/components/create/ParticipantItem';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { useCreateStore } from '@/features/create/create.store';
-
-// Mock participants
-const mockParticipants = [
-  { id: '1', name: 'Laura Wang', avatar_url: null },
-  { id: '2', name: 'Norni Legrand', avatar_url: null },
-  { id: '3', name: 'Dina Eboa', avatar_url: null },
-  { id: '4', name: 'Patrick Mballa', avatar_url: null },
-  { id: '5', name: 'Sophie Kamdem', avatar_url: null },
-  { id: '6', name: 'Henri Talla', avatar_url: null },
-];
+import { eventsApi } from '@/features/events/events.api';
+import { postApi } from '@/features/post/post.api';
 
 export default function EventSettingsScreen() {
   const router = useRouter();
-  const { setEventSettings } = useCreateStore();
-  
-  const [visibility, setVisibility] = useState<'public' | 'friends' | 'close_friends'>('public');
+  const { eventForm, setEventSettings, resetEventForm } = useCreateStore();
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [allowStrangers, setAllowStrangers] = useState(true);
-  const [allowCommentsParticipants, setAllowCommentsParticipants] = useState(false);
-  const [showParticipantsList, setShowParticipantsList] = useState(true);
-  const [allowShareOutside, setAllowShareOutside] = useState(false);
-  const [showAllParticipants, setShowAllParticipants] = useState(false);
+  const [commentsParticipantsOnly, setCommentsParticipantsOnly] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(true);
+  const [sharingEnabled, setSharingEnabled] = useState(false);
   const [enableWaitlist, setEnableWaitlist] = useState(false);
+  const [userId, setUserId] = useState('');
   const [invitedUsers, setInvitedUsers] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [publishing, setPublishing] = useState(false);
 
-  const handleInviteToggle = (userId: string) => {
-    setInvitedUsers(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
+  const addInvite = () => {
+    const normalized = userId.trim();
+    if (!normalized) return;
+    if (invitedUsers.includes(normalized)) {
+      Alert.alert('Déjà ajouté', 'Cet utilisateur figure déjà parmi les invitations.');
+      return;
+    }
+    setInvitedUsers((current) => [...current, normalized]);
+    setUserId('');
   };
 
-  const handlePublish = () => {
-    setEventSettings({
-      visibility,
-      allow_strangers: allowStrangers,
-      allow_comments_participants_only: allowCommentsParticipants,
-      show_participants_list: showParticipantsList,
-      allow_share_outside: allowShareOutside,
-      enable_waitlist: enableWaitlist,
-      invited_users: invitedUsers,
-    });
-    console.log('Publishing event with settings');
-    router.back();
-    router.back();
+  const publish = async () => {
+    if (!eventForm.date || !eventForm.time || !eventForm.end_time || !eventForm.title || !eventForm.location || !eventForm.max_participants) {
+      Alert.alert('Informations incomplètes', 'Revenez à l’étape précédente pour compléter la sortie.');
+      return;
+    }
+    const startAt = new Date(`${eventForm.date}T${eventForm.time}:00`);
+    const endAt = new Date(`${eventForm.date}T${eventForm.end_time}:00`);
+    const isCanonicalPlace = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(eventForm.location);
+    setPublishing(true);
+    try {
+      let coverMediaId: string | undefined;
+      if (eventForm.cover_image_url) {
+        const cover = new FormData();
+        cover.append('file', {
+          uri: eventForm.cover_image_url,
+          name: 'event-cover',
+          type: eventForm.cover_image_mime_type ?? 'image/jpeg',
+        } as unknown as Blob);
+        coverMediaId = (await postApi.uploadMedia(cover)).data.id;
+      }
+      const event = await eventsApi.createEvent({
+        ...(isCanonicalPlace ? { placeId: eventForm.location } : {
+          locationName: eventForm.location,
+          locationAddress: eventForm.location,
+          locationLatitude: Number(eventForm.latitude),
+          locationLongitude: Number(eventForm.longitude),
+        }),
+        title: eventForm.title,
+        description: eventForm.description || undefined,
+        coverMediaId,
+        startAt: startAt.toISOString(),
+        endAt: endAt.toISOString(),
+        capacity: eventForm.max_participants,
+        visibility: visibility === 'public' ? 'PUBLIC' : 'PRIVATE',
+        allowUninvitedParticipants: allowStrangers,
+        commentsParticipantsOnly,
+        showParticipants,
+        sharingEnabled,
+      });
+      const invitations = await Promise.allSettled(invitedUsers.map((invitee) => eventsApi.invite(String(event.id), invitee)));
+      const failedInvitations = invitations.filter((result) => result.status === 'rejected').length;
+      setEventSettings({
+        visibility: visibility === 'public' ? 'public' : 'friends',
+        allow_strangers: allowStrangers,
+        allow_comments_participants_only: commentsParticipantsOnly,
+        show_participants_list: showParticipants,
+        allow_share_outside: sharingEnabled,
+        enable_waitlist: enableWaitlist,
+        invited_users: invitedUsers,
+      });
+      resetEventForm();
+      const detail = [
+        'La sortie a été créée.',
+        failedInvitations ? `${failedInvitations} invitation(s) n’ont pas pu être envoyées.` : null,
+        enableWaitlist ? 'La liste d’attente reste visible mais n’est pas encore prise en charge par une route V1.' : null,
+      ].filter(Boolean).join(' ');
+      Alert.alert('Sortie créée', detail, [{ text: 'OK', onPress: () => router.replace('/(tabs)/explore') }]);
+    } catch (error) {
+      Alert.alert('Publication impossible', error instanceof Error ? error.message : 'Réessayez dans quelques instants.');
+    } finally {
+      setPublishing(false);
+    }
   };
 
-  return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
-          headerTitle: 'Inviter à sortie sortie',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-4 py-6">
-          {/* Visibility Section */}
-          <View className="mb-6">
-            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-4">
-              Qui peut voir votre sortie ?
-            </Text>
-            
-            <TouchableOpacity
-              onPress={() => setVisibility('public')}
-              className="flex-row items-center justify-between py-3"
-              activeOpacity={0.7}
-            >
-              <View className="flex-row items-center flex-1">
-                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
-                  visibility === 'public' ? 'border-[#EF4444]' : 'border-[#52525B]'
-                }`}>
-                  {visibility === 'public' && (
-                    <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
-                  )}
-                </View>
-                <Text className="text-[#18181B] dark:text-white text-sm">Tout le monde</Text>
-              </View>
-              {visibility === 'public' && (
-                <Icon library="ionicons" name="checkmark-circle" size={20} color="#EF4444" />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setVisibility('friends')}
-              className="flex-row items-center justify-between py-3"
-              activeOpacity={0.7}
-            >
-              <View className="flex-row items-center flex-1">
-                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
-                  visibility === 'friends' ? 'border-[#EF4444]' : 'border-[#52525B]'
-                }`}>
-                  {visibility === 'friends' && (
-                    <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
-                  )}
-                </View>
-                <Text className="text-[#18181B] dark:text-white text-sm">Amis</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setVisibility('close_friends')}
-              className="flex-row items-center justify-between py-3"
-              activeOpacity={0.7}
-            >
-              <View className="flex-row items-center flex-1">
-                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
-                  visibility === 'close_friends' ? 'border-[#EF4444]' : 'border-[#52525B]'
-                }`}>
-                  {visibility === 'close_friends' && (
-                    <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
-                  )}
-                </View>
-                <Text className="text-[#18181B] dark:text-white text-sm">Amis proches</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* Options Section */}
-          <View className="mb-6">
-            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-2">Options</Text>
-            <View className="bg-white dark:bg-[#161616] rounded-xl px-4 divide-y divide-[#27272A]">
-              <Toggle
-                label="Autoriser les participants étrangers"
-                value={allowStrangers}
-                onValueChange={setAllowStrangers}
-              />
-              <Toggle
-                label="Commenter pour les participants"
-                value={allowCommentsParticipants}
-                onValueChange={setAllowCommentsParticipants}
-              />
-              <Toggle
-                label="Afficher la liste des participants"
-                value={showParticipantsList}
-                onValueChange={setShowParticipantsList}
-              />
-              <Toggle
-                label="Partager hors du groupe"
-                value={allowShareOutside}
-                onValueChange={setAllowShareOutside}
-              />
-              <Toggle
-                label="Activer la liste d'attente"
-                value={enableWaitlist}
-                onValueChange={setEnableWaitlist}
-              />
-            </View>
-          </View>
-
-          {/* Participants Section */}
-          <View className="mb-6">
-            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-3">Participants</Text>
-            
-            {/* Search */}
-            <View className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center mb-4 border border-[#E4E4E7] dark:border-[#27272A]">
-              <Icon library="ionicons" name="search" size={18} color="#A1A1AA" />
-              <TextInput
-                className="flex-1 text-[#18181B] dark:text-white text-sm ml-2"
-                placeholder="Rechercher un ami..."
-                placeholderTextColor="#A1A1AA"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-
-            {/* Participants List */}
-            <View className="bg-white dark:bg-[#161616] rounded-xl px-4">
-              {(showAllParticipants ? mockParticipants : mockParticipants.slice(0, 3)).map((participant, index) => (
-                <View key={participant.id}>
-                  <ParticipantItem
-                    {...participant}
-                    isInvited={invitedUsers.includes(participant.id)}
-                    onInviteToggle={() => handleInviteToggle(participant.id)}
-                  />
-                  {index < (showAllParticipants ? mockParticipants : mockParticipants.slice(0, 3)).length - 1 && (
-                    <View className="h-px bg-[#F4F4F5] dark:bg-[#27272A]" />
-                  )}
-                </View>
-              ))}
-            </View>
-
-            {mockParticipants.length > 3 ? (
-              <TouchableOpacity
-                onPress={() => setShowAllParticipants((value) => !value)}
-                className="mt-3"
-                activeOpacity={0.7}
-              >
-                <Text className="text-[#EF4444] text-sm font-semibold text-center">
-                  {showAllParticipants ? 'Voir moins' : 'Voir plus'}
-                </Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
+  return <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
+    <Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: '#0A0A0A' }, headerTintColor: '#FFFFFF', headerTitle: 'Paramètres de sortie', headerTitleStyle: { fontSize: 18, fontWeight: '600' }, headerLeft: () => <TouchableOpacity onPress={() => router.back()} className="ml-4"><Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" /></TouchableOpacity> }} />
+    <ScrollView className="flex-1" keyboardShouldPersistTaps="handled"><View className="px-4 py-6">
+      <Section title="Qui peut voir votre sortie ?">
+        <Choice selected={visibility === 'public'} label="Tout le monde" onPress={() => setVisibility('public')} />
+        <Choice selected={visibility === 'private'} label="Sur invitation" onPress={() => setVisibility('private')} />
+      </Section>
+      <Section title="Options">
+        <View className="bg-white dark:bg-[#161616] rounded-xl px-4 divide-y divide-[#27272A]">
+          <Toggle label="Autoriser les inscriptions sans invitation" value={allowStrangers} onValueChange={setAllowStrangers} />
+          <Toggle label="Commentaires réservés aux participants" value={commentsParticipantsOnly} onValueChange={setCommentsParticipantsOnly} />
+          <Toggle label="Afficher la liste des participants" value={showParticipants} onValueChange={setShowParticipants} />
+          <Toggle label="Autoriser le partage" value={sharingEnabled} onValueChange={setSharingEnabled} />
+          <Toggle label="Activer la liste d’attente (route V1 absente)" value={enableWaitlist} onValueChange={setEnableWaitlist} />
         </View>
-
-        <View className="h-24" />
-      </ScrollView>
-
-      {/* Bottom Buttons */}
-      <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
-        <View className="flex-row gap-3">
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="flex-1 bg-[#F4F4F5] dark:bg-[#27272A] rounded-xl py-4 items-center"
-            activeOpacity={0.7}
-          >
-            <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Annuler</Text>
-          </TouchableOpacity>
-          
-          <View className="flex-1">
-            <CTAButton
-              title="Publier"
-              variant="primary"
-              onPress={handlePublish}
-            />
-          </View>
-        </View>
-      </View>
-    </View>
-  );
+      </Section>
+      <Section title="Invitations">
+        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mb-3">Saisissez l’identifiant utilisateur connu. La recherche d’amis n’est pas exposée par l’API actuelle.</Text>
+        <View className="flex-row gap-2"><TextInput className="flex-1 bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]" placeholder="Identifiant utilisateur" placeholderTextColor="#A1A1AA" value={userId} onChangeText={setUserId} autoCapitalize="none" /><TouchableOpacity onPress={addInvite} className="bg-[#EF4444] rounded-xl px-4 items-center justify-center"><Text className="text-white font-semibold">Ajouter</Text></TouchableOpacity></View>
+        {invitedUsers.length ? <View className="mt-3 gap-2">{invitedUsers.map((id) => <View key={id} className="flex-row items-center justify-between rounded-xl bg-[#F4F4F5] dark:bg-[#27272A] px-3 py-3"><Text className="flex-1 text-[#18181B] dark:text-white text-xs" numberOfLines={1}>{id}</Text><TouchableOpacity onPress={() => setInvitedUsers((current) => current.filter((candidate) => candidate !== id))}><Icon library="ionicons" name="close-circle" size={20} color="#EF4444" /></TouchableOpacity></View>)}</View> : <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-4">Aucune invitation ajoutée.</Text>}
+      </Section>
+    </View><View className="h-24" /></ScrollView>
+    <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4"><View className="flex-row gap-3"><TouchableOpacity onPress={() => router.back()} className="flex-1 bg-[#F4F4F5] dark:bg-[#27272A] rounded-xl py-4 items-center"><Text className="text-[#18181B] dark:text-white text-sm font-semibold">Annuler</Text></TouchableOpacity><View className="flex-1"><CTAButton title={publishing ? 'Publication…' : 'Publier'} variant="primary" onPress={publish} disabled={publishing} /></View></View></View>
+  </View>;
 }
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) { return <View className="mb-6"><Text className="text-[#18181B] dark:text-white text-base font-semibold mb-3">{title}</Text>{children}</View>; }
+function Choice({ selected, label, onPress }: { selected: boolean; label: string; onPress: () => void }) { return <TouchableOpacity onPress={onPress} className="flex-row items-center justify-between py-3"><View className="flex-row items-center"><View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${selected ? 'border-[#EF4444]' : 'border-[#52525B]'}`}>{selected ? <View className="w-3 h-3 rounded-full bg-[#EF4444]" /> : null}</View><Text className="text-[#18181B] dark:text-white text-sm">{label}</Text></View>{selected ? <Icon library="ionicons" name="checkmark-circle" size={20} color="#EF4444" /> : null}</TouchableOpacity>; }
