@@ -1,4 +1,5 @@
 import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Linking, Share } from 'react-native';
+import { useState } from 'react';
 import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +8,8 @@ import { useEventDetail, useUpcomingEvents } from '@/features/events/useEvents';
 import { useEventTickets } from '@/features/ticketing/useTicketing';
 import { usePlaceDetail } from '@/features/places/usePlaces';
 import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
+import { reviewsApi, usePublicReviews } from '@/features/reviews/reviews.api';
+import { CreateVerifiedReviewSheet } from '@/components/reviews/CreateVerifiedReviewSheet';
 
 const { width } = Dimensions.get('window');
 
@@ -22,6 +25,8 @@ export default function EventDetailScreen() {
   const { data: ticketing } = useEventTickets(String(id));
   const favorite = useInteractionStatus('EVENT', id);
   const toggleFavorite = useToggleInteraction('EVENT', id);
+  const verifiedReviews = usePublicReviews('EVENT', id);
+  const [reviewComposerOpen, setReviewComposerOpen] = useState(false);
 
   if (isLoading || !event) {
     return (
@@ -186,6 +191,8 @@ export default function EventDetailScreen() {
             </View>
           ) : null}
 
+          <View className="mb-5"><View className="mb-2 flex-row items-center justify-between"><Text className="text-lg font-bold" style={{ color: colors.text }}>Avis vérifiés</Text><TouchableOpacity onPress={() => setReviewComposerOpen(true)}><Text className="font-semibold" style={{ color: colors.primary }}>Laisser un avis</Text></TouchableOpacity></View><Text className="text-sm" style={{ color: colors.textSecondary }}>{verifiedReviews.aggregate.data?.averageRating?.toFixed(1) ?? '—'} · {verifiedReviews.aggregate.data?.count ?? 0} avis</Text>{verifiedReviews.reviews.data?.content.map((review) => <View key={review.id} className="mt-3 rounded-xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.card }}><Text className="font-semibold" style={{ color: colors.text }}>Utilisateur vérifié · {review.rating}/5</Text>{review.comment ? <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{review.comment}</Text> : null}<TouchableOpacity onPress={() => void reviewsApi.report(review.id).then(() => Alert.alert('Signalement envoyé', 'Cet avis a été transmis à la modération.')).catch((error) => Alert.alert('Signalement impossible', error instanceof Error ? error.message : 'Réessayez plus tard.'))} className="mt-2 self-start"><Text className="text-xs font-semibold text-[#EF4444]">Signaler</Text></TouchableOpacity></View>)}</View>
+
           {/* Participants Section */}
           <View className="mb-5">
             <View className="mb-3">
@@ -270,6 +277,7 @@ export default function EventDetailScreen() {
 
         <View className="h-20" />
       </ScrollView>
+      <CreateVerifiedReviewSheet visible={reviewComposerOpen} targetType="EVENT" targetId={String(event.id)} onClose={() => setReviewComposerOpen(false)} />
     </View>
   );
 }

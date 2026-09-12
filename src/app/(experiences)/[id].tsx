@@ -11,6 +11,7 @@ import { experiencesApi } from '@/features/experiences/experiences.api';
 import type { CatalogExperience } from '@/features/experiences/types';
 import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
 import { reviewsApi, usePublicReviews } from '@/features/reviews/reviews.api';
+import { CreateVerifiedReviewSheet } from '@/components/reviews/CreateVerifiedReviewSheet';
 
 const { width } = Dimensions.get('window');
 
@@ -286,6 +287,7 @@ function CatalogExperienceEnrichedDetail({ experience }: { experience: CatalogEx
   const favorite = useInteractionStatus('EXPERIENCE', experience.id);
   const toggleFavorite = useToggleInteraction('EXPERIENCE', experience.id);
   const verifiedReviews = usePublicReviews('EXPERIENCE', experience.id);
+  const [reviewComposerOpen, setReviewComposerOpen] = useState(false);
   const mediaUrls = experiencesApi.mediaUrls(experience.mediaIds);
   const location = [experience.city, experience.district, experience.address]
     .filter((value): value is string => Boolean(value?.trim()))
@@ -325,9 +327,10 @@ function CatalogExperienceEnrichedDetail({ experience }: { experience: CatalogEx
           {experience.placeId ? <TouchableOpacity onPress={() => router.push(`/(places)/${experience.placeId}`)} className="mt-6 flex-row items-center justify-between rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><View className="flex-row items-center"><Ionicons name="location-outline" size={21} color={colors.primary} /><Text className="ml-3 text-sm font-semibold" style={{ color: colors.text }}>Voir le lieu associé</Text></View><Ionicons name="chevron-forward" size={20} color={colors.textMuted} /></TouchableOpacity> : null}
 
           {experience.description ? <View className="mt-7"><Text className="text-lg font-bold" style={{ color: colors.text }}>À propos</Text><Text className="mt-2 text-sm leading-6" style={{ color: colors.textSecondary }}>{experience.description}</Text></View> : null}
-          <View className="mt-7"><View className="flex-row items-center justify-between"><Text className="text-lg font-bold" style={{ color: colors.text }}>Avis vérifiés</Text><TouchableOpacity onPress={() => router.push(`/(profile)/create-review/EXPERIENCE/${experience.id}`)}><Text className="font-semibold" style={{ color: colors.primary }}>Laisser un avis</Text></TouchableOpacity></View><Text className="mt-2 text-sm" style={{ color: colors.textSecondary }}>{verifiedReviews.aggregate.data?.averageRating?.toFixed(1) ?? '—'} · {verifiedReviews.aggregate.data?.count ?? 0} avis</Text>{verifiedReviews.reviews.data?.content.map((review) => <View key={review.id} className="mt-3 rounded-xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.card }}><Text className="font-semibold" style={{ color: colors.text }}>Utilisateur vérifié · {review.rating}/5</Text>{review.comment ? <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{review.comment}</Text> : null}<TouchableOpacity onPress={() => void reviewsApi.report(review.id).then(() => Alert.alert('Signalement envoyé', 'Cet avis a été transmis à la modération.')).catch((error) => Alert.alert('Signalement impossible', error instanceof Error ? error.message : 'Réessayez plus tard.'))} className="mt-2 self-start"><Text className="text-xs font-semibold text-[#EF4444]">Signaler</Text></TouchableOpacity></View>)}</View>
+          <View className="mt-7"><View className="flex-row items-center justify-between"><Text className="text-lg font-bold" style={{ color: colors.text }}>Avis vérifiés</Text><TouchableOpacity onPress={() => setReviewComposerOpen(true)}><Text className="font-semibold" style={{ color: colors.primary }}>Laisser un avis</Text></TouchableOpacity></View><Text className="mt-2 text-sm" style={{ color: colors.textSecondary }}>{verifiedReviews.aggregate.data?.averageRating?.toFixed(1) ?? '—'} · {verifiedReviews.aggregate.data?.count ?? 0} avis</Text>{verifiedReviews.reviews.data?.content.map((review) => <View key={review.id} className="mt-3 rounded-xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.card }}><Text className="font-semibold" style={{ color: colors.text }}>Utilisateur vérifié · {review.rating}/5</Text>{review.comment ? <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{review.comment}</Text> : null}<TouchableOpacity onPress={() => void reviewsApi.report(review.id).then(() => Alert.alert('Signalement envoyé', 'Cet avis a été transmis à la modération.')).catch((error) => Alert.alert('Signalement impossible', error instanceof Error ? error.message : 'Réessayez plus tard.'))} className="mt-2 self-start"><Text className="text-xs font-semibold text-[#EF4444]">Signaler</Text></TouchableOpacity></View>)}</View>
         </View>
       </ScrollView>
+      <CreateVerifiedReviewSheet visible={reviewComposerOpen} targetType="EXPERIENCE" targetId={experience.id} onClose={() => setReviewComposerOpen(false)} />
     </View>
   );
 }

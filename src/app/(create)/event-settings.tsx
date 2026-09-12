@@ -50,7 +50,7 @@ export default function EventSettingsScreen() {
           name: 'event-cover',
           type: eventForm.cover_image_mime_type ?? 'image/jpeg',
         } as unknown as Blob);
-        coverMediaId = (await postApi.uploadMedia(cover)).data.id;
+        coverMediaId = String((await postApi.uploadMedia(cover)).data.id);
       }
       const event = await eventsApi.createEvent({
         ...(isCanonicalPlace ? { placeId: eventForm.location } : {
@@ -84,7 +84,7 @@ export default function EventSettingsScreen() {
       });
       resetEventForm();
       const detail = [
-        'La sortie a été créée.',
+        'La sortie a été créée et attend sa modération avant sa publication publique.',
         failedInvitations ? `${failedInvitations} invitation(s) n’ont pas pu être envoyées.` : null,
         enableWaitlist ? 'La liste d’attente reste visible mais n’est pas encore prise en charge par une route V1.' : null,
       ].filter(Boolean).join(' ');

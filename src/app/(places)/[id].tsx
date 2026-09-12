@@ -8,6 +8,7 @@ import { usePlaceDetail } from '@/features/places/usePlaces';
 import { usePlaceActivities } from '@/features/places/usePlaceActivities';
 import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
 import { reviewsApi, usePublicReviews } from '@/features/reviews/reviews.api';
+import { CreateVerifiedReviewSheet } from '@/components/reviews/CreateVerifiedReviewSheet';
 
 const { width } = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ export default function PlaceDetailScreen() {
   const favorite = useInteractionStatus('PLACE', id);
   const toggleFavorite = useToggleInteraction('PLACE', id);
   const [activityPickerOpen, setActivityPickerOpen] = useState(false);
+  const [reviewComposerOpen, setReviewComposerOpen] = useState(false);
   const verifiedReviews = usePublicReviews('PLACE', id);
 
   if (isLoading || !place) {
@@ -166,7 +168,7 @@ export default function PlaceDetailScreen() {
                 <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => router.push(`/(profile)/create-review/PLACE/${place.id}`)} className="mb-4 self-start rounded-xl border px-3 py-2" style={{ borderColor: colors.primary }}><Text className="text-sm font-semibold" style={{ color: colors.primary }}>Laisser un avis vérifié</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => setReviewComposerOpen(true)} className="mb-4 self-start rounded-xl border px-3 py-2" style={{ borderColor: colors.primary }}><Text className="text-sm font-semibold" style={{ color: colors.primary }}>Laisser un avis vérifié</Text></TouchableOpacity>
 
             {(verifiedReviews.reviews.data?.content ?? place.recent_reviews ?? []).map((review: any) => (
               <View key={review.id} className="mb-4">
@@ -293,6 +295,7 @@ export default function PlaceDetailScreen() {
           </View>
         </View>
       </Modal>
+      <CreateVerifiedReviewSheet visible={reviewComposerOpen} targetType="PLACE" targetId={String(place.id)} onClose={() => setReviewComposerOpen(false)} />
     </View>
   );
 }
