@@ -40,7 +40,9 @@ export function VerticalFeedItem({
   onSave,
 }: VerticalFeedItemProps) {
   const router = useRouter();
-  const videoUri = post.type === 'video' ? (post.media[0]?.url ?? '') : '';
+  const primaryMedia = post.media[0];
+  const isVideo = primaryMedia?.type === 'video';
+  const videoUri = isVideo ? primaryMedia.url : '';
   const backendLinked = post.linkedContent;
   const legacyLinked = post.linked_content;
   const linkedRoute = backendLinked
@@ -50,7 +52,7 @@ export function VerticalFeedItem({
   const linkedLabel = backendLinked ? backendLinked.title ?? (backendLinked.type === 'PROVERB' ? 'Voir le proverbe' : 'Voir la recette') : legacyLinked?.label;
   
   const player = useVideoPlayer(
-    post.type === 'video' && isActive ? videoUri : null,
+    isVideo && isActive ? videoUri : null,
     (p) => {
       p.loop = true;
       p.playbackRate = playbackRate;
@@ -60,25 +62,25 @@ export function VerticalFeedItem({
 
   useEffect(() => {
     if (post.type === 'video') player.playbackRate = playbackRate;
-  }, [playbackRate, player, post.type]);
+  }, [isVideo, playbackRate, player]);
 
   return (
     <View style={{ height }} className="bg-[#0A0A0A]">
       {/* Media */}
-      {post.type === 'video' ? (
+      {isVideo ? (
         <VideoView
           player={player}
           style={{ flex: 1 }}
           contentFit="cover"
           nativeControls={false}
         />
-      ) : (
+      ) : primaryMedia ? (
         <Image
-          source={{ uri: post.media[0]?.url }}
+          source={{ uri: primaryMedia.url }}
           style={{ flex: 1 }}
           contentFit="cover"
         />
-      )}
+      ) : <View className="flex-1 items-center justify-center bg-[#171717] px-8"><Text className="text-center text-2xl font-bold leading-9 text-white">{post.caption || 'Publication Yeyamo'}</Text></View>}
 
       {/* Bottom gradient overlay */}
       <LinearGradient

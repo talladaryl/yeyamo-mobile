@@ -1,94 +1,81 @@
 import { useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
+import { YeyamoFormFooter } from '@/components/forms/YeyamoFormFooter';
+import { YeyamoFormProgress } from '@/components/forms/YeyamoFormProgress';
+import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
+import { YeyamoFormStep } from '@/components/forms/YeyamoFormStep';
+import { useYeyamoMediaPicker } from '@/components/media/useYeyamoMediaPicker';
+import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
-import { Toggle } from '@/components/ui/Toggle';
-import { CTAButton } from '@/components/ui/CTAButton';
-import { DateTimeField } from '@/components/ui/DateTimeField';
+import { Input } from '@/components/ui/Input';
 import { useCreateStore } from '@/features/create/create.store';
 import { useThemeStore } from '@/features/theme/theme.store';
-import { formValidation } from '@/utils/formValidation';
 
 export default function CreateEventScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const initial = useRef(useCreateStore.getState().eventForm).current;
   const setEventForm = useCreateStore((state) => state.setEventForm);
-  const colors = useThemeStore((state) => state.colors);
+  const resetEventForm = useCreateStore((state) => state.resetEventForm);
+  const { pickFromLibrary } = useYeyamoMediaPicker();
   const [coverImage, setCoverImage] = useState<string | null>(initial.cover_image_url ?? null);
+  const [coverMimeType, setCoverMimeType] = useState<string | null>(initial.cover_image_mime_type ?? null);
   const [title, setTitle] = useState(initial.title ?? '');
   const [description, setDescription] = useState(initial.description ?? '');
-  const [location, setLocation] = useState(initial.location ?? '');
-  const [latitude, setLatitude] = useState(initial.latitude ?? '');
-  const [longitude, setLongitude] = useState(initial.longitude ?? '');
-  const [date, setDate] = useState(initial.date ?? '');
-  const [time, setTime] = useState(initial.time ?? '');
-  const [endTime, setEndTime] = useState(initial.end_time ?? '');
-  const [maxParticipants, setMaxParticipants] = useState(String(initial.max_participants ?? 20));
-  const [shareToFeed, setShareToFeed] = useState(initial.share_to_feed ?? true);
 
   const pickCoverImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 1 });
-    if (!result.canceled && result.assets?.[0]) {
-      setCoverImage(result.assets[0].uri);
-      setEventForm({ cover_image_url: result.assets[0].uri, cover_image_mime_type: result.assets[0].mimeType });
+    try {
+      const result = await pickFromLibrary({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 1 });
+      if (result.cancelled) return;
+      const asset = result.assets[0];
+      if (!asset) return;
+      setCoverImage(asset.uri);
+      setCoverMimeType(asset.mimeType ?? 'image/jpeg');
+    } catch (error) {
+      Alert.alert('Image indisponible', error instanceof Error ? error.message : 'Réessayez dans quelques instants.');
     }
   };
 
-  const next = () => {
-    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(location.trim());
-    const parsedLatitude = Number(latitude);
-    const parsedLongitude = Number(longitude);
-    const error = formValidation.required(title, 'Le titre')
-      ?? formValidation.required(location, 'Le lieu')
-      ?? formValidation.date(date, 'La date', true)
-      ?? formValidation.required(time, 'L’heure de début')
-      ?? formValidation.required(endTime, 'L’heure de fin')
-      ?? formValidation.positiveNumber(maxParticipants, 'Le nombre de participants', true)
-      ?? (!uuid && (!Number.isFinite(parsedLatitude) || !Number.isFinite(parsedLongitude)) ? 'Saisissez les coordonnées exactes du lieu libre, ou l’identifiant UUID d’un lieu Yeyamo.' : null);
-    if (error) {
-      Alert.alert('Informations à vérifier', error);
+  const continueToLocation = () => {
+    if (!title.trim()) {
+      Alert.alert('Titre requis', 'Donnez un titre à votre sortie avant de continuer.');
       return;
     }
-    const start = new Date(`${date}T${time}:00`);
-    const end = new Date(`${date}T${endTime}:00`);
-    if (end <= start) {
-      Alert.alert('Horaire invalide', 'L’heure de fin doit être postérieure à l’heure de début.');
-      return;
-    }
-    setEventForm({
-      title: title.trim(), description: description.trim(), location: location.trim(), latitude, longitude, date, time,
-      end_time: endTime, max_participants: Number(maxParticipants), share_to_feed: shareToFeed,
-    });
-    router.push('/(create)/event-settings');
+    setEventForm({ title: title.trim(), description: description.trim(), cover_image_url: coverImage, cover_image_mime_type: coverMimeType });
+    router.push('/(create)/event-location');
   };
 
-  return <View className="flex-1" style={{ backgroundColor: colors.background }}>
-    <Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerTitle: 'Créer une sortie', headerTitleStyle: { fontSize: 18, fontWeight: '600' }, headerLeft: () => <TouchableOpacity onPress={() => router.back()} className="ml-4"><Icon library="ionicons" name="arrow-back" size={24} color={colors.text} /></TouchableOpacity> }} />
-    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}><ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
-      <TouchableOpacity onPress={pickCoverImage} activeOpacity={0.9} className="relative">
-        {coverImage ? <Image source={{ uri: coverImage }} style={{ width: '100%', height: 200 }} contentFit="cover" /> : <View className="w-full h-48 bg-white dark:bg-[#161616] items-center justify-center"><Icon library="ionicons" name="image" size={48} color="#52525B" /><Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-2">Ajouter une photo de couverture</Text></View>}
-      </TouchableOpacity>
-      <View className="px-4 py-6">
-        <Field label="Titre de votre sortie *" value={title} onChangeText={setTitle} placeholder="Ex : randonnée au Mont Cameroun" maxLength={100} />
-        <Field label="Description" value={description} onChangeText={setDescription} placeholder="Décrivez votre sortie…" multiline maxLength={500} />
-        <Field label="Lieu *" value={location} onChangeText={setLocation} placeholder="UUID d’un lieu Yeyamo ou nom du lieu libre" />
-        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs -mt-2 mb-4">Pour un lieu libre, saisissez aussi ses coordonnées. Un UUID Yeyamo suffit pour un lieu déjà référencé.</Text>
-        <View className="flex-row gap-3"><View className="flex-1"><Field label="Latitude" value={latitude} onChangeText={setLatitude} placeholder="4.05" keyboardType="decimal-pad" /></View><View className="flex-1"><Field label="Longitude" value={longitude} onChangeText={setLongitude} placeholder="9.77" keyboardType="decimal-pad" /></View></View>
-        <DateTimeField label="Date" value={date} onChange={setDate} mode="date" required minimumDate={new Date()} />
-        <DateTimeField label="Heure de début" value={time} onChange={setTime} mode="time" required />
-        <DateTimeField label="Heure de fin" value={endTime} onChange={setEndTime} mode="time" required />
-        <Field label="Nombre maximal de participants" value={maxParticipants} onChangeText={setMaxParticipants} placeholder="20" keyboardType="number-pad" />
-        <View className="bg-white dark:bg-[#161616] rounded-xl px-4 py-2 mb-4"><Toggle label="Partager dans le fil Sorties" value={shareToFeed} onValueChange={setShareToFeed} /></View>
-        <View className="bg-[#FEF3C7]/10 border border-[#F59E0B]/30 rounded-xl p-4"><Text className="text-[#F59E0B] text-xs leading-5">Ne partagez pas votre adresse personnelle ni des informations sensibles dans la description publique.</Text></View>
+  const exit = () => {
+    if (!title && !description && !coverImage) {
+      router.back();
+      return;
+    }
+    Alert.alert('Quitter la création ?', 'Les informations de cette sortie seront perdues.', [
+      { text: 'Continuer', style: 'cancel' },
+      { text: 'Quitter', style: 'destructive', onPress: () => { resetEventForm(); router.back(); } },
+    ]);
+  };
+
+  return <YeyamoFormScreen footer={<YeyamoFormFooter onContinue={continueToLocation} continueLabel="Continuer" />}>
+    <YeyamoFormProgress currentStep={1} totalSteps={5} label="Créer une sortie" />
+    <YeyamoFormStep title="Quelle sortie organisez-vous ?" description="Commencez par présenter l’activité aux personnes qui pourraient vous rejoindre.">
+      <View className="gap-5">
+        <View className="overflow-hidden rounded-2xl border" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
+          {coverImage ? <Image source={{ uri: coverImage }} style={{ width: '100%', height: 190 }} contentFit="cover" accessibilityLabel="Aperçu de l'image de couverture" /> : <View className="h-44 items-center justify-center px-6"><Icon name="image-outline" size={42} color={colors.textMuted} /><Text className="mt-3 text-center text-sm" style={{ color: colors.textSecondary }}>Ajoutez une image pour rendre votre sortie plus facile à repérer.</Text></View>}
+          <View className="flex-row gap-3 p-3">
+            <View className="flex-1"><Button label={coverImage ? 'Remplacer' : 'Ajouter une image'} variant="secondary" size="sm" onPress={() => void pickCoverImage()} /></View>
+            {coverImage ? <Button label="Retirer" variant="ghost" size="sm" fullWidth={false} onPress={() => { setCoverImage(null); setCoverMimeType(null); }} /> : null}
+          </View>
+        </View>
+        <Input label="Titre de la sortie *" value={title} onChangeText={setTitle} placeholder="Ex. Randonnée au Mont Cameroun" maxLength={100} autoCapitalize="sentences" returnKeyType="next" />
+        <Input label="Description" value={description} onChangeText={setDescription} placeholder="Expliquez l’activité, l’ambiance et ce qu’il faut prévoir." multiline maxLength={500} returnKeyType="default" blurOnSubmit={false} />
+        <View className="rounded-xl border p-4" style={{ borderColor: colors.border, backgroundColor: colors.accentSoft }}>
+          <Text className="text-sm font-semibold" style={{ color: colors.text }}>Vous choisirez le lieu, l’horaire et la capacité aux prochaines étapes.</Text>
+        </View>
+        <Button label="Annuler la création" variant="ghost" onPress={exit} />
       </View>
-    </ScrollView>
-    <View className="border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}><View className="flex-row gap-3"><TouchableOpacity onPress={() => router.back()} className="flex-1 bg-[#F4F4F5] dark:bg-[#27272A] rounded-xl py-4 items-center"><Text className="text-[#18181B] dark:text-white text-sm font-semibold">Annuler</Text></TouchableOpacity><View className="flex-1"><CTAButton title="Suivant" variant="primary" onPress={next} disabled={!title || !location} /></View></View></View>
-    </KeyboardAvoidingView>
-  </View>;
-}
-
-function Field({ label, multiline, ...props }: { label: string; multiline?: boolean } & React.ComponentProps<typeof TextInput>) {
-  return <View className="mb-4"><Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">{label}</Text><TextInput className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]" placeholderTextColor="#A1A1AA" multiline={multiline} style={multiline ? { minHeight: 100, textAlignVertical: 'top' } : undefined} {...props} /></View>;
+    </YeyamoFormStep>
+  </YeyamoFormScreen>;
 }

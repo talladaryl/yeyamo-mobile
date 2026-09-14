@@ -28,6 +28,7 @@ export const mockStories: Story[] = [
     },
     views_count: 234,
     viewed: false,
+    duration_seconds: 15,
     expires_at: new Date(Date.now() + 1000 * 60 * 60 * 18).toISOString(),
     created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
   },

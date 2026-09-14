@@ -31,6 +31,8 @@ export function StoryRing({
       onPress={onPress}
       activeOpacity={0.8}
       className="items-center"
+      accessibilityRole="button"
+      accessibilityLabel={`Voir les stories de ${displayName}`}
     >
       <View style={{ padding: 3 }}>
         <LinearGradient
@@ -52,7 +54,7 @@ export function StoryRing({
       </View>
 
       {showAddButton && (
-        <View className="absolute bottom-0 right-0 h-6 w-6 items-center justify-center rounded-full border-2 bg-[#EF4444]" style={{ borderColor: colors.background }}>
+        <View className="absolute bottom-0 right-0 h-6 w-6 items-center justify-center rounded-full border-2" style={{ borderColor: colors.background, backgroundColor: colors.primary }}>
           <View className="w-3 h-0.5 bg-white" />
           <View className="w-0.5 h-3 bg-white absolute" />
         </View>

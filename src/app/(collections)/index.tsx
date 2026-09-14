@@ -1,134 +1,28 @@
-// ÉCRAN 1 - Liste des collections de l'utilisateur
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { CollectionCard } from '@/components/collections/CollectionCard';
+import { Button } from '@/components/ui/Button';
+import { SafeScreen } from '@/components/ui/SafeScreen';
 import { useUserCollections, usePublicCollections } from '@/features/collections/useCollections';
 import type { CollectionTab } from '@/features/collections/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function CollectionsScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const [activeTab, setActiveTab] = useState<CollectionTab>('saved');
-
   const { data: userCollections, isLoading: loadingUser } = useUserCollections();
   const { data: publicCollections, isLoading: loadingPublic } = usePublicCollections();
-
   const collections = activeTab === 'saved' ? userCollections : publicCollections;
   const isLoading = activeTab === 'saved' ? loadingUser : loadingPublic;
+  const handleBack = () => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)/profile'); };
 
-  const handleBack = () => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/profile');
-  };
+  return <SafeScreen><View className="flex-row items-center justify-between border-b px-4 py-3" style={{ borderColor: colors.border }}><TouchableOpacity onPress={handleBack} className="-ml-2 p-2" accessibilityRole="button" accessibilityLabel="Retour"><Ionicons name="chevron-back" size={24} color={colors.text} /></TouchableOpacity><Text className="text-xl font-bold" style={{ color: colors.text }}>Mes collections</Text><TouchableOpacity onPress={() => router.push('/(collections)/create')} className="p-2" accessibilityRole="button" accessibilityLabel="Créer une collection"><Ionicons name="add" size={28} color={colors.text} /></TouchableOpacity></View><View className="flex-row border-b px-4 pt-4" style={{ borderColor: colors.border }}><Tab label="Enregistrés" active={activeTab === 'saved'} onPress={() => setActiveTab('saved')} /><Tab label="Collections publiques" active={activeTab === 'public'} onPress={() => setActiveTab('public')} /></View>{isLoading ? <View className="flex-1 items-center justify-center"><Text style={{ color: colors.textSecondary }}>Chargement…</Text></View> : collections?.length ? <FlatList data={collections} keyExtractor={(item) => item.id.toString()} numColumns={2} contentContainerStyle={{ padding: 16 }} columnWrapperStyle={{ gap: 12 }} ItemSeparatorComponent={() => <View className="h-3" />} renderItem={({ item }) => <View className="flex-1"><CollectionCard collection={item} onPress={() => router.push(`/(collections)/${item.id}`)} /></View>} ListFooterComponent={activeTab === 'saved' ? <TouchableOpacity onPress={() => router.push('/(collections)/create')} className="mt-3 items-center rounded-xl border-2 border-dashed p-6" style={{ backgroundColor: colors.surface, borderColor: colors.border }}><Ionicons name="add-circle-outline" size={40} color={colors.primary} /><Text className="mt-2 text-base font-semibold" style={{ color: colors.text }}>Créer une collection</Text><Text className="mt-1 text-center text-sm" style={{ color: colors.textSecondary }}>Organisez vos découvertes</Text></TouchableOpacity> : null} /> : <View className="flex-1 items-center justify-center px-8"><Ionicons name="albums-outline" size={64} color={colors.textMuted} /><Text className="mt-4 text-center text-lg font-semibold" style={{ color: colors.text }}>{activeTab === 'saved' ? 'Aucune collection' : 'Aucune collection publique'}</Text><Text className="mt-2 text-center" style={{ color: colors.textSecondary }}>{activeTab === 'saved' ? 'Créez votre première collection pour organiser vos lieux favoris' : 'Explorez les collections partagées par la communauté'}</Text>{activeTab === 'saved' ? <View className="mt-6"><Button label="Créer une collection" onPress={() => router.push('/(collections)/create')} /></View> : null}</View>}</SafeScreen>;
+}
 
-  return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
-      {/* Header */}
-      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={handleBack} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text className="text-[#18181B] dark:text-white text-xl font-bold">Mes collections</Text>
-          <TouchableOpacity onPress={() => router.push('/(collections)/create')} className="p-2">
-            <Ionicons name="add" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Onglets */}
-      <View className="flex-row px-4 pt-4 pb-2 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <TouchableOpacity
-          onPress={() => setActiveTab('saved')}
-          className={`flex-1 pb-3 border-b-2 ${
-            activeTab === 'saved' ? 'border-[#EF4444]' : 'border-transparent'
-          }`}
-        >
-          <Text
-            className={`text-center font-semibold ${
-              activeTab === 'saved' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
-            }`}
-          >
-            Enregistrés
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('public')}
-          className={`flex-1 pb-3 border-b-2 ${
-            activeTab === 'public' ? 'border-[#EF4444]' : 'border-transparent'
-          }`}
-        >
-          <Text
-            className={`text-center font-semibold ${
-              activeTab === 'public' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
-            }`}
-          >
-            Collections publiques
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Liste des collections */}
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-[#52525B] dark:text-[#A1A1AA]">Chargement...</Text>
-        </View>
-      ) : collections && collections.length > 0 ? (
-        <FlatList
-          data={collections}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          contentContainerStyle={{ padding: 16 }}
-          columnWrapperStyle={{ gap: 12 }}
-          ItemSeparatorComponent={() => <View className="h-3" />}
-          renderItem={({ item }) => (
-            <View className="flex-1">
-              <CollectionCard
-                collection={item}
-                onPress={() => router.push(`/(collections)/${item.id}`)}
-              />
-            </View>
-          )}
-          ListFooterComponent={
-            activeTab === 'saved' ? (
-              <TouchableOpacity
-                onPress={() => router.push('/(collections)/create')}
-                className="bg-white dark:bg-[#161616] rounded-xl p-6 mt-3 border-2 border-dashed border-[#E4E4E7] dark:border-[#27272A] items-center"
-                activeOpacity={0.7}
-              >
-                <Ionicons name="add-circle-outline" size={40} color="#EF4444" />
-                <Text className="text-[#18181B] dark:text-white font-semibold text-base mt-2">Créer une collection</Text>
-                <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm text-center mt-1">
-                  Organisez vos découvertes
-                </Text>
-              </TouchableOpacity>
-            ) : null
-          }
-        />
-      ) : (
-        <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="albums-outline" size={64} color="#52525B" />
-          <Text className="text-[#18181B] dark:text-white text-lg font-semibold mt-4 text-center">
-            {activeTab === 'saved' ? 'Aucune collection' : 'Aucune collection publique'}
-          </Text>
-          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center mt-2">
-            {activeTab === 'saved'
-              ? 'Créez votre première collection pour organiser vos lieux favoris'
-              : 'Explorez les collections partagées par la communauté'}
-          </Text>
-          {activeTab === 'saved' && (
-            <TouchableOpacity
-              onPress={() => router.push('/(collections)/create')}
-              className="bg-[#EF4444] px-6 py-3 rounded-xl mt-6"
-            >
-              <Text className="font-semibold text-white">Créer une collection</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-    </SafeAreaView>
-  );
+function Tab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <TouchableOpacity onPress={onPress} className="flex-1 border-b-2 pb-3" style={{ borderColor: active ? colors.primary : 'transparent' }} accessibilityRole="tab" accessibilityState={{ selected: active }}><Text className="text-center font-semibold" style={{ color: active ? colors.primary : colors.textSecondary }}>{label}</Text></TouchableOpacity>;
 }

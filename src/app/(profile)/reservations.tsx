@@ -1,97 +1,17 @@
-// ÉCRAN 5 - Mes réservations
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { ReservationCard } from '@/components/profile/ReservationCard';
+import { EmptyState, LoadingState } from '@/components/ui/ViewStates';
+import { SafeScreen } from '@/components/ui/SafeScreen';
 import { useUserReservations } from '@/features/profile/useProfile';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function ReservationsScreen() {
-  const router = useRouter();
-  const colors = useThemeStore((state) => state.colors);
-  const [activeTab, setActiveTab] = useState<'confirmed' | 'pending'>('confirmed');
-  const { data: reservations, isLoading } = useUserReservations();
-
-  const filteredReservations = reservations?.filter(
-    (r) => r.status === activeTab || (activeTab === 'confirmed' && r.status === 'confirmed')
-  );
-
-  return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
-      {/* Header */}
-      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text className="text-[#18181B] dark:text-white text-xl font-bold">Mes réservations</Text>
-          <View className="w-10" />
-        </View>
-      </View>
-
-      {/* Onglets */}
-      <View className="flex-row px-4 pt-4 pb-2 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <TouchableOpacity
-          onPress={() => setActiveTab('confirmed')}
-          className={`flex-1 pb-3 border-b-2 ${
-            activeTab === 'confirmed' ? 'border-[#EF4444]' : 'border-transparent'
-          }`}
-        >
-          <Text
-            className={`text-center font-semibold ${
-              activeTab === 'confirmed' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
-            }`}
-          >
-            Confirmées
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('pending')}
-          className={`flex-1 pb-3 border-b-2 ${
-            activeTab === 'pending' ? 'border-[#EF4444]' : 'border-transparent'
-          }`}
-        >
-          <Text
-            className={`text-center font-semibold ${
-              activeTab === 'pending' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
-            }`}
-          >
-            En attente
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Liste des réservations */}
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-[#52525B] dark:text-[#A1A1AA]">Chargement...</Text>
-        </View>
-      ) : filteredReservations && filteredReservations.length > 0 ? (
-        <FlatList
-          data={filteredReservations}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ padding: 16 }}
-          renderItem={({ item }) => (
-            <ReservationCard
-              reservation={item}
-              onPress={() => router.push(`/(places)/${item.place.id}`)}
-            />
-          )}
-        />
-      ) : (
-        <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="calendar-outline" size={64} color="#52525B" />
-          <Text className="text-[#18181B] dark:text-white text-lg font-semibold mt-4 text-center">
-            {activeTab === 'confirmed' ? 'Aucune réservation confirmée' : 'Aucune réservation en attente'}
-          </Text>
-          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center mt-2">
-            Réservez des lieux pour qu'ils apparaissent ici
-          </Text>
-        </View>
-      )}
-    </SafeAreaView>
-  );
+  const router = useRouter(); const colors = useThemeStore((state) => state.colors); const [activeTab, setActiveTab] = useState<'confirmed' | 'pending'>('confirmed'); const { data: reservations, isLoading } = useUserReservations(); const filtered = reservations?.filter((reservation) => reservation.status === activeTab || (activeTab === 'confirmed' && reservation.status === 'confirmed'));
+  return <SafeScreen><Header title="Mes réservations" onBack={() => router.back()} /><View className="flex-row border-b px-4 pt-4" style={{ borderColor: colors.border }}><Tab label="Confirmées" active={activeTab === 'confirmed'} onPress={() => setActiveTab('confirmed')} /><Tab label="En attente" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} /></View>{isLoading ? <LoadingState /> : filtered?.length ? <FlatList data={filtered} keyExtractor={(item) => item.id.toString()} contentContainerStyle={{ padding: 16 }} renderItem={({ item }) => <ReservationCard reservation={item} onPress={() => router.push(`/(places)/${item.place.id}`)} />} /> : <EmptyState title={activeTab === 'confirmed' ? 'Aucune réservation confirmée' : 'Aucune réservation en attente'} message="Réservez des lieux pour qu’ils apparaissent ici" icon={<Ionicons name="calendar-outline" size={64} color={colors.textMuted} />} />}</SafeScreen>;
 }
+
+function Header({ title, onBack }: { title: string; onBack: () => void }) { const colors = useThemeStore((state) => state.colors); return <View className="flex-row items-center justify-between border-b px-4 py-3" style={{ borderColor: colors.border }}><TouchableOpacity onPress={onBack} className="-ml-2 p-2" accessibilityRole="button" accessibilityLabel="Retour"><Ionicons name="chevron-back" size={24} color={colors.text} /></TouchableOpacity><Text className="text-xl font-bold" style={{ color: colors.text }}>{title}</Text><View className="w-10" /></View>; }
+function Tab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) { const colors = useThemeStore((state) => state.colors); return <TouchableOpacity onPress={onPress} className="flex-1 border-b-2 pb-3" style={{ borderColor: active ? colors.primary : 'transparent' }} accessibilityRole="tab" accessibilityState={{ selected: active }}><Text className="text-center font-semibold" style={{ color: active ? colors.primary : colors.textSecondary }}>{label}</Text></TouchableOpacity>; }

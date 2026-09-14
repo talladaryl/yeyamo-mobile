@@ -36,7 +36,7 @@ export function RadioItem({
           style={{ borderColor: selected ? colors.primary : colors.textMuted }}
         >
           {selected && (
-            <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
+            <View className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.primary }} />
           )}
         </View>
       </View>

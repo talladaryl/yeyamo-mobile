@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from '@/services/api/client';
+import { apiDelete, apiGet, apiPost, apiPut } from '@/services/api/client';
 import type {
   AuthApiUser,
   AuthResponse,
@@ -66,4 +66,19 @@ export const authApi = {
 
   changePassword: (currentPassword: string, newPassword: string) =>
     apiPut<void>('/auth/password', { currentPassword, newPassword }),
+
+  deactivateAccount: (currentPassword: string) =>
+    apiPost<void>('/auth/account/deactivate', { currentPassword }),
+
+  sessions: () => apiGet<AuthSession[]>('/auth/sessions'),
+
+  revokeSession: (sessionId: string) => apiDelete<void>(`/auth/sessions/${sessionId}`),
 };
+
+/** The API does not provide device, IP or geographic metadata for a session. */
+export interface AuthSession {
+  id: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  active: boolean;
+}

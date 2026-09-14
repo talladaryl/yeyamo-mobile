@@ -48,9 +48,10 @@ export interface UserProfile {
 
 export interface ProfilePost {
   id: EntityId;
-  type: 'video' | 'image' | 'carousel';
+  type: 'video' | 'image' | 'carousel' | 'text';
   thumbnail_url: string;
   media: MediaAttachment[];
+  caption?: string | null;
   likes_count: number;
   comments_count: number;
   created_at: string;

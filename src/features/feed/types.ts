@@ -2,7 +2,7 @@ import type { EntityId, UserSummary, MediaAttachment } from '@/types/api.types';
 
 export interface FeedPost {
   id: EntityId;
-  type: 'video' | 'image' | 'carousel';
+  type: 'video' | 'image' | 'carousel' | 'text';
   caption: string | null;
   media: MediaAttachment[];
   author: UserSummary;
@@ -16,6 +16,8 @@ export interface FeedPost {
   linked_content?: { type: 'proverb' | 'recipe' | 'artwork' | 'artist' | 'language' | 'culture'; id: string; label: string };
   linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
   created_at: string;
+  /** False only when a real media metadata lookup failed; the media ID is retained. */
+  media_metadata_complete?: boolean;
 }
 
 export type OrganicFeedItem = FeedPost & { item_kind?: 'organic' };

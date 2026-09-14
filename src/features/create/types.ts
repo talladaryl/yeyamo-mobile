@@ -17,6 +17,10 @@ export interface CreateEventForm {
   cover_image_url: string | null;
   cover_image_mime_type?: string | null;
   location: string;
+  /** Presentation-only draft data for the event create contract. */
+  location_label?: string;
+  location_address?: string;
+  location_mode?: 'YEYAMO_PLACE' | 'CUSTOM_LOCATION';
   latitude?: string;
   longitude?: string;
   date: string;
@@ -52,6 +56,7 @@ export interface SuggestPlaceForm {
     longitude: number;
   };
   city: string;
+  region_id?: number;
   route_details: string;
   
   // Step 3+ (à compléter selon les étapes suivantes)
@@ -101,8 +106,20 @@ export interface PublicationForm {
   media_urls: string[];
   media_type: 'image' | 'video' | 'carousel';
   caption: string;
+  media_assets?: PublicationMediaDraft[];
   location?: string;
   tags?: string[];
+}
+
+export interface PublicationMediaDraft {
+  uri: string;
+  type: 'image' | 'video';
+  mimeType?: string | null;
+  fileName?: string | null;
+  width: number;
+  height: number;
+  duration?: number | null;
+  fileSize?: number | null;
 }
 
 export interface ArtworkDraft {

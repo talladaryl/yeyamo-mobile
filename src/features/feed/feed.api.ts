@@ -6,6 +6,7 @@ import {
   mediaContentUrl,
   toPaginatedResponse,
 } from '@/services/api/contracts';
+import { getMediaAttachment } from '@/features/media/media.api';
 import type { FeedPost , PostComment } from './types';
 
 interface BackendFeedItem {
@@ -65,20 +66,29 @@ function mapComment(comment: BackendComment): PostComment {
   };
 }
 
-function mapFeedItem(item: BackendFeedItem): FeedPost {
+function fallbackMediaAttachment(id: string) {
+  return {
+    id,
+    url: mediaContentUrl(id),
+    thumbnail_url: null,
+    // The feed DTO does not expose a MIME. This fallback retains the real ID
+    // and lets the image renderer fail visibly instead of fabricating a URL.
+    type: 'image' as const,
+    width: 0,
+    height: 0,
+    duration_seconds: null,
+  };
+}
+
+async function mapFeedItem(item: BackendFeedItem): Promise<FeedPost> {
+  const metadata = await Promise.allSettled(item.mediaIds.map((id) => getMediaAttachment(id)));
+  const media = metadata.map((result, index) => result.status === 'fulfilled' ? result.value : fallbackMediaAttachment(item.mediaIds[index]));
+  const hasVideo = media.some((attachment) => attachment.type === 'video');
   return {
     id: item.postId,
-    type: item.mediaIds.length > 1 ? 'carousel' : 'image',
+    type: item.mediaIds.length === 0 ? 'text' : item.mediaIds.length > 1 ? 'carousel' : hasVideo ? 'video' : 'image',
     caption: item.caption,
-    media: item.mediaIds.map((id) => ({
-      id,
-      url: mediaContentUrl(id),
-      thumbnail_url: null,
-      type: 'image',
-      width: 0,
-      height: 0,
-      duration_seconds: null,
-    })),
+    media,
     author: fallbackUser(item.authorId),
     likes_count: item.likes,
     comments_count: item.comments,
@@ -90,15 +100,17 @@ function mapFeedItem(item: BackendFeedItem): FeedPost {
       : null,
     created_at: item.publishedAt,
     linkedContent: item.linkedContent ?? null,
+    media_metadata_complete: metadata.every((result) => result.status === 'fulfilled'),
   };
 }
 
 export const feedApi = {
-  getFeed: async (cursor?: string, _interests: string[] = [], _regionId?: number) => {
-    const page = Number.parseInt(cursor ?? '0', 10) || 0;
+  getFeed: async (pageParam?: number) => {
+    const page = Number.isInteger(pageParam) && pageParam! >= 0 ? pageParam! : 0;
     const response = await apiGet<BackendFeedPage>(`/feed?page=${page}&size=20`);
+    const posts = await Promise.all(response.items.map(mapFeedItem));
     return toPaginatedResponse(
-      response.items.map(mapFeedItem),
+      posts,
       response.page,
       response.size,
       response.items.length === response.size,
@@ -131,7 +143,7 @@ export const feedApi = {
       apiGet<InteractionSummary>(`/interactions/posts/${postId}/summary`),
       apiGet<BackendComment[]>(`/interactions/posts/${postId}/comments?limit=50`),
     ]);
-    const feedPost = mapFeedItem({
+    const feedPost = await mapFeedItem({
       postId: post.id,
       authorId: post.authorId,
       caption: post.caption,

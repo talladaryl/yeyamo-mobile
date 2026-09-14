@@ -98,6 +98,7 @@ export default function PublicProfileScreen() {
       type: post.type,
       thumbnail_url: post.media[0]?.thumbnail_url ?? post.media[0]?.url ?? '',
       media: post.media,
+      caption: post.caption,
       likes_count: post.likes_count,
       comments_count: post.comments_count,
       created_at: post.created_at,

@@ -10,7 +10,19 @@ export interface BackendUserProfile {
   status: string;
   notificationsEnabled: boolean;
   locationSharingEnabled: boolean;
-  preferredRegionId: number | null;
+  preferredRegionId: string | null;
+  countryCode: string | null;
+  adminLevel1Id: string | null;
+  adminLevel2Id: string | null;
+  cityId: string | null;
+  localityId: string | null;
+  preferredLanguageCode: string | null;
+  timezone: string | null;
+  preferredCurrencyCode: string | null;
+  contentCountries: string[];
+  contentLanguages: string[];
+  localRadiusKm: number | null;
+  discoverAfricanContent: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +35,15 @@ export interface UpdateBackendProfile {
   visibility: 'PUBLIC' | 'FOLLOWERS_ONLY' | 'PRIVATE';
 }
 
+export interface UpdateBackendLocation {
+  countryCode: string;
+  adminLevel1Id?: string | null;
+  adminLevel2Id?: string | null;
+  cityId?: string | null;
+  localityId?: string | null;
+  timezone?: string | null;
+}
+
 export const settingsApi = {
   getProfile: () => apiGet<BackendUserProfile>('/users/me'),
   updateProfile: (profile: UpdateBackendProfile) =>
@@ -30,7 +51,9 @@ export const settingsApi = {
   updatePreferences: (input: {
     notificationsEnabled: boolean;
     locationSharingEnabled: boolean;
-    preferredRegionId: number | null;
+    preferredRegionId: string | null;
   }) => apiPatch<BackendUserProfile>('/users/me/preferences', input),
+  updateLocation: (input: UpdateBackendLocation) =>
+    apiPatch<BackendUserProfile>('/users/me/location', input),
   deleteAccount: () => apiDelete<void>('/users/me'),
 };

@@ -1,109 +1,70 @@
-import { useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { useRef, useState } from 'react';
+import { Alert, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { YeyamoFormFooter } from '@/components/forms/YeyamoFormFooter';
+import { YeyamoFormProgress } from '@/components/forms/YeyamoFormProgress';
+import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
+import { YeyamoFormStep } from '@/components/forms/YeyamoFormStep';
 import { NativeMap, NativeMarker, PROVIDER_GOOGLE } from '@/components/maps/NativeMap';
-import { Icon } from '@/components/ui/Icon';
-import { Stepper } from '@/components/ui/Stepper';
-import { CTAButton } from '@/components/ui/CTAButton';
+import { FormSelect } from '@/components/ui/FormSelect';
+import { Input } from '@/components/ui/Input';
+import { useCountryStore } from '@/features/country/country.store';
 import { useCreateStore } from '@/features/create/create.store';
-import { placesApi } from '@/features/places/places.api';
+import { usePlaceCities, usePlaceRegions } from '@/features/places/placeReferences.hooks';
+import { useThemeStore } from '@/features/theme/theme.store';
+
+type Coordinates = { latitude: number; longitude: number };
 
 export default function SuggestPlaceStep2Screen() {
   const router = useRouter();
-  const { placeForm, setPlaceForm, setPlaceStep, resetPlaceForm } = useCreateStore();
-  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(
-    placeForm.coordinates ?? null,
-  );
-  const [submitting, setSubmitting] = useState(false);
+  const colors = useThemeStore((state) => state.colors);
+  const initial = useRef(useCreateStore.getState().placeForm).current;
+  const setPlaceForm = useCreateStore((state) => state.setPlaceForm);
+  const setPlaceStep = useCreateStore((state) => state.setPlaceStep);
+  const countryCode = useCountryStore((state) => state.selectedCountryCode);
+  const regions = usePlaceRegions();
+  const [regionId, setRegionId] = useState<number | undefined>(initial.region_id);
+  const cities = usePlaceCities(regionId);
+  const [region, setRegion] = useState(initial.region ?? '');
+  const [city, setCity] = useState(initial.city ?? '');
+  const [address, setAddress] = useState(initial.address ?? '');
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(initial.coordinates ?? null);
 
-  const submit = async () => {
-    if (!coordinates) {
-      Alert.alert('Localisation requise', 'Touchez la carte pour positionner le lieu.');
-      return;
-    }
-    if (!placeForm.name?.trim() || !placeForm.address?.trim()) {
-      Alert.alert('Informations incomplètes', 'Le nom et l’adresse du lieu sont requis.');
-      router.replace('/(create)/suggest-place-step1');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await placesApi.suggestPlace({
-        name: placeForm.name.trim(),
-        address: placeForm.address.trim(),
-        description: placeForm.description?.trim() || undefined,
-        category: placeForm.category?.trim() || undefined,
-        placeType: placeForm.type?.trim() || undefined,
-        region: placeForm.region?.trim() || undefined,
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
-      });
-      setPlaceForm({ coordinates });
-      setPlaceStep(3);
-      Alert.alert('Suggestion envoyée', 'Elle sera examinée avant sa publication.', [
-        {
-          text: 'OK',
-          onPress: () => {
-            resetPlaceForm();
-            router.replace('/(tabs)/explore');
-          },
-        },
-      ]);
-    } catch (error) {
-      Alert.alert('Envoi impossible', error instanceof Error ? error.message : 'Réessayez dans quelques instants.');
-    } finally {
-      setSubmitting(false);
-    }
+  const changeRegion = (value: string) => {
+    const selected = (regions.data ?? []).find((item) => String(item.id) === value);
+    setRegionId(selected?.id);
+    setRegion(selected?.name ?? '');
+    setCity('');
   };
 
-  return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
-      <Stack.Screen options={{
-        headerShown: true,
-        headerStyle: { backgroundColor: '#0A0A0A' },
-        headerTintColor: '#FFFFFF',
-        headerTitle: 'Suggérer un lieu',
-        headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-        headerLeft: () => (
-          <TouchableOpacity onPress={() => router.back()} className="ml-4">
-            <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        ),
-      }} />
+  const changeCity = (value: string) => setCity((cities.data ?? []).find((item) => item.id === value)?.name ?? '');
 
-      <View className="flex-1">
-        <View className="px-4 pt-4 pb-3 bg-white dark:bg-[#0A0A0A]"><Stepper currentStep={2} totalSteps={2} /></View>
-        <View className="flex-1 relative">
-          <NativeMap
-            provider={PROVIDER_GOOGLE}
-            style={{ flex: 1 }}
-            initialRegion={{
-              latitude: coordinates?.latitude ?? 0,
-              longitude: coordinates?.longitude ?? 0,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            }}
-            onPress={(event: any) => setCoordinates(event.nativeEvent.coordinate)}
-          >
-            {coordinates ? <NativeMarker coordinate={coordinates} pinColor="#EF4444" draggable onDragEnd={(event: any) => setCoordinates(event.nativeEvent.coordinate)} /> : null}
+  const continueToDetails = () => {
+    if (!address.trim() || !coordinates) {
+      Alert.alert('Localisation incomplète', 'Renseignez l’adresse puis touchez la carte pour positionner le lieu.');
+      return;
+    }
+    setPlaceForm({ address: address.trim(), region, region_id: regionId, city, coordinates, manual_address: true });
+    setPlaceStep(3);
+    router.push('/(create)/suggest-place-details');
+  };
+
+  return <YeyamoFormScreen footer={<YeyamoFormFooter onBack={() => router.back()} onContinue={continueToDetails} />}>
+    <YeyamoFormProgress currentStep={2} totalSteps={4} label="Suggérer un lieu" />
+    <YeyamoFormStep title="Où se situe ce lieu ?" description="Les coordonnées nécessaires à la suggestion sont choisies sur la carte, jamais saisies manuellement.">
+      <View className="gap-4">
+        <Input label="Pays" value={countryCode ?? ''} placeholder="Pays défini dans votre profil" editable={false} helperText="Le contrat de suggestion actuel ne transmet pas encore le pays séparément." />
+        <FormSelect label="Région" value={regionId ? String(regionId) : undefined} options={(regions.data ?? []).filter((item) => item.active).map((item) => ({ label: item.name, value: String(item.id) }))} placeholder={regions.isLoading ? 'Chargement des régions…' : 'Choisir une région'} onChange={changeRegion} />
+        {regions.isError ? <Text className="-mt-3 text-xs" style={{ color: colors.textSecondary }}>Les régions sont indisponibles. Vous pouvez toutefois préciser l’adresse.</Text> : null}
+        <FormSelect label="Ville (facultatif)" value={(cities.data ?? []).find((item) => item.name === city)?.id} options={(cities.data ?? []).filter((item) => item.active).map((item) => ({ label: item.name, value: item.id }))} placeholder={!regionId ? 'Choisissez d’abord une région' : cities.isLoading ? 'Chargement des villes…' : 'Choisir une ville'} onChange={changeCity} />
+        <Input label="Adresse ou indication *" value={address} onChangeText={setAddress} placeholder="Ex. Avenue de la Liberté, entrée principale" multiline maxLength={250} returnKeyType="done" blurOnSubmit={false} />
+        <View className="h-60 overflow-hidden rounded-2xl border" style={{ borderColor: colors.border }}>
+          <NativeMap provider={PROVIDER_GOOGLE} style={{ flex: 1 }} initialRegion={{ latitude: coordinates?.latitude ?? 4.0511, longitude: coordinates?.longitude ?? 9.7679, latitudeDelta: 0.08, longitudeDelta: 0.08 }} onPress={(event: { nativeEvent: { coordinate: Coordinates } }) => setCoordinates(event.nativeEvent.coordinate)}>
+            {coordinates ? <NativeMarker coordinate={coordinates} pinColor={colors.primary} draggable onDragEnd={(event: { nativeEvent: { coordinate: Coordinates } }) => setCoordinates(event.nativeEvent.coordinate)} /> : null}
           </NativeMap>
-
-          <View className="absolute top-4 left-4 right-4 bg-white/95 rounded-2xl p-4 shadow-lg">
-            <Text className="text-[#0A0A0A] text-sm font-semibold">Positionnez le lieu</Text>
-            <Text className="text-[#52525B] text-xs mt-1">Touchez la carte ou déplacez le repère. Aucune position par défaut n’est envoyée.</Text>
-            <View className="border-t border-[#E5E5E5] mt-3 pt-3">
-              <Text className="text-[#0A0A0A] text-xs font-medium">{placeForm.name || 'Nom non renseigné'}</Text>
-              <Text className="text-[#52525B] text-xs mt-1">{placeForm.address || 'Adresse non renseignée'}</Text>
-              <Text className="text-[#52525B] text-xs mt-1">{placeForm.region || 'Région non renseignée'}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View className="bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
-          <CTAButton title={submitting ? 'Envoi…' : 'Envoyer la suggestion'} variant="primary" onPress={submit} disabled={submitting} />
+          <View className="absolute left-3 right-3 top-3 rounded-xl p-3" style={{ backgroundColor: colors.surfaceGlassStrong }}><Text className="text-xs font-semibold" style={{ color: colors.text }}>{coordinates ? 'Position choisie' : 'Touchez la carte pour placer le repère'}</Text></View>
         </View>
       </View>
-    </View>
-  );
+    </YeyamoFormStep>
+  </YeyamoFormScreen>;
 }

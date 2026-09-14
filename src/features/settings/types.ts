@@ -12,9 +12,9 @@ export interface ProfileSettings {
   display_name: string;
   username: string;
   bio: string | null;
-  city: string | null;
-  region: string | null;
-  gender: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null;
+  country_code: string | null;
+  city_id: string | null;
+  timezone: string | null;
   interests: string[];
 }
 

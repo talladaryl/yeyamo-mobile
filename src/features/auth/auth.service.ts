@@ -17,9 +17,16 @@ function toAuthUser(user: AuthApiUser, displayName?: string): AuthUser {
     username: name.toLowerCase().replace(/[^a-z0-9_]+/g, '_'),
     display_name: name,
     email: user.email ?? '',
+    phone: user.phone,
     avatar_url: null,
     city: '',
-    is_verified: Boolean(user.emailVerifiedAt),
+    email_verified: Boolean(user.emailVerifiedAt),
+    phone_verified: null,
+    is_certified: false,
+    verification_status: null,
+    badge_type: null,
+    // An email-verification timestamp never proves public certification.
+    is_verified: false,
     user_type: user.roles.includes('PARTNER') ? 'partner' : 'user',
     created_at: user.createdAt,
   };
@@ -125,9 +132,7 @@ export const authService = {
 
   async logout(): Promise<void> {
     if (useAuthStore.getState().sessionMode?.startsWith('demo-')) {
-      await secureStore.clearAuthSession();
-      useAuthStore.getState().clearAuth();
-      useInterestsStore.getState().reset();
+      await this.clearLocalSession();
       return;
     }
 
@@ -137,10 +142,15 @@ export const authService = {
     } catch {
       // Best-effort — clear local state regardless
     } finally {
-      reverbClient.disconnect();
-      await secureStore.clearAuthSession();
-      useAuthStore.getState().clearAuth();
-      useInterestsStore.getState().reset();
+      await this.clearLocalSession();
     }
+  },
+
+  /** Clears protected data only after an explicit server-side account action. */
+  async clearLocalSession(): Promise<void> {
+    reverbClient.disconnect();
+    await secureStore.clearAuthSession();
+    useAuthStore.getState().clearAuth();
+    useInterestsStore.getState().reset();
   },
 };

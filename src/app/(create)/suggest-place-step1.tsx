@@ -1,176 +1,49 @@
-import { memo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
-import { NativeMap, NativeMarker, PROVIDER_GOOGLE } from '@/components/maps/NativeMap';
-import { Icon } from '@/components/ui/Icon';
-import { Stepper } from '@/components/ui/Stepper';
-import { CTAButton } from '@/components/ui/CTAButton';
+import { useRef, useState } from 'react';
+import { Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { YeyamoFormFooter } from '@/components/forms/YeyamoFormFooter';
+import { YeyamoFormProgress } from '@/components/forms/YeyamoFormProgress';
+import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
+import { YeyamoFormStep } from '@/components/forms/YeyamoFormStep';
 import { FormSelect } from '@/components/ui/FormSelect';
+import { Input } from '@/components/ui/Input';
+import { useCountryStore } from '@/features/country/country.store';
 import { useCreateStore } from '@/features/create/create.store';
-
-const StableMapPreview = memo(function StableMapPreview() {
-  return (
-    <View className="rounded-2xl overflow-hidden" style={{ height: 180 }}>
-      <NativeMap
-        provider={PROVIDER_GOOGLE}
-        style={{ flex: 1 }}
-        initialRegion={{ latitude: 4.0511, longitude: 9.7679, latitudeDelta: 0.1, longitudeDelta: 0.1 }}
-        scrollEnabled={false}
-        zoomEnabled={false}
-        pitchEnabled={false}
-        rotateEnabled={false}
-      >
-        <NativeMarker coordinate={{ latitude: 4.0511, longitude: 9.7679 }} pinColor="#EF4444" />
-      </NativeMap>
-    </View>
-  );
-});
+import { usePlaceCategories } from '@/features/places/placeReferences.hooks';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function SuggestPlaceStep1Screen() {
   const router = useRouter();
-  const placeForm = useCreateStore((state) => state.placeForm);
+  const colors = useThemeStore((state) => state.colors);
+  const initial = useRef(useCreateStore.getState().placeForm).current;
   const setPlaceForm = useCreateStore((state) => state.setPlaceForm);
   const setPlaceStep = useCreateStore((state) => state.setPlaceStep);
-  
-  const [name, setName] = useState(placeForm.name || '');
-  const [address, setAddress] = useState(placeForm.address || '');
-  const [manualAddress, setManualAddress] = useState(false);
-  const [category, setCategory] = useState(placeForm.category || '');
-  const [type, setType] = useState(placeForm.type || 'Événementiel');
-  const [description, setDescription] = useState(placeForm.description || '');
-  const [region, setRegion] = useState(placeForm.region || 'Littoral');
-  const regions = ['Adamaoua', 'Centre', 'Est', 'Extrême-Nord', 'Littoral', 'Nord', 'Nord-Ouest', 'Ouest', 'Sud', 'Sud-Ouest'];
-  const categories = ['Nature', 'Restaurant', 'Hôtel', 'Culture', 'Loisir'];
-  const placeTypes = ['Événementiel', 'Naturel', 'Commercial', 'Public'];
+  const countryCode = useCountryStore((state) => state.selectedCountryCode);
+  const categories = usePlaceCategories();
+  const [name, setName] = useState(initial.name ?? '');
+  const [category, setCategory] = useState(initial.category ?? '');
+  const [type, setType] = useState(initial.type ?? '');
 
-  const handleContinue = () => {
-    setPlaceForm({
-      name,
-      address,
-      manual_address: manualAddress,
-      category,
-      type,
-      description,
-      region,
-    });
+  const continueToLocation = () => {
+    if (!name.trim()) return;
+    setPlaceForm({ name: name.trim(), category, type: type.trim() });
     setPlaceStep(2);
     router.push('/(create)/suggest-place-step2');
   };
 
-  return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
-          headerTitle: 'Suggérer un lieu',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}>
-        {/* Stepper */}
-        <View className="px-4 pt-4">
-          <Stepper currentStep={1} totalSteps={2} />
+  return <YeyamoFormScreen footer={<YeyamoFormFooter onBack={() => router.back()} onContinue={continueToLocation} disabled={!name.trim()} />}>
+    <YeyamoFormProgress currentStep={1} totalSteps={4} label="Suggérer un lieu" />
+    <YeyamoFormStep title="Quel lieu souhaitez-vous proposer ?" description="Cette suggestion sera examinée avant d’être publiée sur Yeyamo.">
+      <View className="gap-5">
+        <Input label="Nom du lieu *" value={name} onChangeText={setName} placeholder="Ex. Jardin botanique de Limbé" maxLength={120} autoCapitalize="words" returnKeyType="next" />
+        <FormSelect label="Catégorie" value={category} options={(categories.data ?? []).filter((item) => item.active).map((item) => ({ label: item.name, value: item.name }))} onChange={setCategory} placeholder={categories.isLoading ? 'Chargement des catégories…' : 'Choisir une catégorie'} />
+        {categories.isError ? <Text className="-mt-3 text-xs" style={{ color: colors.textSecondary }}>Les catégories sont momentanément indisponibles. Elles sont facultatives pour l’envoi de la suggestion.</Text> : null}
+        <Input label="Type de lieu (facultatif)" value={type} onChangeText={setType} placeholder="Ex. Jardin, restaurant, musée…" maxLength={80} autoCapitalize="sentences" returnKeyType="done" />
+        <View className="rounded-xl border p-4" style={{ borderColor: colors.border, backgroundColor: colors.accentSoft }}>
+          <Text className="text-sm font-semibold" style={{ color: colors.text }}>Pays : {countryCode ?? 'non défini dans votre profil'}</Text>
+          <Text className="mt-1 text-xs leading-5" style={{ color: colors.textSecondary }}>Vous préciserez ensuite la région, la ville et l’adresse. Une suggestion publique est distincte d’un lieu personnalisé créé pour une sortie.</Text>
         </View>
-
-        {/* Map Preview */}
-        <View className="px-4 mb-4">
-          <StableMapPreview />
-        </View>
-
-        <View className="px-4 pb-6">
-          {/* Section Title */}
-          <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-4">
-            Informations de base
-          </Text>
-
-          {/* Nom du lieu */}
-          <View className="mb-4">
-            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
-              Nom du lieu <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <TextInput
-              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
-              placeholder="Ex: Chutes d'Ekom Nkam"
-              placeholderTextColor="#A1A1AA"
-              value={name}
-              onChangeText={setName}
-            />
-          </View>
-
-          {/* Adresse */}
-          <View className="mb-4">
-            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
-              Adresse complète (Région) <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <View className="relative">
-              <TextInput
-                className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
-                placeholder="Rechercher une adresse..."
-                placeholderTextColor="#A1A1AA"
-                value={address}
-                onChangeText={setAddress}
-              />
-              <TouchableOpacity
-                onPress={() => setManualAddress(!manualAddress)}
-                className="absolute right-3 top-3"
-                activeOpacity={0.7}
-              >
-                <Text className="text-[#EF4444] text-xs font-semibold">
-                  Saisir manuellement
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Catégorie */}
-          <FormSelect label="Catégorie" value={category} options={categories.map((value) => ({ label: value, value }))} onChange={setCategory} required />
-
-          {/* Type de lieu */}
-          <FormSelect label="Type de lieu" value={type} options={placeTypes.map((value) => ({ label: value, value }))} onChange={setType} required />
-
-          {/* Brève description */}
-          <View className="mb-4">
-            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
-              Brève description <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <TextInput
-              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
-              placeholder="Décrivez brièvement ce lieu..."
-              placeholderTextColor="#A1A1AA"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              maxLength={500}
-              style={{ minHeight: 100, textAlignVertical: 'top' }}
-            />
-          </View>
-
-          {/* Région */}
-          <FormSelect label="Région" value={region} options={regions.map((value) => ({ label: value, value }))} onChange={setRegion} required />
-        </View>
-
-        <View className="h-24" />
-      </ScrollView>
-
-      {/* Bottom Button */}
-      <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
-        <CTAButton
-          title="Continuer"
-          variant="primary"
-          onPress={handleContinue}
-          disabled={!name || !address || !category || !type || !description}
-        />
       </View>
-      </KeyboardAvoidingView>
-    </View>
-  );
+    </YeyamoFormStep>
+  </YeyamoFormScreen>;
 }

@@ -23,6 +23,8 @@ import {
   synchronizePushToken,
 } from '@/features/notifications/push.service';
 import { AppErrorScreen } from '@/components/ui/AppErrorScreen';
+import { FEED_QUERY_KEY } from '@/features/feed/useFeed';
+import { STORIES_QUERY_KEY } from '@/features/story/useStory';
 import type { ErrorBoundaryProps } from 'expo-router';
 
 const queryClient = new QueryClient({
@@ -141,6 +143,19 @@ function RootNavigator() {
       unsubscribe = cleanup;
     });
     return () => unsubscribe();
+  }, [isAuthenticated, isHydrated]);
+
+  // Protected feed and story queries must never leak a previous session or
+  // remain failed after a newly restored/authenticated session becomes ready.
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (!isAuthenticated) {
+      queryClient.removeQueries({ queryKey: FEED_QUERY_KEY });
+      queryClient.removeQueries({ queryKey: STORIES_QUERY_KEY });
+      return;
+    }
+    void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
   }, [isAuthenticated, isHydrated]);
 
   // Profile remains the source of truth once authenticated. The persisted
@@ -283,13 +298,7 @@ function RootNavigator() {
         <Stack.Screen name="(explore)/places" />
         <Stack.Screen name="(explore)/search" />
         <Stack.Screen name="(explore)/map" />
-        <Stack.Screen name="(create)/choice" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="(create)/publication" />
-        <Stack.Screen name="(create)/story" options={{ presentation: 'fullScreenModal' }} />
-        <Stack.Screen name="(create)/event" />
-        <Stack.Screen name="(create)/event-settings" />
-        <Stack.Screen name="(create)/suggest-place-step1" />
-        <Stack.Screen name="(create)/suggest-place-step2" />
+        <Stack.Screen name="(create)" options={{ headerShown: false }} />
         <Stack.Screen name="(partner)/choice" options={{ presentation: 'modal' }} />
         <Stack.Screen name="(partner)/publication" />
         <Stack.Screen name="(partner)/story" options={{ presentation: 'fullScreenModal' }} />
@@ -325,21 +334,7 @@ function RootNavigator() {
         <Stack.Screen name="(partner-dashboard)/settings" />
         <Stack.Screen name="(social-graph)" />
         <Stack.Screen name="(collections)" />
-        <Stack.Screen name="(profile)/publications" />
-        <Stack.Screen name="(profile)/favorites" />
-        <Stack.Screen name="(profile)/events" />
-        <Stack.Screen name="(profile)/reservations" />
-        <Stack.Screen name="(profile)/reviews" />
-        <Stack.Screen name="(profile)/create-review/[targetType]/[targetId]" />
-        <Stack.Screen name="(profile)/notifications" />
-        <Stack.Screen name="(profile)/settings" />
-        <Stack.Screen name="(profile)/help" />
-        <Stack.Screen name="(profile)/faq" />
-        <Stack.Screen name="(profile)/support" />
-        <Stack.Screen name="(profile)/privacy-policy" />
-        <Stack.Screen name="(profile)/about" />
-        <Stack.Screen name="(profile)/tickets" />
-        <Stack.Screen name="(profile)/ticket/[id]" />
+        <Stack.Screen name="(profile)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       </View>

@@ -1,4 +1,7 @@
 import { apiClient } from '@/services/api/client';
+import { apiGet } from '@/services/api/client';
+import { absoluteApiUrl, mediaContentUrl } from '@/services/api/contracts';
+import type { EntityId, MediaAttachment } from '@/types/api.types';
 
 export interface MediaUploadAsset {
   uri: string;
@@ -13,6 +16,30 @@ export interface MediaUploadResponse {
   type?: string;
   contentType?: string;
   [key: string]: unknown;
+}
+
+interface BackendMediaMetadata {
+  id: string;
+  type: 'IMAGE' | 'VIDEO';
+  contentUrl?: string | null;
+  thumbnailUrl?: string | null;
+  width?: number | null;
+  height?: number | null;
+  durationMs?: number | null;
+}
+
+/** Resolves real media metadata for consumers whose parent DTO only exposes mediaIds. */
+export async function getMediaAttachment(mediaId: EntityId): Promise<MediaAttachment> {
+  const media = await apiGet<BackendMediaMetadata>(`/media/${mediaId}`);
+  return {
+    id: media.id,
+    url: absoluteApiUrl(media.contentUrl) ?? mediaContentUrl(media.id),
+    thumbnail_url: absoluteApiUrl(media.thumbnailUrl) ?? null,
+    type: media.type === 'VIDEO' ? 'video' : 'image',
+    width: media.width ?? 0,
+    height: media.height ?? 0,
+    duration_seconds: media.durationMs == null ? null : Math.max(0, Math.round(media.durationMs / 1000)),
+  };
 }
 
 /** Uploads a real local asset. No optimistic success is returned. */
