@@ -1,13 +1,19 @@
 import type { CountryConfiguration, CountryFeatureCode, CountrySummary } from './country.types';
 
-type CountryDto = {
-  code: string; name: string; defaultLanguageCode: string; defaultCurrencyCode: string;
-  defaultTimezone: string; phoneCountryCode: string | null; launchStatus: string;
-  registrationEnabled: boolean | null; contentPublishingEnabled: boolean | null;
-  placePublishingEnabled: boolean | null; eventFeatureEnabled: boolean | null;
-  partnerOnboardingEnabled: boolean | null; paymentsEnabled: boolean | null;
-  bookingEnabled: boolean | null; ticketingEnabled: boolean | null;
-  artisanCommerceEnabled: boolean | null; cultureModuleEnabled: boolean | null;
+/**
+ * The country-config service uses `code`. The production gateway may still
+ * temporarily serve the legacy place-service response, which uses
+ * `countryCode` and omits configuration flags. Keep this adapter at the API
+ * boundary so callers always receive one stable mobile shape.
+ */
+export type CountryDto = {
+  code?: string; countryCode?: string; name: string; defaultLanguageCode?: string; defaultCurrencyCode?: string;
+  defaultTimezone?: string; phoneCountryCode?: string | null; launchStatus: string;
+  registrationEnabled?: boolean | null; contentPublishingEnabled?: boolean | null;
+  placePublishingEnabled?: boolean | null; eventFeatureEnabled?: boolean | null;
+  partnerOnboardingEnabled?: boolean | null; paymentsEnabled?: boolean | null;
+  bookingEnabled?: boolean | null; ticketingEnabled?: boolean | null;
+  artisanCommerceEnabled?: boolean | null; cultureModuleEnabled?: boolean | null;
 };
 
 type FeatureFlagsDto = Omit<CountryDto, 'code' | 'name' | 'defaultLanguageCode' | 'defaultCurrencyCode' | 'defaultTimezone' | 'phoneCountryCode' | 'launchStatus'>;
@@ -25,6 +31,13 @@ const featureCodes: CountryFeatureCode[] = [
   'artisanCommerceEnabled', 'cultureModuleEnabled',
 ];
 
+// The legacy public endpoint temporarily omits phoneCountryCode. These are
+// only used as a compatibility fallback; the country-config value always wins.
+const legacyCallingCodes: Record<string, string> = {
+  ZA: '+27', CM: '+237', CI: '+225', ET: '+251', GH: '+233',
+  KE: '+254', NG: '+234', RW: '+250', SN: '+221', TZ: '+255',
+};
+
 function countryStatus(value: string): CountrySummary['status'] {
   return value === 'LIVE' || value === 'BETA' || value === 'COMING_SOON' || value === 'DISABLED' ? value : 'DISABLED';
 }
@@ -35,11 +48,23 @@ function mapFeatures(source: CountryDto | FeatureFlagsDto): CountryConfiguration
 }
 
 export function mapCountrySummary(dto: CountryDto): CountrySummary {
+  const code = dto.code ?? dto.countryCode;
+  if (!code || !/^[A-Za-z]{2}$/.test(code)) {
+    throw new Error('La réponse du serveur pour ce pays est invalide.');
+  }
+  const normalizedCode = code.toUpperCase();
+  const status = countryStatus(dto.launchStatus);
   return {
-    code: dto.code.toUpperCase(), name: dto.name, flag: getCountryFlag(dto.code), status: countryStatus(dto.launchStatus),
-    registrationEnabled: Boolean(dto.registrationEnabled), defaultCurrencyCode: dto.defaultCurrencyCode,
-    defaultTimezone: dto.defaultTimezone, defaultLanguageCode: dto.defaultLanguageCode,
-    callingCode: dto.phoneCountryCode,
+    code: normalizedCode, name: dto.name, flag: getCountryFlag(code), status,
+    // The legacy endpoint has no feature flags. LIVE/BETA was its only
+    // registration signal, so retain that historical behaviour until the
+    // country-config deployment is active.
+    registrationEnabled: typeof dto.registrationEnabled === 'boolean'
+      ? dto.registrationEnabled
+      : status === 'LIVE' || status === 'BETA',
+    defaultCurrencyCode: dto.defaultCurrencyCode ?? '',
+    defaultTimezone: dto.defaultTimezone ?? 'UTC', defaultLanguageCode: dto.defaultLanguageCode ?? 'fr',
+    callingCode: dto.phoneCountryCode ?? legacyCallingCodes[normalizedCode] ?? null,
   };
 }
 

@@ -11,6 +11,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { forgotPasswordSchema, type ForgotPasswordForm } from '@/utils/validation';
 import { useTurnstileChallenge } from '@/features/auth/useTurnstileChallenge';
+import ENV from '@/config/env';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function ForgotPasswordScreen() {
 
   const onSubmit = async (data: ForgotPasswordForm) => {
     try {
-      const turnstileToken = await requestToken('forgot_password');
+      const turnstileToken = ENV.TURNSTILE_ENABLED ? await requestToken('forgot_password') : undefined;
       await forgotPassword(data, turnstileToken);
       router.push({ pathname: '/(auth)/reset-password', params: { email: data.email } } as unknown as Href);
     } catch {
@@ -39,7 +40,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeScreen>
-      {challenge}
+      {ENV.TURNSTILE_ENABLED ? challenge : null}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"

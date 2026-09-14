@@ -1,8 +1,7 @@
 import { apiGet, apiPatch } from '@/services/api/client';
 import type { CountryCity, UserCountryPreferences } from './country.types';
-import type { CountryConfigurationDto } from './country.mappers';
+import type { CountryConfigurationDto, CountryDto } from './country.mappers';
 
-type CountryDto = CountryConfigurationDto['country'];
 type FeatureFlagsDto = Omit<CountryDto, 'code' | 'name' | 'defaultLanguageCode' | 'defaultCurrencyCode' | 'defaultTimezone' | 'phoneCountryCode' | 'launchStatus'>;
 
 const code = (value: string) => encodeURIComponent(value.toUpperCase());

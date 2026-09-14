@@ -1,4 +1,4 @@
-import { View, Text, TextInput, type TextInputProps } from 'react-native';
+import { Platform, View, Text, TextInput, type TextInputProps } from 'react-native';
 import type { ReactNode } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
 
@@ -15,7 +15,7 @@ export function Input({ label, error, containerClassName = '', leftIcon, ...prop
   return (
     <View className={`gap-1 ${containerClassName}`}>
       {label ? (
-        <Text className="text-sm font-medium" style={{ color: colors.textSecondary }}>{label}</Text>
+        <Text className="text-sm font-medium" style={{ color: colors.textSecondary, lineHeight: 20 }}>{label}</Text>
       ) : null}
       <View
         className="flex-row items-center rounded-xl border"
@@ -23,15 +23,22 @@ export function Input({ label, error, containerClassName = '', leftIcon, ...prop
       >
         {leftIcon ? <View className="pl-4">{leftIcon}</View> : null}
         <TextInput
-          className="flex-1 px-4 py-3 text-base"
-          style={{ color: colors.text }}
+          className="flex-1 px-4 text-base"
+          style={{
+            color: colors.text,
+            minHeight: 52,
+            paddingVertical: 0,
+            lineHeight: 22,
+            textAlignVertical: 'center',
+            ...(Platform.OS === 'android' ? { includeFontPadding: true } : {}),
+          }}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           {...props}
         />
       </View>
       {error ? (
-        <Text className="text-xs text-[#EF4444]">{error}</Text>
+        <Text className="text-xs text-[#EF4444]" style={{ lineHeight: 18 }}>{error}</Text>
       ) : null}
     </View>
   );

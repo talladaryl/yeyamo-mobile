@@ -28,6 +28,7 @@ function documentFor(siteKey: string, action: TurnstileAction): string {
 
 /** Native bridge for Cloudflare Turnstile. The site key is public and injected by Expo at build time. */
 export function TurnstileWidget({ action, onVerify, onExpire, onError }: TurnstileWidgetProps) {
+  if (!ENV.TURNSTILE_ENABLED) return null;
   const siteKey = ENV.TURNSTILE_SITE_KEY;
 
   if (!siteKey) {

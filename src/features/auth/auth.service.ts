@@ -5,7 +5,7 @@ import { useAuthStore, type SessionMode } from './auth.store';
 import { authApi } from './auth.api';
 import type { AuthApiUser, AuthUser, LoginCredentials, RegisterCredentials, SocialLoginCredentials } from './types';
 import { useInterestsStore } from '@/features/interests/interests.store';
-import { registerTokenRefreshedHandler } from '@/services/api/client';
+import { registerTokenRefreshedHandler, resetUnauthenticatedSessionHandler } from '@/services/api/client';
 import { synchronizePushToken, unregisterCurrentPushToken } from '@/features/notifications/push.service';
 import ENV from '@/config/env';
 
@@ -38,6 +38,7 @@ async function persistSession(response: {
     secureStore.set(secureStore.KEYS.SESSION_MODE, 'backend'),
   ]);
   useAuthStore.getState().setAuth(user, response.accessToken, 'backend');
+  resetUnauthenticatedSessionHandler();
   reverbClient.connect(response.accessToken);
   void synchronizePushToken();
 }
@@ -83,6 +84,7 @@ export const authService = {
         const apiUser = await authApi.me();
         const user = toAuthUser(apiUser);
         useAuthStore.getState().setAuth(user, token, 'backend');
+        resetUnauthenticatedSessionHandler();
         await secureStore.set(secureStore.KEYS.SESSION_MODE, 'backend');
         reverbClient.connect(token);
         void synchronizePushToken();
@@ -100,11 +102,11 @@ export const authService = {
     }
   },
 
-  async login(credentials: LoginCredentials, turnstileToken: string): Promise<void> {
+  async login(credentials: LoginCredentials, turnstileToken?: string): Promise<void> {
     await persistSession(await authApi.login(credentials, turnstileToken));
   },
 
-  async register(credentials: RegisterCredentials, turnstileToken: string): Promise<void> {
+  async register(credentials: RegisterCredentials, turnstileToken?: string): Promise<void> {
     await persistSession(await authApi.register(credentials, turnstileToken), credentials.display_name);
   },
 

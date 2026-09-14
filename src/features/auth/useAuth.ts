@@ -12,6 +12,12 @@ import type {
 } from './types';
 
 function authErrorMessage(error: unknown, fallback: string): string {
+  // API errors are normalized by the shared Axios client before reaching this
+  // hook, so they are no longer AxiosError instances at this point.
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message.trim();
+  }
   if (isAxiosError<{ message?: string }>(error)) {
     if (error.response?.data?.message) return error.response.data.message;
     if (error.code === 'ECONNABORTED') return 'Le serveur met trop de temps à répondre.';
@@ -25,7 +31,7 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function login(credentials: LoginCredentials, turnstileToken: string) {
+  async function login(credentials: LoginCredentials, turnstileToken?: string) {
     setIsLoading(true);
     setError(null);
     try {
@@ -38,7 +44,7 @@ export function useAuth() {
     }
   }
 
-  async function register(credentials: RegisterCredentials, turnstileToken: string) {
+  async function register(credentials: RegisterCredentials, turnstileToken?: string) {
     setIsLoading(true);
     setError(null);
     try {
@@ -80,7 +86,7 @@ export function useAuth() {
     }
   }
 
-  async function forgotPassword(credentials: ForgotPasswordCredentials, turnstileToken: string) {
+  async function forgotPassword(credentials: ForgotPasswordCredentials, turnstileToken?: string) {
     setIsLoading(true);
     setError(null);
     try {

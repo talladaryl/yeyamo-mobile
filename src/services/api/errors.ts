@@ -10,6 +10,12 @@ const defaults: Record<number, string> = {
   422: 'Certaines informations sont invalides.',
   429: 'Trop de demandes ont été envoyées. Réessayez dans quelques instants.',
 };
+const serverMessages: Record<string, string> = {
+  EMAIL_DELIVERY_FAILED: "L'e-mail de vérification ne peut pas être envoyé pour le moment. Réessayez plus tard.",
+  COUNTRY_SERVICE_ERROR: 'La validation du pays est temporairement indisponible. Réessayez dans quelques instants.',
+  OTP_SERVICE_UNAVAILABLE: 'Le service de vérification est indisponible. Réessayez dans quelques instants.',
+  DATABASE_UNAVAILABLE: "Le service d'inscription est temporairement indisponible. Réessayez dans quelques instants.",
+};
 
 const object = (value: unknown): JsonObject | undefined => typeof value === 'object' && value !== null && !Array.isArray(value) ? value as JsonObject : undefined;
 const text = (value: unknown) => typeof value === 'string' && value.trim() ? value.trim() : undefined;
@@ -32,10 +38,14 @@ export function normalizeApiError(error: unknown): AppApiError {
   const code = text(body?.code) ?? text(body?.errorCode) ?? text(body?.scanResult) ?? text(body?.title);
   const correlationId = text(body?.correlationId) ?? text(error.response?.headers?.['x-correlation-id']);
   const backendMessage = text(body?.message) ?? text(body?.detail);
+  const safeBackendMessage = backendMessage && !unsafe.test(backendMessage) ? backendMessage : undefined;
+  const serverMessage = code ? serverMessages[code] : undefined;
   const message = !status
     ? 'Connexion au serveur impossible. Vérifiez votre réseau.'
     : status >= 500
-      ? 'Une erreur serveur est survenue. Réessayez plus tard.'
-      : backendMessage && !unsafe.test(backendMessage) ? backendMessage : defaults[status] ?? 'La demande a échoué.';
+      ? serverMessage ?? (code === 'INTERNAL_ERROR'
+        ? `Une erreur serveur est survenue. Réessayez plus tard.${correlationId ? ` Référence : ${correlationId}` : ''}`
+        : safeBackendMessage ?? 'Une erreur serveur est survenue. Réessayez plus tard.')
+      : safeBackendMessage ?? defaults[status] ?? 'La demande a échoué.';
   return { status, code, message, fieldErrors: status === 422 || status === 400 ? fields(body) : undefined, correlationId };
 }

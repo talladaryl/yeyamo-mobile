@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { Platform, View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { useThemeStore } from '@/features/theme/theme.store';
 
@@ -38,7 +38,7 @@ export function PhoneInput({
   return (
     <View className="mb-4">
       {label && (
-        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textSecondary }}>
+        <Text className="mb-2 text-sm font-medium" style={{ color: colors.textSecondary, lineHeight: 20 }}>
           {label}
         </Text>
       )}
@@ -48,8 +48,8 @@ export function PhoneInput({
         <TouchableOpacity
           onPress={() => setShowCountryPicker(!showCountryPicker)}
           disabled={disabled || countryOptions.length === 0}
-          className="flex-row items-center rounded-l-xl border-2 border-r-0 px-3 py-3"
-          style={{ backgroundColor: colors.elevated, borderColor: error ? colors.primary : colors.border }}
+          className="flex-row items-center rounded-l-xl border-2 border-r-0 px-3"
+          style={{ backgroundColor: colors.elevated, borderColor: error ? colors.primary : colors.border, minHeight: 52 }}
         >
           <View className="mr-1">
             <Icon name="globe-outline" size={16} color={colors.textMuted} />
@@ -67,8 +67,17 @@ export function PhoneInput({
           placeholder={placeholder}
           keyboardType="phone-pad"
           editable={!disabled}
-          className="flex-1 rounded-r-xl border-2 border-l-0 px-4 py-3 text-base"
-          style={{ backgroundColor: colors.card, borderColor: error ? colors.primary : colors.border, color: colors.text }}
+          className="flex-1 rounded-r-xl border-2 border-l-0 px-4 text-base"
+          style={{
+            backgroundColor: colors.card,
+            borderColor: error ? colors.primary : colors.border,
+            color: colors.text,
+            minHeight: 52,
+            paddingVertical: 0,
+            lineHeight: 22,
+            textAlignVertical: 'center',
+            ...(Platform.OS === 'android' ? { includeFontPadding: true } : {}),
+          }}
           placeholderTextColor={colors.textSecondary}
         />
       </View>
@@ -97,7 +106,7 @@ export function PhoneInput({
       )}
 
       {error && (
-        <Text className="text-red-500 text-sm mt-1">
+        <Text className="text-red-500 text-sm mt-1" style={{ lineHeight: 20 }}>
           {error}
         </Text>
       )}
