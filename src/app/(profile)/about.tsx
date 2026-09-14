@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { Text, View } from 'react-native';
-import { Logo } from '@/components/ui/Logo';
+import { StaticYeyamoSplashLogo } from '@/components/onboarding/StaticYeyamoSplashLogo';
 import { SupportPageLayout } from '@/components/profile/SupportPageLayout';
 import { i18n } from '@/i18n';
 import { useThemeStore } from '@/features/theme/theme.store';
@@ -11,7 +11,7 @@ export default function AboutScreen() {
   return (
     <SupportPageLayout title={i18n.t('support.aboutTitle')}>
       <View className="items-center rounded-3xl border p-6" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-        <Logo size="large" />
+        <StaticYeyamoSplashLogo width={128} height={96} />
         <Text className="mt-3 text-3xl font-extrabold" style={{ color: colors.text }}>{i18n.t('support.aboutTitle')}</Text>
         <Text className="mt-2 text-center text-base font-bold" style={{ color: colors.primary }}>{i18n.t('support.signature')}</Text>
       </View>

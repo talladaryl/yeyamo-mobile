@@ -22,6 +22,7 @@ interface BackendEvent {
   id: string;
   placeId: string;
   title: string;
+  locationName?: string | null;
   description: string | null;
   startAt: string;
   endAt: string | null;
@@ -120,13 +121,13 @@ export const profileApi = {
         cover_image_url: null,
         place: {
           id: event.placeId,
-          name: 'Lieu de l’événement',
+          name: event.locationName ?? 'Lieu non renseigné',
           city: '',
         },
         organizer: {
-          id: 'unknown',
-          username: 'organisateur',
-          display_name: 'Organisateur',
+          id: event.id,
+          username: '',
+          display_name: '',
           avatar_url: null,
           is_verified: false,
         },
@@ -154,7 +155,7 @@ export const profileApi = {
     const { data } = await apiClient.get<BackendBooking[]>('/bookings/me');
     return data.map((booking) => ({
       id: booking.id,
-      place: emptyPlace(booking.activityId, `Activité ${booking.activityId}`),
+      place: emptyPlace(booking.activityId, 'Lieu non renseigné'),
       reservation_date: booking.createdAt,
       guests_count: booking.quantity,
       status: booking.status.toLowerCase() as Reservation['status'],
@@ -170,7 +171,7 @@ export const profileApi = {
     );
     return data.map((review) => ({
       id: review.id,
-      place: emptyPlace(review.placeId, `Lieu ${review.placeId}`),
+      place: emptyPlace(review.placeId, 'Lieu non renseigné'),
       rating: review.rating,
       comment: review.comment,
       created_at: review.createdAt,

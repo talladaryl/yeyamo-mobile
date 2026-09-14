@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
@@ -10,7 +10,12 @@ export default function SearchUsersScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: results = [], isLoading, isError, refetch } = useUserSearch(searchQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+  const { data: results = [], isLoading, isError, refetch } = useUserSearch(debouncedQuery);
   const { follow } = useFollowActions();
 
   return (

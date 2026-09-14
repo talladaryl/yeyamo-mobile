@@ -183,7 +183,7 @@ export const collectionsApi = {
       name: summary.title,
       cover_image_url: undefined,
       places_count: summary.placeCount,
-      visibility: 'private',
+      visibility: undefined,
     }));
   },
 };

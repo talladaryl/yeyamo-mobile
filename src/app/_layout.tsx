@@ -150,8 +150,20 @@ function RootNavigator() {
   useEffect(() => {
     if (!isHydrated) return;
     if (!isAuthenticated) {
-      queryClient.removeQueries({ queryKey: FEED_QUERY_KEY });
-      queryClient.removeQueries({ queryKey: STORIES_QUERY_KEY });
+      // Never reuse data associated with the previous identity after logout,
+      // deactivation or a real account deletion. Public data can refetch later.
+      [
+        FEED_QUERY_KEY,
+        STORIES_QUERY_KEY,
+        ['profile'],
+        ['settings'],
+        ['social'],
+        ['notifications'],
+        ['collections'],
+        ['favorites'],
+        ['reservations'],
+        ['auth', 'sessions'],
+      ].forEach((queryKey) => queryClient.removeQueries({ queryKey }));
       return;
     }
     void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });

@@ -3,6 +3,7 @@ export interface AuthUser {
   username: string;
   display_name: string;
   email: string;
+  phone: string | null;
   avatar_url: string | null;
   city: string;
   /** Authentication evidence; it is not a public certification badge. */

@@ -26,7 +26,8 @@ export interface CollectionSummary {
   name: string;
   cover_image_url?: string;
   places_count: number;
-  visibility: 'private' | 'public';
+  /** Summaries do not currently contain isPublic in the backend contract. */
+  visibility?: 'private' | 'public';
 }
 
 export interface CreateCollectionInput {

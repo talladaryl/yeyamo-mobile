@@ -1,56 +1,21 @@
-import { useState, type ReactNode } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
-import { ToggleItem } from '@/components/settings/ToggleItem';
-import { RadioItem } from '@/components/settings/RadioItem';
-import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
-import { useAuthStore } from '@/features/auth/auth.store';
+import { ErrorState, LoadingState } from '@/components/ui/ViewStates';
+import { useSocialSettings, useUpdateSocialSettings } from '@/features/social/useSocial';
+import type { SocialSettings } from '@/features/social/types';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function PrivacyScreen() {
-  const router = useRouter();
-  const colors = useThemeStore((state) => state.colors);
-  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
-  const [settings, setSettings] = useState(() => isDemo ? MOCK_USER_SETTINGS.privacy : {
-    account_visibility: 'public' as const,
-    show_online_status: false,
-    who_can_message: 'no_one' as const,
-    who_can_see_posts: 'everyone' as const,
-    who_can_tag_me: 'no_one' as const,
-    show_location_in_posts: false,
-    show_city_in_profile: false,
-    show_in_search: true,
-    show_in_suggestions: false,
-  });
-
-  return <SafeScreen>
-    <Header title="Confidentialité" onBack={() => router.back()} />
-    <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
-      <PrivacySection title="Visibilité du compte"><Card><RadioItem label="Public" description="Tout le monde peut voir votre profil" selected={settings.account_visibility === 'public'} onPress={() => setSettings({ ...settings, account_visibility: 'public' })} showBorder={false} /><RadioItem label="Privé" description="Seuls vos abonnés peuvent voir vos publications" selected={settings.account_visibility === 'private'} onPress={() => setSettings({ ...settings, account_visibility: 'private' })} /><RadioItem label="Amis uniquement" description="Seuls vos amis peuvent voir votre profil" selected={settings.account_visibility === 'friends_only'} onPress={() => setSettings({ ...settings, account_visibility: 'friends_only' })} /></Card><Card className="mt-3"><ToggleItem label="Afficher mon statut en ligne" description="Les autres peuvent voir si vous êtes en ligne" value={settings.show_online_status} onValueChange={(value) => setSettings({ ...settings, show_online_status: value })} showBorder={false} /></Card></PrivacySection>
-      <PrivacySection title="Interactions"><Question title="Qui peut m’envoyer des messages"><RadioItem label="Tout le monde" selected={settings.who_can_message === 'everyone'} onPress={() => setSettings({ ...settings, who_can_message: 'everyone' })} showBorder={false} /><RadioItem label="Mes amis" selected={settings.who_can_message === 'friends'} onPress={() => setSettings({ ...settings, who_can_message: 'friends' })} /><RadioItem label="Personne" selected={settings.who_can_message === 'no_one'} onPress={() => setSettings({ ...settings, who_can_message: 'no_one' })} /></Question><Question title="Qui peut voir mes publications"><RadioItem label="Tout le monde" selected={settings.who_can_see_posts === 'everyone'} onPress={() => setSettings({ ...settings, who_can_see_posts: 'everyone' })} showBorder={false} /><RadioItem label="Mes amis" selected={settings.who_can_see_posts === 'friends'} onPress={() => setSettings({ ...settings, who_can_see_posts: 'friends' })} /><RadioItem label="Personne" selected={settings.who_can_see_posts === 'no_one'} onPress={() => setSettings({ ...settings, who_can_see_posts: 'no_one' })} /></Question><Question title="Qui peut me taguer dans les publications"><RadioItem label="Tout le monde" selected={settings.who_can_tag_me === 'everyone'} onPress={() => setSettings({ ...settings, who_can_tag_me: 'everyone' })} showBorder={false} /><RadioItem label="Mes amis" selected={settings.who_can_tag_me === 'friends'} onPress={() => setSettings({ ...settings, who_can_tag_me: 'friends' })} /><RadioItem label="Personne" selected={settings.who_can_tag_me === 'no_one'} onPress={() => setSettings({ ...settings, who_can_tag_me: 'no_one' })} /></Question></PrivacySection>
-      <PrivacySection title="Localisation"><Card><ToggleItem label="Afficher ma ville sur mon profil" value={settings.show_city_in_profile} onValueChange={(value) => setSettings({ ...settings, show_city_in_profile: value })} showBorder={false} /><ToggleItem label="Inclure ma localisation dans les publications" value={settings.show_location_in_posts} onValueChange={(value) => setSettings({ ...settings, show_location_in_posts: value })} /><ToggleItem label="Apparaître dans les recherches" value={settings.show_in_search} onValueChange={(value) => setSettings({ ...settings, show_in_search: value })} /><ToggleItem label="Apparaître dans les suggestions" value={settings.show_in_suggestions} onValueChange={(value) => setSettings({ ...settings, show_in_suggestions: value })} /></Card></PrivacySection>
-    </ScrollView>
-  </SafeScreen>;
+  const router = useRouter(); const colors = useThemeStore((state) => state.colors); const settings = useSocialSettings(); const update = useUpdateSocialSettings();
+  if (settings.isLoading) return <LoadingState label="Chargement des réglages…" />;
+  if (settings.isError || !settings.data) return <ErrorState title="Réglages indisponibles" message="La confidentialité ne peut pas être chargée." retry={() => void settings.refetch()} />;
+  const privacy = settings.data.privacy;
+  const mutate = (patch: Partial<SocialSettings['privacy']>) => update.mutate({ privacy: { ...privacy, ...patch } });
+  return <SafeScreen><Header onBack={() => router.back()} /><ScrollView contentContainerStyle={{ paddingBottom: 32 }}><Section title="Visibilité du profil"><Card>{([['public', 'Public', 'Tout le monde peut voir votre profil'], ['followers', 'Abonnés uniquement', 'Seuls vos abonnés peuvent voir votre profil'], ['private', 'Privé', 'Votre profil est privé']] as const).map(([value, label, description]) => <TouchableOpacity key={value} disabled={update.isPending} onPress={() => mutate({ profile_visibility: value })} className="flex-row items-center border-t p-4 first:border-t-0" style={{ borderColor: colors.border }} accessibilityRole="radio" accessibilityState={{ selected: privacy.profile_visibility === value }}><View className="flex-1"><Text className="font-semibold" style={{ color: colors.text }}>{label}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{description}</Text></View><Ionicons name={privacy.profile_visibility === value ? 'radio-button-on' : 'radio-button-off'} size={22} color={privacy.profile_visibility === value ? colors.primary : colors.textMuted} /></TouchableOpacity>)}</Card></Section><Section title="Réseau social"><Card><SwitchRow label="Afficher mon activité" description="Autorise l’affichage de votre activité sociale." value={privacy.show_activity} onChange={(show_activity) => mutate({ show_activity })} disabled={update.isPending} /><SwitchRow label="Afficher mes abonnés" description="Autorise l’affichage de votre liste d’abonnés." value={privacy.show_followers} onChange={(show_followers) => mutate({ show_followers })} disabled={update.isPending} /><SwitchRow label="Afficher mes abonnements" description="Autorise l’affichage de vos abonnements." value={privacy.show_following} onChange={(show_following) => mutate({ show_following })} disabled={update.isPending} /></Card></Section>{update.isError ? <Text className="mx-4 mt-4 text-sm" style={{ color: colors.primary }}>La modification a échoué et la valeur précédente a été restaurée.</Text> : null}<Text className="mx-4 mt-5 text-xs leading-5" style={{ color: colors.textSecondary }}>Les réglages de messages, tags, localisation et statut en ligne ne sont pas affichés car ils ne sont pas fournis par le contrat backend actuel.</Text></ScrollView></SafeScreen>;
 }
-
-function Header({ title, onBack }: { title: string; onBack: () => void }) {
-  const colors = useThemeStore((state) => state.colors);
-  return <View className="flex-row items-center border-b px-4 py-3" style={{ borderColor: colors.border }}><TouchableOpacity onPress={onBack} className="-ml-2 p-2" accessibilityRole="button" accessibilityLabel="Retour"><Ionicons name="chevron-back" size={24} color={colors.text} /></TouchableOpacity><Text className="ml-2 text-xl font-bold" style={{ color: colors.text }}>{title}</Text></View>;
-}
-
-function PrivacySection({ title, children }: { title: string; children: ReactNode }) {
-  const colors = useThemeStore((state) => state.colors);
-  return <View className="mt-6 px-4"><Text className="mb-3 text-xs font-semibold uppercase" style={{ color: colors.textSecondary }}>{title}</Text>{children}</View>;
-}
-
-function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  const colors = useThemeStore((state) => state.colors);
-  return <View className={`overflow-hidden rounded-xl ${className}`} style={{ backgroundColor: colors.surface }}>{children}</View>;
-}
-
-function Question({ title, children }: { title: string; children: ReactNode }) {
-  const colors = useThemeStore((state) => state.colors);
-  return <Card className="mb-3"><Text className="px-4 pb-2 pt-3 text-sm font-medium" style={{ color: colors.text }}>{title}</Text>{children}</Card>;
-}
+function Header({ onBack }: { onBack: () => void }) { const colors = useThemeStore((state) => state.colors); return <View className="flex-row items-center border-b px-4 py-3" style={{ borderColor: colors.border }}><TouchableOpacity onPress={onBack} className="-ml-2 p-2"><Ionicons name="chevron-back" size={24} color={colors.text} /></TouchableOpacity><Text className="ml-2 text-xl font-bold" style={{ color: colors.text }}>Confidentialité</Text></View>; }
+function Section({ title, children }: { title: string; children: React.ReactNode }) { const colors = useThemeStore((state) => state.colors); return <View className="mt-6 px-4"><Text className="mb-3 text-xs font-semibold uppercase" style={{ color: colors.textSecondary }}>{title}</Text>{children}</View>; }
+function Card({ children }: { children: React.ReactNode }) { const colors = useThemeStore((state) => state.colors); return <View className="overflow-hidden rounded-xl" style={{ backgroundColor: colors.surface }}>{children}</View>; }
+function SwitchRow({ label, description, value, onChange, disabled }: { label: string; description: string; value: boolean; onChange: (value: boolean) => void; disabled: boolean }) { const colors = useThemeStore((state) => state.colors); return <View className="flex-row items-center border-t p-4 first:border-t-0" style={{ borderColor: colors.border }}><View className="flex-1 pr-3"><Text className="font-semibold" style={{ color: colors.text }}>{label}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{description}</Text></View><Switch value={value} disabled={disabled} onValueChange={onChange} trackColor={{ false: colors.border, true: colors.primary }} thumbColor="#FFFFFF" /></View>; }
