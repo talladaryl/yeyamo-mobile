@@ -1,35 +1,33 @@
-import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import type { ReactNode } from 'react';
+import { ActivityIndicator, Text, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useThemeStore } from '@/features/theme/theme.store';
 
-type Variant = 'primary' | 'outline' | 'ghost' | 'danger';
-type Size = 'sm' | 'md' | 'lg';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps {
   label: string;
-  onPress: () => void;
-  variant?: Variant;
-  size?: Size;
+  onPress?: () => void;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   isLoading?: boolean;
   disabled?: boolean;
   className?: string;
+  style?: StyleProp<ViewStyle>;
+  fullWidth?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  accessibilityHint?: string;
+  testID?: string;
 }
 
-const variantClasses: Record<Variant, { container: string; text: string }> = {
-  primary: { container: 'bg-[#EF4444]', text: 'text-white font-semibold' },
-  outline: {
-    container: 'border border-[#EF4444] bg-transparent',
-    text: 'text-[#EF4444] font-semibold',
-  },
-  ghost: { container: 'bg-transparent', text: 'text-[#A1A1AA]' },
-  danger: { container: 'bg-[#EF4444]', text: 'text-white font-semibold' },
+const sizeStyles: Record<ButtonSize, { minHeight: number; horizontal: number; radius: number; fontSize: number }> = {
+  sm: { minHeight: 40, horizontal: 14, radius: 10, fontSize: 13 },
+  md: { minHeight: 48, horizontal: 18, radius: 12, fontSize: 15 },
+  lg: { minHeight: 56, horizontal: 22, radius: 16, fontSize: 16 },
 };
 
-const sizeClasses: Record<Size, { container: string; text: string }> = {
-  sm: { container: 'px-4 py-2 rounded-lg', text: 'text-sm' },
-  md: { container: 'px-6 py-3 rounded-xl', text: 'text-base' },
-  lg: { container: 'px-8 py-4 rounded-xl', text: 'text-lg' },
-};
-
+/** Single visual primitive for text actions. Icon-only actions remain ActionButton. */
 export function Button({
   label,
   onPress,
@@ -38,29 +36,50 @@ export function Button({
   isLoading = false,
   disabled = false,
   className = '',
+  style,
+  fullWidth = true,
+  leftIcon,
+  rightIcon,
+  accessibilityHint,
+  testID,
 }: ButtonProps) {
   const colors = useThemeStore((state) => state.colors);
-  const vc = variantClasses[variant];
-  const sc = sizeClasses[size];
-  const isDisabled = disabled || isLoading;
+  const metrics = sizeStyles[size];
+  const inactive = disabled || isLoading;
+  const isPrimary = variant === 'primary' || variant === 'danger';
+  const backgroundColor = isPrimary ? colors.primary : variant === 'secondary' ? colors.elevated : 'transparent';
+  const borderWidth = variant === 'outline' ? 1 : 0;
+  const textColor = isPrimary ? '#FFFFFF' : variant === 'outline' ? colors.primary : colors.text;
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: inactive, busy: isLoading }}
+      testID={testID}
       onPress={onPress}
-      disabled={isDisabled}
-      activeOpacity={0.75}
-      className={`flex-row items-center justify-center ${vc.container} ${sc.container} ${isDisabled ? 'opacity-50' : ''} ${className}`}
+      disabled={inactive}
+      activeOpacity={0.78}
+      className={`flex-row items-center justify-center ${fullWidth ? 'w-full' : ''} ${className}`}
+      style={[
+        {
+          minHeight: metrics.minHeight,
+          paddingHorizontal: metrics.horizontal,
+          borderRadius: metrics.radius,
+          backgroundColor,
+          borderColor: variant === 'outline' ? colors.border : 'transparent',
+          borderWidth,
+          opacity: inactive ? 0.5 : 1,
+        },
+        style,
+      ]}
     >
-      {isLoading ? (
-        <ActivityIndicator size="small" color="#FFFFFF" />
-      ) : (
-        <Text
-          className={`${vc.text} ${sc.text}`}
-          style={variant === 'ghost' ? { color: colors.textSecondary } : undefined}
-        >
-          {label}
-        </Text>
-      )}
+      {isLoading ? <ActivityIndicator color={isPrimary ? '#FFFFFF' : colors.primary} /> : <>
+        {leftIcon ? <View className="mr-2">{leftIcon}</View> : null}
+        <Text className="font-semibold" style={{ color: textColor, fontSize: metrics.fontSize }}>{label}</Text>
+        {rightIcon ? <View className="ml-2">{rightIcon}</View> : null}
+      </>}
     </TouchableOpacity>
   );
 }

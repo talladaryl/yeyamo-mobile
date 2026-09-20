@@ -1,8 +1,9 @@
 import '../../global.css';
 import '@/i18n'; // Initialiser i18n
 import { useEffect } from 'react';
-import { AppState, Appearance, Platform, View } from 'react-native';
+import { Alert, AppState, Appearance, Platform, TouchableOpacity, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -22,6 +23,8 @@ import {
   synchronizePushToken,
 } from '@/features/notifications/push.service';
 import { AppErrorScreen } from '@/components/ui/AppErrorScreen';
+import { FEED_QUERY_KEY } from '@/features/feed/useFeed';
+import { STORIES_QUERY_KEY } from '@/features/story/useStory';
 import type { ErrorBoundaryProps } from 'expo-router';
 
 const queryClient = new QueryClient({
@@ -82,6 +85,7 @@ function RootNavigator() {
   useEffect(() => {
     registerUnauthenticatedHandler(() => {
       clearAuth();
+      Alert.alert('Session expirée', 'Reconnectez-vous pour continuer.');
       router.replace('/(auth)/login');
     });
   }, [clearAuth, router]);
@@ -108,8 +112,7 @@ function RootNavigator() {
 
     const hideAndroidNavigation = async () => {
       try {
-        await NavigationBar.setVisibilityAsync('hidden');
-        await NavigationBar.setButtonStyleAsync('light');
+        NavigationBar.NavigationBar.setHidden(true);
       } catch {
         // Some vendor ROMs can refuse immersive mode; the app remains usable.
       }
@@ -140,6 +143,35 @@ function RootNavigator() {
       unsubscribe = cleanup;
     });
     return () => unsubscribe();
+  }, [isAuthenticated, isHydrated]);
+
+  // Protected feed and story queries must never leak a previous session or
+  // remain failed after a newly restored/authenticated session becomes ready.
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (!isAuthenticated) {
+      // Never reuse data associated with the previous identity after logout,
+      // deactivation or a real account deletion. Public data can refetch later.
+      [
+        FEED_QUERY_KEY,
+        STORIES_QUERY_KEY,
+        ['profile'],
+        ['settings'],
+        ['social'],
+        ['notifications'],
+        ['ticketing'],
+        ['passport'],
+        ['countries', 'profile'],
+        ['recommendations'],
+        ['collections'],
+        ['favorites'],
+        ['reservations'],
+        ['auth', 'sessions'],
+      ].forEach((queryKey) => queryClient.removeQueries({ queryKey }));
+      return;
+    }
+    void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
   }, [isAuthenticated, isHydrated]);
 
   // Profile remains the source of truth once authenticated. The persisted
@@ -228,7 +260,20 @@ function RootNavigator() {
         <Stack.Screen name="interests" />
         <Stack.Screen
           name="(post)/[id]"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+            headerShown: true,
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            headerTitle: 'Publication',
+            headerTitleStyle: { fontWeight: '600' },
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} className="ml-2">
+                <Ionicons name="close" size={28} color={colors.text} />
+              </TouchableOpacity>
+            ),
+          }}
         />
         <Stack.Screen
           name="(post)/[id]/comments"
@@ -269,13 +314,10 @@ function RootNavigator() {
         <Stack.Screen name="(explore)/places" />
         <Stack.Screen name="(explore)/search" />
         <Stack.Screen name="(explore)/map" />
-        <Stack.Screen name="(create)/choice" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="(create)/publication" />
-        <Stack.Screen name="(create)/story" options={{ presentation: 'fullScreenModal' }} />
-        <Stack.Screen name="(create)/event" />
-        <Stack.Screen name="(create)/event-settings" />
-        <Stack.Screen name="(create)/suggest-place-step1" />
-        <Stack.Screen name="(create)/suggest-place-step2" />
+        <Stack.Screen name="(explore)/preferences" />
+        <Stack.Screen name="(explore)/adventure" />
+        <Stack.Screen name="(explore)/adventure-plan" />
+        <Stack.Screen name="(create)" options={{ headerShown: false }} />
         <Stack.Screen name="(partner)/choice" options={{ presentation: 'modal' }} />
         <Stack.Screen name="(partner)/publication" />
         <Stack.Screen name="(partner)/story" options={{ presentation: 'fullScreenModal' }} />
@@ -311,20 +353,7 @@ function RootNavigator() {
         <Stack.Screen name="(partner-dashboard)/settings" />
         <Stack.Screen name="(social-graph)" />
         <Stack.Screen name="(collections)" />
-        <Stack.Screen name="(profile)/publications" />
-        <Stack.Screen name="(profile)/favorites" />
-        <Stack.Screen name="(profile)/events" />
-        <Stack.Screen name="(profile)/reservations" />
-        <Stack.Screen name="(profile)/reviews" />
-        <Stack.Screen name="(profile)/notifications" />
-        <Stack.Screen name="(profile)/settings" />
-        <Stack.Screen name="(profile)/help" />
-        <Stack.Screen name="(profile)/faq" />
-        <Stack.Screen name="(profile)/support" />
-        <Stack.Screen name="(profile)/privacy-policy" />
-        <Stack.Screen name="(profile)/about" />
-        <Stack.Screen name="(profile)/tickets" />
-        <Stack.Screen name="(profile)/ticket/[id]" />
+        <Stack.Screen name="(profile)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       </View>

@@ -7,6 +7,31 @@ import { MOCK_NOTIFICATIONS } from './mockData';
 import type { PushTokenRegistration } from './notifications.api';
 import type { Notification } from './types';
 
+type NotificationCacheSnapshot = [readonly unknown[], Notification[] | number | undefined][];
+
+function notificationKeys(isDemo: boolean) {
+  const source = isDemo ? 'demo' : 'backend';
+  return {
+    all: ['notifications', source] as const,
+    unread: ['notifications', source, 'unread'] as const,
+    count: ['notifications', source, 'unread', 'count'] as const,
+  };
+}
+
+async function snapshotNotifications(queryClient: ReturnType<typeof useQueryClient>, isDemo: boolean): Promise<NotificationCacheSnapshot> {
+  const keys = notificationKeys(isDemo);
+  await queryClient.cancelQueries({ queryKey: ['notifications'] });
+  return [
+    [keys.all, queryClient.getQueryData<Notification[]>(keys.all)],
+    [keys.unread, queryClient.getQueryData<Notification[]>(keys.unread)],
+    [keys.count, queryClient.getQueryData<number>(keys.count)],
+  ];
+}
+
+function restoreNotifications(queryClient: ReturnType<typeof useQueryClient>, snapshot?: NotificationCacheSnapshot) {
+  snapshot?.forEach(([key, data]) => queryClient.setQueryData(key, data));
+}
+
 /**
  * Hook pour récupérer toutes les notifications
  */
@@ -63,17 +88,21 @@ export function useMarkAsRead() {
   return useMutation({
     mutationFn: (id: EntityId) =>
       isDemo ? Promise.resolve() : notificationsApi.markAsRead(id),
-    onMutate: (id) => {
-      if (!isDemo) return;
-      const allKey = ['notifications', 'demo'];
-      const unreadKey = ['notifications', 'demo', 'unread'];
-      const countKey = ['notifications', 'demo', 'unread', 'count'];
-      queryClient.setQueryData<Notification[]>(allKey, (current = MOCK_NOTIFICATIONS) => current.map((notification) => notification.id === id ? { ...notification, is_read: true } : notification));
-      queryClient.setQueryData<Notification[]>(unreadKey, (current = MOCK_NOTIFICATIONS.filter((notification) => !notification.is_read)) => current.filter((notification) => notification.id !== id));
-      queryClient.setQueryData<number>(countKey, (current = 0) => Math.max(0, current - 1));
+    onMutate: async (id) => {
+      const snapshot = await snapshotNotifications(queryClient, isDemo);
+      const keys = notificationKeys(isDemo);
+      const all = queryClient.getQueryData<Notification[]>(keys.all);
+      const wasUnread = all?.some((notification) => notification.id === id && !notification.is_read) ?? false;
+      queryClient.setQueryData<Notification[]>(keys.all, (current) => current?.map((notification) => notification.id === id ? { ...notification, is_read: true } : notification));
+      queryClient.setQueryData<Notification[]>(keys.unread, (current) => current?.filter((notification) => notification.id !== id));
+      if (wasUnread) queryClient.setQueryData<number>(keys.count, (current) => Math.max(0, (current ?? 0) - 1));
+      return { snapshot };
     },
-    onSuccess: () => {
-      if (!isDemo) queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onError: (_error, _id, context) => {
+      restoreNotifications(queryClient, context?.snapshot);
+    },
+    onSettled: () => {
+      if (!isDemo) void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }
@@ -88,14 +117,19 @@ export function useMarkAllAsRead() {
   return useMutation({
     mutationFn: () =>
       isDemo ? Promise.resolve() : notificationsApi.markAllAsRead(),
-    onMutate: () => {
-      if (!isDemo) return;
-      queryClient.setQueryData<Notification[]>(['notifications', 'demo'], (current = MOCK_NOTIFICATIONS) => current.map((notification) => ({ ...notification, is_read: true })));
-      queryClient.setQueryData<Notification[]>(['notifications', 'demo', 'unread'], []);
-      queryClient.setQueryData<number>(['notifications', 'demo', 'unread', 'count'], 0);
+    onMutate: async () => {
+      const snapshot = await snapshotNotifications(queryClient, isDemo);
+      const keys = notificationKeys(isDemo);
+      queryClient.setQueryData<Notification[]>(keys.all, (current) => current?.map((notification) => ({ ...notification, is_read: true })));
+      queryClient.setQueryData<Notification[]>(keys.unread, []);
+      queryClient.setQueryData<number>(keys.count, 0);
+      return { snapshot };
     },
-    onSuccess: () => {
-      if (!isDemo) queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onError: (_error, _value, context) => {
+      restoreNotifications(queryClient, context?.snapshot);
+    },
+    onSettled: () => {
+      if (!isDemo) void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }
@@ -110,16 +144,21 @@ export function useDeleteNotification() {
   return useMutation({
     mutationFn: (id: EntityId) =>
       isDemo ? Promise.resolve() : notificationsApi.deleteNotification(id),
-    onMutate: (id) => {
-      if (!isDemo) return;
-      const current = queryClient.getQueryData<Notification[]>(['notifications', 'demo']) ?? MOCK_NOTIFICATIONS;
+    onMutate: async (id) => {
+      const snapshot = await snapshotNotifications(queryClient, isDemo);
+      const keys = notificationKeys(isDemo);
+      const current = queryClient.getQueryData<Notification[]>(keys.all) ?? (isDemo ? MOCK_NOTIFICATIONS : []);
       const removedWasUnread = current.some((notification) => notification.id === id && !notification.is_read);
-      queryClient.setQueryData<Notification[]>(['notifications', 'demo'], current.filter((notification) => notification.id !== id));
-      queryClient.setQueryData<Notification[]>(['notifications', 'demo', 'unread'], (unread = []) => unread.filter((notification) => notification.id !== id));
-      if (removedWasUnread) queryClient.setQueryData<number>(['notifications', 'demo', 'unread', 'count'], (count = 0) => Math.max(0, count - 1));
+      queryClient.setQueryData<Notification[]>(keys.all, current.filter((notification) => notification.id !== id));
+      queryClient.setQueryData<Notification[]>(keys.unread, (unread) => unread?.filter((notification) => notification.id !== id));
+      if (removedWasUnread) queryClient.setQueryData<number>(keys.count, (count) => Math.max(0, (count ?? 0) - 1));
+      return { snapshot };
     },
-    onSuccess: () => {
-      if (!isDemo) queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onError: (_error, _id, context) => {
+      restoreNotifications(queryClient, context?.snapshot);
+    },
+    onSettled: () => {
+      if (!isDemo) void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +13,7 @@ import { authApi } from '@/features/auth/auth.api';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { verifyCodeSchema, type VerifyCodeForm } from '@/utils/validation';
 import { useTurnstileChallenge } from '@/features/auth/useTurnstileChallenge';
+import ENV from '@/config/env';
 
 export default function VerifyCodeScreen() {
   const router = useRouter();
@@ -29,14 +30,13 @@ export default function VerifyCodeScreen() {
     control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<VerifyCodeForm>({
     resolver: zodResolver(verifyCodeSchema),
     defaultValues: { code: '' },
   });
 
-  const codeValue = watch('code');
+  const codeValue = useWatch({ control, name: 'code' });
 
   useEffect(() => {
     if (timer > 0) {
@@ -63,7 +63,7 @@ export default function VerifyCodeScreen() {
     
     try {
       if (!email) throw new Error('Adresse email absente');
-      const turnstileToken = await requestToken('resend_otp');
+      const turnstileToken = ENV.TURNSTILE_ENABLED ? await requestToken('resend_otp') : undefined;
       await authApi.requestEmailVerification(email, turnstileToken);
       setTimer(60);
       setCanResend(false);
@@ -81,7 +81,7 @@ export default function VerifyCodeScreen() {
 
   return (
     <SafeScreen>
-      {challenge}
+      {ENV.TURNSTILE_ENABLED ? challenge : null}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"

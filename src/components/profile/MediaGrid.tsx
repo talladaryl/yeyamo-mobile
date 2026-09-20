@@ -23,11 +23,17 @@ export function MediaGrid({ posts, onPostPress }: MediaGridProps) {
           activeOpacity={0.9}
           style={{ width: itemSize, height: itemSize }}
         >
-          <Image
-            source={{ uri: item.thumbnail_url }}
-            style={{ width: '100%', height: '100%' }}
-            contentFit="cover"
-          />
+          {item.type === 'text' ? (
+            <View className="h-full w-full items-center justify-center bg-[#171717] p-3">
+              <Text className="text-center text-xs font-semibold leading-4 text-white" numberOfLines={5}>{item.caption || 'Publication texte'}</Text>
+            </View>
+          ) : (
+            <Image
+              source={{ uri: item.thumbnail_url }}
+              style={{ width: '100%', height: '100%' }}
+              contentFit="cover"
+            />
+          )}
 
           {/* Video indicator */}
           {item.type === 'video' && (

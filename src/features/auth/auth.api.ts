@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from '@/services/api/client';
+import { apiDelete, apiGet, apiPost, apiPut } from '@/services/api/client';
 import type {
   AuthApiUser,
   AuthResponse,
@@ -14,7 +14,7 @@ export const authApi = {
     apiPost<AuthResponse>('/auth/login', {
       identifier: credentials.email.trim(),
       password: credentials.password,
-      turnstileToken,
+      turnstileToken: turnstileToken ?? undefined,
     }),
 
   register: (credentials: RegisterCredentials, turnstileToken?: string) =>
@@ -23,7 +23,7 @@ export const authApi = {
       phone: credentials.phone || null,
       password: credentials.password,
       displayName: credentials.display_name,
-      turnstileToken,
+      turnstileToken: turnstileToken ?? undefined,
       countryCode: credentials.countryCode,
       cityId: credentials.cityId ?? null,
       preferredLanguageCode: credentials.preferredLanguageCode ?? null,
@@ -37,8 +37,8 @@ export const authApi = {
   refresh: (refreshToken: string) =>
     apiPost<AuthResponse>('/auth/refresh', { refreshToken }),
 
-  requestEmailVerification: (email: string, turnstileToken: string) =>
-    apiPost<{ message: string }>('/auth/email/verification/request', { email, turnstileToken }),
+  requestEmailVerification: (email: string, turnstileToken?: string) =>
+    apiPost<{ message: string }>('/auth/email/verification/request', { email, turnstileToken: turnstileToken ?? undefined }),
 
   confirmEmailVerification: (credentials: VerifyCodeCredentials) =>
     apiPost<{ message: string }>('/auth/email/verification/confirm', {
@@ -46,8 +46,8 @@ export const authApi = {
       otp: credentials.code,
     }),
 
-  forgotPassword: (email: string, turnstileToken: string) =>
-    apiPost<{ message: string }>('/auth/password/forgot', { email, turnstileToken }),
+  forgotPassword: (email: string, turnstileToken?: string) =>
+    apiPost<{ message: string }>('/auth/password/forgot', { email, turnstileToken: turnstileToken ?? undefined }),
 
   resetPassword: (credentials: PasswordResetCredentials) =>
     apiPost<{ message: string }>('/auth/password/reset', {
@@ -61,6 +61,24 @@ export const authApi = {
       idToken: credentials.token,
     }),
 
+  oauthGoogle: (idToken: string) =>
+    apiPost<AuthResponse>('/auth/oauth/google', { idToken }),
+
   changePassword: (currentPassword: string, newPassword: string) =>
     apiPut<void>('/auth/password', { currentPassword, newPassword }),
+
+  deactivateAccount: (currentPassword: string) =>
+    apiPost<void>('/auth/account/deactivate', { currentPassword }),
+
+  sessions: () => apiGet<AuthSession[]>('/auth/sessions'),
+
+  revokeSession: (sessionId: string) => apiDelete<void>(`/auth/sessions/${sessionId}`),
 };
+
+/** The API does not provide device, IP or geographic metadata for a session. */
+export interface AuthSession {
+  id: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  active: boolean;
+}

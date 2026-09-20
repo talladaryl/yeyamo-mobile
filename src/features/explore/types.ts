@@ -1,5 +1,6 @@
 // ─── Explorer Types ─────────────────────────────────────────────────────────
 
+import type { EntityId } from '@/types/api.types';
 export type ExploreCategory = 
   | 'attractions' 
   | 'events' 
@@ -25,10 +26,10 @@ export interface TrendingPlace {
   name: string;
   city: string;
   region_id: EntityId;
-  rating: number;
-  reviews_count: number;
-  distance_km: number;
-  image_url: string;
+  rating?: number | null;
+  reviews_count?: number | null;
+  distance_km?: number | null;
+  image_url?: string | null;
   category: string;
 }
 
@@ -105,9 +106,9 @@ export interface MapPlace {
     latitude: number;
     longitude: number;
   };
-  rating: number;
-  image_url: string;
-  category: string;
+  rating?: number | null;
+  image_url?: string | null;
+  category?: string | null;
 }
 
 export interface UpcomingEvent {
@@ -115,8 +116,7 @@ export interface UpcomingEvent {
   title: string;
   date_start: string;
   date_end: string;
-  location: string;
-  image_url: string;
+  location?: string | null;
+  image_url?: string | null;
   attendees_count: number;
 }
-import type { EntityId } from '@/types/api.types';

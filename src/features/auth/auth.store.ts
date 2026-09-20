@@ -11,6 +11,7 @@ interface AuthState {
   isHydrated: boolean;
   // Actions
   setAuth: (user: AuthUser, token: string, sessionMode?: SessionMode) => void;
+  updateUser: (patch: Partial<AuthUser>) => void;
   clearAuth: () => void;
   setHydrated: (value: boolean) => void;
 }
@@ -24,6 +25,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setAuth: (user, token, sessionMode = 'backend') =>
     set({ user, token, sessionMode, isAuthenticated: true }),
+
+  updateUser: (patch) => set((state) => state.user ? { user: { ...state.user, ...patch } } : state),
 
   clearAuth: () =>
     set({ user: null, token: null, sessionMode: null, isAuthenticated: false }),

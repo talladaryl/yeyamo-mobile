@@ -1,194 +1,31 @@
-// ÉCRAN 3 - Sécurité du Compte
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { MOCK_USER_SETTINGS } from '@/features/settings/mockData';
-import { NavigationItem } from '@/components/settings/NavigationItem';
-import { ToggleItem } from '@/components/settings/ToggleItem';
+import { useRouter } from 'expo-router';
+import { SafeScreen } from '@/components/ui/SafeScreen';
+import { Button } from '@/components/ui/Button';
+import { LoadingState } from '@/components/ui/ViewStates';
 import { useAuthStore } from '@/features/auth/auth.store';
+import { useAuthSessions, useRevokeAuthSession } from '@/features/auth/useSecurity';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function SecurityScreen() {
   const router = useRouter();
+  const colors = useThemeStore((state) => state.colors);
   const user = useAuthStore((state) => state.user);
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
-  const [settings, setSettings] = useState(() => isDemo ? MOCK_USER_SETTINGS.security : {
-    password_last_changed: '',
-    email: user?.email ?? '',
-    email_verified: user?.is_verified ?? false,
-    phone: null,
-    phone_verified: false,
-    two_factor_enabled: false,
-    active_sessions: [],
-  });
+  const sessions = useAuthSessions();
+  const revoke = useRevokeAuthSession();
+  const revokeSession = (id: string) => Alert.alert('Déconnecter cette session', 'Cette session sera révoquée sur le serveur.', [{ text: 'Annuler', style: 'cancel' }, { text: 'Déconnecter', style: 'destructive', onPress: () => revoke.mutate(id) }]);
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Non disponible';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
-
-  const handleChangePassword = () => {
-    Alert.alert(
-      'Changement de mot de passe',
-      'En mode démo, utilisez le parcours Mot de passe oublié depuis la page de connexion.'
-    );
-  };
-
-  const handleManageSessions = () => {
-    Alert.alert(
-      'Sessions actives',
-      `${settings.active_sessions.length} appareils connectés`,
-      [
-        ...settings.active_sessions.map((session) => ({
-          text: `${session.device_name} - ${session.location}`,
-          onPress: () => {
-            if (!session.is_current) {
-              Alert.alert('Déconnecter', 'Voulez-vous déconnecter cet appareil ?', [
-                { text: 'Annuler', style: 'cancel' },
-                { text: 'Déconnecter', style: 'destructive' },
-              ]);
-            }
-          },
-        })),
-        { text: 'Fermer', style: 'cancel' },
-      ]
-    );
-  };
-
-  return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
-      {/* Header */}
-      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text className="text-[#18181B] dark:text-white text-xl font-bold ml-2">Sécurité</Text>
-        </View>
-      </View>
-
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Connexion */}
-        <View className="mt-6 px-4">
-          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
-            Connexion
-          </Text>
-          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden">
-            <NavigationItem
-              icon="lock-closed-outline"
-              label="Mot de passe"
-              description={`Modifié le ${formatDate(settings.password_last_changed)}`}
-              onPress={handleChangePassword}
-              showBorder={false}
-            />
-            <View className="px-4 py-4 border-t border-[#E4E4E7] dark:border-[#27272A]">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-[#F4F4F5] dark:bg-[#27272A] rounded-full items-center justify-center mr-3">
-                  <Ionicons name="mail-outline" size={20} color="#EF4444" />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[#18181B] dark:text-white font-medium text-sm">Email</Text>
-                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-0.5">
-                    {settings.email}
-                  </Text>
-                </View>
-                {settings.email_verified && (
-                  <View className="w-6 h-6 bg-[#10B981] rounded-full items-center justify-center">
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                  </View>
-                )}
-              </View>
-            </View>
-            <View className="px-4 py-4 border-t border-[#E4E4E7] dark:border-[#27272A]">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-[#F4F4F5] dark:bg-[#27272A] rounded-full items-center justify-center mr-3">
-                  <Ionicons name="call-outline" size={20} color="#EF4444" />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[#18181B] dark:text-white font-medium text-sm">Téléphone</Text>
-                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs mt-0.5">
-                    {settings.phone || 'Non renseigné'}
-                  </Text>
-                </View>
-                {settings.phone_verified && (
-                  <View className="w-6 h-6 bg-[#10B981] rounded-full items-center justify-center">
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Authentification */}
-        <View className="mt-6 px-4">
-          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
-            Authentification à deux facteurs
-          </Text>
-          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden">
-            <ToggleItem
-              icon="shield-checkmark-outline"
-              label="Authentification à deux facteurs"
-              description="Sécurisez votre compte avec un code de vérification"
-              value={settings.two_factor_enabled}
-              onValueChange={(value) => {
-                if (value) {
-                  Alert.alert(
-                    'Activer 2FA',
-                    'Vous recevrez un code par SMS à chaque connexion'
-                  );
-                }
-                setSettings({ ...settings, two_factor_enabled: value });
-              }}
-              showBorder={false}
-            />
-          </View>
-        </View>
-
-        {/* Sessions actives */}
-        <View className="mt-6 px-4">
-          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-semibold uppercase mb-3">
-            Sessions actives
-          </Text>
-          <View className="bg-white dark:bg-[#161616] rounded-xl overflow-hidden">
-            <NavigationItem
-              icon="phone-portrait-outline"
-              label="Gérer les appareils"
-              description={`${settings.active_sessions.length} appareils connectés`}
-              onPress={handleManageSessions}
-              showBorder={false}
-            />
-          </View>
-        </View>
-
-        {/* Badge sécurité */}
-        <View className="mt-6 px-4 pb-8">
-          <View className="bg-white dark:bg-[#161616] rounded-xl p-4 border border-[#10B981]/20">
-            <View className="flex-row items-start">
-              <View className="w-12 h-12 bg-[#10B981]/20 rounded-full items-center justify-center mr-3">
-                <Ionicons name="shield-checkmark" size={24} color="#10B981" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-[#18181B] dark:text-white font-bold text-base mb-1">
-                  Compte sécurisé
-                </Text>
-                <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm leading-5">
-                  Votre compte est protégé. Email et téléphone vérifiés.
-                  {settings.two_factor_enabled
-                    ? ' Authentification à deux facteurs activée.'
-                    : ' Activez la 2FA pour plus de sécurité.'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+  return <SafeScreen><Header onBack={() => router.back()} /><ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+    <Section title="Identité de connexion"><Card><Identity icon="mail-outline" label="E-mail" value={user?.email || 'Non renseigné'} status={user?.email_verified ? 'Adresse vérifiée' : 'Adresse non vérifiée'} /><Identity icon="call-outline" label="Téléphone" value={user?.phone || 'Non renseigné'} status={user?.phone ? 'État de vérification indisponible' : 'Aucun téléphone associé'} /></Card></Section>
+    <Section title="Mot de passe"><Card><TouchableOpacity onPress={() => router.push('/(profile)/change-password')} className="flex-row items-center p-4" accessibilityRole="button"><Ionicons name="key-outline" size={21} color={colors.primary} /><View className="ml-3 flex-1"><Text className="font-semibold" style={{ color: colors.text }}>Modifier le mot de passe</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Une confirmation du mot de passe actuel est requise.</Text></View><Ionicons name="chevron-forward" size={20} color={colors.textMuted} /></TouchableOpacity></Card></Section>
+    <Section title="Authentification à deux facteurs"><Card><View className="p-4"><Text className="font-semibold" style={{ color: colors.text }}>Indisponible pour le moment</Text><Text className="mt-1 text-sm leading-5" style={{ color: colors.textSecondary }}>Le backend ne fournit pas encore de configuration 2FA. Aucun réglage local n’est simulé.</Text></View></Card></Section>
+    <Section title="Sessions"><Card>{isDemo ? <View className="p-4"><Text style={{ color: colors.textSecondary }}>Les sessions serveur ne sont pas disponibles en mode démo.</Text></View> : sessions.isLoading ? <View className="p-5"><LoadingState label="Chargement des sessions…" /></View> : sessions.isError ? <View className="p-4"><Text style={{ color: colors.textSecondary }}>Impossible de charger les sessions.</Text><Button label="Réessayer" variant="outline" size="sm" className="mt-3" onPress={() => void sessions.refetch()} /></View> : (sessions.data ?? []).length === 0 ? <View className="p-4"><Text style={{ color: colors.textSecondary }}>Aucune session active retournée par le serveur.</Text></View> : (sessions.data ?? []).map((session) => <View key={session.id} className="border-t p-4" style={{ borderColor: colors.border }}><View className="flex-row items-center"><Ionicons name="desktop-outline" size={20} color={colors.primary} /><View className="ml-3 flex-1"><Text className="font-semibold" style={{ color: colors.text }}>Session {session.id.slice(0, 8)}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{session.active ? 'Active' : 'Inactive'}{session.expiresAt ? ` · Expire le ${new Date(session.expiresAt).toLocaleDateString('fr-FR')}` : ''}</Text></View>{session.active ? <TouchableOpacity disabled={revoke.isPending} onPress={() => revokeSession(session.id)} accessibilityRole="button"><Text style={{ color: colors.primary }}>Déconnecter</Text></TouchableOpacity> : null}</View></View>)}</Card></Section>
+  </ScrollView></SafeScreen>;
 }
+
+function Header({ onBack }: { onBack: () => void }) { const colors = useThemeStore((state) => state.colors); return <View className="flex-row items-center border-b px-4 py-3" style={{ borderColor: colors.border }}><TouchableOpacity onPress={onBack} className="-ml-2 p-2" accessibilityRole="button" accessibilityLabel="Retour"><Ionicons name="chevron-back" size={24} color={colors.text} /></TouchableOpacity><Text className="ml-2 text-xl font-bold" style={{ color: colors.text }}>Sécurité</Text></View>; }
+function Section({ title, children }: { title: string; children: React.ReactNode }) { const colors = useThemeStore((state) => state.colors); return <View className="mt-6 px-4"><Text className="mb-3 text-xs font-semibold uppercase" style={{ color: colors.textSecondary }}>{title}</Text>{children}</View>; }
+function Card({ children }: { children: React.ReactNode }) { const colors = useThemeStore((state) => state.colors); return <View className="overflow-hidden rounded-xl" style={{ backgroundColor: colors.surface }}>{children}</View>; }
+function Identity({ icon, label, value, status }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; status: string }) { const colors = useThemeStore((state) => state.colors); return <View className="flex-row items-center border-t p-4 first:border-t-0" style={{ borderColor: colors.border }}><Ionicons name={icon} size={20} color={colors.primary} /><View className="ml-3 flex-1"><Text className="font-semibold" style={{ color: colors.text }}>{label}</Text><Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{value}</Text><Text className="mt-1 text-xs" style={{ color: colors.textMuted }}>{status}</Text></View></View>; }

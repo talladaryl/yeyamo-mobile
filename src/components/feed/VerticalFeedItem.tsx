@@ -40,10 +40,19 @@ export function VerticalFeedItem({
   onSave,
 }: VerticalFeedItemProps) {
   const router = useRouter();
-  const videoUri = post.type === 'video' ? (post.media[0]?.url ?? '') : '';
+  const primaryMedia = post.media[0];
+  const isVideo = primaryMedia?.type === 'video';
+  const videoUri = isVideo ? primaryMedia.url : '';
+  const backendLinked = post.linkedContent;
+  const legacyLinked = post.linked_content;
+  const linkedRoute = backendLinked
+    ? (backendLinked.type === 'PROVERB' ? '/(explore)/proverbs/' : '/(explore)/recipes/')
+    : legacyLinked ? ({ proverb: '/(explore)/proverbs/', recipe: '/(explore)/recipes/', artwork: '/(explore)/artworks/', artist: '/(explore)/artisans/', language: '/(explore)/languages/', culture: '/(explore)/culture/' } as const)[legacyLinked.type] : null;
+  const linkedId = backendLinked?.id ?? legacyLinked?.id;
+  const linkedLabel = backendLinked ? backendLinked.title ?? (backendLinked.type === 'PROVERB' ? 'Voir le proverbe' : 'Voir la recette') : legacyLinked?.label;
   
   const player = useVideoPlayer(
-    post.type === 'video' && isActive ? videoUri : null,
+    isVideo && isActive ? videoUri : null,
     (p) => {
       p.loop = true;
       p.playbackRate = playbackRate;
@@ -53,25 +62,25 @@ export function VerticalFeedItem({
 
   useEffect(() => {
     if (post.type === 'video') player.playbackRate = playbackRate;
-  }, [playbackRate, player, post.type]);
+  }, [isVideo, playbackRate, player]);
 
   return (
     <View style={{ height }} className="bg-[#0A0A0A]">
       {/* Media */}
-      {post.type === 'video' ? (
+      {isVideo ? (
         <VideoView
           player={player}
           style={{ flex: 1 }}
           contentFit="cover"
           nativeControls={false}
         />
-      ) : (
+      ) : primaryMedia ? (
         <Image
-          source={{ uri: post.media[0]?.url }}
+          source={{ uri: primaryMedia.url }}
           style={{ flex: 1 }}
           contentFit="cover"
         />
-      )}
+      ) : <View className="flex-1 items-center justify-center bg-[#171717] px-8"><Text className="text-center text-2xl font-bold leading-9 text-white">{post.caption || 'Publication Yeyamo'}</Text></View>}
 
       {/* Bottom gradient overlay */}
       <LinearGradient
@@ -92,17 +101,15 @@ export function VerticalFeedItem({
           </Text>
         )}
 
-        {post.linked_content ? (
+        {linkedRoute && linkedId && linkedLabel ? (
           <TouchableOpacity
             onPress={() => {
-              const linked = post.linked_content!;
-              const routes = { proverb: '/(explore)/proverbs/', recipe: '/(explore)/recipes/', artwork: '/(explore)/artworks/', artist: '/(explore)/artisans/', language: '/(explore)/languages/', culture: '/(explore)/culture/' } as const;
-              router.push(`${routes[linked.type]}${linked.id}` as never);
+              router.push(`${linkedRoute}${linkedId}` as never);
             }}
             className="mb-2 self-start flex-row items-center rounded-full bg-white/20 px-3 py-2"
           >
             <Icon name="book-outline" size={15} color="#FFFFFF" />
-            <Text className="ml-2 text-xs font-bold text-white">{post.linked_content.label}</Text>
+            <Text className="ml-2 text-xs font-bold text-white">{linkedLabel}</Text>
             <Icon name="chevron-forward" size={14} color="#FFFFFF" />
           </TouchableOpacity>
         ) : null}

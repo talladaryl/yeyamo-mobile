@@ -1,3 +1,5 @@
+import type { CashInOperator } from '@/features/payments/cash-in';
+
 export type TicketTypeStatus = 'ACTIVE' | 'SOLD_OUT' | 'DRAFT' | 'SALES_CLOSED';
 export type TicketStatus = 'PENDING_PAYMENT' | 'VALID' | 'USED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED' | 'REVOKED';
 export type TicketOrderStatus = 'CREATED' | 'AWAITING_PAYMENT' | 'PAID' | 'ISSUED' | 'CANCELLED' | 'EXPIRED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
@@ -46,7 +48,7 @@ export interface PublicTicketType {
 
 export interface PublicEventTickets {
   eventId: string;
-  eventName: string;
+  eventName?: string | null;
   currency: string;
   tickets: PublicTicketType[];
 }
@@ -78,12 +80,22 @@ export interface TicketScanResult {
 export interface TicketOrder {
   id: string; eventId: string; reference: string; total: number; currency: string; status: 'PENDING' | 'PAID' | 'CANCELLED';
 }
-export interface CreateTicketOrderInput { ticketTypeId: string; quantity: number }
+export interface CreateTicketOrderInput {
+  ticketTypeId: string;
+  quantity: number;
+  operator: CashInOperator;
+  phoneNumber: string;
+}
 export interface TicketAnalytics { sold: number; revenue: number; checkedIn: number; entryRate: number }
 
 export interface CreateHoldRequest { eventId: string; ticketTypeId: string; quantity: number }
 export interface HoldResponse { holdId: string; quantity: number; expiresAt: string; status: string }
-export interface CreateOrderRequest { holdId: string; promotionCode: string | null }
+export interface CreateOrderRequest {
+  holdId: string;
+  promotionCode: string | null;
+  operator: CashInOperator;
+  phoneNumber: string;
+}
 export interface TicketOrderResponse {
   orderId: string; reference: string; status: TicketOrderStatus; paymentStatus: string;
   totalAmount: number; currency: string; expiresAt: string;

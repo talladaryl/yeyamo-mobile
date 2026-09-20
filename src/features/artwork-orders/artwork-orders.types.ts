@@ -1,3 +1,5 @@
+import type { CashInOperator } from '@/features/payments/cash-in';
+
 export type ArtworkOrderStatus = 'PENDING' | 'AWAITING_PAYMENT' | 'PAID' | 'ACCEPTED' | 'IN_PRODUCTION' | 'READY' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED' | 'DISPUTED';
 export interface ArtworkOrder { id: string; reference: string; buyerUserId: string; artisanPartnerId: string; offerId: string; commerceOrderId: string | null; status: ArtworkOrderStatus; deliveryType: 'PICKUP' | 'LOCAL_DELIVERY' | 'DELIVERY_ON_REQUEST' | 'INTERNATIONAL_SHIPPING'; quantity: number; grossAmount: string | number; commissionAmount: string | number; artisanAmount: string | number; currencyCode: string; cancellationReason: string | null; createdAt: string; updatedAt: string; }
-export interface CreateArtworkOrderInput { offerId: string; quantity: number; deliveryType: ArtworkOrder['deliveryType']; }
+export interface CreateArtworkOrderInput { offerId: string; quantity: number; deliveryType: ArtworkOrder['deliveryType']; operator: CashInOperator; phoneNumber: string; }

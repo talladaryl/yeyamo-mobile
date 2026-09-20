@@ -174,9 +174,6 @@ export default function ChatScreen() {
 
         <View className="border-t px-3 pb-2 pt-2" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
           <View className="flex-row items-end gap-1.5">
-            <TouchableOpacity className="h-10 w-9 items-center justify-center"><Icon name="add" size={27} color={colors.textSecondary} /></TouchableOpacity>
-            <TouchableOpacity className="h-10 w-9 items-center justify-center"><Icon name="camera-outline" size={22} color={colors.textSecondary} /></TouchableOpacity>
-            <TouchableOpacity className="h-10 w-9 items-center justify-center"><Icon name="image-outline" size={22} color={colors.textSecondary} /></TouchableOpacity>
             <View className="min-h-11 flex-1 flex-row items-end rounded-2xl border px-3" style={{ backgroundColor: colors.elevated, borderColor: colors.border }}>
               <TextInput
                 value={draft}
@@ -188,9 +185,6 @@ export default function ChatScreen() {
                 multiline
                 maxLength={1000}
               />
-              {!draft.trim() ? (
-                <TouchableOpacity className="h-10 w-8 items-center justify-center"><Icon name="mic-outline" size={21} color={colors.textSecondary} /></TouchableOpacity>
-              ) : null}
             </View>
             <TouchableOpacity
               onPress={handleSend}

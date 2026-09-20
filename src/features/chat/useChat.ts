@@ -9,8 +9,7 @@ import {
 import { chatApi } from './chat.api';
 import { chatSocket } from './chat.socket';
 import { useChatStore } from './chat.store';
-import type { PaginatedResponse } from '@/types/api.types';
-import type { EntityId } from '@/types/api.types';
+import type { PaginatedResponse , EntityId } from '@/types/api.types';
 import type { ChatMessage, Conversation, SendMessagePayload } from './types';
 
 const EMPTY_MESSAGES: ChatMessage[] = [];
@@ -143,6 +142,17 @@ export function useCreateConversation() {
     mutationFn: (userId: EntityId) => isDemo
       ? Promise.resolve({ data: MOCK_CONVERSATIONS[0] })
       : chatApi.createConversation(userId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
+  });
+}
+
+export function useContactPartner() {
+  const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  return useMutation({
+    mutationFn: (partnerId: EntityId) => isDemo
+      ? Promise.resolve({ data: MOCK_CONVERSATIONS[0] })
+      : chatApi.contactPartner(partnerId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
   });
 }

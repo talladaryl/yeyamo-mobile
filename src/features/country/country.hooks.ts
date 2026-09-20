@@ -3,7 +3,7 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { countryApi } from './country.api';
 import { mapCountryConfiguration, mapCountrySummary } from './country.mappers';
 import { useCountryStore } from './country.store';
-import type { CountryFeatureCode } from './country.types';
+import type { CountryConfiguration, CountryFeatureCode, CountrySummary } from './country.types';
 
 export const countryKeys = {
   all: ['countries'] as const,
@@ -22,7 +22,22 @@ export function useCountries() {
 }
 
 export function useAvailableCountries() {
-  return useQuery({ queryKey: countryKeys.available(), queryFn: async () => (await countryApi.available()).map(mapCountrySummary) });
+  return useQuery({
+    queryKey: countryKeys.available(),
+    queryFn: async () => {
+      try {
+        return (await countryApi.available()).map(mapCountrySummary);
+      } catch (error) {
+        // The legacy production endpoint interprets `/available` as a country
+        // code. Fall back to the complete public list while that route is
+        // being deployed, without masking unrelated failures.
+        if (!isLegacyCountryEndpointError(error)) throw error;
+        return (await countryApi.countries())
+          .map(mapCountrySummary)
+          .filter((country) => country.status === 'LIVE' || country.status === 'BETA');
+      }
+    },
+  });
 }
 
 export function useCountryConfiguration(countryCode: string | null) {
@@ -37,6 +52,15 @@ export function useCountryConfiguration(countryCode: string | null) {
         await selectCountry(mapped);
         return mapped;
       } catch (error) {
+        // The deployed legacy countries endpoint only exposes the country
+        // summary. A manually selected LIVE/BETA country must still allow
+        // registration; use that public summary until the richer endpoint is
+        // deployed, rather than treating it as an unavailable country.
+        if (isLegacyCountryEndpointError(error)) {
+          const mapped = legacyCountryConfiguration(await countryApi.country(countryCode!));
+          await selectCountry(mapped);
+          return mapped;
+        }
         markUnavailable();
         throw error;
       }
@@ -45,7 +69,19 @@ export function useCountryConfiguration(countryCode: string | null) {
 }
 
 export function useCountryCities(countryCode: string | null) {
-  return useQuery({ queryKey: countryKeys.cities(countryCode), enabled: Boolean(countryCode), queryFn: () => countryApi.cities(countryCode!) });
+  return useQuery({
+    queryKey: countryKeys.cities(countryCode), enabled: Boolean(countryCode),
+    queryFn: async () => {
+      try {
+        return await countryApi.cities(countryCode!);
+      } catch (error) {
+        // City selection remains optional on registration. The legacy API has
+        // no country-scoped city route, so expose an empty optional list.
+        if (isLegacyCountryEndpointError(error)) return [];
+        throw error;
+      }
+    },
+  });
 }
 
 export function useCountryProfile() {
@@ -90,6 +126,11 @@ function useCountryPreferenceMutation<TInput>(mutation: (input: TInput) => Promi
     onSuccess: async (preferences) => {
       await applyProfilePreferences(preferences);
       queryClient.invalidateQueries({ queryKey: countryKeys.profile() });
+      // Explorer and recommendations are user-personalized. Refresh only
+      // these affected caches after a real server-side preference update.
+      queryClient.invalidateQueries({ queryKey: ['explore'] });
+      queryClient.invalidateQueries({ queryKey: ['discovery'] });
+      queryClient.invalidateQueries({ queryKey: ['recommendations'] });
     },
   });
 }
@@ -107,4 +148,32 @@ export function useCountry() {
     discoveryScope: state.discoveryScope,
     configurationError: state.configurationError,
   }));
+}
+
+function isLegacyCountryEndpointError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null
+    && 'status' in error
+    && ((error as { status?: unknown }).status === 400 || (error as { status?: unknown }).status === 404);
+}
+
+function legacyCountryConfiguration(dto: Parameters<typeof mapCountrySummary>[0]): CountryConfiguration {
+  const country: CountrySummary = mapCountrySummary(dto);
+  return {
+    ...country,
+    currencies: country.defaultCurrencyCode ? [country.defaultCurrencyCode] : [],
+    timezones: country.defaultTimezone ? [country.defaultTimezone] : [],
+    languages: [country.defaultLanguageCode],
+    features: {
+      registrationEnabled: country.registrationEnabled,
+      contentPublishingEnabled: false,
+      placePublishingEnabled: false,
+      eventFeatureEnabled: false,
+      partnerOnboardingEnabled: false,
+      paymentsEnabled: false,
+      bookingEnabled: false,
+      ticketingEnabled: false,
+      artisanCommerceEnabled: false,
+      cultureModuleEnabled: false,
+    },
+  };
 }

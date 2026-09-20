@@ -1,13 +1,15 @@
 // Layout pour la section Collections
 import { Stack } from 'expo-router';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function CollectionsLayout() {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <Stack
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
-        contentStyle: { backgroundColor: '#0A0A0A' },
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="index" />

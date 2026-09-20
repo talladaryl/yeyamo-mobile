@@ -1,6 +1,5 @@
 // Item d'événement auquel l'utilisateur participe
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import type { EventParticipation } from '@/features/profile/types';
 
 interface EventParticipantItemProps {

@@ -16,6 +16,7 @@ export function useEventDetail(eventId: EntityId) {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
     queryKey: ['events', isDemo ? 'demo' : 'backend', eventId],
+    enabled: Boolean(eventId),
     queryFn: () => isDemo
       ? Promise.resolve(mockEvents.find((event) => String(event.id) === String(eventId)) ?? mockEvents[0])
       : eventsApi.detail(eventId),

@@ -1,4 +1,4 @@
-﻿import { EXPLORE_CATEGORY_DEFINITIONS, type Category, type TrendingPlace, type Region, type MapPlace, type UpcomingEvent } from './types';
+import { EXPLORE_CATEGORY_DEFINITIONS, type Category, type TrendingPlace, type Region, type MapPlace, type UpcomingEvent } from './types';
 
 export const categories: Category[] = EXPLORE_CATEGORY_DEFINITIONS;
 

@@ -1,121 +1,34 @@
-// ÉCRAN 1 - Recherche utilisateurs
-import { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
+import { FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { UserSearchCard } from '@/components/social/UserSearchCard';
 import { useFollowActions, useUserSearch } from '@/features/social/useSocial';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function SearchUsersScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const colors = useThemeStore((state) => state.colors);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-
-  const { data: results = [] } = useUserSearch(searchQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+  const { data: results = [], isLoading, isError, refetch } = useUserSearch(debouncedQuery);
   const { follow } = useFollowActions();
 
   return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
-          headerTitle: 'Recherche',
-        }}
-      />
-
-      {/* Search Bar */}
-      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <View className="flex-row items-center bg-white dark:bg-[#161616] rounded-xl px-4 py-2.5 gap-3">
-          <Icon library="ionicons" name="search" size={20} color="#A1A1AA" />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Rechercher des utilisateurs..."
-            placeholderTextColor="#A1A1AA"
-            className="flex-1 text-[#18181B] dark:text-white text-sm"
-            autoFocus
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
-              <Icon library="ionicons" name="close-circle" size={20} color="#52525B" />
-            </TouchableOpacity>
-          )}
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerTitle: 'Recherche' }} />
+      <View className="border-b px-4 py-3" style={{ borderColor: colors.border }}>
+        <View className="flex-row items-center gap-3 rounded-xl px-4 py-2.5" style={{ backgroundColor: colors.card }}>
+          <Icon library="ionicons" name="search" size={20} color={colors.textMuted} />
+          <TextInput value={searchQuery} onChangeText={setSearchQuery} placeholder="Rechercher des utilisateurs…" placeholderTextColor={colors.textMuted} className="flex-1 text-sm" style={{ color: colors.text }} autoFocus returnKeyType="search" />
+          {searchQuery ? <TouchableOpacity onPress={() => setSearchQuery('')} accessibilityLabel="Effacer la recherche"><Icon library="ionicons" name="close-circle" size={20} color={colors.textMuted} /></TouchableOpacity> : null}
         </View>
-
-        {/* Filters Toggle */}
-        <TouchableOpacity
-          onPress={() => setShowFilters(!showFilters)}
-          className="flex-row items-center justify-between mt-3"
-          activeOpacity={0.7}
-        >
-          <View className="flex-row items-center gap-2">
-            <Icon library="ionicons" name="options" size={18} color="#EF4444" />
-            <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Filtres</Text>
-          </View>
-          <Icon
-            library="ionicons"
-            name={showFilters ? 'chevron-up' : 'chevron-down'}
-            size={18}
-            color="#A1A1AA"
-          />
-        </TouchableOpacity>
-
-        {/* Filters Panel */}
-        {showFilters && (
-          <View className="mt-3 p-3 bg-white dark:bg-[#161616] rounded-xl">
-            <Text className="text-[#18181B] dark:text-white text-sm font-semibold mb-2">Localisation</Text>
-            <View className="flex-row flex-wrap gap-2 mb-3">
-              {['Toutes', 'Yaoundé', 'Douala', 'Bafoussam'].map((location) => (
-                <TouchableOpacity
-                  key={location}
-                  className="px-3 py-1.5 rounded-full bg-[#F4F4F5] dark:bg-[#27272A]"
-                  activeOpacity={0.8}
-                >
-                  <Text className="text-[#18181B] dark:text-white text-xs">{location}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text className="text-[#18181B] dark:text-white text-sm font-semibold mb-2">Centres d'intérêt</Text>
-            <View className="flex-row flex-wrap gap-2">
-              {['Voyages', 'Food', 'Sports', 'Culture', 'Nature'].map((interest) => (
-                <TouchableOpacity
-                  key={interest}
-                  className="px-3 py-1.5 rounded-full bg-[#F4F4F5] dark:bg-[#27272A]"
-                  activeOpacity={0.8}
-                >
-                  <Text className="text-[#18181B] dark:text-white text-xs">{interest}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
       </View>
-
-      {/* Results */}
-      <FlatList
-        data={results}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <UserSearchCard
-            user={item}
-            onPress={() => router.push(`/(profile)/${item.username}`)}
-            onFollowPress={() => follow.mutate(item.id)}
-          />
-        )}
-        ListEmptyComponent={
-          <View className="items-center justify-center py-12">
-            <Icon library="ionicons" name="search" size={64} color="#27272A" />
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-4">
-              {searchQuery ? 'Aucun résultat trouvé' : 'Recherchez des utilisateurs'}
-            </Text>
-          </View>
-        }
-      />
+      <FlatList data={results} keyExtractor={(item) => String(item.id)} keyboardShouldPersistTaps="handled" renderItem={({ item }) => <UserSearchCard user={item} onPress={() => router.push(`/(profile)/${item.username}`)} onFollowPress={() => follow.mutate(item.id)} />} ListHeaderComponent={searchQuery.trim() ? <Text className="px-4 pb-2 pt-4 text-sm font-semibold" style={{ color: colors.textSecondary }}>{results.length} résultat{results.length > 1 ? 's' : ''}</Text> : null} ListEmptyComponent={<View className="items-center px-8 py-20"><Icon library="ionicons" name={isError ? 'cloud-offline-outline' : 'search-outline'} size={48} color={colors.textMuted} /><Text className="mt-4 text-center" style={{ color: colors.textSecondary }}>{isLoading ? 'Recherche…' : isError ? 'La recherche est indisponible.' : searchQuery.trim() ? 'Aucun utilisateur trouvé.' : 'Saisissez un nom ou un identifiant.'}</Text>{isError ? <TouchableOpacity onPress={() => void refetch()} className="mt-4 rounded-xl px-4 py-3" style={{ backgroundColor: colors.primary }}><Text className="font-bold text-white">Réessayer</Text></TouchableOpacity> : null}</View>} />
     </View>
   );
 }

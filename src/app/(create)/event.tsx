@@ -1,229 +1,81 @@
 import { useRef, useState } from 'react';
-import { Alert, View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
+import { YeyamoFormFooter } from '@/components/forms/YeyamoFormFooter';
+import { YeyamoFormProgress } from '@/components/forms/YeyamoFormProgress';
+import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
+import { YeyamoFormStep } from '@/components/forms/YeyamoFormStep';
+import { useYeyamoMediaPicker } from '@/components/media/useYeyamoMediaPicker';
+import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
-import { Toggle } from '@/components/ui/Toggle';
-import { CTAButton } from '@/components/ui/CTAButton';
+import { Input } from '@/components/ui/Input';
 import { useCreateStore } from '@/features/create/create.store';
 import { useThemeStore } from '@/features/theme/theme.store';
-import { DateTimeField } from '@/components/ui/DateTimeField';
-import { formValidation } from '@/utils/formValidation';
 
 export default function CreateEventScreen() {
   const router = useRouter();
-  const initialEventForm = useRef(useCreateStore.getState().eventForm).current;
-  const setEventForm = useCreateStore((state) => state.setEventForm);
   const colors = useThemeStore((state) => state.colors);
-  
-  const [coverImage, setCoverImage] = useState<string | null>(initialEventForm.cover_image_url ?? null);
-  const [title, setTitle] = useState(initialEventForm.title ?? '');
-  const [description, setDescription] = useState(initialEventForm.description ?? '');
-  const [location, setLocation] = useState(initialEventForm.location ?? '');
-  const [date, setDate] = useState(initialEventForm.date ?? '');
-  const [time, setTime] = useState(initialEventForm.time ?? '');
-  const [maxParticipants, setMaxParticipants] = useState(String(initialEventForm.max_participants ?? 20));
-  const [shareToFeed, setShareToFeed] = useState(initialEventForm.share_to_feed ?? true);
+  const initial = useRef(useCreateStore.getState().eventForm).current;
+  const setEventForm = useCreateStore((state) => state.setEventForm);
+  const resetEventForm = useCreateStore((state) => state.resetEventForm);
+  const { pickFromLibrary } = useYeyamoMediaPicker();
+  const [coverImage, setCoverImage] = useState<string | null>(initial.cover_image_url ?? null);
+  const [coverMimeType, setCoverMimeType] = useState<string | null>(initial.cover_image_mime_type ?? null);
+  const [title, setTitle] = useState(initial.title ?? '');
+  const [description, setDescription] = useState(initial.description ?? '');
 
   const pickCoverImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets?.[0]) {
-      setCoverImage(result.assets[0].uri);
-      setEventForm({ cover_image_url: result.assets[0].uri });
+    try {
+      const result = await pickFromLibrary({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 1 });
+      if (result.cancelled) return;
+      const asset = result.assets[0];
+      if (!asset) return;
+      setCoverImage(asset.uri);
+      setCoverMimeType(asset.mimeType ?? 'image/jpeg');
+    } catch (error) {
+      Alert.alert('Image indisponible', error instanceof Error ? error.message : 'Réessayez dans quelques instants.');
     }
   };
 
-  const handleNext = () => {
-    const error = formValidation.required(title, 'Le titre')
-      ?? formValidation.required(location, 'Le lieu')
-      ?? formValidation.date(date, 'La date', true)
-      ?? formValidation.required(time, 'L’heure')
-      ?? formValidation.positiveNumber(maxParticipants, 'Le nombre de participants', true);
-    if (error) {
-      Alert.alert('Informations à vérifier', error);
+  const continueToLocation = () => {
+    if (!title.trim()) {
+      Alert.alert('Titre requis', 'Donnez un titre à votre sortie avant de continuer.');
       return;
     }
-    setEventForm({
-      title,
-      description,
-      location,
-      date,
-      time,
-      max_participants: parseInt(maxParticipants) || 20,
-      share_to_feed: shareToFeed,
-    });
-    router.push('/(create)/event-settings');
+    setEventForm({ title: title.trim(), description: description.trim(), cover_image_url: coverImage, cover_image_mime_type: coverMimeType });
+    router.push('/(create)/event-location');
   };
 
-  return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerTitle: 'Créer une sortie',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+  const exit = () => {
+    if (!title && !description && !coverImage) {
+      router.back();
+      return;
+    }
+    Alert.alert('Quitter la création ?', 'Les informations de cette sortie seront perdues.', [
+      { text: 'Continuer', style: 'cancel' },
+      { text: 'Quitter', style: 'destructive', onPress: () => { resetEventForm(); router.back(); } },
+    ]);
+  };
 
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="none"
-        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
-      >
-        {/* Cover Image */}
-        <TouchableOpacity
-          onPress={pickCoverImage}
-          activeOpacity={0.9}
-          className="relative"
-        >
-          {coverImage ? (
-            <Image
-              source={{ uri: coverImage }}
-              style={{ width: '100%', height: 200 }}
-              contentFit="cover"
-            />
-          ) : (
-            <View className="w-full h-48 bg-white dark:bg-[#161616] items-center justify-center">
-              <Icon library="ionicons" name="image" size={48} color="#52525B" />
-              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm mt-2">
-                Ajouter une photo de couverture
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-
-        <View className="px-4 py-6">
-          {/* Title */}
-          <View className="mb-4">
-            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
-              Titre de votre sortie <Text className="text-[#EF4444]">*</Text>
-            </Text>
-            <TextInput
-              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
-              placeholder="Ex: Randonnée au Mont Cameroun"
-              placeholderTextColor="#A1A1AA"
-              value={title}
-              onChangeText={setTitle}
-              maxLength={100}
-            />
-          </View>
-
-          {/* Description */}
-          <View className="mb-4">
-            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">Description</Text>
-            <TextInput
-              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
-              placeholder="Décrivez votre sortie..."
-              placeholderTextColor="#A1A1AA"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              maxLength={500}
-              style={{ minHeight: 100, textAlignVertical: 'top' }}
-            />
-          </View>
-
-          {/* Location, Date, Time */}
-          <View className="flex-row gap-3 mb-4">
-            <View className="flex-1">
-              <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
-                Lieu <Text className="text-[#EF4444]">*</Text>
-              </Text>
-              <TextInput
-                className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
-                placeholder="Lieu"
-                placeholderTextColor="#A1A1AA"
-                value={location}
-                onChangeText={setLocation}
-              />
-            </View>
-          </View>
-
-          <View className="mb-4 gap-4">
-            <DateTimeField label="Date" value={date} onChange={setDate} mode="date" required minimumDate={new Date()} />
-            <DateTimeField label="Heure" value={time} onChange={setTime} mode="time" required />
-          </View>
-
-          {/* Max Participants */}
-          <View className="mb-4">
-            <Text className="text-[#18181B] dark:text-white text-sm font-medium mb-2">
-              Nombre de participants
-            </Text>
-            <TextInput
-              className="bg-white dark:bg-[#161616] text-[#18181B] dark:text-white rounded-xl px-4 py-3 text-sm border border-[#E4E4E7] dark:border-[#27272A]"
-              placeholder="20"
-              placeholderTextColor="#A1A1AA"
-              value={maxParticipants}
-              onChangeText={setMaxParticipants}
-              keyboardType="number-pad"
-            />
-          </View>
-
-          {/* Share to Feed Toggle */}
-          <View className="bg-white dark:bg-[#161616] rounded-xl px-4 py-2 mb-4">
-            <Toggle
-              label="Partager mon post dans Sortie"
-              value={shareToFeed}
-              onValueChange={(value) => {
-                setShareToFeed(value);
-                setEventForm({ share_to_feed: value });
-              }}
-            />
-          </View>
-
-          {/* Warning Message */}
-          <View className="bg-[#FEF3C7]/10 border border-[#F59E0B]/30 rounded-xl p-4 mb-6">
-            <View className="flex-row items-start">
-              <Icon library="ionicons" name="warning" size={20} color="#F59E0B" />
-              <Text className="text-[#F59E0B] text-xs ml-2 flex-1 leading-5">
-                Rappel : ne partagez pas votre adresse personnelle ni des informations sensibles dans la description publique.
-              </Text>
-            </View>
+  return <YeyamoFormScreen footer={<YeyamoFormFooter onContinue={continueToLocation} continueLabel="Continuer" />}>
+    <YeyamoFormProgress currentStep={1} totalSteps={5} label="Créer une sortie" />
+    <YeyamoFormStep title="Quelle sortie organisez-vous ?" description="Commencez par présenter l’activité aux personnes qui pourraient vous rejoindre.">
+      <View className="gap-5">
+        <View className="overflow-hidden rounded-2xl border" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
+          {coverImage ? <Image source={{ uri: coverImage }} style={{ width: '100%', height: 190 }} contentFit="cover" accessibilityLabel="Aperçu de l'image de couverture" /> : <View className="h-44 items-center justify-center px-6"><Icon name="image-outline" size={42} color={colors.textMuted} /><Text className="mt-3 text-center text-sm" style={{ color: colors.textSecondary }}>Ajoutez une image pour rendre votre sortie plus facile à repérer.</Text></View>}
+          <View className="flex-row gap-3 p-3">
+            <View className="flex-1"><Button label={coverImage ? 'Remplacer' : 'Ajouter une image'} variant="secondary" size="sm" onPress={() => void pickCoverImage()} /></View>
+            {coverImage ? <Button label="Retirer" variant="ghost" size="sm" fullWidth={false} onPress={() => { setCoverImage(null); setCoverMimeType(null); }} /> : null}
           </View>
         </View>
-
-        <View className="h-4" />
-      </ScrollView>
-
-      {/* Bottom Buttons */}
-      <View className="border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
-        <View className="flex-row gap-3">
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="flex-1 bg-[#F4F4F5] dark:bg-[#27272A] rounded-xl py-4 items-center"
-            activeOpacity={0.7}
-          >
-            <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Annuler</Text>
-          </TouchableOpacity>
-          
-          <View className="flex-1">
-            <CTAButton
-              title="Suivant"
-              variant="primary"
-              onPress={handleNext}
-              disabled={!title || !location}
-            />
-          </View>
+        <Input label="Titre de la sortie *" value={title} onChangeText={setTitle} placeholder="Ex. Randonnée au Mont Cameroun" maxLength={100} autoCapitalize="sentences" returnKeyType="next" />
+        <Input label="Description" value={description} onChangeText={setDescription} placeholder="Expliquez l’activité, l’ambiance et ce qu’il faut prévoir." multiline maxLength={500} returnKeyType="default" blurOnSubmit={false} />
+        <View className="rounded-xl border p-4" style={{ borderColor: colors.border, backgroundColor: colors.accentSoft }}>
+          <Text className="text-sm font-semibold" style={{ color: colors.text }}>Vous choisirez le lieu, l’horaire et la capacité aux prochaines étapes.</Text>
         </View>
+        <Button label="Annuler la création" variant="ghost" onPress={exit} />
       </View>
-      </KeyboardAvoidingView>
-    </View>
-  );
+    </YeyamoFormStep>
+  </YeyamoFormScreen>;
 }

@@ -1,6 +1,7 @@
 import { Modal, Text, TouchableOpacity, View } from 'react-native';
 import { WebView, type WebViewMessageEvent, type WebViewNavigation } from 'react-native-webview';
 import ENV from '@/config/env';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export type TurnstileAction = 'register' | 'request_otp' | 'resend_otp' | 'forgot_password' | 'login';
 
@@ -21,6 +22,7 @@ interface Props {
 const allowedHosts = new Set(['yeyamo.com', 'challenges.cloudflare.com']);
 
 export function TurnstileChallenge({ action, visible, onSuccess, onCancel, onError }: Props) {
+  const colors = useThemeStore((state) => state.colors);
   const source = `${ENV.TURNSTILE_CHALLENGE_URL}?action=${encodeURIComponent(action)}`;
 
   const allowNavigation = (request: WebViewNavigation) => {
@@ -51,10 +53,10 @@ export function TurnstileChallenge({ action, visible, onSuccess, onCancel, onErr
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onCancel}>
       <View className="flex-1 justify-end bg-black/50">
-        <View className="h-80 rounded-t-3xl bg-white p-4">
+        <View className="h-80 rounded-t-3xl p-4" style={{ backgroundColor: colors.card }}>
           <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-lg font-bold">Vérification de sécurité</Text>
-            <TouchableOpacity onPress={onCancel}><Text className="font-semibold">Annuler</Text></TouchableOpacity>
+            <Text className="text-lg font-bold" style={{ color: colors.text }}>Vérification de sécurité</Text>
+            <TouchableOpacity onPress={onCancel}><Text className="font-semibold" style={{ color: colors.primary }}>Annuler</Text></TouchableOpacity>
           </View>
           <WebView
             source={{ uri: source }}

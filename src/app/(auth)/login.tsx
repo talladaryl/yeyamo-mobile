@@ -1,6 +1,6 @@
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { isAxiosError } from 'axios';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,51 +8,58 @@ import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { SocialButton } from '@/components/auth/SocialButton';
-import { Logo } from '@/components/ui/Logo';
+import { StaticYeyamoSplashLogo } from '@/components/onboarding/StaticYeyamoSplashLogo';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/features/auth/useAuth';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { loginSchema, type LoginForm } from '@/utils/validation';
 import { useInterestsStore } from '@/features/interests/interests.store';
-import { useTurnstileChallenge } from '@/features/auth/useTurnstileChallenge';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
+import { useGoogleIdToken } from '@/features/auth/useGoogleIdToken';
+import { useAppleIdToken } from '@/features/auth/useAppleIdToken';
+import ENV from '@/config/env';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, loginDemo, googleLogin, isLoading, error } = useAuth();
+  const { login, loginDemo, googleLogin, socialLogin, isLoading, error } = useAuth();
   const colors = useThemeStore((state) => state.colors);
-  const { requestToken, challenge } = useTurnstileChallenge();
-  const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+  const turnstileEnabled = ENV.TURNSTILE_ENABLED;
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileVersion, setTurnstileVersion] = useState(0);
+  const [turnstileMessage, setTurnstileMessage] = useState<string | null>(null);
+  const { googleRequest, requestGoogleIdToken, googleError } = useGoogleIdToken();
+  const { appleAvailable, appleError, requestAppleIdToken } = useAppleIdToken();
+  const { control, handleSubmit, formState: { errors, isValid } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
     defaultValues: { email: '', password: '' },
   });
 
   const signIn = async (data: LoginForm) => {
     try {
-      await login(data);
-      router.replace('/interests');
-    } catch (requestError: unknown) {
-      if (
-        isAxiosError<{ code?: string }>(requestError)
-        && requestError.response?.data?.code === 'TURNSTILE_REQUIRED'
-      ) {
-        try {
-          const turnstileToken = await requestToken('login');
-          await login(data, turnstileToken);
-          router.replace('/interests');
-        } catch {
-          // The challenge can be cancelled without blocking normal navigation.
-        }
+      if (turnstileEnabled && !turnstileToken) {
+        setTurnstileMessage('Veuillez terminer la vérification anti-robot avant de vous connecter.');
         return;
       }
-      if (
-        isAxiosError<{ code?: string }>(requestError)
-        && requestError.response?.data?.code === 'EMAIL_NOT_VERIFIED'
-      ) {
+      await login(data, turnstileToken ?? undefined);
+      router.replace('/interests');
+    } catch (requestError: unknown) {
+      const code = typeof requestError === 'object' && requestError !== null && 'code' in requestError
+        ? String(requestError.code)
+        : undefined;
+      if (code === 'TURNSTILE_VERIFICATION_FAILED' || code === 'TURNSTILE_REQUIRED') {
+        setTurnstileToken(null);
+        setTurnstileVersion((value) => value + 1);
+        setTurnstileMessage('La vérification a expiré. Veuillez la recommencer.');
+        return;
+      }
+      if (code === 'EMAIL_NOT_VERIFIED') {
         router.push({
           pathname: '/(auth)/verify-code',
           params: { email: data.email.trim() },
         });
-      }
+      } else Alert.alert('Connexion impossible', 'Veuillez vérifier vos informations puis réessayer.');
     }
   };
 
@@ -66,7 +73,19 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
-    if (await googleLogin()) router.replace('/interests');
+    const idToken = await requestGoogleIdToken();
+    if (idToken && await googleLogin(idToken)) router.replace('/interests');
+  };
+
+  const handleAppleLogin = async () => {
+    const idToken = await requestAppleIdToken();
+    if (!idToken) return;
+    try {
+      await socialLogin({ provider: 'apple', token: idToken });
+      router.replace('/interests');
+    } catch {
+      // The backend error is exposed by useAuth.
+    }
   };
 
   const partnerDemoLogin = async () => {
@@ -85,7 +104,6 @@ export default function LoginScreen() {
 
   return (
     <SafeScreen>
-      {challenge}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
           <LinearGradient colors={['#EF4444', '#DC2626', '#991B1B']} className="h-48 overflow-hidden px-6 pt-3">
@@ -104,9 +122,7 @@ export default function LoginScreen() {
             style={{ backgroundColor: colors.background }}
           >
             <View className="items-center">
-              <View className="h-20 w-20 items-center justify-center rounded-full border-4 shadow-sm" style={{ backgroundColor: colors.card, borderColor: colors.background }}>
-                <Logo size="medium" />
-              </View>
+              <StaticYeyamoSplashLogo />
               <Text className="mt-3 text-2xl font-extrabold" style={{ color: colors.text }}>Bon retour sur Yeyamo !</Text>
               <Text className="mt-2 text-center text-sm leading-5" style={{ color: colors.textSecondary }}>
                 Continuez à découvrir, partager et vivre des expériences.
@@ -152,9 +168,19 @@ export default function LoginScreen() {
               <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')} className="self-end">
                 <Text className="text-sm font-semibold" style={{ color: colors.primary }}>Mot de passe oublié ?</Text>
               </TouchableOpacity>
-              {error ? <Text className="text-center text-sm" style={{ color: colors.primary }}>{error}</Text> : null}
-              <Button label="Se connecter" onPress={handleSubmit(signIn)} isLoading={isLoading} />
-              <TouchableOpacity
+              {turnstileEnabled ? <>
+                <TurnstileWidget
+                  key={turnstileVersion}
+                  action="login"
+                  onVerify={(token) => { setTurnstileToken(token); setTurnstileMessage(null); }}
+                  onExpire={() => { setTurnstileToken(null); setTurnstileMessage('La vérification a expiré. Veuillez la recommencer.'); }}
+                  onError={(message) => { setTurnstileToken(null); setTurnstileMessage(message); }}
+                />
+                {turnstileMessage ? <Text className="text-center text-xs text-[#B45309]">{turnstileMessage}</Text> : null}
+              </> : null}
+              {error || googleError || appleError ? <Text className="text-center text-sm" style={{ color: colors.primary }}>{error ?? googleError ?? appleError}</Text> : null}
+              <Button label="Se connecter" onPress={handleSubmit(signIn)} isLoading={isLoading} disabled={!isValid || isLoading} />
+              {ENV.APP_ENV !== 'production' ? <TouchableOpacity
                 onPress={demoLogin}
                 disabled={isLoading}
                 activeOpacity={0.8}
@@ -162,8 +188,8 @@ export default function LoginScreen() {
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
               >
                 <Text className="font-semibold" style={{ color: colors.text }}>Entrer en mode démo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </TouchableOpacity> : null}
+              {ENV.APP_ENV !== 'production' ? <TouchableOpacity
                 onPress={partnerDemoLogin}
                 disabled={isLoading}
                 activeOpacity={0.8}
@@ -174,7 +200,7 @@ export default function LoginScreen() {
                 <Text className="font-semibold" style={{ color: colors.text }}>
                   Se connecter en tant que partenaire démo
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> : null}
             </View>
 
             <View className="my-6 flex-row items-center">
@@ -183,8 +209,8 @@ export default function LoginScreen() {
               <View className="h-px flex-1" style={{ backgroundColor: colors.border }} />
             </View>
             <View className="gap-3">
-              <SocialButton provider="google" onPress={handleGoogleLogin} disabled={isLoading} />
-              <SocialButton provider="apple" onPress={() => undefined} disabled={isLoading} />
+              <SocialButton provider="google" onPress={() => void handleGoogleLogin()} disabled={isLoading || !googleRequest} />
+              {appleAvailable ? <SocialButton provider="apple" onPress={() => void handleAppleLogin()} disabled={isLoading} /> : null}
             </View>
 
             <View className="mt-7 flex-row items-center justify-center">

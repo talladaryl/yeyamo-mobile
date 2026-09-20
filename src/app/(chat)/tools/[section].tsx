@@ -11,7 +11,7 @@ import { useChatStore, type ChatWallpaper } from '@/features/chat/chat.store';
 import { useThemeStore } from '@/features/theme/theme.store';
 import type { ChatMessage } from '@/features/chat/types';
 
-const WALLPAPERS: Array<{ id: ChatWallpaper; name: string; colors: [string, string] }> = [
+const WALLPAPERS: { id: ChatWallpaper; name: string; colors: [string, string] }[] = [
   { id: 'default', name: 'Classique', colors: ['#F3F4F6', '#E5E7EB'] },
   { id: 'sand', name: 'Sable', colors: ['#FFF7E6', '#EAD7B7'] },
   { id: 'ocean', name: 'Océan', colors: ['#DDF4FF', '#9ED7EA'] },

@@ -1,168 +1,82 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { usePartnerStore } from '@/features/partner/partner.store';
+import { useAuthStore } from '@/features/auth/auth.store';
+import { eventsApi } from '@/features/events/events.api';
 import { useThemeStore } from '@/features/theme/theme.store';
+
+function messageFor(error: unknown) {
+  return typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string'
+    ? error.message
+    : 'Impossible de créer cet événement pour le moment. Réessayez plus tard.';
+}
+
+function toIso(date: string, time: string) {
+  return new Date(`${date}T${time}:00`).toISOString();
+}
 
 export default function AddEventStep4Screen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const sessionMode = useAuthStore((state) => state.sessionMode);
+  const isDemo = sessionMode?.startsWith('demo-') ?? false;
   const { eventForm, resetEventForm } = usePartnerStore();
   const [showFullPreview, setShowFullPreview] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
-  const handlePublish = () => {
-    // TODO: API call to create event
-    console.log('Publishing event:', eventForm);
-    
-    // Reset form and navigate
-    resetEventForm();
-    router.push('/(tabs)/explore');
+  const handlePublish = async () => {
+    if (isDemo) {
+      resetEventForm();
+      router.push('/(tabs)/explore');
+      return;
+    }
+    if (!eventForm.placeId || !eventForm.name || !eventForm.start_date || !eventForm.start_time || !eventForm.end_date || !eventForm.end_time || !eventForm.max_seats) {
+      Alert.alert('Informations incomplètes', 'Renseignez le lieu, les dates, les heures et la capacité avant de créer l’événement.');
+      return;
+    }
+    const startAt = toIso(eventForm.start_date, eventForm.start_time);
+    const endAt = toIso(eventForm.end_date, eventForm.end_time);
+    if (Number.isNaN(Date.parse(startAt)) || Number.isNaN(Date.parse(endAt)) || Date.parse(endAt) <= Date.parse(startAt)) {
+      Alert.alert('Période invalide', 'La fin de l’événement doit être postérieure à son début.');
+      return;
+    }
+    setIsPublishing(true);
+    try {
+      await eventsApi.createEvent({
+        placeId: eventForm.placeId,
+        title: eventForm.name,
+        description: eventForm.description || undefined,
+        startAt,
+        endAt,
+        capacity: eventForm.max_seats,
+        status: 'PENDING',
+      });
+      resetEventForm();
+      Alert.alert('Événement envoyé', 'Votre événement a été envoyé pour validation.', [
+        { text: 'Continuer', onPress: () => router.replace('/(tabs)/explore') },
+      ]);
+    } catch (error) {
+      Alert.alert('Création impossible', messageFor(error));
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
-  return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerTitle: 'Ajouter un événement',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+  return <View className="flex-1" style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerTitle: 'Ajouter un événement', headerTitleStyle: { fontSize: 18, fontWeight: '600' }, headerLeft: () => <TouchableOpacity onPress={() => router.back()} className="ml-4"><Icon library="ionicons" name="arrow-back" size={24} color={colors.text} /></TouchableOpacity> }} />
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}><View className="px-4 py-6"><Stepper currentStep={4} totalSteps={4} /><View className="mb-6 mt-4 items-center"><View className="mb-4 h-24 w-24 items-center justify-center rounded-full bg-[#EF4444]/20"><Icon library="ionicons" name="checkmark-circle" size={48} color="#EF4444" /></View><Text className="mb-2 text-lg font-bold" style={{ color: colors.text }}>Aperçu</Text><Text className="text-center text-sm" style={{ color: colors.textSecondary }}>Vérifiez les informations avant envoi</Text></View>
+      <View className="mb-6 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>{eventForm.cover_image_url ? <Image source={{ uri: eventForm.cover_image_url }} style={{ width: '100%', height: 192 }} contentFit="cover" /> : null}<View className="p-4"><Text className="mb-2 text-lg font-bold" style={{ color: colors.text }}>{eventForm.name || 'Événement non renseigné'}</Text><Detail label="Lieu" value={eventForm.place} /><Detail label="Début" value={eventForm.start_date && eventForm.start_time ? `${eventForm.start_date} · ${eventForm.start_time}` : undefined} /><Detail label="Fin" value={eventForm.end_date && eventForm.end_time ? `${eventForm.end_date} · ${eventForm.end_time}` : undefined} /><Detail label="Description" value={eventForm.description} />{showFullPreview ? <><Detail label="Capacité" value={eventForm.max_seats ? `${eventForm.max_seats} personnes` : undefined} /><Detail label="Statut" value="En attente de validation" /></> : null}<TouchableOpacity className="mt-4" onPress={() => setShowFullPreview((value) => !value)}><Text className="text-sm font-medium" style={{ color: colors.primary }}>{showFullPreview ? 'Voir moins' : 'Voir plus'}</Text></TouchableOpacity></View></View>
+      <View className="flex-row rounded-xl border p-4" style={{ backgroundColor: colors.accentSoft, borderColor: colors.border }}><Icon library="ionicons" name="information-circle" size={20} color={colors.primary} /><Text className="ml-3 flex-1 text-xs leading-5" style={{ color: colors.textSecondary }}>L’image et les données de billetterie restent visibles dans le brouillon local : le contrat Event actuel ne les accepte pas encore.</Text></View>
+    </View><View className="h-24" /></ScrollView>
+    <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}><View className="flex-row gap-3"><View className="flex-1"><CTAButton title="Retour" variant="secondary" onPress={() => router.back()} disabled={isPublishing} /></View><View className="flex-1"><CTAButton title={isDemo ? 'Publier l’événement' : 'Envoyer'} onPress={handlePublish} loading={isPublishing} /></View></View></View>
+  </View>;
+}
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-4 py-6">
-          {/* Stepper */}
-          <Stepper currentStep={4} totalSteps={4} />
-
-          {/* Icon Illustration */}
-          <View className="items-center mb-6 mt-4">
-            <View className="w-24 h-24 bg-[#EF4444]/20 rounded-full items-center justify-center mb-4">
-              <Icon library="ionicons" name="checkmark-circle" size={48} color="#EF4444" />
-            </View>
-            <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-2">Aperçu</Text>
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm text-center">
-              Vérifiez les informations avant publication
-            </Text>
-          </View>
-
-          {/* Preview Card */}
-          <View className="bg-white dark:bg-[#161616] rounded-2xl overflow-hidden border border-[#E4E4E7] dark:border-[#27272A] mb-6">
-            {/* Cover Image */}
-            <View className="bg-[#F4F4F5] dark:bg-[#27272A] h-48 items-center justify-center">
-              <Icon library="ionicons" name="image-outline" size={48} color="#52525B" />
-              <Text className="text-[#52525B] text-xs mt-2">Image de l'événement</Text>
-            </View>
-
-            {/* Content */}
-            <View className="p-4">
-              {/* Name & Date Badge */}
-              <View className="mb-3">
-                <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-2">
-                  {eventForm.name || 'Festival Ngundo 2026'}
-                </Text>
-                
-                {/* Date Badge */}
-                <View className="flex-row items-center bg-[#EF4444]/10 self-start px-3 py-1.5 rounded-full">
-                  <Icon library="ionicons" name="calendar" size={14} color="#EF4444" />
-                  <Text className="text-[#EF4444] text-xs font-medium ml-1.5">
-                    {eventForm.start_date || '20 - 25 Mar'} • {eventForm.start_time || '10:00'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Tarif Badge */}
-              {eventForm.ticket_price_enabled && eventForm.ticket_price && (
-                <View className="bg-white dark:bg-[#0A0A0A] px-3 py-2 rounded-lg mb-3 self-start">
-                  <Text className="text-[#18181B] dark:text-white text-sm font-semibold">
-                    {eventForm.ticket_price} FCFA
-                  </Text>
-                </View>
-              )}
-
-              {/* Info Sections */}
-              <View className="space-y-3">
-                {/* Location */}
-                <View>
-                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Lieu</Text>
-                  <Text className="text-[#18181B] dark:text-white text-sm">
-                    {eventForm.location || 'La Falaise Resort, Douala'}
-                  </Text>
-                </View>
-
-                {/* Description */}
-                <View>
-                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Description</Text>
-                  <Text className="text-[#18181B] dark:text-white text-sm leading-5">
-                    {eventForm.description || 'La Ngondo est un plus grand festival dans la ville culturelle du Sénégal, où les traditions se mêlent à la modernité. Ce moment unique rassemble 4 musiques, 4 danses et de la gastronomie locale.'}
-                  </Text>
-                </View>
-
-                {/* Capacity */}
-                {showFullPreview && eventForm.max_seats && (
-                  <View>
-                    <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Capacité</Text>
-                    <Text className="text-[#18181B] dark:text-white text-sm">{eventForm.max_seats} personnes</Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Voir plus button */}
-              {showFullPreview ? (
-                <View className="mt-3">
-                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Statut</Text>
-                  <Text className="text-[#18181B] dark:text-white text-sm">Brouillon prêt pour validation</Text>
-                </View>
-              ) : null}
-
-              <TouchableOpacity className="mt-4" onPress={() => setShowFullPreview((value) => !value)}>
-                <Text className="text-[#EF4444] text-sm font-medium">
-                  {showFullPreview ? 'Voir moins' : 'Voir plus'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Info Message */}
-          <View className="bg-[#EF4444]/10 border border-[#EF4444]/20 rounded-xl p-4 flex-row">
-            <Icon library="ionicons" name="information-circle" size={20} color="#EF4444" />
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs ml-3 flex-1 leading-5">
-              Votre événement sera vérifié par notre équipe avant publication. Vous recevrez une notification dans les 24-48h.
-            </Text>
-          </View>
-        </View>
-
-        <View className="h-24" />
-      </ScrollView>
-
-      {/* Bottom Buttons */}
-      <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <CTAButton
-              title="Retour"
-              variant="secondary"
-              onPress={() => router.back()}
-            />
-          </View>
-          <View className="flex-1">
-            <CTAButton
-              title="Publier l'événement"
-              variant="primary"
-              onPress={handlePublish}
-            />
-          </View>
-        </View>
-      </View>
-    </View>
-  );
+function Detail({ label, value }: { label: string; value?: string }) {
+  const colors = useThemeStore((state) => state.colors);
+  return value ? <View className="mt-3"><Text className="mb-1 text-xs font-medium" style={{ color: colors.textSecondary }}>{label}</Text><Text className="text-sm" style={{ color: colors.text }}>{value}</Text></View> : null;
 }

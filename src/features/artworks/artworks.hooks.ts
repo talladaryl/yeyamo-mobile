@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { toSpringPage } from '@/services/api/contracts';
 import { artworksApi } from './artworks.api';
+import { genericInteractionsApi } from '@/features/interactions/generic-interactions.api';
 import { demoArtwork, demoArtworks, demoArtworkDetail, demoArtworkHistories, demoArtworkOffer, demoArtworkOfferFor } from './artworks.demo';
 import { artworkKeys } from './artworks.query-keys';
 import type { ArtworkFilters, ArtworkOfferInput, ArtworkRequest } from './artworks.types';
@@ -14,3 +15,4 @@ export function useRelatedArtworks(id?:string){const demo=useDemo();return useQu
 export function useArtworkOffer(id?:string){const demo=useDemo();return useQuery({queryKey:artworkKeys.offer(id??''),enabled:Boolean(id),retry:false,queryFn:()=>demo?Promise.resolve(demoArtworkOfferFor(findArtwork(id))):artworksApi.offer(id!)});}
 export function useCreateArtwork(){const client=useQueryClient();const demo=useDemo();return useMutation({mutationFn:(input:ArtworkRequest)=>demo?Promise.resolve(demoArtworkDetail(demoArtwork)):artworksApi.create(input),onSuccess:()=>client.invalidateQueries({queryKey:artworkKeys.all})});}
 export function useCreateArtworkOffer(){const demo=useDemo();return useMutation({mutationFn:(input:ArtworkOfferInput)=>demo?Promise.resolve({...demoArtworkOffer,amount:input.amount??demoArtworkOffer.amount,currencyCode:input.currencyCode??demoArtworkOffer.currencyCode}):artworksApi.createOffer(input)});}
+export function useSavedArtworks(){const demo=useDemo();return useQuery({queryKey:[...artworkKeys.all,'saved'],queryFn:async()=>{if(demo)return demoArtworks.map(demoArtworkDetail);const interactions=await genericInteractionsApi.mine('ARTWORK','FAVORITE',100);return Promise.all(interactions.map((interaction)=>artworksApi.detail(interaction.targetId)));}});}

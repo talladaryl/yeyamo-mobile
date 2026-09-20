@@ -1,8 +1,8 @@
-import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions, Share } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { usePostDetail } from '@/features/post/usePost';
 import { feedService } from '@/features/feed/feed.service';
@@ -14,40 +14,44 @@ export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
+  const [interactionState, setInteractionState] = useState<{
+    postId: string;
+    isLiked: boolean;
+    isSaved: boolean;
+    likesCount: number;
+  } | null>(null);
   const [comment, setComment] = useState('');
   const { data: post, isLoading, refetch } = usePostDetail(id);
 
-  useEffect(() => {
-    if (post) {
-      setIsLiked(post.is_liked);
-      setIsSaved(post.is_saved);
-      setLikesCount(post.likes_count);
-    }
-  }, [post]);
+  const currentInteraction = interactionState?.postId === id ? interactionState : null;
+  const isLiked = currentInteraction?.isLiked ?? post?.is_liked ?? false;
+  const isSaved = currentInteraction?.isSaved ?? post?.is_saved ?? false;
+  const likesCount = currentInteraction?.likesCount ?? post?.likes_count ?? 0;
 
   const handleLike = async () => {
     const previous = isLiked;
-    setIsLiked(!previous);
-    setLikesCount((value) => value + (previous ? -1 : 1));
+    const previousCount = likesCount;
+    setInteractionState({
+      postId: id,
+      isLiked: !previous,
+      isSaved,
+      likesCount: previousCount + (previous ? -1 : 1),
+    });
     try {
       await feedService.toggleLike(id, previous);
     } catch {
-      setIsLiked(previous);
-      setLikesCount((value) => value + (previous ? 1 : -1));
+      setInteractionState({ postId: id, isLiked: previous, isSaved, likesCount: previousCount });
       Alert.alert('Action impossible', 'Le like n’a pas pu être enregistré.');
     }
   };
 
   const handleSave = async () => {
     const previous = isSaved;
-    setIsSaved(!previous);
+    setInteractionState({ postId: id, isLiked, isSaved: !previous, likesCount });
     try {
       await feedService.toggleSave(id, previous);
     } catch {
-      setIsSaved(previous);
+      setInteractionState({ postId: id, isLiked, isSaved: previous, likesCount });
       Alert.alert('Action impossible', 'La sauvegarde n’a pas pu être enregistrée.');
     }
   };
@@ -64,6 +68,17 @@ export default function PostDetailScreen() {
     }
   };
 
+  const handleShare = async () => {
+    const result = await Share.share({ message: `https://yeyamo.com/posts/${id}` });
+    if (result.action === Share.sharedAction) {
+      try {
+        await feedApi.recordShare(id);
+      } catch {
+        // The native share succeeded; analytics failure must not mislead the user.
+      }
+    }
+  };
+
   if (isLoading || !post) {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
@@ -74,27 +89,6 @@ export default function PostDetailScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Stack.Screen
-        options={{
-          presentation: 'modal',
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerTitle: 'Publication',
-          headerTitleStyle: { fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-2">
-              <Ionicons name="close" size={28} color={colors.text} />
-            </TouchableOpacity>
-          ),
-          headerRight: () => (
-            <TouchableOpacity className="mr-2">
-              <Ionicons name="ellipsis-horizontal" size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Author Header */}
         <View className="flex-row items-center justify-between px-4 py-3">
@@ -114,9 +108,6 @@ export default function PostDetailScreen() {
               <Text className="text-xs" style={{ color: colors.textSecondary }}>{post.created_at}</Text>
             </View>
           </View>
-          <TouchableOpacity>
-            <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
         </View>
 
         {/* Post Image */}
@@ -141,7 +132,7 @@ export default function PostDetailScreen() {
               <Ionicons name="chatbubble-outline" size={24} color={colors.text} />
               <Text className="font-semibold" style={{ color: colors.text }}>{post.comments_count}</Text>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => void handleShare()} accessibilityLabel="Partager la publication">
               <Ionicons name="paper-plane-outline" size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
@@ -198,19 +189,6 @@ export default function PostDetailScreen() {
                 </View>
                 <View className="flex-row items-center gap-4 mt-1 ml-3">
                   <Text className="text-xs" style={{ color: colors.textSecondary }}>{commentItem.created_at}</Text>
-                  <TouchableOpacity>
-                    <Text className="text-xs font-semibold" style={{ color: colors.textSecondary }}>Répondre</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity className="flex-row items-center gap-1">
-                    <Ionicons 
-                      name={commentItem.is_liked ? 'heart' : 'heart-outline'} 
-                      size={12} 
-                      color={commentItem.is_liked ? '#EF4444' : colors.textSecondary}
-                    />
-                    {commentItem.likes_count > 0 && (
-                      <Text className="text-xs" style={{ color: colors.textSecondary }}>{commentItem.likes_count}</Text>
-                    )}
-                  </TouchableOpacity>
                 </View>
               </View>
             </View>

@@ -1,43 +1,12 @@
-// Sélecteur de visibilité pour une collection
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { VISIBILITY_OPTIONS } from '@/features/collections/types';
 import type { Collection } from '@/features/collections/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
-interface VisibilityPickerProps {
-  value: Collection['visibility'];
-  onChange: (value: Collection['visibility']) => void;
-}
+interface VisibilityPickerProps { value: Collection['visibility']; onChange: (value: Collection['visibility']) => void; }
 
 export function VisibilityPicker({ value, onChange }: VisibilityPickerProps) {
-  return (
-    <View>
-      <Text className="text-[#18181B] dark:text-white font-semibold text-base mb-3">Visibilité</Text>
-      {VISIBILITY_OPTIONS.map((option) => (
-        <TouchableOpacity
-          key={option.value}
-          onPress={() => onChange(option.value)}
-          className="flex-row items-center py-3 border-b border-[#E4E4E7] dark:border-[#27272A]"
-          activeOpacity={0.7}
-        >
-          <View className="w-10 h-10 rounded-full bg-[#F4F4F5] dark:bg-[#27272A] items-center justify-center mr-3">
-            <Ionicons name={option.icon as any} size={20} color="#EF4444" />
-          </View>
-
-          <View className="flex-1">
-            <Text className="text-[#18181B] dark:text-white font-medium text-base">{option.label}</Text>
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">{option.description}</Text>
-          </View>
-
-          <View
-            className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
-              value === option.value ? 'border-[#EF4444] bg-[#EF4444]' : 'border-[#52525B]'
-            }`}
-          >
-            {value === option.value && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
-          </View>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
+  const colors = useThemeStore((state) => state.colors);
+  return <View><Text className="mb-3 text-base font-semibold" style={{ color: colors.text }}>Visibilité</Text>{VISIBILITY_OPTIONS.map((option) => { const selected = value === option.value; return <TouchableOpacity key={option.value} onPress={() => onChange(option.value)} className="flex-row items-center border-b py-3" style={{ borderColor: colors.border }} activeOpacity={0.7} accessibilityRole="radio" accessibilityState={{ selected }}><View className="mr-3 h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Ionicons name={option.icon as any} size={20} color={colors.primary} /></View><View className="flex-1"><Text className="text-base font-medium" style={{ color: colors.text }}>{option.label}</Text><Text className="text-sm" style={{ color: colors.textSecondary }}>{option.description}</Text></View><View className="h-5 w-5 items-center justify-center rounded-full border-2" style={{ borderColor: selected ? colors.primary : colors.textMuted, backgroundColor: selected ? colors.primary : 'transparent' }}>{selected ? <Ionicons name="checkmark" size={14} color="#FFFFFF" /> : null}</View></TouchableOpacity>; })}</View>;
 }

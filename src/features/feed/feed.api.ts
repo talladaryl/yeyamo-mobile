@@ -1,5 +1,4 @@
 import { apiDelete, apiGet, apiPost, apiPut } from '@/services/api/client';
-import type { PaginatedResponse } from '@/types/api.types';
 import type { EntityId } from '@/types/api.types';
 import {
   createIdempotencyKey,
@@ -7,26 +6,45 @@ import {
   mediaContentUrl,
   toPaginatedResponse,
 } from '@/services/api/contracts';
-import type { FeedPost } from './types';
-import type { PostComment } from './types';
+import { getMediaAttachment } from '@/features/media/media.api';
+import type { FeedPost , PostComment } from './types';
 
 interface BackendFeedItem {
-  postId: string;
-  authorId: string;
+  itemType?: 'ORGANIC' | 'SPONSORED';
+  postId: string | null;
+  authorId: string | null;
   caption: string | null;
   catalogAssetId: string | null;
-  mediaIds: string[];
-  hashtags: string[];
-  publishedAt: string;
-  likes: number;
-  comments: number;
-  shares: number;
+  mediaIds: string[] | null;
+  hashtags: string[] | null;
+  publishedAt: string | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
 }
 
 interface BackendFeedPage {
   page: number;
   size: number;
   items: BackendFeedItem[];
+}
+
+type OrganicBackendFeedItem = BackendFeedItem & {
+  postId: string;
+  authorId: string;
+  mediaIds: string[];
+  publishedAt: string;
+};
+
+function isOrganicFeedItem(item: BackendFeedItem): item is OrganicBackendFeedItem {
+  // FeedPage can contain backend-injected sponsored rows. They intentionally
+  // have no post or media fields and must not be decoded as social posts.
+  return item.itemType !== 'SPONSORED'
+    && typeof item.postId === 'string'
+    && typeof item.authorId === 'string'
+    && Array.isArray(item.mediaIds)
+    && typeof item.publishedAt === 'string';
 }
 
 interface BackendPost {
@@ -37,6 +55,7 @@ interface BackendPost {
   mediaIds: string[];
   publishedAt: string | null;
   createdAt: string;
+  linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
 }
 
 interface InteractionSummary {
@@ -65,42 +84,55 @@ function mapComment(comment: BackendComment): PostComment {
   };
 }
 
-function mapFeedItem(item: BackendFeedItem): FeedPost {
+function fallbackMediaAttachment(id: string) {
+  return {
+    id,
+    url: mediaContentUrl(id),
+    thumbnail_url: null,
+    // The feed DTO does not expose a MIME. This fallback retains the real ID
+    // and lets the image renderer fail visibly instead of fabricating a URL.
+    type: 'image' as const,
+    width: 0,
+    height: 0,
+    duration_seconds: null,
+  };
+}
+
+async function mapFeedItem(item: OrganicBackendFeedItem): Promise<FeedPost> {
+  const metadata = await Promise.allSettled(item.mediaIds.map((id) => getMediaAttachment(id)));
+  const media = metadata.map((result, index) => result.status === 'fulfilled' ? result.value : fallbackMediaAttachment(item.mediaIds[index]));
+  const hasVideo = media.some((attachment) => attachment.type === 'video');
   return {
     id: item.postId,
-    type: item.mediaIds.length > 1 ? 'carousel' : 'image',
+    type: item.mediaIds.length === 0 ? 'text' : item.mediaIds.length > 1 ? 'carousel' : hasVideo ? 'video' : 'image',
     caption: item.caption,
-    media: item.mediaIds.map((id) => ({
-      id,
-      url: mediaContentUrl(id),
-      thumbnail_url: null,
-      type: 'image',
-      width: 0,
-      height: 0,
-      duration_seconds: null,
-    })),
+    media,
     author: fallbackUser(item.authorId),
-    likes_count: item.likes,
-    comments_count: item.comments,
-    shares_count: item.shares,
+    likes_count: item.likes ?? 0,
+    comments_count: item.comments ?? 0,
+    shares_count: item.shares ?? 0,
     is_liked: false,
     is_saved: false,
     place_tag: item.catalogAssetId
       ? { id: item.catalogAssetId, name: 'Lieu associé' }
       : null,
     created_at: item.publishedAt,
+    linkedContent: item.linkedContent ?? null,
+    media_metadata_complete: metadata.every((result) => result.status === 'fulfilled'),
   };
 }
 
 export const feedApi = {
-  getFeed: async (cursor?: string, _interests: string[] = [], _regionId?: number) => {
-    const page = Number.parseInt(cursor ?? '0', 10) || 0;
+  getFeed: async (pageParam?: number) => {
+    const page = Number.isInteger(pageParam) && pageParam! >= 0 ? pageParam! : 0;
     const response = await apiGet<BackendFeedPage>(`/feed?page=${page}&size=20`);
+    const organicItems = (response.items ?? []).filter(isOrganicFeedItem);
+    const posts = await Promise.all(organicItems.map(mapFeedItem));
     return toPaginatedResponse(
-      response.items.map(mapFeedItem),
+      posts,
       response.page,
       response.size,
-      response.items.length === response.size,
+      (response.items ?? []).length === response.size,
     );
   },
 
@@ -130,7 +162,7 @@ export const feedApi = {
       apiGet<InteractionSummary>(`/interactions/posts/${postId}/summary`),
       apiGet<BackendComment[]>(`/interactions/posts/${postId}/comments?limit=50`),
     ]);
-    const feedPost = mapFeedItem({
+    const feedPost = await mapFeedItem({
       postId: post.id,
       authorId: post.authorId,
       caption: post.caption,
@@ -141,6 +173,7 @@ export const feedApi = {
       likes: summary.likes,
       comments: summary.comments,
       shares: summary.shares,
+      linkedContent: post.linkedContent ?? null,
     });
     feedPost.is_liked = summary.likedByViewer;
     feedPost.is_saved = summary.favoriteByViewer;
@@ -154,4 +187,11 @@ export const feedApi = {
       { parentId: null, body },
       { headers: { 'Idempotency-Key': createIdempotencyKey() } },
     )),
+
+  recordShare: (postId: EntityId) =>
+    apiPost<void>(
+      `/interactions/posts/${postId}/shares`,
+      { channel: 'NATIVE_SHARE' },
+      { headers: { 'Idempotency-Key': createIdempotencyKey() } },
+    ),
 };

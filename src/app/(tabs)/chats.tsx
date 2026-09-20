@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
 import { ChatListItem } from '@/components/chat/ChatListItem';
 import { ChatTabs } from '@/components/chat/ChatTabs';
@@ -26,7 +26,7 @@ function conversationName(conversation: Conversation) {
 export default function ChatsScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useYeyamoTabBarHeight();
   const [inboxSection, setInboxSection] = useState<InboxSection>('messages');
   const [activeTab, setActiveTab] = useState<ChatTab>('recent');
   const [search, setSearch] = useState('');
@@ -66,11 +66,6 @@ export default function ChatsScreen() {
           <Text className="text-3xl font-extrabold" style={{ color: colors.text }}>Boîte de réception</Text>
           <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>Messages, activités et informations Yeyamo</Text>
         </View>
-        {inboxSection === 'messages' ? (
-          <TouchableOpacity className="h-11 w-11 items-center justify-center rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }} accessibilityLabel="Filtrer les conversations">
-            <Icon name="options-outline" size={22} color={colors.text} />
-          </TouchableOpacity>
-        ) : null}
       </View>
 
       <View className="mx-4 my-2 flex-row rounded-2xl p-1" style={{ backgroundColor: colors.elevated }}>

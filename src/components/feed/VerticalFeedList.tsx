@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
-import { Alert, FlatList, Text, View } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Alert, FlatList, RefreshControl, Text, View } from 'react-native';
+import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
 import type { ViewToken } from 'react-native';
 import { FeedShareSheet } from './FeedShareSheet';
@@ -14,13 +14,19 @@ import { isSponsoredFeedItem, type FeedItem, type FeedPost } from '@/features/fe
 import { socialApi } from '@/features/social/social.api';
 import { useThemeStore } from '@/features/theme/theme.store';
 import type { EntityId } from '@/types/api.types';
+import { Button } from '@/components/ui/Button';
 
 type VerticalFeedListProps = {
   posts: FeedItem[];
   onEndReached?: () => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
+  isFetchingNextPage?: boolean;
+  nextPageError?: string | null;
+  onRetryNextPage?: () => void;
 };
 
-export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps) {
+export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = false, isFetchingNextPage = false, nextPageError, onRetryNextPage }: VerticalFeedListProps) {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
@@ -39,8 +45,12 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
   const { data: conversations = [] } = useConversations();
   const sendMessage = useSendMessage();
   const trackImpression = useTrackAdImpression();
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useYeyamoTabBarHeight();
   const bottomOverlayInset = tabBarHeight + 18;
+  const visiblePosts = useMemo(
+    () => posts.filter((post) => isSponsoredFeedItem(post) || !hiddenPostIds.has(post.id)),
+    [hiddenPostIds, posts],
+  );
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -98,7 +108,7 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
       {itemHeight > 0 ? (
         <FlatList
           style={{ flex: 1 }}
-          data={posts.filter((post) => isSponsoredFeedItem(post) || !hiddenPostIds.has(post.id))}
+          data={visiblePosts}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item, index }) => isSponsoredFeedItem(item) ? (
             <SponsoredFeedCard item={item} height={itemHeight} isActive={index === activeIndex} bottomOverlayInset={bottomOverlayInset} />
@@ -133,6 +143,8 @@ export function VerticalFeedList({ posts, onEndReached }: VerticalFeedListProps)
           initialNumToRender={2}
           maxToRenderPerBatch={3}
           windowSize={3}
+          refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} /> : undefined}
+          ListFooterComponent={isFetchingNextPage ? <View className="items-center py-6"><Text className="text-sm" style={{ color: colors.textSecondary }}>Chargement des publications…</Text></View> : nextPageError ? <View className="px-5 py-5"><Text className="mb-3 text-center text-sm" style={{ color: colors.textSecondary }}>{nextPageError}</Text>{onRetryNextPage ? <Button label="Réessayer" variant="secondary" onPress={onRetryNextPage} /> : null}</View> : null}
           ListEmptyComponent={(
             <View className="flex-1 items-center justify-center px-8 py-20">
               <Text className="text-center text-base font-semibold" style={{ color: colors.text }}>Aucune publication pour le moment</Text>

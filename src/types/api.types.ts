@@ -25,7 +25,7 @@ export interface PaginatedResponse<T> {
 export interface ApiError {
   code?: string;
   message: string;
-  details?: Array<{ field?: string; message?: string }>;
+  details?: { field?: string; message?: string }[];
   correlationId?: string;
   errors?: Record<string, string[]>;
   status?: number;

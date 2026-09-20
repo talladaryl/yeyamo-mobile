@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +14,6 @@ export default function SettingsScreen() {
   const { logout } = useAuth();
   const { preference, setThemePreference, colors } = useThemeStore();
 
-  const [pushNotifications, setPushNotifications] = useState(true);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
 
   const themeLabel = preference === 'light' ? 'Clair' : preference === 'dark' ? 'Sombre' : 'Système';
@@ -67,24 +66,11 @@ export default function SettingsScreen() {
           <View className="overflow-hidden rounded-xl" style={{ backgroundColor: colors.card }}>
             <SettingsItem
               icon="language-outline"
-              label="Langue & Préférences"
-              value="Français"
-              onPress={() => router.push('/(profile)/preferences')}
+              label="Langue"
+              value={i18n.language === 'en' ? 'English' : 'Français'}
+              onPress={() => router.push('/(profile)/language')}
             />
-            <View className="flex-row items-center justify-between border-t px-4 py-4" style={{ borderColor: colors.border }}>
-              <View className="flex-row items-center flex-1">
-                <View className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
-                  <Ionicons name="notifications-outline" size={20} color="#EF4444" />
-                </View>
-                <Text className="ml-3 font-medium" style={{ color: colors.text }}>Notifications</Text>
-              </View>
-              <Switch
-                value={pushNotifications}
-                onValueChange={setPushNotifications}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+            <SettingsItem icon="notifications-outline" label="Notifications" onPress={() => router.push('/(profile)/notifications')} showBorder />
           </View>
         </View>
 

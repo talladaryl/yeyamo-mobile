@@ -1,12 +1,15 @@
 import { Stack } from 'expo-router';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function OnboardingLayout() {
+  const colors = useThemeStore((state) => state.colors);
   return (
     <Stack
       screenOptions={{
         headerShown: false,
         gestureEnabled: false,
         animation: 'slide_from_right',
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="splash" />

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Asset } from 'expo-asset';
 import { useRouter } from 'expo-router';
@@ -12,11 +12,11 @@ export default function SplashScreen() {
   const hasNavigated = useRef(false);
   const [animationHtml, setAnimationHtml] = useState<string>();
 
-  const continueToOnboarding = () => {
+  const continueToOnboarding = useCallback(() => {
     if (hasNavigated.current) return;
     hasNavigated.current = true;
     router.replace('/(onboarding)/step1');
-  };
+  }, [router]);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,7 +38,7 @@ export default function SplashScreen() {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, []);
+  }, [continueToOnboarding]);
 
   return (
     <View className="flex-1 bg-white">

@@ -7,6 +7,8 @@ export interface CreatePostPayload {
   caption?: string;
   place_id?: EntityId;
   media_ids: EntityId[];
+  target_type?: 'PROVERB' | 'RECIPE';
+  target_id?: string;
 }
 
 export interface UploadedMedia {

@@ -9,11 +9,7 @@ import { useThemeStore } from '@/features/theme/theme.store';
 import { useCountryFeature } from '@/features/country/country.hooks';
 import { useArtwork, useArtworkHistory, useArtworkOffer } from '@/features/artworks/artworks.hooks';
 import { formatMoney } from '@/utils/format';
-
-const INITIAL_COMMENTS = [
-  'Une oeuvre tres expressive, merci pour le recit audio.',
-  "J'aimerais decouvrir les etapes de fabrication dans l'atelier.",
-];
+import { useCreateInteractionComment, useInteractionComments, useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
 
 export default function ArtworkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,13 +20,15 @@ export default function ArtworkDetailScreen() {
   const detail = useArtwork(id);
   const history = useArtworkHistory(id);
   const offer = useArtworkOffer(id);
-  const [comments, setComments] = useState(INITIAL_COMMENTS);
   const [comment, setComment] = useState('');
+  const comments = useInteractionComments('ARTWORK', id);
+  const createComment = useCreateInteractionComment('ARTWORK', id);
+  const favorite = useInteractionStatus('ARTWORK', id);
+  const toggleFavorite = useToggleInteraction('ARTWORK', id);
 
   const publish = () => {
     if (comment.trim().length < 2) return;
-    setComments((current) => [comment.trim(), ...current]);
-    setComment('');
+    createComment.mutate(comment.trim(), { onSuccess: () => setComment('') });
   };
 
   if (detail.isLoading) {
@@ -64,8 +62,8 @@ export default function ArtworkDetailScreen() {
             <Icon name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <View className="flex-1" />
-          <TouchableOpacity className="h-11 w-11 items-center justify-center">
-            <Icon name="bookmark-outline" size={23} color={colors.text} />
+          <TouchableOpacity onPress={() => toggleFavorite.mutate(Boolean(favorite.data))} disabled={toggleFavorite.isPending} className="h-11 w-11 items-center justify-center">
+            <Icon name={favorite.data ? 'bookmark' : 'bookmark-outline'} size={23} color={colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -149,7 +147,7 @@ export default function ArtworkDetailScreen() {
           </View>
 
           <Text className="mb-3 mt-8 text-xl font-extrabold" style={{ color: colors.text }}>
-            Commentaires ({comments.length})
+            Commentaires ({comments.data?.length ?? 0})
           </Text>
           <View className="flex-row items-center rounded-2xl border p-2" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
             <TextInput
@@ -162,25 +160,25 @@ export default function ArtworkDetailScreen() {
             />
             <TouchableOpacity
               onPress={publish}
-              disabled={comment.trim().length < 2}
+              disabled={comment.trim().length < 2 || createComment.isPending}
               className="h-11 w-11 items-center justify-center rounded-full bg-[#EF4444]"
-              style={{ opacity: comment.trim().length < 2 ? 0.45 : 1 }}
+              style={{ opacity: comment.trim().length < 2 || createComment.isPending ? 0.45 : 1 }}
             >
               <Icon name="arrow-up" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
-          {comments.map((value, index) => (
-            <View key={`${value}-${index}`} className="mt-3 flex-row rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+          {comments.data?.map((value) => (
+            <View key={value.id} className="mt-3 flex-row rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
               <View className="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}>
                 <Icon name="person" size={17} color={colors.textSecondary} />
               </View>
               <View className="ml-3 flex-1">
                 <Text className="font-bold" style={{ color: colors.text }}>
-                  {index === 0 && comments.length > INITIAL_COMMENTS.length ? 'Vous' : index % 2 ? 'Amina' : 'Joel'}
+                  {value.userId}
                 </Text>
                 <Text className="mt-1 leading-5" style={{ color: colors.textSecondary }}>
-                  {value}
+                  {value.body}
                 </Text>
               </View>
             </View>

@@ -1,2 +1,25 @@
-import { ScrollView, Text, View } from 'react-native'; import { useRouter } from 'expo-router'; import { SafeScreen } from '@/components/ui/SafeScreen'; import { Input } from '@/components/ui/Input'; import { Button } from '@/components/ui/Button'; import { Stepper } from '@/components/ui/Stepper'; import { useCreateStore } from '@/features/create/create.store'; import { useThemeStore } from '@/features/theme/theme.store';
-export default function ArtworkMaterials(){const router=useRouter();const colors=useThemeStore((s)=>s.colors);const d=useCreateStore((s)=>s.artworkDraft);const set=useCreateStore((s)=>s.setArtworkDraft);return <SafeScreen><ScrollView contentContainerStyle={{padding:20,paddingBottom:40}} keyboardShouldPersistTaps="handled"><Stepper currentStep={4} totalSteps={7}/><Text className="text-3xl font-extrabold" style={{color:colors.text}}>Matières et dimensions</Text><Text className="mt-2 text-sm" style={{color:colors.textSecondary}}>Ces informations aident à comprendre le geste artisanal.</Text><View className="mt-7 gap-4"><Input label="Matières" value={d.materials??''} onChangeText={(value)=>set({materials:value})} placeholder="Bois, perles, tissage…"/><Input label="Techniques" value={d.techniques??''} onChangeText={(value)=>set({techniques:value})} placeholder="Sculpture, teinture…"/><View className="flex-row gap-3"><Input containerClassName="flex-1" label="Largeur (cm)" value={d.width??''} onChangeText={(value)=>set({width:value})} keyboardType="decimal-pad"/><Input containerClassName="flex-1" label="Hauteur (cm)" value={d.height??''} onChangeText={(value)=>set({height:value})} keyboardType="decimal-pad"/><Input containerClassName="flex-1" label="Profondeur (cm)" value={d.depth??''} onChangeText={(value)=>set({depth:value})} keyboardType="decimal-pad"/></View><Input label="Poids (g, facultatif)" value={d.weight??''} onChangeText={(value)=>set({weight:value})} keyboardType="decimal-pad"/></View><Button label="Continuer" onPress={()=>router.push('/(create)/artwork/media')} className="mt-8"/></ScrollView></SafeScreen>;}
+import { View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { YeyamoFormFooter } from '@/components/forms/YeyamoFormFooter';
+import { YeyamoFormProgress } from '@/components/forms/YeyamoFormProgress';
+import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
+import { YeyamoFormStep } from '@/components/forms/YeyamoFormStep';
+import { Input } from '@/components/ui/Input';
+import { useCreateStore } from '@/features/create/create.store';
+
+export default function ArtworkMaterials() {
+  const router = useRouter();
+  const draft = useCreateStore((state) => state.artworkDraft);
+  const setDraft = useCreateStore((state) => state.setArtworkDraft);
+  return <YeyamoFormScreen footer={<YeyamoFormFooter onBack={() => router.back()} onContinue={() => router.push('/(create)/artwork/media')} />}>
+    <View className="px-4 pt-5"><YeyamoFormProgress currentStep={4} totalSteps={7} label="Créer une œuvre" /></View>
+    <YeyamoFormStep title="Matières et dimensions" description="Ces informations aident à comprendre le geste artisanal.">
+      <View className="gap-4">
+        <Input label="Matières" value={draft.materials ?? ''} onChangeText={(value) => setDraft({ materials: value })} placeholder="Bois, perles, tissage…" returnKeyType="next" />
+        <Input label="Techniques" value={draft.techniques ?? ''} onChangeText={(value) => setDraft({ techniques: value })} placeholder="Sculpture, teinture…" returnKeyType="next" />
+        <View className="flex-row gap-3"><Input containerClassName="flex-1" label="Largeur (cm)" value={draft.width ?? ''} onChangeText={(value) => setDraft({ width: value })} keyboardType="decimal-pad" /><Input containerClassName="flex-1" label="Hauteur (cm)" value={draft.height ?? ''} onChangeText={(value) => setDraft({ height: value })} keyboardType="decimal-pad" /><Input containerClassName="flex-1" label="Profondeur (cm)" value={draft.depth ?? ''} onChangeText={(value) => setDraft({ depth: value })} keyboardType="decimal-pad" /></View>
+        <Input label="Poids (g, facultatif)" value={draft.weight ?? ''} onChangeText={(value) => setDraft({ weight: value })} keyboardType="decimal-pad" returnKeyType="done" />
+      </View>
+    </YeyamoFormStep>
+  </YeyamoFormScreen>;
+}

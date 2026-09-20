@@ -1,240 +1,66 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
-import { Icon } from '@/components/ui/Icon';
+import { useRef, useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { YeyamoFormFooter } from '@/components/forms/YeyamoFormFooter';
+import { YeyamoFormProgress } from '@/components/forms/YeyamoFormProgress';
+import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
+import { YeyamoFormStep } from '@/components/forms/YeyamoFormStep';
 import { Toggle } from '@/components/ui/Toggle';
-import { ParticipantItem } from '@/components/create/ParticipantItem';
-import { CTAButton } from '@/components/ui/CTAButton';
 import { useCreateStore } from '@/features/create/create.store';
+import { useThemeStore } from '@/features/theme/theme.store';
 
-// Mock participants
-const mockParticipants = [
-  { id: '1', name: 'Laura Wang', avatar_url: null },
-  { id: '2', name: 'Norni Legrand', avatar_url: null },
-  { id: '3', name: 'Dina Eboa', avatar_url: null },
-  { id: '4', name: 'Patrick Mballa', avatar_url: null },
-  { id: '5', name: 'Sophie Kamdem', avatar_url: null },
-  { id: '6', name: 'Henri Talla', avatar_url: null },
-];
+type Visibility = 'public' | 'friends';
 
 export default function EventSettingsScreen() {
   const router = useRouter();
-  const { eventSettings, setEventSettings } = useCreateStore();
-  
-  const [visibility, setVisibility] = useState<'public' | 'friends' | 'close_friends'>('public');
-  const [allowStrangers, setAllowStrangers] = useState(true);
-  const [allowCommentsParticipants, setAllowCommentsParticipants] = useState(false);
-  const [showParticipantsList, setShowParticipantsList] = useState(true);
-  const [allowShareOutside, setAllowShareOutside] = useState(false);
-  const [showAllParticipants, setShowAllParticipants] = useState(false);
-  const [enableWaitlist, setEnableWaitlist] = useState(false);
-  const [invitedUsers, setInvitedUsers] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const colors = useThemeStore((state) => state.colors);
+  const initialForm = useRef(useCreateStore.getState().eventForm).current;
+  const initialSettings = useRef(useCreateStore.getState().eventSettings).current;
+  const setEventForm = useCreateStore((state) => state.setEventForm);
+  const setEventSettings = useCreateStore((state) => state.setEventSettings);
+  const [visibility, setVisibility] = useState<Visibility>(initialSettings.visibility === 'friends' ? 'friends' : 'public');
+  const [commentsParticipantsOnly, setCommentsParticipantsOnly] = useState(initialSettings.allow_comments_participants_only ?? false);
+  const [showParticipants, setShowParticipants] = useState(initialSettings.show_participants_list ?? true);
+  const [sharingEnabled, setSharingEnabled] = useState(initialSettings.allow_share_outside ?? false);
+  const [shareToFeed, setShareToFeed] = useState(initialForm.share_to_feed ?? false);
 
-  const handleInviteToggle = (userId: string) => {
-    setInvitedUsers(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
-  };
-
-  const handlePublish = () => {
+  const continueToReview = () => {
     setEventSettings({
       visibility,
-      allow_strangers: allowStrangers,
-      allow_comments_participants_only: allowCommentsParticipants,
-      show_participants_list: showParticipantsList,
-      allow_share_outside: allowShareOutside,
-      enable_waitlist: enableWaitlist,
-      invited_users: invitedUsers,
+      allow_comments_participants_only: commentsParticipantsOnly,
+      show_participants_list: showParticipants,
+      allow_share_outside: sharingEnabled,
     });
-    console.log('Publishing event with settings');
-    router.back();
-    router.back();
+    setEventForm({ share_to_feed: shareToFeed });
+    router.push('/(create)/event-review');
   };
 
-  return (
-    <View className="flex-1 bg-white dark:bg-[#0A0A0A]">
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: '#0A0A0A' },
-          headerTintColor: '#FFFFFF',
-          headerTitle: 'Inviter à sortie sortie',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-4 py-6">
-          {/* Visibility Section */}
-          <View className="mb-6">
-            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-4">
-              Qui peut voir votre sortie ?
-            </Text>
-            
-            <TouchableOpacity
-              onPress={() => setVisibility('public')}
-              className="flex-row items-center justify-between py-3"
-              activeOpacity={0.7}
-            >
-              <View className="flex-row items-center flex-1">
-                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
-                  visibility === 'public' ? 'border-[#EF4444]' : 'border-[#52525B]'
-                }`}>
-                  {visibility === 'public' && (
-                    <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
-                  )}
-                </View>
-                <Text className="text-[#18181B] dark:text-white text-sm">Tout le monde</Text>
-              </View>
-              {visibility === 'public' && (
-                <Icon library="ionicons" name="checkmark-circle" size={20} color="#EF4444" />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setVisibility('friends')}
-              className="flex-row items-center justify-between py-3"
-              activeOpacity={0.7}
-            >
-              <View className="flex-row items-center flex-1">
-                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
-                  visibility === 'friends' ? 'border-[#EF4444]' : 'border-[#52525B]'
-                }`}>
-                  {visibility === 'friends' && (
-                    <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
-                  )}
-                </View>
-                <Text className="text-[#18181B] dark:text-white text-sm">Amis</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setVisibility('close_friends')}
-              className="flex-row items-center justify-between py-3"
-              activeOpacity={0.7}
-            >
-              <View className="flex-row items-center flex-1">
-                <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
-                  visibility === 'close_friends' ? 'border-[#EF4444]' : 'border-[#52525B]'
-                }`}>
-                  {visibility === 'close_friends' && (
-                    <View className="w-3 h-3 rounded-full bg-[#EF4444]" />
-                  )}
-                </View>
-                <Text className="text-[#18181B] dark:text-white text-sm">Amis proches</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* Options Section */}
-          <View className="mb-6">
-            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-2">Options</Text>
-            <View className="bg-white dark:bg-[#161616] rounded-xl px-4 divide-y divide-[#27272A]">
-              <Toggle
-                label="Autoriser les participants étrangers"
-                value={allowStrangers}
-                onValueChange={setAllowStrangers}
-              />
-              <Toggle
-                label="Commenter pour les participants"
-                value={allowCommentsParticipants}
-                onValueChange={setAllowCommentsParticipants}
-              />
-              <Toggle
-                label="Afficher la liste des participants"
-                value={showParticipantsList}
-                onValueChange={setShowParticipantsList}
-              />
-              <Toggle
-                label="Partager hors du groupe"
-                value={allowShareOutside}
-                onValueChange={setAllowShareOutside}
-              />
-              <Toggle
-                label="Activer la liste d'attente"
-                value={enableWaitlist}
-                onValueChange={setEnableWaitlist}
-              />
-            </View>
-          </View>
-
-          {/* Participants Section */}
-          <View className="mb-6">
-            <Text className="text-[#18181B] dark:text-white text-base font-semibold mb-3">Participants</Text>
-            
-            {/* Search */}
-            <View className="bg-white dark:bg-[#161616] rounded-xl px-4 py-3 flex-row items-center mb-4 border border-[#E4E4E7] dark:border-[#27272A]">
-              <Icon library="ionicons" name="search" size={18} color="#A1A1AA" />
-              <TextInput
-                className="flex-1 text-[#18181B] dark:text-white text-sm ml-2"
-                placeholder="Rechercher un ami..."
-                placeholderTextColor="#A1A1AA"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-
-            {/* Participants List */}
-            <View className="bg-white dark:bg-[#161616] rounded-xl px-4">
-              {(showAllParticipants ? mockParticipants : mockParticipants.slice(0, 3)).map((participant, index) => (
-                <View key={participant.id}>
-                  <ParticipantItem
-                    {...participant}
-                    isInvited={invitedUsers.includes(participant.id)}
-                    onInviteToggle={() => handleInviteToggle(participant.id)}
-                  />
-                  {index < (showAllParticipants ? mockParticipants : mockParticipants.slice(0, 3)).length - 1 && (
-                    <View className="h-px bg-[#F4F4F5] dark:bg-[#27272A]" />
-                  )}
-                </View>
-              ))}
-            </View>
-
-            {mockParticipants.length > 3 ? (
-              <TouchableOpacity
-                onPress={() => setShowAllParticipants((value) => !value)}
-                className="mt-3"
-                activeOpacity={0.7}
-              >
-                <Text className="text-[#EF4444] text-sm font-semibold text-center">
-                  {showAllParticipants ? 'Voir moins' : 'Voir plus'}
-                </Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
+  return <YeyamoFormScreen footer={<YeyamoFormFooter onBack={() => router.back()} onContinue={continueToReview} continueLabel="Vérifier la sortie" />}>
+    <YeyamoFormProgress currentStep={4} totalSteps={5} label="Créer une sortie" />
+    <YeyamoFormStep title="Qui peut voir votre sortie ?" description="Les deux niveaux ci-dessous correspondent aux seules visibilités actuellement prises en charge.">
+      <View className="gap-5">
+        <View className="gap-3">
+          <VisibilityCard active={visibility === 'public'} title="Public" description="Toute personne sur Yeyamo peut découvrir cette sortie." onPress={() => setVisibility('public')} />
+          <VisibilityCard active={visibility === 'friends'} title="Sur invitation" description="La sortie est privée. Les personnes non invitées ne la verront pas." onPress={() => setVisibility('friends')} />
         </View>
-
-        <View className="h-24" />
-      </ScrollView>
-
-      {/* Bottom Buttons */}
-      <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0A0A0A] border-t border-[#E4E4E7] dark:border-[#27272A] px-4 py-4">
-        <View className="flex-row gap-3">
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="flex-1 bg-[#F4F4F5] dark:bg-[#27272A] rounded-xl py-4 items-center"
-            activeOpacity={0.7}
-          >
-            <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Annuler</Text>
-          </TouchableOpacity>
-          
-          <View className="flex-1">
-            <CTAButton
-              title="Publier"
-              variant="primary"
-              onPress={handlePublish}
-            />
-          </View>
+        <View className="rounded-2xl border px-4" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
+          <Toggle label="Afficher la liste des participants" value={showParticipants} onValueChange={setShowParticipants} />
+          <Toggle label="Réserver les commentaires aux participants" value={commentsParticipantsOnly} onValueChange={setCommentsParticipantsOnly} />
+          <Toggle label="Autoriser le partage de la sortie" value={sharingEnabled} onValueChange={setSharingEnabled} />
+        </View>
+        <View className="rounded-2xl border px-4" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
+          <Toggle label="Partager aussi dans le Feed" value={shareToFeed} onValueChange={setShareToFeed} />
+          <Text className="pb-4 text-xs leading-5" style={{ color: colors.textSecondary }}>Cette préférence est conservée dans le brouillon, mais l’API de création de sortie ne crée pas encore de publication Feed. Aucun post ne sera simulé.</Text>
         </View>
       </View>
-    </View>
-  );
+    </YeyamoFormStep>
+  </YeyamoFormScreen>;
+}
+
+function VisibilityCard({ active, title, description, onPress }: { active: boolean; title: string; description: string; onPress: () => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <TouchableOpacity onPress={onPress} accessibilityRole="radio" accessibilityState={{ selected: active }} className="rounded-2xl border p-4" style={{ borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.accentSoft : colors.surface }}>
+    <Text className="text-base font-bold" style={{ color: colors.text }}>{title}</Text>
+    <Text className="mt-1 text-sm leading-5" style={{ color: colors.textSecondary }}>{description}</Text>
+  </TouchableOpacity>;
 }

@@ -6,18 +6,12 @@ import { useThemeStore } from '@/features/theme/theme.store';
 
 interface EstablishmentCardProps {
   establishment: Establishment;
-  onPress: () => void;
+  onPress?: () => void;
 }
 
 export function EstablishmentCard({ establishment, onPress }: EstablishmentCardProps) {
   const colors = useThemeStore((state) => state.colors);
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      className="mb-3 overflow-hidden rounded-2xl border"
-      style={{ backgroundColor: colors.card, borderColor: colors.border }}
-      activeOpacity={0.8}
-    >
+  const content = <>
       <Image
         source={{ uri: establishment.image_url }}
         style={{ width: '100%', height: 140 }}
@@ -45,6 +39,7 @@ export function EstablishmentCard({ establishment, onPress }: EstablishmentCardP
           </Text>
         </View>
       </View>
-    </TouchableOpacity>
-  );
+    </>;
+  if (!onPress) return <View className="mb-3 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>{content}</View>;
+  return <TouchableOpacity onPress={onPress} className="mb-3 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }} activeOpacity={0.8}>{content}</TouchableOpacity>;
 }

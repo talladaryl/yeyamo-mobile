@@ -28,6 +28,7 @@ export function usePlaces(query: Omit<PlacesQuery, 'page'>) {
           })
         : placesApi.getPlaces({ ...query, page: pageParam as number | undefined }),
     initialPageParam: undefined as number | undefined,
+    enabled: isDemo || (query.lat != null && query.lng != null) || Boolean(query.search || query.city || query.categoryCode),
     getNextPageParam: (lastPage) =>
       lastPage.meta.current_page < lastPage.meta.last_page
         ? lastPage.meta.current_page + 1
@@ -39,6 +40,7 @@ export function usePlaceDetail(placeId: EntityId) {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
     queryKey: ['place', isDemo ? 'demo' : 'backend', placeId],
+    enabled: Boolean(placeId),
     queryFn: () =>
       isDemo
         ? Promise.resolve({ data: mockPlaces.find((place) => String(place.id) === String(placeId)) ?? mockPlaces[0] })

@@ -1,69 +1,11 @@
-// Item de liste pour followers/following
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import type { FollowUser } from '@/features/social/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
-interface UserListItemProps {
-  user: FollowUser;
-  onPress: () => void;
-  onFollowPress: () => void;
-  onRemovePress?: () => void;
-  showFollowButton?: boolean;
-  showRemoveButton?: boolean;
-}
-
-export function UserListItem({
-  user,
-  onPress,
-  onFollowPress,
-  onRemovePress,
-  showFollowButton = true,
-  showRemoveButton = false,
-}: UserListItemProps) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      className="flex-row items-center px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]"
-      activeOpacity={0.7}
-    >
-      <Avatar uri={user.avatar_url} displayName={user.display_name} size={52} />
-
-      <View className="flex-1 ml-3">
-        <View className="flex-row items-center gap-1">
-          <Text className="text-[#18181B] dark:text-white font-semibold text-base">{user.display_name}</Text>
-          {user.is_verified && <Icon library="ionicons" name="checkmark-circle" size={16} color="#EF4444" />}
-        </View>
-        <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm">@{user.username}</Text>
-        {user.city && (
-          <View className="flex-row items-center gap-1 mt-1">
-            <Icon name="location-outline" size={12} color="#52525B" />
-            <Text className="text-[#52525B] text-xs">{user.city}</Text>
-          </View>
-        )}
-      </View>
-
-      {showFollowButton && (
-        <TouchableOpacity
-          onPress={onFollowPress}
-          className={`px-4 py-2 rounded-full ${user.is_following ? 'bg-[#F4F4F5] dark:bg-[#27272A]' : 'bg-[#EF4444]'}`}
-          activeOpacity={0.8}
-        >
-          <Text className={`text-sm font-semibold ${user.is_following ? 'text-[#18181B] dark:text-white' : 'text-white'}`}>
-            {user.is_following ? 'Abonné' : 'Suivre'}
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {showRemoveButton && onRemovePress && (
-        <TouchableOpacity
-          onPress={onRemovePress}
-          className="px-4 py-2 rounded-full bg-[#F4F4F5] dark:bg-[#27272A]"
-          activeOpacity={0.8}
-        >
-          <Text className="text-[#18181B] dark:text-white text-sm font-semibold">Retirer</Text>
-        </TouchableOpacity>
-      )}
-    </TouchableOpacity>
-  );
+type Props = { user: FollowUser; onPress: () => void; onFollowPress: () => void; onRemovePress?: () => void; showFollowButton?: boolean; showRemoveButton?: boolean };
+export function UserListItem({ user, onPress, onFollowPress, onRemovePress, showFollowButton = true, showRemoveButton = false }: Props) {
+  const colors = useThemeStore((state) => state.colors);
+  return <TouchableOpacity onPress={onPress} className="flex-row items-center border-b px-4 py-3" style={{ borderColor: colors.border }} activeOpacity={0.7}><Avatar uri={user.avatar_url} displayName={user.display_name} size={52} /><View className="ml-3 flex-1"><View className="flex-row items-center gap-1"><Text className="text-base font-semibold" style={{ color: colors.text }}>{user.display_name}</Text>{user.is_verified ? <Icon library="ionicons" name="checkmark-circle" size={16} color={colors.primary} /> : null}</View><Text className="text-sm" style={{ color: colors.textSecondary }}>@{user.username}</Text>{user.city ? <View className="mt-1 flex-row items-center gap-1"><Icon name="location-outline" size={12} color={colors.textMuted} /><Text className="text-xs" style={{ color: colors.textMuted }}>{user.city}</Text></View> : null}</View>{showFollowButton ? <TouchableOpacity onPress={onFollowPress} className="rounded-full px-4 py-2" style={{ backgroundColor: user.is_following ? colors.elevated : colors.primary }} accessibilityRole="button"><Text className="text-sm font-semibold" style={{ color: user.is_following ? colors.text : '#FFFFFF' }}>{user.is_following ? 'Abonné' : 'Suivre'}</Text></TouchableOpacity> : null}{showRemoveButton && onRemovePress ? <TouchableOpacity onPress={onRemovePress} className="ml-2 rounded-full px-4 py-2" style={{ backgroundColor: colors.elevated }} accessibilityRole="button"><Text className="text-sm font-semibold" style={{ color: colors.text }}>Retirer</Text></TouchableOpacity> : null}</TouchableOpacity>;
 }

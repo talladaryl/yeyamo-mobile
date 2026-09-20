@@ -37,7 +37,7 @@ export default function AddToCollectionScreen() {
       Alert.alert('Succès', 'Lieu ajouté à la collection', [
         { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch (error) {
+    } catch {
       Alert.alert('Erreur', 'Impossible d\'ajouter le lieu à la collection');
     } finally {
       setIsSubmitting(false);

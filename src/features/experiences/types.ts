@@ -62,3 +62,37 @@ export interface ExperiencesFilters {
   difficulty?: 'facile' | 'modérée' | 'difficile';
   duration?: 'half-day' | 'full-day' | 'multi-day';
 }
+
+/** Exact public fields exposed by GET /catalog/assets/{id} for an EXPERIENCE asset. */
+export interface CatalogExperience {
+  id: string;
+  type: 'EXPERIENCE';
+  ownerId: string | null;
+  source: string | null;
+  externalId: string | null;
+  name: string;
+  slug: string;
+  description: string | null;
+  categoryCode: string | null;
+  countryCode: string | null;
+  regionCode: string | null;
+  city: string | null;
+  district: string | null;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+  mediaIds: string[];
+  durationMinutes: number | null;
+  difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT' | null;
+  price: number | null;
+  currency: string | null;
+  capacityMin: number | null;
+  capacityMax: number | null;
+  includedItems: string[];
+  excludedItems: string[];
+  placeId: string | null;
+}

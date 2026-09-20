@@ -57,7 +57,7 @@ export default function PublicProfileScreen() {
       .flatMap(([, data]) => data?.pages.flatMap((page) => page.data) ?? []);
   }, [isDemo, queryClient]);
   const feedPosts = useMemo(() => knownFeedPosts.filter((post) => post.author.username === username), [knownFeedPosts, username]);
-  const feedAuthor = feedPosts[0]?.author ?? MOCK_FEED_POSTS.find((post) => post.author.username === username)?.author;
+  const feedAuthor = feedPosts[0]?.author ?? (isDemo ? MOCK_FEED_POSTS.find((post) => post.author.username === username)?.author : undefined);
   const searchResult = users.find((item) => item.username === username) ?? users[0];
   const isOwnProfile = Boolean(currentUser && currentUser.username === username);
 
@@ -78,14 +78,14 @@ export default function PublicProfileScreen() {
       city: 'Cameroun',
       is_verified: source.is_verified,
       is_partner: source.user_type === 'partner',
-      followers_count: (source as { followers_count?: number }).followers_count ?? 1200 + Number(source.id) * 37,
-      following_count: 186,
-      posts_count: Math.max(feedPosts.length, 9),
+      followers_count: (source as { followers_count?: number }).followers_count ?? (isDemo ? 1200 + Number(source.id) * 37 : 0),
+      following_count: (source as { following_count?: number }).following_count ?? (isDemo ? 186 : 0),
+      posts_count: (source as { posts_count?: number }).posts_count ?? (isDemo ? Math.max(feedPosts.length, 9) : feedPosts.length),
       is_following: (source as { is_following?: boolean }).is_following ?? false,
       is_followed_by: false,
       created_at: '',
     };
-  }, [feedAuthor, feedPosts.length, searchResult]);
+  }, [feedAuthor, feedPosts.length, isDemo, searchResult]);
 
   useEffect(() => {
     if (profile) setFollowing(profile.is_following);
@@ -98,6 +98,7 @@ export default function PublicProfileScreen() {
       type: post.type,
       thumbnail_url: post.media[0]?.thumbnail_url ?? post.media[0]?.url ?? '',
       media: post.media,
+      caption: post.caption,
       likes_count: post.likes_count,
       comments_count: post.comments_count,
       created_at: post.created_at,

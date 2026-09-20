@@ -151,10 +151,9 @@ export const ticketingApi = {
     unavailable('Historique détaillé des scans'),
 
   async getAvailableTicketTypes(eventId: string): Promise<PublicEventTickets> {
-    const response = await apiGet<{ eventId: string; currency: string; tickets: Array<{ id: string; name: string; price: number; quantityAvailable: number }> }>(`/tickets/events/${eventId}/types`);
+    const response = await apiGet<{ eventId: string; currency: string; tickets: { id: string; name: string; price: number; quantityAvailable: number }[] }>(`/tickets/events/${eventId}/types`);
     return {
       eventId: response.eventId,
-      eventName: response.eventId,
       currency: response.currency,
       tickets: response.tickets.map((ticket): PublicTicketType => ({ id: ticket.id, name: ticket.name, price: ticket.price, remaining: ticket.quantityAvailable, available: ticket.quantityAvailable > 0 })),
     };
@@ -183,6 +182,8 @@ export const ticketingApi = {
         {
           holdId: hold.holdId,
           promotionCode: payload.promotionCode ?? null,
+          operator: payload.operator,
+          phoneNumber: payload.phoneNumber,
         } satisfies CreateOrderRequest,
       );
     } catch (error) {

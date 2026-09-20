@@ -13,6 +13,9 @@ export function useRegions() {
     queryKey: ['explore', isDemo ? 'demo' : 'backend', 'regions'],
     queryFn: () => isDemo ? Promise.resolve(regions) : exploreApi.getRegions(),
     placeholderData: isDemo ? regions : undefined,
+    // Regions improve browsing, but must never keep the whole Explorer screen
+    // behind the API retry budget.
+    retry: 1,
   });
 }
 
@@ -25,11 +28,11 @@ export function useCategories() {
   });
 }
 
-export function useTrendingPlaces() {
+export function useTrendingPlaces(filters: { regionCode?: string } = {}) {
   const isDemo = useDemoMode();
   return useQuery({
-    queryKey: ['explore', isDemo ? 'demo' : 'backend', 'trending'],
-    queryFn: () => isDemo ? Promise.resolve(trendingPlaces) : exploreApi.getTrending(),
+    queryKey: ['explore', isDemo ? 'demo' : 'backend', 'trending', filters],
+    queryFn: () => isDemo ? Promise.resolve(trendingPlaces) : exploreApi.getTrending(filters.regionCode),
     placeholderData: isDemo ? trendingPlaces : undefined,
   });
 }

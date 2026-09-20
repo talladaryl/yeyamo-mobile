@@ -14,7 +14,7 @@ interface ExperienceCardProps {
   imageUrl: string;
   isSaved: boolean;
   onPress: () => void;
-  onSavePress: () => void;
+  onSavePress?: () => void;
 }
 
 export function ExperienceCard({

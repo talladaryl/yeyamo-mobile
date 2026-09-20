@@ -5,7 +5,7 @@ import type { PartnerEvent } from '@/features/partner-dashboard/types';
 
 interface EventCardProps {
   event: PartnerEvent;
-  onPress: () => void;
+  onPress?: () => void;
   onTicketingPress?: () => void;
 }
 
@@ -16,7 +16,7 @@ export function EventCard({ event, onPress, onTicketingPress }: EventCardProps) 
 
   return (
     <View className="mb-3 overflow-hidden rounded-xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-      <TouchableOpacity onPress={onPress} className="flex-row p-4" activeOpacity={0.8}>
+      <TouchableOpacity onPress={onPress} disabled={!onPress} className="flex-row p-4" activeOpacity={0.8}>
         <View className="mr-3 h-14 w-14 items-center justify-center rounded-lg bg-[#EF4444]">
           <Text className="text-xl font-bold text-white">{event.date.split(' ')[0]}</Text>
           <Text className="text-[10px] uppercase text-white">{event.date.split(' ')[1]}</Text>

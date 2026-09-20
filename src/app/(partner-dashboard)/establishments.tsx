@@ -14,7 +14,7 @@ export default function EstablishmentsScreen() {
   return (
     <PartnerPage title="Mes établissements" subtitle="Gérez tous vos lieux et leurs informations" actionIcon="add" onAction={() => router.push('/(partner)/add-place-step1')}>
       <FilterChips values={FILTERS} selected={filter} onSelect={setFilter} />
-      {(isDemo ? establishments : []).map((item) => <EstablishmentCard key={item.id} establishment={item} onPress={() => {}} />)}
+      {(isDemo ? establishments : []).map((item) => <EstablishmentCard key={item.id} establishment={item} />)}
     </PartnerPage>
   );
 }

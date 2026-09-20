@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { YeyamoModal } from '@/components/ui/YeyamoModal';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 export type FormSelectOption = { label: string; value: string; description?: string };
@@ -15,14 +16,13 @@ export function FormSelect({ label, value, options, placeholder = 'Sélectionner
       <Text className="flex-1 text-sm" style={{ color: selected ? colors.text : colors.textMuted }}>{selected?.label ?? placeholder}</Text><Icon name="chevron-down" size={18} color={colors.textMuted} />
     </TouchableOpacity>
     {error ? <Text className="mt-1 text-xs" style={{ color: colors.primary }}>{error}</Text> : null}
-    <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)} statusBarTranslucent>
-      <View className="flex-1 justify-end"><Pressable className="absolute inset-0" style={{ backgroundColor: colors.overlay }} onPress={() => setOpen(false)} />
-        <View className="max-h-[70%] rounded-t-[28px] border-t px-4 pb-8 pt-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-          <View className="mb-4 h-1 w-10 self-center rounded-full" style={{ backgroundColor: colors.textMuted }} />
-          <View className="mb-3 flex-row items-center"><Text className="flex-1 text-xl font-extrabold" style={{ color: colors.text }}>{label}</Text><TouchableOpacity onPress={() => setOpen(false)} className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="close" size={22} color={colors.text} /></TouchableOpacity></View>
-          <ScrollView showsVerticalScrollIndicator={false}>{options.map((option) => { const active = option.value === value; return <TouchableOpacity key={option.value} onPress={() => { onChange(option.value); setOpen(false); }} className="mb-2 min-h-14 flex-row items-center rounded-2xl border px-4 py-3" style={{ backgroundColor: active ? `${colors.primary}12` : colors.background, borderColor: active ? colors.primary : colors.border }} accessibilityRole="radio" accessibilityState={{ selected: active }}><View className="flex-1"><Text className="font-bold" style={{ color: colors.text }}>{option.label}</Text>{option.description ? <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{option.description}</Text> : null}</View>{active ? <Icon name="checkmark-circle" size={22} color={colors.primary} /> : null}</TouchableOpacity>; })}</ScrollView>
-        </View>
-      </View>
-    </Modal>
+    <YeyamoModal visible={open} onClose={() => setOpen(false)} title={label}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
+        {options.map((option) => {
+          const active = option.value === value;
+          return <TouchableOpacity key={option.value} onPress={() => { onChange(option.value); setOpen(false); }} className="mb-2 min-h-14 flex-row items-center rounded-2xl border px-4 py-3" style={{ backgroundColor: active ? `${colors.primary}12` : colors.background, borderColor: active ? colors.primary : colors.border }} accessibilityRole="radio" accessibilityState={{ selected: active }}><View className="flex-1"><Text className="font-bold" style={{ color: colors.text }}>{option.label}</Text>{option.description ? <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{option.description}</Text> : null}</View>{active ? <Icon name="checkmark-circle" size={22} color={colors.primary} /> : null}</TouchableOpacity>;
+        })}
+      </ScrollView>
+    </YeyamoModal>
   </View>;
 }

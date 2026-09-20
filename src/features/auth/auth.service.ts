@@ -5,8 +5,9 @@ import { useAuthStore, type SessionMode } from './auth.store';
 import { authApi } from './auth.api';
 import type { AuthApiUser, AuthUser, LoginCredentials, RegisterCredentials, SocialLoginCredentials } from './types';
 import { useInterestsStore } from '@/features/interests/interests.store';
-import { registerTokenRefreshedHandler } from '@/services/api/client';
+import { registerTokenRefreshedHandler, resetUnauthenticatedSessionHandler } from '@/services/api/client';
 import { synchronizePushToken, unregisterCurrentPushToken } from '@/features/notifications/push.service';
+import ENV from '@/config/env';
 
 function toAuthUser(user: AuthApiUser, displayName?: string): AuthUser {
   const identifier = user.email ?? user.phone ?? `user-${user.id}`;
@@ -16,9 +17,16 @@ function toAuthUser(user: AuthApiUser, displayName?: string): AuthUser {
     username: name.toLowerCase().replace(/[^a-z0-9_]+/g, '_'),
     display_name: name,
     email: user.email ?? '',
+    phone: user.phone,
     avatar_url: null,
     city: '',
-    is_verified: Boolean(user.emailVerifiedAt),
+    email_verified: Boolean(user.emailVerifiedAt),
+    phone_verified: null,
+    is_certified: false,
+    verification_status: null,
+    badge_type: null,
+    // An email-verification timestamp never proves public certification.
+    is_verified: false,
     user_type: user.roles.includes('PARTNER') ? 'partner' : 'user',
     created_at: user.createdAt,
   };
@@ -37,6 +45,7 @@ async function persistSession(response: {
     secureStore.set(secureStore.KEYS.SESSION_MODE, 'backend'),
   ]);
   useAuthStore.getState().setAuth(user, response.accessToken, 'backend');
+  resetUnauthenticatedSessionHandler();
   reverbClient.connect(response.accessToken);
   void synchronizePushToken();
 }
@@ -69,6 +78,11 @@ export const authService = {
       if (token) {
         const storedMode = await secureStore.get(secureStore.KEYS.SESSION_MODE);
         if (storedMode === 'demo-user' || storedMode === 'demo-partner') {
+          if (ENV.APP_ENV === 'production') {
+            await secureStore.clearAuthSession();
+            useAuthStore.getState().clearAuth();
+            return;
+          }
           const mockUser = storedMode === 'demo-partner' ? MOCK_PARTNER_USER : MOCK_USER;
           useAuthStore.getState().setAuth(mockUser, MOCK_TOKEN, storedMode);
           return;
@@ -77,6 +91,7 @@ export const authService = {
         const apiUser = await authApi.me();
         const user = toAuthUser(apiUser);
         useAuthStore.getState().setAuth(user, token, 'backend');
+        resetUnauthenticatedSessionHandler();
         await secureStore.set(secureStore.KEYS.SESSION_MODE, 'backend');
         reverbClient.connect(token);
         void synchronizePushToken();
@@ -106,15 +121,18 @@ export const authService = {
     await persistSession(await authApi.socialLogin(credentials));
   },
 
+  async googleLogin(idToken: string): Promise<void> {
+    await persistSession(await authApi.oauthGoogle(idToken));
+  },
+
   async loginDemo(kind: 'user' | 'partner'): Promise<void> {
+    if (ENV.APP_ENV === 'production') throw new Error('DEMO_DISABLED_IN_PRODUCTION');
     await persistDemoSession(kind === 'partner' ? 'demo-partner' : 'demo-user');
   },
 
   async logout(): Promise<void> {
     if (useAuthStore.getState().sessionMode?.startsWith('demo-')) {
-      await secureStore.clearAuthSession();
-      useAuthStore.getState().clearAuth();
-      useInterestsStore.getState().reset();
+      await this.clearLocalSession();
       return;
     }
 
@@ -124,10 +142,15 @@ export const authService = {
     } catch {
       // Best-effort — clear local state regardless
     } finally {
-      reverbClient.disconnect();
-      await secureStore.clearAuthSession();
-      useAuthStore.getState().clearAuth();
-      useInterestsStore.getState().reset();
+      await this.clearLocalSession();
     }
+  },
+
+  /** Clears protected data only after an explicit server-side account action. */
+  async clearLocalSession(): Promise<void> {
+    reverbClient.disconnect();
+    await secureStore.clearAuthSession();
+    useAuthStore.getState().clearAuth();
+    useInterestsStore.getState().reset();
   },
 };

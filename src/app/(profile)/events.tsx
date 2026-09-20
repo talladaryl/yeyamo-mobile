@@ -1,76 +1,16 @@
-// ÉCRAN 4 - Mes sorties (événements)
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { EventParticipantItem } from '@/components/profile/EventParticipantItem';
+import { Button } from '@/components/ui/Button';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/ViewStates';
+import { SafeScreen } from '@/components/ui/SafeScreen';
 import { useUserEvents } from '@/features/profile/useProfile';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 export default function EventsScreen() {
-  const router = useRouter();
-  const { data: events, isLoading } = useUserEvents();
-
-  const handleCreateEvent = () => {
-    router.push('/(create)/event');
-  };
-
-  return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
-      {/* Header */}
-      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-[#18181B] dark:text-white">Mes sorties</Text>
-          <TouchableOpacity className="p-2">
-            <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Liste des événements */}
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-[#52525B] dark:text-[#A1A1AA]">Chargement...</Text>
-        </View>
-      ) : events && events.length > 0 ? (
-        <FlatList
-          data={events}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-          renderItem={({ item }) => (
-            <EventParticipantItem
-              participation={item}
-              onPress={() => router.push(`/(events)/${item.event.id}`)}
-            />
-          )}
-        />
-      ) : (
-        <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="calendar-outline" size={64} color="#52525B" />
-          <Text className="mt-4 text-center text-lg font-semibold text-[#18181B] dark:text-white">
-            Aucune sortie prévue
-          </Text>
-          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center mt-2">
-            Rejoignez des événements pour les voir ici
-          </Text>
-        </View>
-      )}
-
-      {/* Bouton flottant */}
-      {events && events.length > 0 && (
-        <View className="absolute bottom-6 left-0 right-0 px-4">
-          <TouchableOpacity
-            onPress={handleCreateEvent}
-            className="h-14 w-14 self-end rounded-full bg-[#EF4444] items-center justify-center shadow-lg"
-            activeOpacity={0.8}
-            accessibilityLabel="Créer une sortie"
-          >
-            <Ionicons name="add" size={30} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      )}
-    </SafeAreaView>
-  );
+  const router = useRouter(); const colors = useThemeStore((state) => state.colors); const { data: events, isLoading, isError, refetch } = useUserEvents();
+  return <SafeScreen><Header title="Mes sorties" onBack={() => router.back()} />{isLoading ? <LoadingState /> : isError ? <ErrorState title="Sorties indisponibles" retry={() => void refetch()} /> : events?.length ? <FlatList data={events} keyExtractor={(item) => item.id.toString()} contentContainerStyle={{ padding: 16, paddingBottom: 100 }} renderItem={({ item }) => <EventParticipantItem participation={item} onPress={() => router.push(`/(events)/${item.event.id}`)} />} /> : <EmptyState title="Aucune sortie prévue" message="Rejoignez des événements pour les voir ici" icon={<Ionicons name="calendar-outline" size={64} color={colors.textMuted} />} />}{events?.length ? <View className="absolute bottom-6 left-0 right-0 px-4"><TouchableOpacity onPress={() => router.push('/(create)/event')} className="h-14 w-14 self-end items-center justify-center rounded-full" style={{ backgroundColor: colors.primary }} accessibilityRole="button" accessibilityLabel="Créer une sortie"><Ionicons name="add" size={30} color="#FFFFFF" /></TouchableOpacity></View> : <View className="absolute bottom-6 left-4 right-4"><Button label="Créer une sortie" onPress={() => router.push('/(create)/event')} /></View>}</SafeScreen>;
 }
+
+function Header({ title, onBack }: { title: string; onBack: () => void }) { const colors = useThemeStore((state) => state.colors); return <View className="flex-row items-center justify-between border-b px-4 py-3" style={{ borderColor: colors.border }}><TouchableOpacity onPress={onBack} className="-ml-2 p-2" accessibilityRole="button" accessibilityLabel="Retour"><Ionicons name="chevron-back" size={24} color={colors.text} /></TouchableOpacity><Text className="text-xl font-bold" style={{ color: colors.text }}>{title}</Text><View className="w-10" /></View>; }

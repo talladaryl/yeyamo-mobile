@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Alert, FlatList, Text, TouchableOpacity, View } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
 import { NotificationItem } from '@/components/profile/NotificationItem';
 import { Icon } from '@/components/ui/Icon';
@@ -18,7 +18,7 @@ type NotificationFilter = 'all' | 'unread';
 export function InboxNotifications() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = useYeyamoTabBarHeight();
   const { data: notifications = [], isLoading } = useNotifications();
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();

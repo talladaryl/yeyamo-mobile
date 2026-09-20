@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,12 @@ import { mockExperiences } from '@/features/experiences/mockData';
 import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useAuthStore } from '@/features/auth/auth.store';
+import { useCatalogExperience } from '@/features/experiences/experiences.hooks';
+import { experiencesApi } from '@/features/experiences/experiences.api';
+import type { CatalogExperience } from '@/features/experiences/types';
+import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
+import { reviewsApi, usePublicReviews } from '@/features/reviews/reviews.api';
+import { CreateVerifiedReviewSheet } from '@/components/reviews/CreateVerifiedReviewSheet';
 
 const { width } = Dimensions.get('window');
 
@@ -15,10 +21,18 @@ export default function ExperienceDetailScreen() {
   const colors = useThemeStore((state) => state.colors);
   const [isSaved, setIsSaved] = useState(false);
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const catalogExperience = useCatalogExperience(id);
+  const shareExperience = () => Share.share({ message: `${experience?.title ?? catalogExperience.data?.name ?? 'Expérience Yeyamo'} — https://yeyamo.com/experiences/${id}` });
   
   const experience = isDemo
     ? mockExperiences.find(e => e.id === Number(id)) || mockExperiences[0]
     : undefined;
+
+  if (!isDemo) {
+    if (catalogExperience.isLoading) return <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}><ActivityIndicator color={colors.primary} /></View>;
+    if (!catalogExperience.data) return <Unavailable />;
+    return <CatalogExperienceEnrichedDetail experience={catalogExperience.data} />;
+  }
 
   if (!experience) {
     return (
@@ -55,7 +69,7 @@ export default function ExperienceDetailScreen() {
               >
                 <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity className="bg-black/50 w-10 h-10 rounded-full items-center justify-center">
+              <TouchableOpacity onPress={() => void shareExperience()} className="bg-black/50 w-10 h-10 rounded-full items-center justify-center" accessibilityLabel="Partager l’expérience">
                 <Ionicons name="share-outline" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
@@ -234,7 +248,7 @@ export default function ExperienceDetailScreen() {
             <TouchableOpacity onPress={() => router.push(`/(bookings)/experience/${experience.id}`)} className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center">
               <Text className="text-base font-semibold text-white">Réserver</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            <TouchableOpacity onPress={() => setIsSaved((current) => !current)} className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }} accessibilityLabel={isSaved ? 'Retirer des favoris' : 'Enregistrer l’expérience'}>
               <Ionicons name="bookmark-outline" size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
@@ -253,4 +267,101 @@ export default function ExperienceDetailScreen() {
       </ScrollView>
     </View>
   );
+}
+
+function Unavailable() {
+  const colors = useThemeStore((state) => state.colors);
+  return <View className="flex-1 items-center justify-center px-8" style={{ backgroundColor: colors.background }}><Text className="text-center text-base" style={{ color: colors.text }}>Cette expérience n’est pas encore disponible.</Text></View>;
+}
+
+export function CatalogExperienceDetail({ experience }: { experience: CatalogExperience }) {
+  const colors = useThemeStore((state) => state.colors);
+  const router = useRouter();
+  const location = [experience.city, experience.district, experience.address].filter((value): value is string => Boolean(value?.trim())).join(' · ');
+  return <View className="flex-1" style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerTitle: 'Expérience', headerLeft: () => <TouchableOpacity onPress={() => router.back()} className="ml-4"><Ionicons name="arrow-back" size={24} color={colors.text} /></TouchableOpacity> }} /><ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}><Text className="text-3xl font-extrabold" style={{ color: colors.text }}>{experience.name}</Text>{experience.categoryCode ? <Text className="mt-2 text-sm font-bold" style={{ color: colors.primary }}>{experience.categoryCode}</Text> : null}{location ? <View className="mt-4 flex-row items-start"><Ionicons name="location-outline" size={20} color={colors.textSecondary} /><Text className="ml-2 flex-1" style={{ color: colors.textSecondary }}>{location}</Text></View> : null}{experience.description ? <View className="mt-7"><Text className="text-lg font-bold" style={{ color: colors.text }}>À propos</Text><Text className="mt-2 text-sm leading-6" style={{ color: colors.textSecondary }}>{experience.description}</Text></View> : null}</ScrollView></View>;
+}
+
+function CatalogExperienceEnrichedDetail({ experience }: { experience: CatalogExperience }) {
+  const colors = useThemeStore((state) => state.colors);
+  const router = useRouter();
+  const favorite = useInteractionStatus('EXPERIENCE', experience.id);
+  const toggleFavorite = useToggleInteraction('EXPERIENCE', experience.id);
+  const verifiedReviews = usePublicReviews('EXPERIENCE', experience.id);
+  const [reviewComposerOpen, setReviewComposerOpen] = useState(false);
+  const mediaUrls = experiencesApi.mediaUrls(experience.mediaIds);
+  const location = [experience.city, experience.district, experience.address]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join(' · ');
+  const capacity = capacityLabel(experience.capacityMin, experience.capacityMax);
+
+  return (
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerTitle: 'Expérience', headerLeft: () => <TouchableOpacity onPress={() => router.back()} className="ml-4"><Ionicons name="arrow-back" size={24} color={colors.text} /></TouchableOpacity>, headerRight: () => <View className="mr-3 flex-row"><TouchableOpacity onPress={() => toggleFavorite.mutate(Boolean(favorite.data))} disabled={toggleFavorite.isPending} className="h-10 w-10 items-center justify-center" accessibilityLabel={favorite.data ? 'Retirer des favoris' : 'Enregistrer l’expérience'}><Ionicons name={favorite.data ? 'heart' : 'heart-outline'} size={22} color={colors.text} /></TouchableOpacity><TouchableOpacity onPress={() => void Share.share({ message: `${experience.name} — https://yeyamo.com/experiences/${experience.id}` })} className="h-10 w-10 items-center justify-center" accessibilityLabel="Partager l’expérience"><Ionicons name="share-outline" size={22} color={colors.text} /></TouchableOpacity></View> }} />
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        {mediaUrls.length > 0 ? (
+          <View>
+            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+              {mediaUrls.map((url, index) => <Image key={experience.mediaIds[index]} source={{ uri: url }} style={{ width, height: 260 }} contentFit="cover" />)}
+            </ScrollView>
+            <View className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1.5"><Text className="text-xs font-medium text-white">{mediaUrls.length} média{mediaUrls.length > 1 ? 's' : ''}</Text></View>
+          </View>
+        ) : null}
+
+        <View className="px-5">
+          <Text className="mt-5 text-3xl font-extrabold" style={{ color: colors.text }}>{experience.name}</Text>
+          {experience.categoryCode ? <Text className="mt-2 text-sm font-bold" style={{ color: colors.primary }}>{experience.categoryCode}</Text> : null}
+          {location ? <View className="mt-4 flex-row items-start"><Ionicons name="location-outline" size={20} color={colors.textSecondary} /><Text className="ml-2 flex-1" style={{ color: colors.textSecondary }}>{location}</Text></View> : null}
+
+          {experience.durationMinutes !== null || experience.difficultyLevel || (experience.price !== null && experience.currency) || capacity ? (
+            <View className="mt-6 flex-row flex-wrap rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              {experience.durationMinutes !== null ? <PracticalItem icon="time-outline" label="Durée" value={formatDuration(experience.durationMinutes)} /> : null}
+              {experience.difficultyLevel ? <PracticalItem icon="speedometer-outline" label="Niveau" value={difficultyLabel(experience.difficultyLevel)} /> : null}
+              {experience.price !== null && experience.currency ? <PracticalItem icon="cash-outline" label="Prix" value={formatPrice(experience.price, experience.currency)} /> : null}
+              {capacity ? <PracticalItem icon="people-outline" label="Groupe" value={capacity} /> : null}
+            </View>
+          ) : null}
+
+          {experience.includedItems.length > 0 ? <ItemList title="Inclus" icon="checkmark-circle-outline" color="#10B981" items={experience.includedItems} /> : null}
+          {experience.excludedItems.length > 0 ? <ItemList title="Non inclus" icon="close-circle-outline" color="#EF4444" items={experience.excludedItems} /> : null}
+
+          {experience.placeId ? <TouchableOpacity onPress={() => router.push(`/(places)/${experience.placeId}`)} className="mt-6 flex-row items-center justify-between rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><View className="flex-row items-center"><Ionicons name="location-outline" size={21} color={colors.primary} /><Text className="ml-3 text-sm font-semibold" style={{ color: colors.text }}>Voir le lieu associé</Text></View><Ionicons name="chevron-forward" size={20} color={colors.textMuted} /></TouchableOpacity> : null}
+
+          {experience.description ? <View className="mt-7"><Text className="text-lg font-bold" style={{ color: colors.text }}>À propos</Text><Text className="mt-2 text-sm leading-6" style={{ color: colors.textSecondary }}>{experience.description}</Text></View> : null}
+          <View className="mt-7"><View className="flex-row items-center justify-between"><Text className="text-lg font-bold" style={{ color: colors.text }}>Avis vérifiés</Text><TouchableOpacity onPress={() => setReviewComposerOpen(true)}><Text className="font-semibold" style={{ color: colors.primary }}>Laisser un avis</Text></TouchableOpacity></View><Text className="mt-2 text-sm" style={{ color: colors.textSecondary }}>{verifiedReviews.aggregate.data?.averageRating?.toFixed(1) ?? '—'} · {verifiedReviews.aggregate.data?.count ?? 0} avis</Text>{verifiedReviews.reviews.data?.content.map((review) => <View key={review.id} className="mt-3 rounded-xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.card }}><Text className="font-semibold" style={{ color: colors.text }}>Utilisateur vérifié · {review.rating}/5</Text>{review.comment ? <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{review.comment}</Text> : null}<TouchableOpacity onPress={() => void reviewsApi.report(review.id).then(() => Alert.alert('Signalement envoyé', 'Cet avis a été transmis à la modération.')).catch((error) => Alert.alert('Signalement impossible', error instanceof Error ? error.message : 'Réessayez plus tard.'))} className="mt-2 self-start"><Text className="text-xs font-semibold text-[#EF4444]">Signaler</Text></TouchableOpacity></View>)}</View>
+        </View>
+      </ScrollView>
+      <CreateVerifiedReviewSheet visible={reviewComposerOpen} targetType="EXPERIENCE" targetId={experience.id} onClose={() => setReviewComposerOpen(false)} />
+    </View>
+  );
+}
+
+function PracticalItem({ icon, label, value }: { icon: 'time-outline' | 'speedometer-outline' | 'cash-outline' | 'people-outline'; label: string; value: string }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <View className="mb-3 w-1/2 flex-row items-start"><Ionicons name={icon} size={19} color={colors.primary} /><View className="ml-2 flex-1"><Text className="text-xs" style={{ color: colors.textSecondary }}>{label}</Text><Text className="mt-0.5 text-sm font-semibold" style={{ color: colors.text }}>{value}</Text></View></View>;
+}
+
+function ItemList({ title, icon, color, items }: { title: string; icon: 'checkmark-circle-outline' | 'close-circle-outline'; color: string; items: string[] }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <View className="mt-6"><Text className="text-lg font-bold" style={{ color: colors.text }}>{title}</Text>{items.map((item, index) => <View key={`${item}-${index}`} className="mt-3 flex-row items-start"><Ionicons name={icon} size={19} color={color} /><Text className="ml-2 flex-1 text-sm" style={{ color: colors.textSecondary }}>{item}</Text></View>)}</View>;
+}
+
+function formatDuration(minutes: number) {
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return hours > 0 ? `${hours}h${remainder > 0 ? String(remainder).padStart(2, '0') : ''}` : `${minutes} min`;
+}
+
+function difficultyLabel(level: NonNullable<CatalogExperience['difficultyLevel']>) {
+  return ({ BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire', ADVANCED: 'Avancé', EXPERT: 'Expert' })[level];
+}
+
+function formatPrice(price: number, currency: string) {
+  return `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(price)} ${currency}`;
+}
+
+function capacityLabel(min: number | null, max: number | null) {
+  if (min !== null && max !== null) return `${min} à ${max} personnes`;
+  if (max !== null) return `Jusqu’à ${max} personnes`;
+  if (min !== null) return `Dès ${min} personne${min > 1 ? 's' : ''}`;
+  return null;
 }

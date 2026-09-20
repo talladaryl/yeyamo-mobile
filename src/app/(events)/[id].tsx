@@ -1,11 +1,15 @@
-import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Linking, Share } from 'react-native';
+import { useState } from 'react';
 import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useEventDetail, useUpcomingEvents } from '@/features/events/useEvents';
 import { useEventTickets } from '@/features/ticketing/useTicketing';
+import { usePlaceDetail } from '@/features/places/usePlaces';
+import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
+import { reviewsApi, usePublicReviews } from '@/features/reviews/reviews.api';
+import { CreateVerifiedReviewSheet } from '@/components/reviews/CreateVerifiedReviewSheet';
 
 const { width } = Dimensions.get('window');
 
@@ -13,11 +17,16 @@ export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const [isSaved, setIsSaved] = useState(false);
-  
-  const { data: event, isLoading } = useEventDetail(id);
+  const eventQuery = useEventDetail(id);
+  const event = eventQuery.data;
+  const { data: eventPlace } = usePlaceDetail(event?.place_id ?? '');
+  const isLoading = eventQuery.isLoading;
   const { data: upcomingEvents = [] } = useUpcomingEvents();
   const { data: ticketing } = useEventTickets(String(id));
+  const favorite = useInteractionStatus('EVENT', id);
+  const toggleFavorite = useToggleInteraction('EVENT', id);
+  const verifiedReviews = usePublicReviews('EVENT', id);
+  const [reviewComposerOpen, setReviewComposerOpen] = useState(false);
 
   if (isLoading || !event) {
     return (
@@ -26,6 +35,13 @@ export default function EventDetailScreen() {
       </View>
     );
   }
+
+  const shareEvent = () => Share.share({ message: `${event.title}\n${new Date(event.start_date).toLocaleString('fr-FR')}` });
+  const addToCalendar = () => {
+    const dates = `${event.start_date.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')}/${event.end_date.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')}`;
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${encodeURIComponent(dates)}&details=${encodeURIComponent(event.description ?? '')}`;
+    void Linking.openURL(url).catch(() => Alert.alert('Calendrier indisponible', "L'événement ne peut pas être ouvert dans le calendrier."));
+  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -47,12 +63,13 @@ export default function EventDetailScreen() {
           headerRight: () => (
             <View className="flex-row gap-2 mr-4">
               <TouchableOpacity 
-                onPress={() => setIsSaved(!isSaved)}
+                onPress={() => toggleFavorite.mutate(Boolean(favorite.data))}
+                disabled={toggleFavorite.isPending}
                 className="bg-black/50 w-10 h-10 rounded-full items-center justify-center"
               >
-                <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
+                <Ionicons name={favorite.data ? 'heart' : 'heart-outline'} size={22} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity className="bg-black/50 w-10 h-10 rounded-full items-center justify-center">
+              <TouchableOpacity onPress={() => void shareEvent()} className="bg-black/50 w-10 h-10 rounded-full items-center justify-center">
                 <Ionicons name="share-outline" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
@@ -63,11 +80,7 @@ export default function EventDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Image with Date Badge */}
         <View className="relative">
-          <Image
-            source={{ uri: event.cover_image_url || '' }}
-            style={{ width, height: 280 }}
-            contentFit="cover"
-          />
+          {event.cover_image_url ? <Image source={{ uri: event.cover_image_url }} style={{ width, height: 280 }} contentFit="cover" /> : <View style={{ width, height: 280, backgroundColor: colors.elevated }} className="items-center justify-center"><Ionicons name="calendar-outline" size={52} color={colors.textMuted} /></View>}
           {/* Date Badge */}
           <View className="absolute top-4 left-4 bg-[#EF4444] rounded-2xl items-center justify-center px-3 py-2">
             <Text className="text-2xl font-bold text-white">
@@ -84,13 +97,7 @@ export default function EventDetailScreen() {
           <Text style={{ color: colors.text }} className=" text-2xl font-bold mt-4 mb-2">{event.title}</Text>
           
           {/* Location */}
-          <TouchableOpacity 
-            onPress={() => event.place_id && router.push(`/(places)/${event.place_id}`)}
-            className="flex-row items-center gap-2 mb-3"
-          >
-            <Ionicons name="location-outline" size={18} color="#A1A1AA" />
-            <Text style={{ color: colors.textSecondary }} className=" text-sm">{event.location}</Text>
-          </TouchableOpacity>
+          {eventPlace ? <TouchableOpacity onPress={() => event.place_id && router.push(`/(places)/${event.place_id}`)} className="flex-row items-center gap-2 mb-3"><Ionicons name="location-outline" size={18} color="#A1A1AA" /><Text style={{ color: colors.textSecondary }} className=" text-sm">{[eventPlace.name, eventPlace.address, eventPlace.city].filter(Boolean).join(' · ')}</Text></TouchableOpacity> : null}
 
           {/* Date & Time */}
           <View className="flex-row items-center gap-2 mb-4">
@@ -114,9 +121,9 @@ export default function EventDetailScreen() {
           </View>
 
           {/* Description */}
-          <View className="mb-5">
+          {event.description ? <View className="mb-5">
             <Text style={{ color: colors.text }} className=" text-base leading-6">{event.description}</Text>
-          </View>
+          </View> : null}
 
           {/* Ticket Types */}
           {event.ticket_types && event.ticket_types.length > 0 && (
@@ -134,7 +141,7 @@ export default function EventDetailScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => router.push({ pathname: '/(bookings)/event/[id]' as never, params: { id: String(event.id), ticketId: ticket.id } } as never)}
+                    onPress={() => router.push({ pathname: '/(events)/[id]/checkout' as never, params: { id: String(event.id), ticketId: ticket.id } } as never)}
                     className="bg-[#EF4444] px-6 py-2.5 rounded-xl"
                   >
                     <Text className="font-semibold text-white">Participer</Text>
@@ -153,10 +160,10 @@ export default function EventDetailScreen() {
               >
                 <Text className="text-base font-semibold text-white">Participer</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              <TouchableOpacity onPress={() => void shareEvent()} className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
                 <Ionicons name="share-social-outline" size={20} color={colors.text} />
               </TouchableOpacity>
-              <TouchableOpacity className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+              <TouchableOpacity onPress={addToCalendar} className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
                 <Ionicons name="add-outline" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -184,28 +191,20 @@ export default function EventDetailScreen() {
             </View>
           ) : null}
 
+          <View className="mb-5"><View className="mb-2 flex-row items-center justify-between"><Text className="text-lg font-bold" style={{ color: colors.text }}>Avis vérifiés</Text><TouchableOpacity onPress={() => setReviewComposerOpen(true)}><Text className="font-semibold" style={{ color: colors.primary }}>Laisser un avis</Text></TouchableOpacity></View><Text className="text-sm" style={{ color: colors.textSecondary }}>{verifiedReviews.aggregate.data?.averageRating?.toFixed(1) ?? '—'} · {verifiedReviews.aggregate.data?.count ?? 0} avis</Text>{verifiedReviews.reviews.data?.content.map((review) => <View key={review.id} className="mt-3 rounded-xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.card }}><Text className="font-semibold" style={{ color: colors.text }}>Utilisateur vérifié · {review.rating}/5</Text>{review.comment ? <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{review.comment}</Text> : null}<TouchableOpacity onPress={() => void reviewsApi.report(review.id).then(() => Alert.alert('Signalement envoyé', 'Cet avis a été transmis à la modération.')).catch((error) => Alert.alert('Signalement impossible', error instanceof Error ? error.message : 'Réessayez plus tard.'))} className="mt-2 self-start"><Text className="text-xs font-semibold text-[#EF4444]">Signaler</Text></TouchableOpacity></View>)}</View>
+
           {/* Participants Section */}
           <View className="mb-5">
-            <View className="flex-row items-center justify-between mb-3">
+            <View className="mb-3">
               <Text style={{ color: colors.text }} className=" text-lg font-bold">
                 Participants ({event.participants_count})
               </Text>
-              <TouchableOpacity
-                onPress={() =>
-                  Alert.alert(
-                    'Participants',
-                    'Liste complète disponible en mode démo lors du branchement backend.'
-                  )
-                }
-              >
-                <Text className="text-[#EF4444] text-sm font-semibold">Voir tout</Text>
-              </TouchableOpacity>
             </View>
 
             <View className="flex-row items-center">
               {/* Participant Avatars */}
               <View className="flex-row -space-x-3 mr-3">
-                {event.participants.slice(0, 4).map((participant, index) => (
+                {(event.participants ?? []).slice(0, 4).map((participant, index) => (
                   <Image
                     key={participant.id}
                     source={{ uri: participant.avatar_url || '' }}
@@ -246,11 +245,21 @@ export default function EventDetailScreen() {
                     onPress={() => router.push(`/(events)/${similarEvent.id}`)}
                     className="mr-3"
                   >
-                    <Image
-                      source={{ uri: similarEvent.cover_image_url || '' }}
-                      style={{ width: 160, height: 120 }}
-                      className="rounded-xl mb-2"
-                    />
+                    {similarEvent.cover_image_url ? (
+                      <Image
+                        source={{ uri: similarEvent.cover_image_url }}
+                        style={{ width: 160, height: 120 }}
+                        className="rounded-xl mb-2"
+                        contentFit="cover"
+                      />
+                    ) : (
+                      <View
+                        style={{ width: 160, height: 120, backgroundColor: colors.elevated }}
+                        className="mb-2 items-center justify-center rounded-xl"
+                      >
+                        <Ionicons name="calendar-outline" size={30} color={colors.textMuted} />
+                      </View>
+                    )}
                     <Text style={{ color: colors.text }} className=" font-semibold text-sm w-[160px]" numberOfLines={1}>
                       {similarEvent.title}
                     </Text>
@@ -268,6 +277,7 @@ export default function EventDetailScreen() {
 
         <View className="h-20" />
       </ScrollView>
+      <CreateVerifiedReviewSheet visible={reviewComposerOpen} targetType="EVENT" targetId={String(event.id)} onClose={() => setReviewComposerOpen(false)} />
     </View>
   );
 }

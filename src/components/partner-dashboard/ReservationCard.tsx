@@ -6,7 +6,7 @@ import { useThemeStore } from '@/features/theme/theme.store';
 
 interface ReservationCardProps {
   reservation: Reservation;
-  onPress: () => void;
+  onPress?: () => void;
 }
 
 export function ReservationCard({ reservation, onPress }: ReservationCardProps) {
@@ -23,13 +23,7 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
     cancelled: 'Annulé',
   };
 
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      className="mb-3 rounded-xl border p-4"
-      style={{ backgroundColor: colors.card, borderColor: colors.border }}
-      activeOpacity={0.8}
-    >
+  const content = <>
       <View className="flex-row items-start justify-between mb-3">
         <View className="flex-row items-center gap-3">
           <Avatar
@@ -87,6 +81,7 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
           {reservation.amount.toLocaleString()} FCFA
         </Text>
       </View>
-    </TouchableOpacity>
-  );
+    </>;
+  if (!onPress) return <View className="mb-3 rounded-xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>{content}</View>;
+  return <TouchableOpacity onPress={onPress} className="mb-3 rounded-xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }} activeOpacity={0.8}>{content}</TouchableOpacity>;
 }

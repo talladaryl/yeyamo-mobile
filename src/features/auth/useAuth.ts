@@ -3,7 +3,6 @@ import { isAxiosError } from 'axios';
 import { useAuthStore } from './auth.store';
 import { authService } from './auth.service';
 import { authApi } from './auth.api';
-import { googleSignInErrorMessage, signInWithGoogle } from './google-auth';
 import type { 
   LoginCredentials, 
   RegisterCredentials, 
@@ -13,6 +12,12 @@ import type {
 } from './types';
 
 function authErrorMessage(error: unknown, fallback: string): string {
+  // API errors are normalized by the shared Axios client before reaching this
+  // hook, so they are no longer AxiosError instances at this point.
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message.trim();
+  }
   if (isAxiosError<{ message?: string }>(error)) {
     if (error.response?.data?.message) return error.response.data.message;
     if (error.code === 'ECONNABORTED') return 'Le serveur met trop de temps à répondre.';
@@ -81,7 +86,7 @@ export function useAuth() {
     }
   }
 
-  async function forgotPassword(credentials: ForgotPasswordCredentials, turnstileToken: string) {
+  async function forgotPassword(credentials: ForgotPasswordCredentials, turnstileToken?: string) {
     setIsLoading(true);
     setError(null);
     try {
@@ -111,16 +116,15 @@ export function useAuth() {
     }
   }
 
-  async function googleLogin(): Promise<boolean> {
+  async function googleLogin(idToken?: string): Promise<boolean> {
     setIsLoading(true);
     setError(null);
     try {
-      const { idToken } = await signInWithGoogle();
-      await authService.socialLogin({ provider: 'google', token: idToken });
+      if (!idToken) throw new Error('Le jeton Google est absent.');
+      await authService.googleLogin(idToken);
       return true;
     } catch (err: unknown) {
-      const message = googleSignInErrorMessage(err);
-      if (message) setError(authErrorMessage(err, message));
+      setError(authErrorMessage(err, 'Connexion Google impossible. Réessayez.'));
       return false;
     } finally {
       setIsLoading(false);

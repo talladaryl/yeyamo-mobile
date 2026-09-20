@@ -1,5 +1,4 @@
 import { Ionicons, MaterialIcons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
-import type { ComponentProps } from 'react';
 
 type IconLibrary = 'ionicons' | 'material' | 'material-community' | 'feather';
 

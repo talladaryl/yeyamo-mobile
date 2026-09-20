@@ -1,97 +1,21 @@
-// ÉCRAN 5 - Mes réservations
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { ReservationCard } from '@/components/profile/ReservationCard';
-import { useUserReservations } from '@/features/profile/useProfile';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/ViewStates';
+import { SafeScreen } from '@/components/ui/SafeScreen';
+import { useCancelUserReservation, useUserReservations } from '@/features/profile/useProfile';
+import { useThemeStore } from '@/features/theme/theme.store';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function ReservationsScreen() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'confirmed' | 'pending'>('confirmed');
-  const { data: reservations, isLoading } = useUserReservations();
-
-  const filteredReservations = reservations?.filter(
-    (r) => r.status === activeTab || (activeTab === 'confirmed' && r.status === 'confirmed')
-  );
-
-  return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-[#0A0A0A]" edges={['top']}>
-      {/* Header */}
-      <View className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text className="text-[#18181B] dark:text-white text-xl font-bold">Mes réservations</Text>
-          <TouchableOpacity className="p-2">
-            <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Onglets */}
-      <View className="flex-row px-4 pt-4 pb-2 border-b border-[#E4E4E7] dark:border-[#27272A]">
-        <TouchableOpacity
-          onPress={() => setActiveTab('confirmed')}
-          className={`flex-1 pb-3 border-b-2 ${
-            activeTab === 'confirmed' ? 'border-[#EF4444]' : 'border-transparent'
-          }`}
-        >
-          <Text
-            className={`text-center font-semibold ${
-              activeTab === 'confirmed' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
-            }`}
-          >
-            Confirmées
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('pending')}
-          className={`flex-1 pb-3 border-b-2 ${
-            activeTab === 'pending' ? 'border-[#EF4444]' : 'border-transparent'
-          }`}
-        >
-          <Text
-            className={`text-center font-semibold ${
-              activeTab === 'pending' ? 'text-[#EF4444]' : 'text-[#52525B] dark:text-[#A1A1AA]'
-            }`}
-          >
-            En attente
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Liste des réservations */}
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-[#52525B] dark:text-[#A1A1AA]">Chargement...</Text>
-        </View>
-      ) : filteredReservations && filteredReservations.length > 0 ? (
-        <FlatList
-          data={filteredReservations}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ padding: 16 }}
-          renderItem={({ item }) => (
-            <ReservationCard
-              reservation={item}
-              onPress={() => router.push(`/(places)/${item.place.id}`)}
-            />
-          )}
-        />
-      ) : (
-        <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="calendar-outline" size={64} color="#52525B" />
-          <Text className="text-[#18181B] dark:text-white text-lg font-semibold mt-4 text-center">
-            {activeTab === 'confirmed' ? 'Aucune réservation confirmée' : 'Aucune réservation en attente'}
-          </Text>
-          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-center mt-2">
-            Réservez des lieux pour qu'ils apparaissent ici
-          </Text>
-        </View>
-      )}
-    </SafeAreaView>
-  );
+  const router = useRouter(); const colors = useThemeStore((state) => state.colors); const [activeTab, setActiveTab] = useState<'confirmed' | 'pending'>('confirmed'); const [cancellingId, setCancellingId] = useState<string | null>(null); const [cancellationReason, setCancellationReason] = useState(''); const query = useUserReservations(); const cancel = useCancelUserReservation(); const filtered = query.data?.filter((reservation) => reservation.status === activeTab || (activeTab === 'confirmed' && reservation.status === 'confirmed'));
+  const confirmCancellation = () => { if (!cancellingId || !cancellationReason.trim()) return; cancel.mutate({ id: cancellingId, reason: cancellationReason.trim() }, { onSuccess: () => { setCancellingId(null); setCancellationReason(''); } }); };
+  const cancellationForm = cancellingId ? <View className="mx-4 mb-3 rounded-xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Text className="text-sm font-bold" style={{ color: colors.text }}>Motif d’annulation</Text><Input value={cancellationReason} onChangeText={setCancellationReason} placeholder="Indiquez le motif demandé par le service de réservation" multiline containerClassName="mt-3" error={cancel.isError ? 'L’annulation a échoué. Réessayez.' : undefined} /><View className="mt-3 flex-row justify-end gap-2"><Button label="Fermer" variant="secondary" onPress={() => { setCancellingId(null); setCancellationReason(''); }} /><Button label="Confirmer" disabled={!cancellationReason.trim()} isLoading={cancel.isPending} onPress={confirmCancellation} /></View></View> : null;
+  return <SafeScreen><Header title="Mes réservations" onBack={() => router.back()} /><View className="flex-row border-b px-4 pt-4" style={{ borderColor: colors.border }}><Tab label="Confirmées" active={activeTab === 'confirmed'} onPress={() => setActiveTab('confirmed')} /><Tab label="En attente" active={activeTab === 'pending'} onPress={() => setActiveTab('pending')} /></View>{cancellationForm}{query.isLoading ? <LoadingState label="Chargement de vos réservations…" /> : query.isError ? <ErrorState title="Impossible de charger les réservations" message="Vérifiez votre connexion puis réessayez." retry={() => void query.refetch()} /> : filtered?.length ? <FlatList data={filtered} keyExtractor={(item) => item.id.toString()} contentContainerStyle={{ padding: 16 }} refreshing={query.isRefetching} onRefresh={() => void query.refetch()} renderItem={({ item }) => <ReservationCard reservation={item} onRequestCancellation={() => { setCancellingId(String(item.id)); setCancellationReason(''); }} />} /> : <EmptyState title={activeTab === 'confirmed' ? 'Aucune réservation confirmée' : 'Aucune réservation en attente'} message="Vos réservations apparaîtront ici." icon={<Ionicons name="calendar-outline" size={64} color={colors.textMuted} />} />}</SafeScreen>;
 }
+
+function Header({ title, onBack }: { title: string; onBack: () => void }) { const colors = useThemeStore((state) => state.colors); return <View className="flex-row items-center justify-between border-b px-4 py-3" style={{ borderColor: colors.border }}><TouchableOpacity onPress={onBack} className="-ml-2 p-2" accessibilityRole="button" accessibilityLabel="Retour"><Ionicons name="chevron-back" size={24} color={colors.text} /></TouchableOpacity><Text className="text-xl font-bold" style={{ color: colors.text }}>{title}</Text><View className="w-10" /></View>; }
+function Tab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) { const colors = useThemeStore((state) => state.colors); return <TouchableOpacity onPress={onPress} className="flex-1 border-b-2 pb-3" style={{ borderColor: active ? colors.primary : 'transparent' }} accessibilityRole="tab" accessibilityState={{ selected: active }}><Text className="text-center font-semibold" style={{ color: active ? colors.primary : colors.textSecondary }}>{label}</Text></TouchableOpacity>; }

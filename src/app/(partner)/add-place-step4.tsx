@@ -1,193 +1,82 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { Stepper } from '@/components/ui/Stepper';
 import { CTAButton } from '@/components/ui/CTAButton';
 import { usePartnerStore } from '@/features/partner/partner.store';
+import { useAuthStore } from '@/features/auth/auth.store';
+import { partnerApi } from '@/features/partner/partner.api';
+import { placesApi } from '@/features/places/places.api';
 import { useThemeStore } from '@/features/theme/theme.store';
+
+function messageFor(error: unknown) {
+  return typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string'
+    ? error.message
+    : 'Impossible de créer ce lieu pour le moment. Réessayez plus tard.';
+}
 
 export default function AddPlaceStep4Screen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const sessionMode = useAuthStore((state) => state.sessionMode);
+  const isDemo = sessionMode?.startsWith('demo-') ?? false;
   const { placeForm, resetPlaceForm } = usePartnerStore();
+  const [isPublishing, setIsPublishing] = useState(false);
 
-  const handlePublish = () => {
-    // TODO: API call to create place
-    console.log('Publishing place:', placeForm);
-    
-    // Reset form and navigate
-    resetPlaceForm();
-    router.push('/(tabs)/explore');
+  const handlePublish = async () => {
+    if (isDemo) {
+      resetPlaceForm();
+      router.push('/(tabs)/explore');
+      return;
+    }
+    if (!placeForm.categoryId || !placeForm.regionId || !placeForm.cityId || !placeForm.name || !placeForm.coordinates || !placeForm.exact_address) {
+      Alert.alert('Informations incomplètes', 'Revenez aux étapes précédentes et complétez les références et la localisation du lieu.');
+      return;
+    }
+    setIsPublishing(true);
+    try {
+      const partner = await partnerApi.me();
+      if (partner.status !== 'APPROVED') {
+        Alert.alert('Partenaire non approuvé', 'Votre compte partenaire doit être approuvé avant la création d’un lieu.');
+        return;
+      }
+      await placesApi.createPlace({
+        partnerId: partner.id,
+        categoryId: placeForm.categoryId,
+        regionId: placeForm.regionId,
+        cityId: placeForm.cityId,
+        name: placeForm.name,
+        latitude: placeForm.coordinates.latitude,
+        longitude: placeForm.coordinates.longitude,
+        address: placeForm.exact_address,
+        phone: placeForm.phone || undefined,
+        website: placeForm.website || undefined,
+        status: 'DRAFT',
+      });
+      resetPlaceForm();
+      Alert.alert('Lieu envoyé', 'Votre lieu a été enregistré comme brouillon et sera vérifié avant publication.', [
+        { text: 'Continuer', onPress: () => router.replace('/(tabs)/explore') },
+      ]);
+    } catch (error) {
+      Alert.alert('Création impossible', messageFor(error));
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
-  return (
-    <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerTitle: 'Ajouter un lieu',
-          headerTitleStyle: { fontSize: 18, fontWeight: '600' },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} className="ml-4">
-              <Icon library="ionicons" name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+  return <View className="flex-1" style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerTitle: 'Ajouter un lieu', headerTitleStyle: { fontSize: 18, fontWeight: '600' }, headerLeft: () => <TouchableOpacity onPress={() => router.back()} className="ml-4"><Icon library="ionicons" name="arrow-back" size={24} color={colors.text} /></TouchableOpacity> }} />
+    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}><View className="px-4 py-6"><Stepper currentStep={4} totalSteps={4} /><View className="mb-6 mt-4 items-center"><View className="mb-4 h-24 w-24 items-center justify-center rounded-full bg-[#EF4444]/20"><Icon library="ionicons" name="checkmark-circle" size={48} color="#EF4444" /></View><Text className="mb-2 text-lg font-bold" style={{ color: colors.text }}>Aperçu</Text><Text className="text-center text-sm" style={{ color: colors.textSecondary }}>Vérifiez les informations avant envoi</Text></View>
+      <View className="mb-6 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}><View className="p-4"><Text className="mb-1 text-lg font-bold" style={{ color: colors.text }}>{placeForm.name || 'Lieu non renseigné'}</Text><Text className="text-sm" style={{ color: colors.textSecondary }}>{placeForm.category || 'Catégorie non renseignée'}</Text>
+        <Detail label="Adresse" value={placeForm.exact_address} /><Detail label="Ville" value={[placeForm.city, placeForm.region].filter(Boolean).join(', ')} /><Detail label="Téléphone" value={placeForm.phone} /><Detail label="E-mail" value={placeForm.contact_email} /><Detail label="Site web" value={placeForm.website} />
+      </View></View>
+      <View className="flex-row rounded-xl border p-4" style={{ backgroundColor: colors.accentSoft, borderColor: colors.border }}><Icon library="ionicons" name="information-circle" size={20} color={colors.primary} /><Text className="ml-3 flex-1 text-xs leading-5" style={{ color: colors.textSecondary }}>En mode réel, seuls les champs reconnus par le contrat de création sont envoyés. Les informations éditoriales supplémentaires restent dans le brouillon local.</Text></View>
+    </View><View className="h-24" /></ScrollView>
+    <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}><View className="flex-row gap-3"><View className="flex-1"><CTAButton title="Retour" variant="secondary" onPress={() => router.back()} disabled={isPublishing} /></View><View className="flex-1"><CTAButton title={isDemo ? 'Publier le lieu' : 'Enregistrer le lieu'} onPress={handlePublish} loading={isPublishing} /></View></View></View>
+  </View>;
+}
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-4 py-6">
-          {/* Stepper */}
-          <Stepper currentStep={4} totalSteps={4} />
-
-          {/* Icon Illustration */}
-          <View className="items-center mb-6 mt-4">
-            <View className="w-24 h-24 bg-[#EF4444]/20 rounded-full items-center justify-center mb-4">
-              <Icon library="ionicons" name="checkmark-circle" size={48} color="#EF4444" />
-            </View>
-            <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-2">Aperçu</Text>
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm text-center">
-              Vérifiez les informations avant publication
-            </Text>
-          </View>
-
-          {/* Preview Card */}
-          <View className="bg-white dark:bg-[#161616] rounded-2xl overflow-hidden border border-[#E4E4E7] dark:border-[#27272A] mb-6">
-            {/* Cover Image */}
-            <View className="bg-[#F4F4F5] dark:bg-[#27272A] h-48 items-center justify-center">
-              <Icon library="ionicons" name="image-outline" size={48} color="#52525B" />
-              <Text className="text-[#52525B] text-xs mt-2">Image de couverture</Text>
-            </View>
-
-            {/* Content */}
-            <View className="p-4">
-              {/* Name & Rating */}
-              <View className="flex-row items-start justify-between mb-3">
-                <View className="flex-1">
-                  <Text className="text-[#18181B] dark:text-white text-lg font-bold mb-1">
-                    {placeForm.name || 'La Falaise Resort'}
-                  </Text>
-                  <View className="flex-row items-center">
-                    <Icon library="ionicons" name="star" size={14} color="#EAB308" />
-                    <Text className="text-[#18181B] dark:text-white text-sm ml-1">4.8</Text>
-                    <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm ml-1">(78 avis)</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Info Sections */}
-              <View className="space-y-3">
-                {/* Address */}
-                <View>
-                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Adresse</Text>
-                  <Text className="text-[#18181B] dark:text-white text-sm">
-                    {placeForm.exact_address || 'Bonapriso, Rue des Mangroves, Douala'}
-                  </Text>
-                </View>
-
-                {/* Category */}
-                <View>
-                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Catégorie</Text>
-                  <Text className="text-[#18181B] dark:text-white text-sm">
-                    {placeForm.category || 'Hôtel • Resort'}
-                  </Text>
-                </View>
-
-                {/* Phone */}
-                {placeForm.phone && (
-                  <View>
-                    <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Téléphone</Text>
-                    <Text className="text-[#18181B] dark:text-white text-sm">{placeForm.phone}</Text>
-                  </View>
-                )}
-
-                {/* Email */}
-                {placeForm.contact_email && (
-                  <View>
-                    <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Email</Text>
-                    <Text className="text-[#18181B] dark:text-white text-sm">{placeForm.contact_email}</Text>
-                  </View>
-                )}
-
-                {/* Website */}
-                {placeForm.website && (
-                  <View>
-                    <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Site web</Text>
-                    <Text className="text-[#EF4444] text-sm">{placeForm.website}</Text>
-                  </View>
-                )}
-
-                {/* Description */}
-                <View>
-                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-1">Description</Text>
-                  <Text className="text-[#18181B] dark:text-white text-sm leading-5">
-                    Un cadre exceptionnel face à l'eau avec une vue magnifique, une expérience culinaire unique et un service irréprochable.
-                  </Text>
-                </View>
-              </View>
-
-              {/* Social Media Links */}
-              {(placeForm.facebook || placeForm.instagram || placeForm.twitter) && (
-                <View className="mt-4 pt-4 border-t border-[#E4E4E7] dark:border-[#27272A]">
-                  <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs font-medium mb-2">Réseaux sociaux</Text>
-                  <View className="flex-row flex-wrap gap-2">
-                    {placeForm.facebook && (
-                      <View className="flex-row items-center bg-white dark:bg-[#0A0A0A] px-3 py-2 rounded-lg">
-                        <Icon library="ionicons" name="logo-facebook" size={16} color="#1877F2" />
-                        <Text className="text-[#18181B] dark:text-white text-xs ml-2">{placeForm.facebook}</Text>
-                      </View>
-                    )}
-                    {placeForm.instagram && (
-                      <View className="flex-row items-center bg-white dark:bg-[#0A0A0A] px-3 py-2 rounded-lg">
-                        <Icon library="ionicons" name="logo-instagram" size={16} color="#E4405F" />
-                        <Text className="text-[#18181B] dark:text-white text-xs ml-2">{placeForm.instagram}</Text>
-                      </View>
-                    )}
-                    {placeForm.twitter && (
-                      <View className="flex-row items-center bg-white dark:bg-[#0A0A0A] px-3 py-2 rounded-lg">
-                        <Icon library="ionicons" name="logo-twitter" size={16} color="#1DA1F2" />
-                        <Text className="text-[#18181B] dark:text-white text-xs ml-2">{placeForm.twitter}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Info Message */}
-          <View className="bg-[#EF4444]/10 border border-[#EF4444]/20 rounded-xl p-4 flex-row">
-            <Icon library="ionicons" name="information-circle" size={20} color="#EF4444" />
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs ml-3 flex-1 leading-5">
-              Votre lieu sera vérifié par notre équipe avant publication. Vous recevrez une notification dans les 24-48h.
-            </Text>
-          </View>
-        </View>
-
-        <View className="h-24" />
-      </ScrollView>
-
-      {/* Bottom Buttons */}
-      <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}>
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <CTAButton
-              title="Retour"
-              variant="secondary"
-              onPress={() => router.back()}
-            />
-          </View>
-          <View className="flex-1">
-            <CTAButton
-              title="Publier le lieu"
-              variant="primary"
-              onPress={handlePublish}
-            />
-          </View>
-        </View>
-      </View>
-    </View>
-  );
+function Detail({ label, value }: { label: string; value?: string }) {
+  const colors = useThemeStore((state) => state.colors);
+  return value ? <View className="mt-4"><Text className="mb-1 text-xs font-medium" style={{ color: colors.textSecondary }}>{label}</Text><Text className="text-sm" style={{ color: colors.text }}>{value}</Text></View> : null;
 }

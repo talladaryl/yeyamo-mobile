@@ -3,8 +3,17 @@ export interface AuthUser {
   username: string;
   display_name: string;
   email: string;
+  phone: string | null;
   avatar_url: string | null;
   city: string;
+  /** Authentication evidence; it is not a public certification badge. */
+  email_verified: boolean;
+  /** The auth contract currently does not expose a phone-verification state. */
+  phone_verified: boolean | null;
+  /** Public certification is deliberately separate from email verification. */
+  is_certified: boolean;
+  verification_status: string | null;
+  badge_type: string | null;
   is_verified: boolean;
   user_type: 'user' | 'partner';
   created_at: string;

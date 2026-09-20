@@ -8,12 +8,12 @@ interface EventCardProps {
   id: EntityId;
   title: string;
   date: string;
-  location: string;
-  city: string;
+  location?: string | null;
+  city?: string | null;
   imageUrl: string | null;
-  isSaved: boolean;
+  isSaved?: boolean;
   onPress: () => void;
-  onSavePress: () => void;
+  onSavePress?: () => void;
 }
 
 export function EventCard({
@@ -48,18 +48,20 @@ export function EventCard({
           </View>
         )}
         
-        <TouchableOpacity
-          onPress={onSavePress}
-          className="absolute top-3 right-3 bg-black/60 w-9 h-9 rounded-full items-center justify-center"
-          activeOpacity={0.7}
-        >
-          <Icon
-            library="ionicons"
-            name={isSaved ? 'bookmark' : 'bookmark-outline'}
-            size={18}
-            color="#FFFFFF"
-          />
-        </TouchableOpacity>
+        {onSavePress ? (
+          <TouchableOpacity
+            onPress={onSavePress}
+            className="absolute top-3 right-3 bg-black/60 w-9 h-9 rounded-full items-center justify-center"
+            activeOpacity={0.7}
+          >
+            <Icon
+              library="ionicons"
+              name={isSaved ? 'bookmark' : 'bookmark-outline'}
+              size={18}
+              color="#FFFFFF"
+            />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       <View className="p-4">
@@ -72,10 +74,7 @@ export function EventCard({
           <Text className="text-xs" style={{ color: colors.textSecondary }}>{date}</Text>
         </View>
         
-        <View className="flex-row items-center gap-1">
-          <Icon library="ionicons" name="location-outline" size={14} color={colors.textSecondary} />
-          <Text className="text-xs" style={{ color: colors.textSecondary }}>{location}</Text>
-        </View>
+        {location ? <View className="flex-row items-center gap-1"><Icon library="ionicons" name="location-outline" size={14} color={colors.textSecondary} /><Text className="text-xs" style={{ color: colors.textSecondary }}>{location}</Text></View> : null}
       </View>
     </TouchableOpacity>
   );

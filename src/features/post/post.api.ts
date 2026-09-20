@@ -13,6 +13,12 @@ interface BackendPost {
   id: string;
 }
 
+export class PostPublicationError extends Error {
+  constructor(public readonly phase: 'create' | 'publish', public readonly cause: unknown) {
+    super(phase === 'publish' ? 'Le brouillon a été créé, mais sa publication a échoué.' : 'La création de la publication a échoué.');
+  }
+}
+
 export const postApi = {
   uploadMedia: async (formData: FormData): Promise<{ data: UploadedMedia }> => {
     const media = await apiPost<BackendMedia>('/media', formData, {
@@ -28,23 +34,25 @@ export const postApi = {
   },
 
   createPost: async (payload: CreatePostPayload): Promise<{ data: { id: EntityId } }> => {
-    const draft = await apiPost<BackendPost>('/posts', {
-      caption: payload.caption,
-      visibility: 'PUBLIC',
-      catalogAssetId: payload.place_id ?? null,
-      mediaIds: payload.media_ids,
-      hashtags: [],
-    });
-    const published = await apiPost<BackendPost>(`/posts/${draft.id}/publish`);
-    return { data: { id: published.id } };
-  },
-
-  createStory: async (mediaId: EntityId, durationSeconds = 15): Promise<{ data: { id: EntityId } }> => {
-    const story = await apiPost<{ id: string }>('/stories', {
-      mediaId,
-      durationSeconds,
-    });
-    return { data: { id: story.id } };
+    let draft: BackendPost;
+    try {
+      draft = await apiPost<BackendPost>('/posts', {
+        caption: payload.caption,
+        visibility: 'PUBLIC',
+        catalogAssetId: payload.place_id ?? null,
+        mediaIds: payload.media_ids,
+        hashtags: [],
+        ...(payload.target_type && payload.target_id ? { targetType: payload.target_type, targetId: payload.target_id } : {}),
+      });
+    } catch (error) {
+      throw new PostPublicationError('create', error);
+    }
+    try {
+      const published = await apiPost<BackendPost>(`/posts/${draft.id}/publish`);
+      return { data: { id: published.id } };
+    } catch (error) {
+      throw new PostPublicationError('publish', error);
+    }
   },
 
   deletePost: (postId: EntityId) =>

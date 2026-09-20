@@ -13,7 +13,7 @@ interface BackendConversation {
 }
 
 interface BackendConversationView extends BackendConversation {
-  members: Array<{ userId: string }>;
+  members: { userId: string }[];
 }
 
 export interface BackendMessage {
@@ -139,6 +139,13 @@ export const chatApi = {
     const conversation = await apiPost<BackendConversationView>(
       '/messaging/conversations',
       { type: 'DIRECT', title: null, participantIds: [String(userId)] },
+    );
+    return { data: mapConversation(conversation) };
+  },
+
+  contactPartner: async (partnerId: EntityId): Promise<{ data: Conversation }> => {
+    const conversation = await apiPost<BackendConversation>(
+      `/messaging/conversations/partner/${encodeURIComponent(String(partnerId))}`,
     );
     return { data: mapConversation(conversation) };
   },

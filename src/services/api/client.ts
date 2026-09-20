@@ -11,18 +11,30 @@ import { normalizeApiError } from './errors';
 // Avoids importing expo-router directly in a service (no React context here)
 let _onUnauthenticated: (() => void) | null = null;
 let _onTokenRefreshed: ((accessToken: string) => void) | null = null;
+let unauthenticatedSessionHandled = false;
 export function registerUnauthenticatedHandler(handler: () => void) {
   _onUnauthenticated = handler;
 }
 export function registerTokenRefreshedHandler(handler: (accessToken: string) => void) {
   _onTokenRefreshed = handler;
 }
+/** Allows a newly established session to report a future, genuine expiry. */
+export function resetUnauthenticatedSessionHandler() {
+  unauthenticatedSessionHandled = false;
+}
 
 const apiBaseUrl = `${ENV.API_BASE_URL.replace(/\/$/, '')}/api/v1`;
 let refreshPromise: Promise<string> | null = null;
 
+function isPublicRequest(config: InternalAxiosRequestConfig): boolean {
+  const url = config.url ?? '';
+  return url.startsWith('/countries')
+    || /^\/auth\/(?:login|register|refresh|oauth|google|apple|verify|resend|forgot|reset)/.test(url);
+}
+
 // ─── Axios instance ──────────────────────────────────────────────────────────
-export const apiClient = axios.create({
+const createClient = axios['create'];
+export const apiClient = createClient({
   baseURL: apiBaseUrl,
   timeout: 15_000,
   headers: {
@@ -36,7 +48,10 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = await secureStore.get(secureStore.KEYS.AUTH_TOKEN);
-    if (token && config.headers) {
+    // An expired bearer token makes otherwise public Spring Security endpoints
+    // answer 401 before their permitAll rule is evaluated. Registration and
+    // country selection must therefore remain true guest requests.
+    if (token && config.headers && !isPublicRequest(config)) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     if (config.headers && !config.headers['X-Correlation-ID'] && !config.headers['X-Correlation-Id']) {
@@ -57,8 +72,14 @@ apiClient.interceptors.response.use(
       || request?.url?.startsWith('/auth/refresh');
 
     if (error.response?.status === 401 && request && !request._retry && !isAuthenticationRequest) {
-      const sessionMode = await secureStore.get(secureStore.KEYS.SESSION_MODE);
-      if (sessionMode === 'demo-user' || sessionMode === 'demo-partner') {
+      const [sessionMode, accessToken, refreshToken] = await Promise.all([
+        secureStore.get(secureStore.KEYS.SESSION_MODE),
+        secureStore.get(secureStore.KEYS.AUTH_TOKEN),
+        secureStore.get(secureStore.KEYS.REFRESH_TOKEN),
+      ]);
+
+      // A guest request must never be interpreted as an expired session.
+      if (sessionMode !== 'backend' || !accessToken || !refreshToken) {
         return Promise.reject(error);
       }
 
@@ -72,7 +93,12 @@ apiClient.interceptors.response.use(
         return apiClient.request(request);
       } catch {
         await secureStore.clearAuthSession();
-        _onUnauthenticated?.();
+        // Several requests can fail at once. Show one expiration message and
+        // perform one redirect, rather than trapping the auth screens in a loop.
+        if (!unauthenticatedSessionHandled) {
+          unauthenticatedSessionHandled = true;
+          _onUnauthenticated?.();
+        }
       }
     }
     return Promise.reject(error);

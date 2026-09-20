@@ -6,11 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "scheme": "yeyamo",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.yeyamo.mobile",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Yeyamo uses your location to show nearby places and events.",
         "NSCameraUsageDescription": "Yeyamo needs camera access to create posts and stories.",
@@ -27,15 +27,14 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.yeyamo.mobile",
+      "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -45,6 +44,7 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-apple-authentication",
       [
         "expo-image-picker",
         {
@@ -86,11 +86,8 @@
       [
         "expo-navigation-bar",
         {
-          "visibility": "hidden",
-          "behavior": "overlay-swipe",
-          "position": "relative",
-          "backgroundColor": "#0A0A0A",
-          "barStyle": "light"
+          "hidden": true,
+          "style": "dark"
         }
       ]
     ],

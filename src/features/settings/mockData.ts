@@ -37,9 +37,9 @@ export const MOCK_USER_SETTINGS: UserSettings = {
     display_name: 'Marie Kasan',
     username: 'mariekasan',
     bio: 'Passionnée de voyage et de découvertes',
-    city: 'Douala',
-    region: 'Littoral',
-    gender: 'female',
+    country_code: 'CM',
+    city_id: null,
+    timezone: 'Africa/Douala',
     interests: ['restaurants', 'events', 'music', 'culture', 'nature'],
   },
   privacy: {

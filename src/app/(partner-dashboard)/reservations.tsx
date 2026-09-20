@@ -17,7 +17,7 @@ export default function ReservationsScreen() {
   return (
     <PartnerPage title="Mes réservations" subtitle="Suivez les réservations et demandes reçues">
       <FilterChips values={FILTERS} selected={filter} onSelect={setFilter} />
-      {(isDemo ? data : []).map((item) => <ReservationCard key={item.id} reservation={item} onPress={() => {}} />)}
+      {(isDemo ? data : []).map((item) => <ReservationCard key={item.id} reservation={item} />)}
     </PartnerPage>
   );
 }
