@@ -10,16 +10,17 @@ import { getMediaAttachment } from '@/features/media/media.api';
 import type { FeedPost , PostComment } from './types';
 
 interface BackendFeedItem {
-  postId: string;
-  authorId: string;
+  itemType?: 'ORGANIC' | 'SPONSORED';
+  postId: string | null;
+  authorId: string | null;
   caption: string | null;
   catalogAssetId: string | null;
-  mediaIds: string[];
-  hashtags: string[];
-  publishedAt: string;
-  likes: number;
-  comments: number;
-  shares: number;
+  mediaIds: string[] | null;
+  hashtags: string[] | null;
+  publishedAt: string | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
   linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
 }
 
@@ -27,6 +28,23 @@ interface BackendFeedPage {
   page: number;
   size: number;
   items: BackendFeedItem[];
+}
+
+type OrganicBackendFeedItem = BackendFeedItem & {
+  postId: string;
+  authorId: string;
+  mediaIds: string[];
+  publishedAt: string;
+};
+
+function isOrganicFeedItem(item: BackendFeedItem): item is OrganicBackendFeedItem {
+  // FeedPage can contain backend-injected sponsored rows. They intentionally
+  // have no post or media fields and must not be decoded as social posts.
+  return item.itemType !== 'SPONSORED'
+    && typeof item.postId === 'string'
+    && typeof item.authorId === 'string'
+    && Array.isArray(item.mediaIds)
+    && typeof item.publishedAt === 'string';
 }
 
 interface BackendPost {
@@ -80,7 +98,7 @@ function fallbackMediaAttachment(id: string) {
   };
 }
 
-async function mapFeedItem(item: BackendFeedItem): Promise<FeedPost> {
+async function mapFeedItem(item: OrganicBackendFeedItem): Promise<FeedPost> {
   const metadata = await Promise.allSettled(item.mediaIds.map((id) => getMediaAttachment(id)));
   const media = metadata.map((result, index) => result.status === 'fulfilled' ? result.value : fallbackMediaAttachment(item.mediaIds[index]));
   const hasVideo = media.some((attachment) => attachment.type === 'video');
@@ -90,9 +108,9 @@ async function mapFeedItem(item: BackendFeedItem): Promise<FeedPost> {
     caption: item.caption,
     media,
     author: fallbackUser(item.authorId),
-    likes_count: item.likes,
-    comments_count: item.comments,
-    shares_count: item.shares,
+    likes_count: item.likes ?? 0,
+    comments_count: item.comments ?? 0,
+    shares_count: item.shares ?? 0,
     is_liked: false,
     is_saved: false,
     place_tag: item.catalogAssetId
@@ -108,12 +126,13 @@ export const feedApi = {
   getFeed: async (pageParam?: number) => {
     const page = Number.isInteger(pageParam) && pageParam! >= 0 ? pageParam! : 0;
     const response = await apiGet<BackendFeedPage>(`/feed?page=${page}&size=20`);
-    const posts = await Promise.all(response.items.map(mapFeedItem));
+    const organicItems = (response.items ?? []).filter(isOrganicFeedItem);
+    const posts = await Promise.all(organicItems.map(mapFeedItem));
     return toPaginatedResponse(
       posts,
       response.page,
       response.size,
-      response.items.length === response.size,
+      (response.items ?? []).length === response.size,
     );
   },
 

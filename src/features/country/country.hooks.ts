@@ -126,6 +126,11 @@ function useCountryPreferenceMutation<TInput>(mutation: (input: TInput) => Promi
     onSuccess: async (preferences) => {
       await applyProfilePreferences(preferences);
       queryClient.invalidateQueries({ queryKey: countryKeys.profile() });
+      // Explorer and recommendations are user-personalized. Refresh only
+      // these affected caches after a real server-side preference update.
+      queryClient.invalidateQueries({ queryKey: ['explore'] });
+      queryClient.invalidateQueries({ queryKey: ['discovery'] });
+      queryClient.invalidateQueries({ queryKey: ['recommendations'] });
     },
   });
 }

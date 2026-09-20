@@ -46,6 +46,13 @@ const defaultRange = () => {
   return { from: isoDate(from), to: isoDate(to) };
 };
 
+function retryUserRead(failureCount: number, error: unknown) {
+  const status = typeof error === 'object' && error !== null && 'status' in error
+    ? Number((error as { status?: unknown }).status)
+    : undefined;
+  return failureCount < 1 && ![400, 401, 403, 404].includes(status ?? 0);
+}
+
 export interface TicketingAnalyticsSummary {
   ticketsSold: number;
   grossRevenue: number;
@@ -202,6 +209,7 @@ export function useMyTickets(filters: TicketPageFilters | OwnedTicketStatus = {}
     },
     placeholderData: keepPreviousData,
     enabled: FEATURE_FLAGS.ticketing_enabled,
+    retry: retryUserRead,
   });
 }
 
@@ -210,6 +218,7 @@ export function useTicket(ticketId: string) {
     queryKey: ticketingKeys.ticket(ticketId),
     queryFn: () => ticketingApi.getTicket(ticketId),
     enabled: FEATURE_FLAGS.ticketing_enabled && Boolean(ticketId),
+    retry: retryUserRead,
   });
 }
 
@@ -221,6 +230,7 @@ export function useTicketQrCredential(ticketId: string) {
     staleTime: 10_000,
     gcTime: 30_000,
     refetchOnWindowFocus: false,
+    retry: retryUserRead,
   });
 }
 

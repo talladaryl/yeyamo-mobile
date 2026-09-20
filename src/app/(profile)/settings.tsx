@@ -66,9 +66,9 @@ export default function SettingsScreen() {
           <View className="overflow-hidden rounded-xl" style={{ backgroundColor: colors.card }}>
             <SettingsItem
               icon="language-outline"
-              label="Langue & Préférences"
-              value="Français"
-              onPress={() => router.push('/(profile)/preferences')}
+              label="Langue"
+              value={i18n.language === 'en' ? 'English' : 'Français'}
+              onPress={() => router.push('/(profile)/language')}
             />
             <SettingsItem icon="notifications-outline" label="Notifications" onPress={() => router.push('/(profile)/notifications')} showBorder />
           </View>

@@ -1,10 +1,12 @@
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Reservation } from '@/features/profile/types';
+import { useThemeStore } from '@/features/theme/theme.store';
 
 interface ReservationCardProps {
   reservation: Reservation;
-  onPress: () => void;
+  onPress?: () => void;
+  onRequestCancellation?: () => void;
 }
 
 const statusConfig: Record<Reservation['status'], { label: string; color: string }> = {
@@ -14,7 +16,8 @@ const statusConfig: Record<Reservation['status'], { label: string; color: string
   completed: { label: 'Terminee', color: '#A1A1AA' },
 };
 
-export function ReservationCard({ reservation, onPress }: ReservationCardProps) {
+export function ReservationCard({ reservation, onPress, onRequestCancellation }: ReservationCardProps) {
+  const colors = useThemeStore((state) => state.colors);
   const status = statusConfig[reservation.status];
   const reservationDate = new Date(reservation.reservation_date);
   const formattedDate = reservationDate.toLocaleDateString('fr-FR', {
@@ -27,30 +30,19 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
     minute: '2-digit',
   });
 
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      className="bg-white dark:bg-[#161616] rounded-xl p-3 mb-3"
-      activeOpacity={0.7}
-    >
+  const content = <View>
       <View className="flex-row">
-        <Image
-          source={{ uri: reservation.place.cover_photo_url }}
-          className="w-20 h-20 rounded-lg"
-          resizeMode="cover"
-        />
+        {reservation.place.cover_photo_url ? <Image source={{ uri: reservation.place.cover_photo_url }} className="h-20 w-20 rounded-lg" resizeMode="cover" /> : <View className="h-20 w-20 items-center justify-center rounded-lg" style={{ backgroundColor: colors.elevated }}><Ionicons name="calendar-outline" size={24} color={colors.textMuted} /></View>}
 
         <View className="flex-1 ml-3">
-          <Text className="text-[#18181B] dark:text-white font-semibold text-base" numberOfLines={1}>
-            {reservation.place.name}
+          <Text className="text-base font-semibold" style={{ color: colors.text }} numberOfLines={1}>
+            {reservation.reference ? `Réservation ${reservation.reference}` : 'Réservation'}
           </Text>
-          <Text className="text-[#52525B] dark:text-[#A1A1AA] text-sm" numberOfLines={1}>
-            {reservation.place.category.name} - {reservation.place.city}
-          </Text>
+          <Text className="text-sm" style={{ color: colors.textSecondary }} numberOfLines={1}>Référence activité : {reservation.activity_id ?? reservation.place.id}</Text>
 
           <View className="flex-row items-center mt-2">
-            <Ionicons name="calendar-outline" size={14} color="#A1A1AA" />
-            <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs ml-1">
+            <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
+            <Text className="ml-1 text-xs" style={{ color: colors.textSecondary }}>
               {formattedDate} a {formattedTime}
             </Text>
           </View>
@@ -66,14 +58,18 @@ export function ReservationCard({ reservation, onPress }: ReservationCardProps) 
             </View>
 
             <View className="flex-row items-center">
-              <Ionicons name="people-outline" size={14} color="#A1A1AA" />
-              <Text className="text-[#52525B] dark:text-[#A1A1AA] text-xs ml-1">
+              <Ionicons name="people-outline" size={14} color={colors.textMuted} />
+              <Text className="ml-1 text-xs" style={{ color: colors.textSecondary }}>
                 {reservation.guests_count}
               </Text>
             </View>
           </View>
         </View>
       </View>
-    </TouchableOpacity>
-  );
+      {reservation.total_amount !== null && reservation.total_amount !== undefined && reservation.currency ? <Text className="mt-3 text-xs" style={{ color: colors.textSecondary }}>Total : {reservation.total_amount} {reservation.currency}</Text> : null}
+      {reservation.payment_status ? <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Paiement : {reservation.payment_status}</Text> : null}
+      {reservation.automatic_refund_available ? <Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Remboursement automatique disponible selon le backend.</Text> : null}
+      {onRequestCancellation && (reservation.status === 'confirmed' || reservation.status === 'pending') ? <TouchableOpacity onPress={onRequestCancellation} className="mt-3 self-start" accessibilityRole="button"><Text className="text-xs font-bold" style={{ color: colors.primary }}>Annuler cette réservation</Text></TouchableOpacity> : null}
+    </View>;
+  return onPress ? <TouchableOpacity onPress={onPress} className="mb-3 rounded-xl p-3" style={{ backgroundColor: colors.card }} activeOpacity={0.7}>{content}</TouchableOpacity> : <View className="mb-3 rounded-xl p-3" style={{ backgroundColor: colors.card }}>{content}</View>;
 }

@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
-import { Alert, Dimensions, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Dimensions, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
 import { useYeyamoMediaPicker, YeyamoMediaPickerError } from '@/components/media/useYeyamoMediaPicker';
@@ -30,11 +31,20 @@ export default function CreateStoryScreen() {
   const [caption, setCaption] = useState('');
   const [duration, setDuration] = useState<number>(15);
   const [error, setError] = useState<string | null>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const uploadMedia = useUploadMedia();
   const createStory = useCreateStory();
   const pending = uploadMedia.isPending || createStory.isPending;
   const videoDuration = useMemo(() => videoDurationSeconds(asset), [asset]);
   const effectiveDuration = videoDuration ?? duration;
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   const chooseMedia = async () => {
     if (pending) return;
@@ -73,10 +83,12 @@ export default function CreateStoryScreen() {
   };
 
   return (
-    <View className="flex-1 bg-black">
+    <KeyboardAvoidingView className="flex-1 bg-black" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Stack.Screen options={{ headerShown: false, presentation: 'fullScreenModal' }} />
       {asset ? (
-        isVideoAsset(asset) ? <StoryPreviewVideo uri={asset.uri} /> : <Image source={{ uri: asset.uri }} style={{ width, height }} contentFit="cover" />
+        <View className="absolute inset-0">
+          {isVideoAsset(asset) ? <StoryPreviewVideo uri={asset.uri} /> : <Image source={{ uri: asset.uri }} style={{ width, height }} contentFit="cover" />}
+        </View>
       ) : (
         <View className="flex-1 items-center justify-center px-10">
           <Icon name="images-outline" size={58} color="#FFFFFF" />
@@ -94,9 +106,9 @@ export default function CreateStoryScreen() {
 
       {asset ? <View className="absolute left-4 right-4 top-28"><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2"><TouchableOpacity onPress={() => void chooseMedia()} disabled={pending} className="rounded-full bg-black/55 px-4 py-2"><Text className="text-xs font-bold text-white">Changer le média</Text></TouchableOpacity>{isVideoAsset(asset) ? <View className="rounded-full bg-black/55 px-4 py-2"><Text className="text-xs font-bold text-white">Vidéo · {effectiveDuration}s</Text></View> : imageDurations.map((value) => <TouchableOpacity key={value} onPress={() => setDuration(value)} disabled={pending} className="rounded-full px-4 py-2" style={{ backgroundColor: value === duration ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.55)' }}><Text className="text-xs font-bold" style={{ color: value === duration ? '#000000' : '#FFFFFF' }}>{value}s</Text></TouchableOpacity>)}</ScrollView></View> : null}
 
-      {asset ? <View className="absolute bottom-0 left-0 right-0 gap-3 px-5 pb-10"><Input value={caption} onChangeText={setCaption} placeholder="Ajouter une légende (facultatif)" maxLength={500} editable={!pending} multiline containerClassName="rounded-2xl bg-black/60 p-1" /><TouchableOpacity onPress={() => void publish()} disabled={pending} className="items-center rounded-full bg-[#EF4444] px-5 py-4" style={{ opacity: pending ? 0.65 : 1 }} accessibilityRole="button"><Text className="font-bold text-white">{pending ? 'Publication…' : 'Publier dans ma story'}</Text></TouchableOpacity></View> : null}
+      {asset ? <SafeAreaView edges={['bottom']} className="mt-auto gap-3 px-5 pb-4"><Input value={caption} onChangeText={setCaption} placeholder="Ajouter une légende (facultatif)" maxLength={500} editable={!pending} multiline containerClassName="rounded-2xl bg-black/60 p-1" />{keyboardVisible ? <TouchableOpacity onPress={Keyboard.dismiss} className="self-end rounded-full bg-black/60 px-3 py-2" accessibilityRole="button" accessibilityLabel="Fermer le clavier"><Text className="text-xs font-bold text-white">Fermer le clavier</Text></TouchableOpacity> : null}<TouchableOpacity onPress={() => void publish()} disabled={pending} className="items-center rounded-full bg-[#EF4444] px-5 py-4" style={{ opacity: pending ? 0.65 : 1 }} accessibilityRole="button"><Text className="font-bold text-white">{pending ? 'Publication…' : 'Publier dans ma story'}</Text></TouchableOpacity></SafeAreaView> : null}
 
       {error ? <View className="absolute bottom-4 left-5 right-5 rounded-xl bg-red-700/95 px-4 py-3"><Text className="text-center text-sm text-white">{error}</Text></View> : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }

@@ -117,6 +117,17 @@ export interface EventParticipation {
 export interface Reservation {
   id: EntityId;
   place: PlaceSummary;
+  reference?: string;
+  activity_id?: string;
+  unit_price?: number | null;
+  total_amount?: number | null;
+  currency?: string | null;
+  payment_status?: string | null;
+  cancellation_reason?: string | null;
+  confirmed_at?: string | null;
+  cancelled_at?: string | null;
+  completed_at?: string | null;
+  automatic_refund_available?: boolean;
   reservation_date: string;
   guests_count: number;
   status: 'confirmed' | 'pending' | 'cancelled' | 'completed';

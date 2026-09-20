@@ -8,18 +8,20 @@ import { NotificationItem } from '@/components/profile/NotificationItem';
 import { useNotifications, useUnreadNotifications, useMarkAllAsRead, useMarkAsRead } from '@/features/notifications/useNotifications';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { resolveResourceRoute } from '@/utils/resource-route';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/ViewStates';
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
-  const { data: allNotifications } = useNotifications();
-  const { data: unreadNotifications } = useUnreadNotifications();
+  const allQuery = useNotifications();
+  const unreadQuery = useUnreadNotifications();
   const markAllAsRead = useMarkAllAsRead();
   const markAsRead = useMarkAsRead();
 
-  const displayedNotifications = activeTab === 'all' ? allNotifications : unreadNotifications;
+  const activeQuery = activeTab === 'all' ? allQuery : unreadQuery;
+  const displayedNotifications = activeQuery.data;
 
   const handleMarkAllAsRead = () => {
     markAllAsRead.mutate();
@@ -69,19 +71,21 @@ export default function NotificationsScreen() {
             }`}
           >
             Non lues
-            {unreadNotifications && unreadNotifications.length > 0 && (
-              <Text className="text-[#EF4444]"> ({unreadNotifications.length})</Text>
+            {unreadQuery.data && unreadQuery.data.length > 0 && (
+              <Text style={{ color: colors.primary }}> ({unreadQuery.data.length})</Text>
             )}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Liste des notifications */}
-      {displayedNotifications && displayedNotifications.length > 0 ? (
+      {activeQuery.isLoading ? <LoadingState label="Chargement des notifications…" /> : activeQuery.isError ? <ErrorState title="Impossible de charger les notifications" message="Vérifiez votre connexion puis réessayez." retry={() => void activeQuery.refetch()} /> : displayedNotifications && displayedNotifications.length > 0 ? (
         <FlatList
           data={displayedNotifications}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ padding: 16 }}
+          refreshing={activeQuery.isRefetching}
+          onRefresh={() => void activeQuery.refetch()}
           renderItem={({ item }) => (
             <NotificationItem
               notification={item}
@@ -102,15 +106,7 @@ export default function NotificationsScreen() {
           )}
         />
       ) : (
-        <View className="flex-1 items-center justify-center px-8">
-          <Ionicons name="notifications-outline" size={64} color={colors.textSecondary} />
-          <Text className="text-lg font-semibold mt-4 text-center" style={{ color: colors.text }}>
-            {activeTab === 'all' ? 'Aucune notification' : 'Aucune notification non lue'}
-          </Text>
-          <Text className="text-center mt-2" style={{ color: colors.textSecondary }}>
-            Restez informé de toutes vos activités ici
-          </Text>
-        </View>
+        <EmptyState title={activeTab === 'all' ? 'Aucune notification' : 'Aucune notification non lue'} message="Vos nouvelles activités apparaîtront ici." icon={<Ionicons name="notifications-outline" size={64} color={colors.textSecondary} />} />
       )}
     </SafeAreaView>
   );

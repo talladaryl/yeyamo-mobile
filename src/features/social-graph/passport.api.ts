@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGet, apiPost } from '@/services/api/client';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 export interface PassportSummary {
   totalXp: number;
@@ -48,7 +49,10 @@ export const passportApi = {
   claimReward: (rewardId: string) => apiPost<PassportReward>(`/me/rewards/${rewardId}/claim`),
 };
 
-const usePassportQuery = <T>(key: readonly unknown[], queryFn: () => Promise<T>) => useQuery<T>({ queryKey: key, queryFn, staleTime: 30_000 });
+const usePassportQuery = <T>(key: readonly unknown[], queryFn: () => Promise<T>) => {
+  const backendSession = useAuthStore((state) => state.sessionMode === 'backend');
+  return useQuery<T>({ queryKey: key, queryFn, staleTime: 30_000, enabled: backendSession, retry: 1 });
+};
 
 export const usePassportSummary = () => usePassportQuery(passportKeys.summary(), passportApi.summary);
 export const usePassportBadges = () => usePassportQuery(passportKeys.badges(), passportApi.badges);

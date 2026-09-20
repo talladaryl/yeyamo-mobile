@@ -34,10 +34,21 @@ interface BackendEvent {
 
 interface BackendBooking {
   id: string;
+  reference: string;
   activityId: string;
+  slotId: string;
   quantity: number;
+  unitPrice: number | null;
+  totalAmount: number | null;
+  currency: string | null;
   status: string;
+  paymentStatus: string | null;
+  cancellationReason: string | null;
   createdAt: string;
+  confirmedAt: string | null;
+  cancelledAt: string | null;
+  completedAt: string | null;
+  automaticRefundAvailable: boolean;
 }
 
 interface BackendReview {
@@ -155,12 +166,48 @@ export const profileApi = {
     const { data } = await apiClient.get<BackendBooking[]>('/bookings/me');
     return data.map((booking) => ({
       id: booking.id,
+      reference: booking.reference,
+      activity_id: booking.activityId,
+      unit_price: booking.unitPrice,
+      total_amount: booking.totalAmount,
+      currency: booking.currency,
+      payment_status: booking.paymentStatus,
+      cancellation_reason: booking.cancellationReason,
+      confirmed_at: booking.confirmedAt,
+      cancelled_at: booking.cancelledAt,
+      completed_at: booking.completedAt,
+      automatic_refund_available: booking.automaticRefundAvailable,
       place: emptyPlace(booking.activityId, 'Lieu non renseigné'),
       reservation_date: booking.createdAt,
       guests_count: booking.quantity,
       status: booking.status.toLowerCase() as Reservation['status'],
       created_at: booking.createdAt,
     }));
+  },
+
+  cancelUserReservation: async (id: string, reason: string): Promise<Reservation> => {
+    const { data } = await apiClient.post<BackendBooking>(`/bookings/${encodeURIComponent(id)}/cancel`, { reason }, {
+      headers: { 'Idempotency-Key': `mobile-booking-cancel-${id}-${Date.now()}` },
+    });
+    return {
+      id: data.id,
+      reference: data.reference,
+      activity_id: data.activityId,
+      unit_price: data.unitPrice,
+      total_amount: data.totalAmount,
+      currency: data.currency,
+      payment_status: data.paymentStatus,
+      cancellation_reason: data.cancellationReason,
+      confirmed_at: data.confirmedAt,
+      cancelled_at: data.cancelledAt,
+      completed_at: data.completedAt,
+      automatic_refund_available: data.automaticRefundAvailable,
+      place: emptyPlace(data.activityId, 'Activité réservée'),
+      reservation_date: data.createdAt,
+      guests_count: data.quantity,
+      status: data.status.toLowerCase() as Reservation['status'],
+      created_at: data.createdAt,
+    };
   },
 
   getUserReviews: async (): Promise<UserReview[]> => {

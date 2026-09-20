@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,6 +28,7 @@ import { recommendationAsDiscoveryItem } from '@/features/recommendations/recomm
 import { useRecommendations } from '@/features/recommendations/recommendations.hooks';
 import { useUpcomingEvents } from '@/features/events/useEvents';
 import type { Event } from '@/features/events/types';
+import { useExploreLocationStore } from '@/features/explore/explore-location.store';
 
 const HERO_FALLBACK_COLORS = ['#7F1D1D', '#EF4444', '#F59E0B'] as const;
 
@@ -44,21 +45,17 @@ export default function ExploreHomeScreen() {
   const regionsQuery = useRegions();
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const regions = useMemo(() => regionsQuery.data ?? [], [regionsQuery.data]);
-  const [selectedRegionId, setSelectedRegionId] = useState<number>();
-  const [isRegionPickerOpen, setIsRegionPickerOpen] = useState(false);
+  const selectedRegionId = useExploreLocationStore((state) => state.selectedRegionId);
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
 
   const selectedRegion = useMemo(
-    () => regions.find((region) => region.id === selectedRegionId) ?? regions[0],
+    () => regions.find((region) => region.id === selectedRegionId),
     [regions, selectedRegionId],
   );
   const regionCode = selectedRegion?.code ?? (selectedRegion ? String(selectedRegion.id) : undefined);
   const trendingPlacesQuery = useTrendingPlaces({ regionCode });
   const trendingPlaces = useMemo(() => trendingPlacesQuery.data ?? [], [trendingPlacesQuery.data]);
-  const selectedLocationLabel = selectedRegion?.name ?? 'Cameroun';
-
-  useEffect(() => {
-    if (selectedRegionId === undefined && regions[0]) setSelectedRegionId(regions[0].id);
-  }, [regions, selectedRegionId]);
+  const selectedLocationLabel = selectedRegion?.name ?? 'Tout le pays';
 
   const { data: culturePage } = useCultureContents({ countryCode, verified: true, size: 6 });
   const { data: artworksPage } = useArtworks({ countryCode, size: 6 });
@@ -87,15 +84,11 @@ export default function ExploreHomeScreen() {
     () => trendingPlaces.filter((place) => (regionCode ? String(place.region_id) === String(regionCode) : true)),
     [regionCode, trendingPlaces],
   );
-
   const openPlacesForRegion = (category?: string) => {
-    if (!selectedRegion) return;
     router.push({
       pathname: '/(explore)/places',
       params: {
-        regionId: String(selectedRegion.id),
-        regionCode,
-        region: selectedRegion.name,
+        ...(selectedRegion ? { regionId: String(selectedRegion.id), regionCode, region: selectedRegion.name } : {}),
         ...(category ? { category } : {}),
       },
     });
@@ -125,31 +118,6 @@ export default function ExploreHomeScreen() {
     });
   };
 
-  if (!selectedRegion) {
-    const failed = regionsQuery.isError;
-    return (
-      <View className="flex-1 items-center justify-center px-8" style={{ backgroundColor: colors.background }}>
-        {failed ? (
-          <>
-            <View className="h-16 w-16 items-center justify-center rounded-3xl" style={{ backgroundColor: colors.elevated }}>
-              <Icon name="cloud-offline-outline" size={30} color={colors.textSecondary} />
-            </View>
-            <Text className="mt-5 text-center text-lg font-extrabold" style={{ color: colors.text }}>Explorer est momentanément indisponible</Text>
-            <Text className="mt-2 text-center text-sm leading-5" style={{ color: colors.textSecondary }}>Vérifiez votre connexion puis réessayez.</Text>
-            <TouchableOpacity onPress={() => void regionsQuery.refetch()} className="mt-5 h-11 justify-center rounded-xl px-5" style={{ backgroundColor: colors.primary }}>
-              <Text className="font-bold text-white">Réessayer</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <ActivityIndicator color={colors.primary} size="large" />
-            <Text className="mt-4 text-sm font-semibold" style={{ color: colors.textSecondary }}>Préparation de vos découvertes…</Text>
-          </>
-        )}
-      </View>
-    );
-  }
-
   const demoCreatorCards: ReactNode[] = isDemo ? [
     ...(culturePage?.content ?? []).slice(0, 3).map((content) => (
       <CultureContentCard key={`culture-${content.id}`} content={content} onPress={() => router.push(`/(explore)/culture/${content.id}`)} />
@@ -169,16 +137,14 @@ export default function ExploreHomeScreen() {
           <View>
             <Text className="text-2xl font-black" style={{ color: colors.text }}>Explorer</Text>
             <TouchableOpacity
-              onPress={() => setIsRegionPickerOpen(true)}
+              onPress={() => router.push('/(explore)/preferences')}
               className="mt-1 flex-row items-center"
               activeOpacity={0.75}
               accessibilityRole="button"
-              accessibilityLabel={`Changer de région. Région actuelle : ${selectedRegion.name}`}
+              accessibilityLabel={`Changer de zone de découverte. Zone actuelle : ${selectedLocationLabel}`}
             >
               <Icon name="location" size={15} color={colors.primary} />
               <Text className="ml-1 text-xs font-bold" style={{ color: colors.textSecondary }}>{selectedLocationLabel}</Text>
-              <Text className="mx-1 text-xs" style={{ color: colors.textMuted }}>·</Text>
-              <Text className="text-xs" style={{ color: colors.textMuted }}>{selectedRegion.name}</Text>
               <Icon name="chevron-down" size={13} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
@@ -230,10 +196,13 @@ export default function ExploreHomeScreen() {
           />
         </View>
 
-        <FeaturedRegionCard region={selectedRegion} onPress={() => openPlacesForRegion()} />
+        {selectedRegion ? <FeaturedRegionCard region={selectedRegion} onPress={() => openPlacesForRegion()} /> : null}
 
         <SectionHeading title="Catégories" action="Tout voir" onPress={() => router.push('/(explore)/search')} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}>
+          {categoriesQuery.isLoading ? <View className="h-20 w-20 items-center justify-center"><ActivityIndicator color={colors.primary} /></View> : null}
+          {categoriesQuery.isError ? <RetryRailItem label="Catégories indisponibles" onPress={() => void categoriesQuery.refetch()} /> : null}
+          {!categoriesQuery.isLoading && !categoriesQuery.isError && categories.length === 0 ? <EmptyRailItem label="Aucune catégorie disponible" /> : null}
           {categories.slice(0, 7).map((category) => (
             <View key={category.id} className="mr-2 w-20">
               <CategoryCard category={category} onPress={() => openCategory(category.id)} />
@@ -247,15 +216,21 @@ export default function ExploreHomeScreen() {
             subtitle="Selon vos préférences et vos découvertes"
             items={recommendationItems}
             isDemo={isDemo}
+            isLoading={recommendations.isLoading}
+            isError={recommendations.isError}
+            onRetry={() => void recommendations.refetch()}
             onViewAll={() => router.push('/(explore)/search')}
             onPress={openDiscovery}
           />
 
           <TrendRail
             title="Près de vous"
-            subtitle={`Les lieux à découvrir dans ${selectedRegion.name}`}
+            subtitle={selectedRegion ? `Les lieux à découvrir dans ${selectedRegion.name}` : 'Les lieux à découvrir dans votre pays'}
             items={trendNearby.data?.items}
             isDemo={isDemo}
+            isLoading={trendNearby.isLoading || trendingPlacesQuery.isLoading}
+            isError={trendNearby.isError && trendingPlacesQuery.isError}
+            onRetry={() => { void trendNearby.refetch(); void trendingPlacesQuery.refetch(); }}
             onViewAll={() => openPlacesForRegion()}
             onPress={openDiscovery}
             actionLabel="Voir sur la carte"
@@ -269,7 +244,7 @@ export default function ExploreHomeScreen() {
             events={upcomingEvents.slice(0, 8)}
             fallbackItems={trendEvents.data?.items ?? []}
             isDemo={isDemo}
-            onViewAll={() => router.push({ pathname: '/(explore)/events', params: { region: selectedRegion.name, regionCode } })}
+            onViewAll={() => router.push({ pathname: '/(explore)/events', params: selectedRegion ? { region: selectedRegion.name, regionCode } : {} })}
             onOpenDiscovery={openDiscovery}
             onOpenEvent={(event) => router.push(`/(events)/${event.id}`)}
           />
@@ -279,6 +254,9 @@ export default function ExploreHomeScreen() {
             subtitle="Histoires, œuvres et savoir-faire à transmettre"
             items={cultureAndCreatorItems}
             isDemo={isDemo}
+            isLoading={trendCulture.isLoading || trendArtworks.isLoading || trendArtisans.isLoading}
+            isError={trendCulture.isError && trendArtworks.isError && trendArtisans.isError}
+            onRetry={() => { void trendCulture.refetch(); void trendArtworks.refetch(); void trendArtisans.refetch(); }}
             onViewAll={() => router.push('/(explore)/culture')}
             onPress={openDiscovery}
           >
@@ -287,18 +265,73 @@ export default function ExploreHomeScreen() {
         </View>
       </ScrollView>
 
-      <RegionPicker
-        visible={isRegionPickerOpen}
-        regions={regions}
-        selectedRegion={selectedRegion}
+      <TouchableOpacity
+        onPress={() => setIsCreateMenuOpen(true)}
+        activeOpacity={0.85}
+        className="absolute right-5 h-14 w-14 items-center justify-center rounded-full"
+        style={{ bottom: tabBarHeight + 12, backgroundColor: '#DC2626', shadowColor: '#DC2626', shadowOpacity: 0.35, shadowRadius: 10, elevation: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel="Créer dans Explorer"
+      >
+        <Icon name="add" size={30} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      <ExploreCreateMenu
+        visible={isCreateMenuOpen}
         bottomInset={insets.bottom}
-        onClose={() => setIsRegionPickerOpen(false)}
-        onSelect={(region) => {
-          setSelectedRegionId(region.id);
-          setIsRegionPickerOpen(false);
+        onClose={() => setIsCreateMenuOpen(false)}
+        onCreateAdventure={() => {
+          setIsCreateMenuOpen(false);
+          router.push('/(explore)/adventure');
+        }}
+        onSuggestPlace={() => {
+          setIsCreateMenuOpen(false);
+          router.push('/(create)/suggest-place-step1');
         }}
       />
+
     </View>
+  );
+}
+
+function ExploreCreateMenu({
+  visible,
+  bottomInset,
+  onClose,
+  onCreateAdventure,
+  onSuggestPlace,
+}: {
+  visible: boolean;
+  bottomInset: number;
+  onClose: () => void;
+  onCreateAdventure: () => void;
+  onSuggestPlace: () => void;
+}) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+      <View className="flex-1 justify-end">
+        <Pressable className="absolute inset-0" style={{ backgroundColor: colors.overlay }} onPress={onClose} accessibilityLabel="Fermer les actions Explorer" />
+        <View className="rounded-t-[30px] border-t px-4 pt-3" style={{ backgroundColor: colors.card, borderColor: colors.border, paddingBottom: bottomInset + 20 }}>
+          <View className="mb-4 h-1 w-10 self-center rounded-full" style={{ backgroundColor: colors.textMuted }} />
+          <Text className="text-xl font-extrabold" style={{ color: colors.text }}>Créer dans Explorer</Text>
+          <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>Préparez une aventure ou contribuez avec un nouveau lieu.</Text>
+          <CreateMenuAction icon="compass-outline" title="Créer une nouvelle aventure" description="Choisissez vos dates, votre budget et vos centres d’intérêt." onPress={onCreateAdventure} />
+          <CreateMenuAction icon="location-outline" title="Créer un lieu" description="Suggérez un lieu pour enrichir Yeyamo." onPress={onSuggestPlace} />
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function CreateMenuAction({ icon, title, description, onPress }: { icon: string; title: string; description: string; onPress: () => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.78} className="mt-4 min-h-20 flex-row items-center rounded-2xl border p-4" style={{ backgroundColor: colors.surface, borderColor: colors.border }} accessibilityRole="button">
+      <View className="h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: '#DC262618' }}><Icon name={icon as never} size={22} color="#DC2626" /></View>
+      <View className="ml-3 flex-1"><Text className="font-bold" style={{ color: colors.text }}>{title}</Text><Text className="mt-1 text-xs leading-4" style={{ color: colors.textSecondary }}>{description}</Text></View>
+      <Icon name="chevron-forward" size={20} color={colors.textMuted} />
+    </TouchableOpacity>
   );
 }
 
@@ -357,6 +390,9 @@ function TrendRail({
   subtitle,
   items,
   isDemo,
+  isLoading = false,
+  isError = false,
+  onRetry,
   children,
   onViewAll,
   onPress,
@@ -366,6 +402,9 @@ function TrendRail({
   subtitle: string;
   items?: DiscoveryItem[];
   isDemo: boolean;
+  isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
   children?: ReactNode;
   onViewAll: () => void;
   onPress: (item: DiscoveryItem) => void;
@@ -374,8 +413,6 @@ function TrendRail({
   const colors = useThemeStore((state) => state.colors);
   const showDiscovery = !isDemo && Boolean(items?.length);
   const showChildren = isDemo && Boolean(children) && (!Array.isArray(children) || children.length > 0);
-  if (!showDiscovery && !showChildren) return null;
-
   return (
     <View className="mb-8">
       <View className="mb-3 flex-row items-end justify-between px-4">
@@ -387,11 +424,30 @@ function TrendRail({
           <Text className="text-xs font-extrabold" style={{ color: colors.primary }}>{actionLabel}</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+      {isLoading && !showDiscovery && !showChildren ? <View className="h-24 items-center justify-center"><ActivityIndicator color={colors.primary} /></View> : null}
+      {isError && !showDiscovery && !showChildren ? <RailFeedback label="Impossible de charger cette sélection" action="Réessayer" onPress={onRetry} /> : null}
+      {!isLoading && !isError && !showDiscovery && !showChildren ? <RailFeedback label="Aucun contenu disponible pour le moment" /> : null}
+      {showDiscovery || showChildren ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
         {showDiscovery ? items!.map((item) => <DiscoveryTrendCard key={item.id} item={item} onPress={() => onPress(item)} />) : children}
       </ScrollView>
+      : null}
     </View>
   );
+}
+
+function RailFeedback({ label, action, onPress }: { label: string; action?: string; onPress?: () => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <View className="px-4 py-4"><Text className="text-sm" style={{ color: colors.textSecondary }}>{label}</Text>{action && onPress ? <TouchableOpacity onPress={onPress} className="mt-2 self-start"><Text className="text-sm font-bold" style={{ color: colors.primary }}>{action}</Text></TouchableOpacity> : null}</View>;
+}
+
+function RetryRailItem({ label, onPress }: { label: string; onPress: () => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <TouchableOpacity onPress={onPress} className="mr-3 w-40 rounded-2xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.card }}><Icon name="reload-outline" size={20} color={colors.primary} /><Text className="mt-2 text-xs font-bold" style={{ color: colors.text }}>{label}</Text><Text className="mt-1 text-xs font-bold" style={{ color: colors.primary }}>Réessayer</Text></TouchableOpacity>;
+}
+
+function EmptyRailItem({ label }: { label: string }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <View className="w-44 justify-center rounded-2xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.card }}><Text className="text-xs" style={{ color: colors.textSecondary }}>{label}</Text></View>;
 }
 
 function EventRail({
@@ -473,20 +529,28 @@ function EventPreviewCard({ event, onPress }: { event: Event; onPress: () => voi
   );
 }
 
-function RegionPicker({
+export function RegionPicker({
   visible,
   regions,
   selectedRegion,
+  isLoading,
+  isError,
   bottomInset,
   onClose,
   onSelect,
+  onSelectCountry,
+  onRetry,
 }: {
   visible: boolean;
   regions: Region[];
-  selectedRegion: Region;
+  selectedRegion?: Region;
+  isLoading: boolean;
+  isError: boolean;
   bottomInset: number;
   onClose: () => void;
   onSelect: (region: Region) => void;
+  onSelectCountry: () => void;
+  onRetry: () => void;
 }) {
   const colors = useThemeStore((state) => state.colors);
   return (
@@ -505,8 +569,28 @@ function RegionPicker({
             </TouchableOpacity>
           </View>
           <ScrollView showsVerticalScrollIndicator={false}>
+            <TouchableOpacity
+              onPress={onSelectCountry}
+              className="mb-2 min-h-14 flex-row items-center rounded-2xl border px-4 py-3"
+              style={{ backgroundColor: !selectedRegion ? `${colors.primary}12` : colors.background, borderColor: !selectedRegion ? colors.primary : colors.border }}
+              activeOpacity={0.78}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: !selectedRegion }}
+            >
+              <View className="h-9 w-9 items-center justify-center rounded-xl" style={{ backgroundColor: !selectedRegion ? `${colors.primary}1F` : colors.elevated }}>
+                <Icon name="earth-outline" size={19} color={!selectedRegion ? colors.primary : colors.textSecondary} />
+              </View>
+              <View className="ml-3 flex-1">
+                <Text className="font-bold" style={{ color: colors.text }}>Tout le pays</Text>
+                <Text className="mt-0.5 text-xs" style={{ color: colors.textMuted }}>Ne pas limiter Explorer à une région</Text>
+              </View>
+              {!selectedRegion ? <Icon name="checkmark-circle" size={22} color={colors.primary} /> : null}
+            </TouchableOpacity>
+            {isLoading ? <View className="items-center py-6"><ActivityIndicator color={colors.primary} /></View> : null}
+            {isError ? <View className="items-center px-4 py-6"><Text className="text-center text-sm" style={{ color: colors.textSecondary }}>Les régions sont indisponibles. Explorer reste disponible pour tout le pays.</Text><TouchableOpacity onPress={onRetry} className="mt-3 rounded-xl px-4 py-2" style={{ backgroundColor: colors.elevated }}><Text className="text-sm font-bold" style={{ color: colors.primary }}>Réessayer</Text></TouchableOpacity></View> : null}
+            {!isLoading && !isError && regions.length === 0 ? <Text className="px-4 py-6 text-center text-sm" style={{ color: colors.textSecondary }}>Aucune région disponible pour le moment.</Text> : null}
             {regions.map((region) => {
-              const active = region.id === selectedRegion.id;
+              const active = region.id === selectedRegion?.id;
               return (
                 <TouchableOpacity
                   key={region.id}

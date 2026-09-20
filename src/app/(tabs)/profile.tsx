@@ -19,6 +19,8 @@ const explorerSections = [
   ['Culture et découvertes', [['language-outline', 'Progression linguistique', '/(profile)/language-progress'], ['leaf-outline', 'Mes contributions culturelles', '/(profile)/culture-contributions'], ['trophy-outline', 'Mes défis culturels', '/(profile)/culture-challenges'], ['color-palette-outline', 'Œuvres enregistrées', '/(profile)/saved-artworks'], ['people-circle-outline', 'Artisans suivis', '/(profile)/followed-artisans'], ['receipt-outline', 'Commandes d’œuvres', '/(profile)/artwork-orders']]],
 ] as const;
 
+const explorerPlannerSection = ['Aventures', [['calendar-clear-outline', 'Gérer vos plannings', '/(profile)/plannings']]] as const;
+
 const partnerSections = [
   ['Gestion partenaire', [['business-outline', 'Mes établissements', '/(partner-dashboard)/establishments'], ['calendar-outline', 'Mes événements', '/(partner-dashboard)/events'], ['calendar-number-outline', 'Réservations', '/(partner-dashboard)/reservations'], ['star-outline', 'Avis clients', '/(partner-dashboard)/reviews']]],
   ['Créer et publier', [['add-circle-outline', 'Ajouter un établissement', '/(partner)/add-place-step1'], ['calendar-clear-outline', 'Créer un événement', '/(partner)/add-event-step1'], ['images-outline', 'Nouvelle publication', '/(partner)/publication'], ['book-outline', 'Partager une story', '/(partner)/story']]],
@@ -31,7 +33,9 @@ export default function ProfileScreen() {
   if (!user) return null;
   if (profile.isLoading) return <LoadingState label="Chargement du profil…" />;
   if (profile.isError || !profile.data) return <ErrorState title="Profil indisponible" message="Impossible de récupérer vos informations." retry={() => void profile.refetch()} />;
-  const data = profile.data; const sections = user.user_type === 'partner' ? partnerSections : explorerSections;
+  // Keep saved adventures at the very top of the profile drawer. This is the
+  // entry point users reach from the three-bar Profile menu after saving one.
+  const data = profile.data; const sections = user.user_type === 'partner' ? partnerSections : [explorerPlannerSection, ...explorerSections];
   const share = () => void Share.share({ title: `Profil de ${data.display_name}`, message: `Découvrez le profil de ${data.display_name} sur Yeyamo.`, url: `https://yeyamo.app/@${data.username}` });
   const navigate = (route: string) => { setMenuOpen(false); router.push(route as Href); };
   return <SafeScreen style={{ backgroundColor: colors.background }}><ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 18 }} showsVerticalScrollIndicator={false}>

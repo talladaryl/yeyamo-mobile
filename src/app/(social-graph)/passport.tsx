@@ -1,4 +1,4 @@
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
@@ -12,6 +12,7 @@ import {
   usePassportSummary,
 } from '@/features/social-graph/passport.api';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { ErrorState, LoadingState } from '@/components/ui/ViewStates';
 
 const MODULES = [
   { label: 'Badges', icon: 'trophy', color: '#F59E0B', route: '/(social-graph)/badges' },
@@ -33,12 +34,10 @@ export default function PassportScreen() {
   const rewardsQuery = usePassportRewards();
   const summary = summaryQuery.data;
 
-  if (summaryQuery.isLoading) {
-    return <SafeScreen><ActivityIndicator className="mt-20" color={colors.primary} /></SafeScreen>;
-  }
+  if (summaryQuery.isLoading) return <SafeScreen><LoadingState label="Chargement de votre Passeport…" /></SafeScreen>;
 
   if (summaryQuery.isError || !summary) {
-    return <SafeScreen><View className="flex-1 items-center justify-center px-8"><Icon name="alert-circle-outline" size={42} color={colors.textMuted} /><Text className="mt-4 text-center font-bold" style={{ color: colors.text }}>Impossible de charger votre Passeport</Text><TouchableOpacity onPress={() => void summaryQuery.refetch()} className="mt-4 rounded-xl bg-[#EF4444] px-4 py-3"><Text className="font-bold text-white">Réessayer</Text></TouchableOpacity></View></SafeScreen>;
+    return <SafeScreen><ErrorState title="Impossible de charger votre Passeport" message="Les données de progression doivent être fournies par le backend." retry={() => void summaryQuery.refetch()} /></SafeScreen>;
   }
 
   const progress = summary.nextLevelThreshold > summary.currentLevelThreshold

@@ -58,35 +58,35 @@ function Timeline() {
   const { data } = usePassportHistory();
   const entries = data?.content ?? [];
   if (!entries.length) return <Empty title="Aucun gain XP enregistré." />;
-  return <View>{entries.map((entry, index) => <AnimatedCard key={entry.id} index={index} className="mb-3 p-4"><View className="flex-row items-center"><View className="h-10 w-10 items-center justify-center rounded-full bg-[#FEE2E2]"><Icon name="flash" size={19} color="#EF4444" /></View><View className="ml-3 flex-1"><Text className="font-bold" style={{ color: colors.text }}>{entry.reason}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{new Date(entry.occurredAt).toLocaleString('fr-FR')}</Text></View><Text className="font-extrabold text-[#16A34A]">+{entry.points} XP</Text></View></AnimatedCard>)}</View>;
+  return <View>{entries.map((entry, index) => <AnimatedCard key={entry.id} index={index} className="mb-3 p-4"><View className="flex-row items-center"><View className="h-10 w-10 items-center justify-center rounded-full bg-[#FEE2E2]"><Icon name="flash" size={19} color="#EF4444" /></View><View className="ml-3 flex-1"><Text className="font-bold" style={{ color: colors.text }}>{entry.reason}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{new Date(entry.occurredAt).toLocaleString('fr-FR')}</Text></View><Text className="font-extrabold" style={{ color: entry.points >= 0 ? '#16A34A' : colors.primary }}>{entry.points >= 0 ? '+' : ''}{entry.points} XP</Text></View></AnimatedCard>)}</View>;
 }
 
 function Missions() {
   const colors = useThemeStore((state) => state.colors);
   const { data } = usePassportMissions();
   if (!data?.length) return <Empty title="Aucune mission disponible." />;
-  return <View>{data.map((mission, index) => <AnimatedCard key={mission.id} index={index} className="mb-3 p-4"><Text className="text-base font-extrabold" style={{ color: colors.text }}>{mission.title}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{mission.description}</Text>{mission.objectives.map((objective) => <View key={objective.id} className="mt-4"><View className="mb-1 flex-row justify-between"><Text className="text-xs" style={{ color: colors.text }}>{objective.label}</Text><Text className="text-xs" style={{ color: colors.textSecondary }}>{objective.current}/{objective.target}</Text></View><AnimatedProgressBar value={objective.target ? (objective.current / objective.target) * 100 : 0} height={7} /></View>)}<Text className="mt-4 text-xs font-bold text-[#F59E0B]">{mission.rewardAmount} XP · {mission.userStatus}</Text></AnimatedCard>)}</View>;
+  return <View>{data.map((mission, index) => <AnimatedCard key={mission.id} index={index} className="mb-3 p-4"><Text className="text-base font-extrabold" style={{ color: colors.text }}>{mission.title}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{mission.description}</Text>{mission.objectives.map((objective) => <View key={objective.id} className="mt-4"><View className="mb-1 flex-row justify-between"><Text className="text-xs" style={{ color: colors.text }}>{objective.label}</Text><Text className="text-xs" style={{ color: colors.textSecondary }}>{objective.current}/{objective.target}</Text></View><AnimatedProgressBar value={objective.target ? Math.min(100, Math.max(0, (objective.current / objective.target) * 100)) : 0} height={7} /></View>)}{mission.endsAt ? <Text className="mt-3 text-xs" style={{ color: colors.textSecondary }}>Se termine le {new Date(mission.endsAt).toLocaleDateString('fr-FR')}</Text> : null}<Text className="mt-4 text-xs font-bold text-[#F59E0B]">{mission.rewardAmount} XP · {mission.userStatus}</Text></AnimatedCard>)}</View>;
 }
 
 function Stamps() {
   const colors = useThemeStore((state) => state.colors);
   const { data } = usePassportStamps();
   if (!data?.length) return <Empty title="Aucun tampon de Passeport pour le moment." />;
-  return <View>{data.map((stamp, index) => <AnimatedCard key={stamp.id} index={index} className="mb-3 flex-row items-center p-4"><View className="h-11 w-11 items-center justify-center rounded-xl bg-[#E0F2FE]"><Icon name="location" size={21} color="#0284C7" /></View><View className="ml-3 flex-1"><Text className="font-bold" style={{ color: colors.text }}>Destination {stamp.destinationId}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{new Date(stamp.stampedAt).toLocaleDateString('fr-FR')}</Text></View></AnimatedCard>)}</View>;
+  return <View>{data.map((stamp, index) => <AnimatedCard key={stamp.id} index={index} className="mb-3 flex-row items-center p-4"><View className="h-11 w-11 items-center justify-center rounded-xl bg-[#E0F2FE]"><Icon name="location" size={21} color="#0284C7" /></View><View className="ml-3 flex-1"><Text className="font-bold" style={{ color: colors.text }}>Tampon enregistré</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>Référence destination : {stamp.destinationId}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{new Date(stamp.stampedAt).toLocaleDateString('fr-FR')}</Text></View></AnimatedCard>)}</View>;
 }
 
 function Leaderboard() {
   const colors = useThemeStore((state) => state.colors);
   const { data } = usePassportLeaderboard();
   if (!data?.length) return <Empty title="Classement indisponible pour le moment." />;
-  return <View>{data.map((entry, index) => <AnimatedCard key={entry.userId} index={index} className="mb-2 flex-row items-center p-3"><Text className="w-10 text-center font-extrabold text-[#EF4444]">#{entry.rank}</Text><View className="flex-1"><Text className="font-bold" style={{ color: colors.text }}>Utilisateur YeYamo</Text><Text className="text-xs" style={{ color: colors.textSecondary }}>Niveau {entry.level}</Text></View><Text className="font-extrabold" style={{ color: colors.text }}>{entry.totalXp.toLocaleString('fr-FR')} XP</Text></AnimatedCard>)}</View>;
+  return <View>{data.map((entry, index) => <AnimatedCard key={entry.userId} index={index} className="mb-2 flex-row items-center p-3"><Text className="w-10 text-center font-extrabold text-[#EF4444]">#{entry.rank}</Text><View className="flex-1"><Text className="font-bold" style={{ color: colors.text }}>Participant</Text><Text className="text-xs" style={{ color: colors.textSecondary }}>Niveau {entry.level} · Référence {entry.userId}</Text></View><Text className="font-extrabold" style={{ color: colors.text }}>{entry.totalXp.toLocaleString('fr-FR')} XP</Text></AnimatedCard>)}</View>;
 }
 
 function Rewards() {
   const colors = useThemeStore((state) => state.colors);
   const client = useQueryClient();
   const { data } = usePassportRewards();
-  const claim = useMutation({ mutationFn: passportApi.claimReward, onSuccess: () => void client.invalidateQueries({ queryKey: passportKeys.rewards() }) });
+  const claim = useMutation({ mutationFn: passportApi.claimReward, onSuccess: () => void client.invalidateQueries({ queryKey: passportKeys.all }) });
   if (!data?.length) return <Empty title="Aucune récompense accordée pour le moment." />;
   return <View>{data.map((reward, index) => <AnimatedCard key={reward.id} index={index} className="mb-3 p-4"><Text className="font-extrabold" style={{ color: colors.text }}>{reward.title}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{reward.code}</Text><View className="mt-3 flex-row items-center justify-between"><Text className="text-xs font-bold text-[#EF4444]">{reward.status}</Text>{reward.status === 'AVAILABLE' ? <TouchableOpacity disabled={claim.isPending} onPress={() => claim.mutate(reward.id)} className="rounded-full bg-[#EF4444] px-3 py-2"><Text className="text-xs font-bold text-white">Réclamer</Text></TouchableOpacity> : null}</View></AnimatedCard>)}</View>;
 }

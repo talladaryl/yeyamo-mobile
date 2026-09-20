@@ -1,5 +1,5 @@
 // Hooks personnalisés pour le profil utilisateur
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { profileApi } from './profile.api';
 import { MOCK_USER_PUBLICATIONS, MOCK_USER_FAVORITES, MOCK_USER_EVENTS, MOCK_USER_RESERVATIONS, MOCK_USER_REVIEWS } from './mockData';
@@ -57,6 +57,18 @@ export function useUserReservations() {
       isDemo ? Promise.resolve(MOCK_USER_RESERVATIONS) : profileApi.getUserReservations(),
     staleTime: 1000 * 60 * 5,
     placeholderData: isDemo ? MOCK_USER_RESERVATIONS : undefined,
+  });
+}
+
+export function useCancelUserReservation() {
+  const queryClient = useQueryClient();
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => {
+      if (isDemo) return Promise.reject(new Error('L’annulation de réservation n’est pas disponible en mode démo.'));
+      return profileApi.cancelUserReservation(id, reason);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile', 'backend', 'reservations'] }),
   });
 }
 

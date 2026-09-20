@@ -159,6 +159,10 @@ function RootNavigator() {
         ['settings'],
         ['social'],
         ['notifications'],
+        ['ticketing'],
+        ['passport'],
+        ['countries', 'profile'],
+        ['recommendations'],
         ['collections'],
         ['favorites'],
         ['reservations'],
@@ -310,6 +314,9 @@ function RootNavigator() {
         <Stack.Screen name="(explore)/places" />
         <Stack.Screen name="(explore)/search" />
         <Stack.Screen name="(explore)/map" />
+        <Stack.Screen name="(explore)/preferences" />
+        <Stack.Screen name="(explore)/adventure" />
+        <Stack.Screen name="(explore)/adventure-plan" />
         <Stack.Screen name="(create)" options={{ headerShown: false }} />
         <Stack.Screen name="(partner)/choice" options={{ presentation: 'modal' }} />
         <Stack.Screen name="(partner)/publication" />
