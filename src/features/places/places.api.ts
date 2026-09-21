@@ -14,8 +14,8 @@ import type {
 interface BackendPlaceSummary {
   id: string;
   name: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   address: string | null;
   categoryName: string | null;
 }
@@ -35,7 +35,21 @@ export interface PlaceCategoryReference { id: number; name: string; active: bool
 export interface PlaceRegionReference { id: number; name: string; active: boolean; }
 export interface PlaceCityReference { id: string; regionId: number; name: string; active: boolean; }
 export interface CreatePlaceInput { partnerId: string; categoryId: number; regionId: number; cityId: string; name: string; latitude: number; longitude: number; address?: string; phone?: string; website?: string; status: 'DRAFT' | 'PENDING'; }
-export interface PlaceSuggestionInput { name: string; address: string; description?: string; category?: string; placeType?: string; region?: string; latitude: number; longitude: number; }
+export interface PlaceSuggestionInput {
+  name: string;
+  address: string;
+  description?: string;
+  category?: string;
+  placeType?: string;
+  region?: string;
+  countryCode: string;
+  administrativeAreaId?: string;
+  cityId?: string;
+  localityId?: string;
+  mediaIds?: string[];
+  latitude: number;
+  longitude: number;
+}
 export interface PartnerPlaceReference { id: string; name: string; status: 'PUBLISHED'; }
 export interface PartnerPlacePage {
   content: PartnerPlaceReference[];
@@ -68,8 +82,8 @@ function basePlace(item: BackendPlaceSummary): Place {
     description: null,
     city: null,
     address: item.address,
-    lat: item.latitude,
-    lng: item.longitude,
+    lat: item.latitude ?? null,
+    lng: item.longitude ?? null,
     cover_image_url: null,
     category: item.categoryName,
     rating: null,
@@ -110,8 +124,8 @@ export const placesApi = {
         ...basePlace({
           id: normalizeDiscoveryId(item.sourceId),
           name: item.title,
-          latitude: item.latitude ?? 0,
-          longitude: item.longitude ?? 0,
+          latitude: item.latitude,
+          longitude: item.longitude,
           address: null,
           categoryName: item.categoryCode,
         }),
@@ -154,7 +168,7 @@ export const placesApi = {
   getActivityBooking: (bookingId: EntityId): Promise<BackendBooking> =>
     apiGet<BackendBooking>(`/bookings/${encodeURIComponent(String(bookingId))}`),
 
-  createActivityBooking: ({ slotId, quantity, operator, phoneNumber }: CreateActivityBookingInput): Promise<BackendBooking> =>
+  createActivityBooking: ({ slotId, quantity, operator, phoneNumber, idempotencyKey }: CreateActivityBookingInput): Promise<BackendBooking> =>
     apiPost<BackendBooking>(
       '/bookings',
       {
@@ -162,6 +176,6 @@ export const placesApi = {
         quantity,
         ...(operator && phoneNumber ? { operator, phoneNumber } : {}),
       },
-      { headers: { 'Idempotency-Key': createIdempotencyKey() } },
+      { headers: { 'Idempotency-Key': idempotencyKey ?? createIdempotencyKey() } },
     ),
 };

@@ -8,6 +8,7 @@ import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
 import { YeyamoFormStep } from '@/components/forms/YeyamoFormStep';
 import { Button } from '@/components/ui/Button';
 import { useCreateStore } from '@/features/create/create.store';
+import { useCountryStore } from '@/features/country/country.store';
 import { eventsApi } from '@/features/events/events.api';
 import type { Event } from '@/features/events/types';
 import { postApi } from '@/features/post/post.api';
@@ -25,6 +26,7 @@ export default function EventReviewScreen() {
   const colors = useThemeStore((state) => state.colors);
   const eventForm = useCreateStore((state) => state.eventForm);
   const eventSettings = useCreateStore((state) => state.eventSettings);
+  const countryCode = useCountryStore((state) => state.selectedCountryCode);
   const resetEventForm = useCreateStore((state) => state.resetEventForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export default function EventReviewScreen() {
     const hasCustomLocation = eventForm.location_mode === 'CUSTOM_LOCATION';
     const latitude = Number(eventForm.latitude);
     const longitude = Number(eventForm.longitude);
-    if (!eventForm.title || !eventForm.location || !eventForm.date || !eventForm.time || !eventForm.end_time || !eventForm.max_participants || (hasCustomLocation && (!Number.isFinite(latitude) || !Number.isFinite(longitude)))) {
+    if (!eventForm.title || !eventForm.location || !eventForm.date || !eventForm.time || !eventForm.end_time || !eventForm.max_participants || !countryCode || (hasCustomLocation && (!Number.isFinite(latitude) || !Number.isFinite(longitude)))) {
       setError('Certaines informations de la sortie sont manquantes. Revenez à l’étape concernée pour les compléter.');
       return;
     }
@@ -69,6 +71,8 @@ export default function EventReviewScreen() {
         commentsParticipantsOnly: eventSettings.allow_comments_participants_only,
         showParticipants: eventSettings.show_participants_list,
         sharingEnabled: eventSettings.allow_share_outside,
+        countryCode,
+        socialDistribution: { publishToFeed: Boolean(eventForm.share_to_feed), publishToStory: false },
       });
       setCreatedEvent(created);
       resetEventForm();
@@ -84,7 +88,7 @@ export default function EventReviewScreen() {
       <View className="w-full rounded-3xl border p-6" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
         <Text className="text-center text-3xl">🎉</Text>
         <Text className="mt-4 text-center text-2xl font-extrabold" style={{ color: colors.text }}>Sortie créée</Text>
-        <Text className="mt-3 text-center text-sm leading-6" style={{ color: colors.textSecondary }}>Votre sortie est maintenant disponible sur Yeyamo.</Text>
+        <Text className="mt-3 text-center text-sm leading-6" style={{ color: colors.textSecondary }}>{createdEvent.status === 'PUBLISHED' ? 'Votre sortie est maintenant disponible sur Yeyamo.' : 'Votre sortie a été envoyée pour validation. Elle ne sera visible qu’après publication par le serveur.'}</Text>
         <View className="mt-6 gap-3"><Button label="Voir la sortie" onPress={() => router.replace(`/(events)/${createdEvent.id}` as never)} /><Button label="Retour à Explorer" variant="secondary" onPress={() => router.replace('/(tabs)/explore')} /></View>
       </View>
     </View></YeyamoFormScreen>;

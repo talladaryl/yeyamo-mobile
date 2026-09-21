@@ -26,11 +26,21 @@ import type { DiscoveryItem, DiscoveryType } from '@/features/discovery/discover
 import { discoveryHref } from '@/features/discovery/discovery.navigation';
 import { recommendationAsDiscoveryItem } from '@/features/recommendations/recommendations.types';
 import { useRecommendations } from '@/features/recommendations/recommendations.hooks';
+import { useExplorerFeedback, useRemoveExplorerFeedback } from '@/features/interactions/generic-interactions.hooks';
+import type { ExplorerFeedbackTarget, FeedbackType } from '@/features/interactions/generic-interactions.api';
 import { useUpcomingEvents } from '@/features/events/useEvents';
 import type { Event } from '@/features/events/types';
 import { useExploreLocationStore } from '@/features/explore/explore-location.store';
 
 const HERO_FALLBACK_COLORS = ['#7F1D1D', '#EF4444', '#F59E0B'] as const;
+
+function recommendationFeedbackTarget(type: DiscoveryType): ExplorerFeedbackTarget | undefined {
+  if (type === 'PLACE') return 'PLACE';
+  if (type === 'EVENT') return 'EVENT';
+  if (type === 'EXPERIENCE') return 'EXPERIENCE';
+  if (type === 'CONTENT' || type === 'CULTURE') return 'CULTURE_CONTENT';
+  return undefined;
+}
 
 export default function ExploreHomeScreen() {
   const router = useRouter();
@@ -47,6 +57,9 @@ export default function ExploreHomeScreen() {
   const regions = useMemo(() => regionsQuery.data ?? [], [regionsQuery.data]);
   const selectedRegionId = useExploreLocationStore((state) => state.selectedRegionId);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const [undoFeedback, setUndoFeedback] = useState<{ targetType: ExplorerFeedbackTarget; targetId: string } | null>(null);
+  const feedbackMutation = useExplorerFeedback();
+  const undoFeedbackMutation = useRemoveExplorerFeedback();
 
   const selectedRegion = useMemo(
     () => regions.find((region) => region.id === selectedRegionId),
@@ -109,6 +122,15 @@ export default function ExploreHomeScreen() {
     const href = discoveryHref(item);
     if (href) return router.push(href);
     Alert.alert('Contenu indisponible', 'Ce type de découverte ne possède pas encore d’écran de détail dans l’application.');
+  };
+  const applyRecommendationFeedback = (item: DiscoveryItem, feedbackType: FeedbackType) => {
+    const targetType = recommendationFeedbackTarget(item.type);
+    if (!targetType || feedbackMutation.isPending) return;
+    feedbackMutation.mutate({ targetType, targetId: item.sourceId.split(':').slice(1).join(':') || item.id, feedbackType }, {
+      onSuccess: () => {
+        if (feedbackType === 'NOT_INTERESTED') setUndoFeedback({ targetType, targetId: item.sourceId.split(':').slice(1).join(':') || item.id });
+      },
+    });
   };
 
   const openQuickFilter = ({ type, nearby }: { type?: DiscoveryType; nearby: boolean }) => {
@@ -221,6 +243,8 @@ export default function ExploreHomeScreen() {
             onRetry={() => void recommendations.refetch()}
             onViewAll={() => router.push('/(explore)/search')}
             onPress={openDiscovery}
+            onFeedback={applyRecommendationFeedback}
+            feedbackDisabled={feedbackMutation.isPending}
           />
 
           <TrendRail
@@ -289,6 +313,7 @@ export default function ExploreHomeScreen() {
           router.push('/(create)/suggest-place-step1');
         }}
       />
+      {undoFeedback ? <View className="absolute bottom-5 left-4 right-20 flex-row items-center rounded-2xl border p-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Text className="flex-1 text-xs" style={{ color: colors.text }}>Suggestion masquée</Text><TouchableOpacity disabled={undoFeedbackMutation.isPending} onPress={() => void undoFeedbackMutation.mutateAsync(undoFeedback).then(() => setUndoFeedback(null)).catch(() => Alert.alert('Annulation impossible', 'Le feedback n’a pas pu être annulé.'))} accessibilityRole="button" accessibilityLabel="Annuler le masquage"><Text className="text-xs font-extrabold" style={{ color: undoFeedbackMutation.isPending ? colors.textMuted : colors.primary }}>Annuler</Text></TouchableOpacity></View> : null}
 
     </View>
   );
@@ -396,6 +421,8 @@ function TrendRail({
   children,
   onViewAll,
   onPress,
+  onFeedback,
+  feedbackDisabled = false,
   actionLabel = 'Voir tout',
 }: {
   title: string;
@@ -408,6 +435,8 @@ function TrendRail({
   children?: ReactNode;
   onViewAll: () => void;
   onPress: (item: DiscoveryItem) => void;
+  onFeedback?: (item: DiscoveryItem, feedbackType: FeedbackType) => void;
+  feedbackDisabled?: boolean;
   actionLabel?: string;
 }) {
   const colors = useThemeStore((state) => state.colors);
@@ -428,7 +457,10 @@ function TrendRail({
       {isError && !showDiscovery && !showChildren ? <RailFeedback label="Impossible de charger cette sélection" action="Réessayer" onPress={onRetry} /> : null}
       {!isLoading && !isError && !showDiscovery && !showChildren ? <RailFeedback label="Aucun contenu disponible pour le moment" /> : null}
       {showDiscovery || showChildren ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
-        {showDiscovery ? items!.map((item) => <DiscoveryTrendCard key={item.id} item={item} onPress={() => onPress(item)} />) : children}
+        {showDiscovery ? items!.map((item) => {
+          const canGiveFeedback = Boolean(onFeedback && recommendationFeedbackTarget(item.type));
+          return <DiscoveryTrendCard key={item.id} item={item} onPress={() => onPress(item)} onInterested={canGiveFeedback ? () => onFeedback?.(item, 'INTERESTED') : undefined} onNotInterested={canGiveFeedback ? () => onFeedback?.(item, 'NOT_INTERESTED') : undefined} feedbackDisabled={feedbackDisabled} />;
+        }) : children}
       </ScrollView>
       : null}
     </View>

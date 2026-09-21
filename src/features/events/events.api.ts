@@ -17,6 +17,15 @@ interface BackendEvent {
   locationName?: string | null;
   locationAddress?: string | null;
   visibility?: 'PUBLIC' | 'PRIVATE';
+  status?: 'DRAFT' | 'PENDING' | 'PENDING_REVIEW' | 'PUBLISHED' | 'SUSPENDED' | 'REJECTED' | 'ARCHIVED' | 'CANCELLED' | 'COMPLETED';
+  socialDistribution?: {
+    publishToFeed: boolean;
+    publishToStory: boolean;
+    feedStatus?: string;
+    storyStatus?: string;
+    feedPostId?: string | null;
+    storyId?: string | null;
+  } | null;
 }
 
 export interface CreateEventInput {
@@ -36,6 +45,11 @@ export interface CreateEventInput {
   commentsParticipantsOnly?: boolean;
   showParticipants?: boolean;
   sharingEnabled?: boolean;
+  countryCode?: string;
+  socialDistribution?: {
+    publishToFeed: boolean;
+    publishToStory: boolean;
+  };
   /** Retained for existing partner creation screens; public API ignores client publishing status. */
   status?: string;
 }
@@ -57,6 +71,15 @@ function mapEvent(event: BackendEvent): Event {
     is_participating: false,
     price: null,
     created_at: event.createdAt ?? event.startAt,
+    status: event.status,
+    social_distribution: event.socialDistribution ? {
+      publishToFeed: event.socialDistribution.publishToFeed,
+      publishToStory: event.socialDistribution.publishToStory,
+      feedStatus: event.socialDistribution.feedStatus ?? 'NOT_REQUESTED',
+      storyStatus: event.socialDistribution.storyStatus ?? 'NOT_REQUESTED',
+      feedPostId: event.socialDistribution.feedPostId,
+      storyId: event.socialDistribution.storyId,
+    } : undefined,
   };
 }
 

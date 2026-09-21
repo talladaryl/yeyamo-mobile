@@ -11,6 +11,13 @@ import {
 } from './mockData';
 import { socialApi } from './social.api';
 import type { SocialSettings } from './types';
+import { FEED_QUERY_KEY } from '@/features/feed/useFeed';
+
+export const socialKeys = {
+  all: ['social'] as const,
+  muted: (mode: 'demo' | 'backend') => ['social', mode, 'muted'] as const,
+  blocked: (mode: 'demo' | 'backend') => ['social', mode, 'blocked'] as const,
+};
 
 function useDemoMode() {
   return useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
@@ -50,6 +57,43 @@ export function useFollowing() {
     queryFn: () => isDemo ? Promise.resolve(mockFollowing) : socialApi.getFollowing(),
     placeholderData: isDemo ? mockFollowing : undefined,
   });
+}
+
+export function useMutedUsers() {
+  const isDemo = useDemoMode();
+  return useQuery({
+    queryKey: socialKeys.muted(isDemo ? 'demo' : 'backend'),
+    queryFn: () => isDemo ? Promise.resolve([]) : socialApi.getMutedUsers(),
+  });
+}
+
+export function useBlockedUsers() {
+  const isDemo = useDemoMode();
+  return useQuery({
+    queryKey: socialKeys.blocked(isDemo ? 'demo' : 'backend'),
+    queryFn: () => isDemo ? Promise.resolve([]) : socialApi.getBlockedUsers(),
+  });
+}
+
+/** Mute and block are separate server-side relationships. Their state comes
+ * from the two backend lists, never from a profile-card-local boolean. */
+export function useSocialSafetyActions() {
+  const isDemo = useDemoMode();
+  const queryClient = useQueryClient();
+  const reconcile = () => {
+    queryClient.invalidateQueries({ queryKey: socialKeys.muted(isDemo ? 'demo' : 'backend') });
+    queryClient.invalidateQueries({ queryKey: socialKeys.blocked(isDemo ? 'demo' : 'backend') });
+    // Mute currently affects the personalized feed; block can also remove
+    // social relationships. Reconcile only these targeted caches.
+    queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: ['social', isDemo ? 'demo' : 'backend', 'following'] });
+    queryClient.invalidateQueries({ queryKey: ['social', isDemo ? 'demo' : 'backend', 'followers'] });
+  };
+  const mute = useMutation({ mutationFn: (userId: EntityId) => isDemo ? Promise.resolve() : socialApi.muteUser(userId), onSuccess: reconcile });
+  const unmute = useMutation({ mutationFn: (userId: EntityId) => isDemo ? Promise.resolve() : socialApi.unmuteUser(userId), onSuccess: reconcile });
+  const block = useMutation({ mutationFn: (userId: EntityId) => isDemo ? Promise.resolve() : socialApi.blockUser(userId), onSuccess: reconcile });
+  const unblock = useMutation({ mutationFn: (userId: EntityId) => isDemo ? Promise.resolve() : socialApi.unblockUser(userId), onSuccess: reconcile });
+  return { mute, unmute, block, unblock };
 }
 
 export function useUserSearch(query: string) {

@@ -148,6 +148,32 @@ export const socialApi = {
     await apiClient.delete(`/users/social/followers/${userId}`);
   },
 
+  getMutedUsers: async (): Promise<FollowUser[]> => {
+    const { data } = await apiClient.get<BackendProfileSummary[]>('/users/social/muted');
+    return data.map(mapFollowUser);
+  },
+
+  getBlockedUsers: async (): Promise<FollowUser[]> => {
+    const { data } = await apiClient.get<BackendProfileSummary[]>('/users/social/blocked');
+    return data.map(mapFollowUser);
+  },
+
+  muteUser: async (userId: EntityId): Promise<void> => {
+    await apiClient.put(`/users/social/${userId}/mute`);
+  },
+
+  unmuteUser: async (userId: EntityId): Promise<void> => {
+    await apiClient.delete(`/users/social/${userId}/mute`);
+  },
+
+  blockUser: async (userId: EntityId): Promise<void> => {
+    await apiClient.post(`/users/social/${userId}/block`);
+  },
+
+  unblockUser: async (userId: EntityId): Promise<void> => {
+    await apiClient.delete(`/users/social/${userId}/block`);
+  },
+
   getSettings: async (): Promise<SocialSettings> => {
     const { data } = await apiClient.get<BackendSocialSettings>('/users/social/settings');
     return mapSettings(data);

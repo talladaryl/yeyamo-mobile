@@ -27,6 +27,7 @@ export default function SuggestPlaceStep2Screen() {
   const cities = usePlaceCities(regionId);
   const [region, setRegion] = useState(initial.region ?? '');
   const [city, setCity] = useState(initial.city ?? '');
+  const [cityId, setCityId] = useState<string | undefined>(initial.city_id);
   const [address, setAddress] = useState(initial.address ?? '');
   const [coordinates, setCoordinates] = useState<Coordinates | null>(initial.coordinates ?? null);
 
@@ -37,14 +38,18 @@ export default function SuggestPlaceStep2Screen() {
     setCity('');
   };
 
-  const changeCity = (value: string) => setCity((cities.data ?? []).find((item) => item.id === value)?.name ?? '');
+  const changeCity = (value: string) => {
+    const selected = (cities.data ?? []).find((item) => item.id === value);
+    setCityId(selected?.id);
+    setCity(selected?.name ?? '');
+  };
 
   const continueToDetails = () => {
     if (!address.trim() || !coordinates) {
       Alert.alert('Localisation incomplète', 'Renseignez l’adresse puis touchez la carte pour positionner le lieu.');
       return;
     }
-    setPlaceForm({ address: address.trim(), region, region_id: regionId, city, coordinates, manual_address: true });
+    setPlaceForm({ address: address.trim(), region, region_id: regionId, city, city_id: cityId, coordinates, manual_address: true });
     setPlaceStep(3);
     router.push('/(create)/suggest-place-details');
   };

@@ -12,7 +12,9 @@ import { Input } from '@/components/ui/Input';
 import { Icon } from '@/components/ui/Icon';
 import { useCountries } from '@/features/country/country.hooks';
 import { useCountryStore } from '@/features/country/country.store';
-import { useAdventureStore, type AdventureBudgetTier, type AdventurePartyType } from '@/features/explore/adventure.store';
+import { usePreviewAdventurePlan } from '@/features/explore/adventure.hooks';
+import { useAdventureStore } from '@/features/explore/adventure.store';
+import type { AdventureBudgetTier, AdventurePartyType, AdventurePlanRequest } from '@/features/explore/adventure.types';
 import { useCategories } from '@/features/explore/useExplore';
 import { useThemeStore } from '@/features/theme/theme.store';
 
@@ -51,7 +53,8 @@ export default function CreateAdventureScreen() {
   const profileCountryCode = useCountryStore((state) => state.selectedCountryCode) ?? '';
   const countries = useCountries();
   const categories = useCategories();
-  const setDraft = useAdventureStore((state) => state.setDraft);
+  const setPreviewDraft = useAdventureStore((state) => state.setPreviewDraft);
+  const previewAdventurePlan = usePreviewAdventurePlan();
   const [step, setStep] = useState(1);
   const [countryCode, setCountryCode] = useState(profileCountryCode);
   const [startDate, setStartDate] = useState('');
@@ -88,7 +91,7 @@ export default function CreateAdventureScreen() {
         ? Boolean(partyType) && timeRangeValid
         : interestRequirementSatisfied && Boolean(budgetTier) && (budgetTier !== 'CUSTOM' || customBudgetValid);
 
-  const continueForm = () => {
+  const continueForm = async () => {
     if (!canContinue) return;
     if (step < 4) {
       setStep((current) => current + 1);
@@ -96,29 +99,35 @@ export default function CreateAdventureScreen() {
     }
     if (!selectedCountry || !partyType || !budgetTier) return;
     const budget = budgetTier === 'STANDARD'
-      ? { minimumBudget: 5000, maximumBudget: 20000 }
+      ? { tier: budgetTier, minimumAmount: 5000, maximumAmount: 20000, currencyCode }
       : budgetTier === 'MEDIUM'
-        ? { minimumBudget: 20000, maximumBudget: 50000 }
+        ? { tier: budgetTier, minimumAmount: 20000, maximumAmount: 50000, currencyCode }
         : budgetTier === 'PREMIUM'
-          ? { minimumBudget: 50000, maximumBudget: undefined }
-          : { minimumBudget: undefined, maximumBudget: customBudgetValue };
-    setDraft({
-      id: `adventure-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-      createdAt: new Date().toISOString(),
+          ? { tier: budgetTier, minimumAmount: 50000, currencyCode }
+          : { tier: budgetTier, maximumAmount: customBudgetValue, currencyCode };
+    const request: AdventurePlanRequest = {
       countryCode,
-      countryName: selectedCountry.name,
       startDate,
       endDate,
       startTime,
       endTime,
       partyType,
       interestCodes,
-      interestLabels: (categories.data ?? []).filter((category) => interestCodes.includes(category.id)).map((category) => category.label),
-      budgetTier,
-      ...budget,
-      currencyCode,
-    });
-    router.push('/(explore)/adventure-plan');
+      budget,
+    };
+    try {
+      const preview = await previewAdventurePlan.mutateAsync(request);
+      setPreviewDraft({
+        request,
+        countryName: selectedCountry.name,
+        interestLabels: (categories.data ?? []).filter((category) => interestCodes.includes(category.id)).map((category) => category.label),
+        preview,
+      });
+      router.push('/(explore)/adventure-plan');
+    } catch {
+      // The next screen never fabricates a planning: keep the form open so the
+      // user can retry the real server preview.
+    }
   };
 
   const back = () => {
@@ -136,7 +145,7 @@ export default function CreateAdventureScreen() {
         <TouchableOpacity onPress={back} className="h-11 w-11 items-center justify-center" accessibilityRole="button" accessibilityLabel="Retour"><Icon name="chevron-back" size={26} color={colors.text} /></TouchableOpacity>
         <View className="ml-1 flex-1"><Text className="text-lg font-extrabold" style={{ color: colors.text }}>Nouvelle aventure</Text><Text className="mt-0.5 text-xs" style={{ color: colors.textSecondary }}>Préparez vos activités jour par jour</Text></View>
       </View>
-      <YeyamoFormScreen footer={<YeyamoFormFooter onBack={step > 1 ? back : undefined} onContinue={continueForm} continueLabel={step === 4 ? 'Voir mon planning' : 'Continuer'} disabled={!canContinue} />}>
+      <YeyamoFormScreen footer={<YeyamoFormFooter onBack={step > 1 ? back : undefined} onContinue={() => void continueForm()} continueLabel={step === 4 ? 'Voir mon planning' : 'Continuer'} disabled={!canContinue || previewAdventurePlan.isPending} loading={previewAdventurePlan.isPending} />}>
         <View className="px-4 pt-5"><YeyamoFormProgress currentStep={step} totalSteps={4} label="Créer une aventure" /></View>
 
         {step === 1 ? <YeyamoFormStep title="Dans quel pays partez-vous ?" description="Ce choix ne modifie pas votre pays principal dans Explorer.">
@@ -162,6 +171,7 @@ export default function CreateAdventureScreen() {
           <Text className="mb-2 mt-7 text-sm font-semibold" style={{ color: colors.textSecondary }}>Budget *</Text>
           <View className="gap-3">{BUDGETS.map((option) => <BudgetChoice key={option.value} {...option} currencyCode={currencyCode} selected={budgetTier === option.value} onPress={() => setBudgetTier(option.value)} />)}</View>
           {budgetTier === 'CUSTOM' ? <Input label={currencyCode ? `Budget maximum (${currencyCode})` : 'Budget maximum'} value={customBudget} onChangeText={setCustomBudget} keyboardType="decimal-pad" placeholder="Ex. 35000" containerClassName="mt-4" error={customBudget && !customBudgetValid ? 'Saisissez un montant positif.' : undefined} /> : null}
+          {previewAdventurePlan.isError ? <Text className="mt-4 text-sm" style={{ color: colors.primary }}>La prévisualisation n’a pas pu être générée. Réessayez.</Text> : null}
         </YeyamoFormStep> : null}
       </YeyamoFormScreen>
     </SafeAreaView>

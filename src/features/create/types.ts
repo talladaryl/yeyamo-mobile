@@ -56,6 +56,7 @@ export interface SuggestPlaceForm {
     longitude: number;
   };
   city: string;
+  city_id?: string;
   region_id?: number;
   route_details: string;
   

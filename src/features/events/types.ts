@@ -27,6 +27,16 @@ export interface Event {
   created_at: string;
   program?: EventProgramItem[];
   ticket_types?: EventTicket[];
+  /** Server lifecycle state. A newly submitted event is not locally published. */
+  status?: 'DRAFT' | 'PENDING' | 'PENDING_REVIEW' | 'PUBLISHED' | 'SUSPENDED' | 'REJECTED' | 'ARCHIVED' | 'CANCELLED' | 'COMPLETED';
+  social_distribution?: {
+    publishToFeed: boolean;
+    publishToStory: boolean;
+    feedStatus: string;
+    storyStatus: string;
+    feedPostId?: string | null;
+    storyId?: string | null;
+  };
 }
 
 export interface EventProgramItem {

@@ -6,6 +6,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { MediaGrid } from '@/components/profile/MediaGrid';
+import { ProfileSafetySheet } from '@/components/profile/ProfileSafetySheet';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useCreateConversation } from '@/features/chat/useChat';
@@ -47,6 +48,7 @@ export default function PublicProfileScreen() {
   const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<PublicProfileTab>('posts');
   const [isFollowing, setFollowing] = useState(false);
+  const [safetySheetOpen, setSafetySheetOpen] = useState(false);
   const { data: users = [], isLoading } = useUserSearch(username);
   const { follow, unfollow } = useFollowActions();
   const createConversation = useCreateConversation();
@@ -168,7 +170,7 @@ export default function PublicProfileScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} className="h-11 w-11 items-center justify-center" accessibilityLabel="Retour"><Icon name="chevron-back" size={27} color={colors.text} /></TouchableOpacity>
           <Text className="flex-1 text-center text-base font-extrabold" style={{ color: colors.text }}>@{profile.username}</Text>
           <TouchableOpacity onPress={() => void shareProfile()} className="h-11 w-11 items-center justify-center" accessibilityLabel="Partager ce profil"><Icon name="arrow-redo-outline" size={26} color={colors.text} /></TouchableOpacity>
-          <TouchableOpacity onPress={() => Alert.alert('Profil', 'Bloquer, masquer ou signaler ce profil.')} className="h-11 w-11 items-center justify-center" accessibilityLabel="Plus d’options"><Icon name="ellipsis-horizontal" size={25} color={colors.text} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => setSafetySheetOpen(true)} className="h-11 w-11 items-center justify-center" accessibilityRole="button" accessibilityLabel="Plus d’options"><Icon name="ellipsis-horizontal" size={25} color={colors.text} /></TouchableOpacity>
         </View>
 
         <View className="items-center px-5 pb-5 pt-3">
@@ -200,6 +202,7 @@ export default function PublicProfileScreen() {
           <View className="items-center px-8 py-20"><Icon name={PUBLIC_TABS.find((tab) => tab.id === activeTab)?.icon ?? 'grid-outline'} size={42} color={colors.textMuted} /><Text className="mt-4 text-base font-bold" style={{ color: colors.text }}>Aucun contenu public</Text><Text className="mt-1 text-center text-sm" style={{ color: colors.textSecondary }}>Les contenus visibles dans cette section apparaîtront ici.</Text></View>
         )}
       </ScrollView>
+      <ProfileSafetySheet visible={safetySheetOpen} onClose={() => setSafetySheetOpen(false)} profileId={profile.id} displayName={profile.display_name} />
     </SafeScreen>
   );
 }

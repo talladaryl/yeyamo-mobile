@@ -51,6 +51,10 @@ interface BackendBooking {
   automaticRefundAvailable: boolean;
 }
 
+interface SpringPage<T> {
+  content: T[];
+}
+
 interface BackendReview {
   id: string;
   placeId: string;
@@ -163,8 +167,8 @@ export const profileApi = {
   },
 
   getUserReservations: async (): Promise<Reservation[]> => {
-    const { data } = await apiClient.get<BackendBooking[]>('/bookings/me');
-    return data.map((booking) => ({
+    const { data } = await apiClient.get<SpringPage<BackendBooking>>('/bookings/me', { params: { page: 0, size: 50 } });
+    return data.content.map((booking) => ({
       id: booking.id,
       reference: booking.reference,
       activity_id: booking.activityId,

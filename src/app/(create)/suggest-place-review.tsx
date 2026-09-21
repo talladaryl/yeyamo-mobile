@@ -24,7 +24,7 @@ export default function SuggestPlaceReviewScreen() {
 
   const submit = async () => {
     const coordinates = placeForm.coordinates;
-    if (!placeForm.name?.trim() || !placeForm.address?.trim() || !coordinates) {
+    if (!placeForm.name?.trim() || !placeForm.address?.trim() || !coordinates || !countryCode) {
       setError('Le nom, l’adresse et la position du lieu sont requis.');
       return;
     }
@@ -38,6 +38,8 @@ export default function SuggestPlaceReviewScreen() {
         category: placeForm.category?.trim() || undefined,
         placeType: placeForm.type?.trim() || undefined,
         region: placeForm.region?.trim() || undefined,
+        countryCode,
+        cityId: placeForm.city_id,
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
       });

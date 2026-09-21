@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -11,6 +11,7 @@ import { experiencesApi } from '@/features/experiences/experiences.api';
 import { useActivityAvailability, useActivityBookingStatus, useCreateActivityBooking } from '@/features/places/usePlaceActivities';
 import type { BackendBooking } from '@/features/places/types';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { createIdempotencyKey } from '@/services/api/contracts';
 
 const terminalStatuses = ['CONFIRMED', 'CANCELLED', 'EXPIRED', 'COMPLETED'];
 const formatDate = (value: string) => new Date(value).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
@@ -28,6 +29,7 @@ export default function ExperienceBooking() {
   const [createdBooking, setCreatedBooking] = useState<BackendBooking | null>(null);
   const [shouldPoll, setShouldPoll] = useState(false);
   const [pollingTimedOut, setPollingTimedOut] = useState(false);
+  const bookingAttempt = useRef<{ signature: string; key: string } | null>(null);
   const status = useActivityBookingStatus(bookingId ?? undefined, shouldPoll);
   const slots = (availability.data ?? []).filter((slot) => slot.activityType === 'EXPERIENCE');
   const selectedSlot = slots.find((slot) => slot.id === selectedSlotId) ?? slots.find((slot) => slot.available > 0) ?? null;
@@ -46,8 +48,12 @@ export default function ExperienceBooking() {
 
   const submit = async (payment?: MobileMoneyPaymentValues) => {
     if (!selectedSlot || selectedSlot.available < quantity || (selectedSlot.isPaid && !payment)) return;
+    const signature = `${selectedSlot.id}:${quantity}:${payment?.operator ?? ''}:${payment?.phoneNumber ?? ''}`;
+    if (bookingAttempt.current?.signature !== signature) {
+      bookingAttempt.current = { signature, key: createIdempotencyKey() };
+    }
     try {
-      const result = await booking.mutateAsync({ slotId: selectedSlot.id, quantity, ...(payment ?? {}) });
+      const result = await booking.mutateAsync({ slotId: selectedSlot.id, quantity, ...(payment ?? {}), idempotencyKey: bookingAttempt.current.key });
       setCreatedBooking(result);
       if (result.status === 'PENDING' || result.paymentStatus === 'PENDING') {
         setBookingId(result.id); setPollingTimedOut(false); setShouldPoll(true); return;
@@ -57,7 +63,7 @@ export default function ExperienceBooking() {
       Alert.alert('Réservation impossible', error instanceof Error ? error.message : 'Réessayez dans un instant.');
     }
   };
-  const resetPayment = () => { setBookingId(null); setCreatedBooking(null); setShouldPoll(false); setPollingTimedOut(false); };
+  const resetPayment = () => { bookingAttempt.current = null; setBookingId(null); setCreatedBooking(null); setShouldPoll(false); setPollingTimedOut(false); };
 
   if (experience.isLoading || availability.isLoading) return <SafeScreen><View className="flex-1 items-center justify-center"><ActivityIndicator color={colors.primary} /></View></SafeScreen>;
   if (experience.isError || !experience.data) return <SafeScreen><View className="flex-1 items-center justify-center px-8"><Text className="text-center" style={{ color: colors.textSecondary }}>Cette expérience est indisponible pour le moment.</Text><Button label="Retour" onPress={() => router.back()} /></View></SafeScreen>;

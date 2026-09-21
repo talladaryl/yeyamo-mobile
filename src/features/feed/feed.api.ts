@@ -27,6 +27,7 @@ interface BackendFeedItem {
 interface BackendFeedPage {
   page: number;
   size: number;
+  hasNext: boolean;
   items: BackendFeedItem[];
 }
 
@@ -132,7 +133,7 @@ export const feedApi = {
       posts,
       response.page,
       response.size,
-      (response.items ?? []).length === response.size,
+      response.hasNext,
     );
   },
 

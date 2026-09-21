@@ -117,4 +117,6 @@ export interface CreateActivityBookingInput {
   quantity: number;
   operator?: CashInOperator;
   phoneNumber?: string;
+  /** Reused by a user-initiated retry of the same booking attempt. */
+  idempotencyKey?: string;
 }

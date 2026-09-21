@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -13,6 +13,7 @@ import {
 } from '@/features/places/usePlaceActivities';
 import type { BackendBooking } from '@/features/places/types';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { createIdempotencyKey } from '@/services/api/contracts';
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString();
@@ -32,6 +33,7 @@ export default function ActivityBookingScreen() {
   const [createdBooking, setCreatedBooking] = useState<BackendBooking | null>(null);
   const [shouldPoll, setShouldPoll] = useState(false);
   const [pollingTimedOut, setPollingTimedOut] = useState(false);
+  const bookingAttempt = useRef<{ signature: string; key: string } | null>(null);
   const bookingStatus = useActivityBookingStatus(bookingId ?? undefined, shouldPoll);
   const slots = availability.data ?? [];
   const selectedSlot = slots.find((slot) => slot.id === selectedSlotId)
@@ -64,11 +66,17 @@ export default function ActivityBookingScreen() {
     if (!selectedSlot || selectedSlot.available < quantity) return;
     if (selectedSlot.isPaid && !payment) return;
 
+    const signature = `${selectedSlot.id}:${quantity}:${payment?.operator ?? ''}:${payment?.phoneNumber ?? ''}`;
+    if (bookingAttempt.current?.signature !== signature) {
+      bookingAttempt.current = { signature, key: createIdempotencyKey() };
+    }
+
     try {
       const result = await booking.mutateAsync({
         slotId: selectedSlot.id,
         quantity,
         ...(payment ?? {}),
+        idempotencyKey: bookingAttempt.current.key,
       });
       setCreatedBooking(result);
       if (result.status === 'PENDING' || result.paymentStatus === 'PENDING') {
@@ -86,6 +94,7 @@ export default function ActivityBookingScreen() {
   };
 
   const resetPayment = () => {
+    bookingAttempt.current = null;
     setBookingId(null);
     setCreatedBooking(null);
     setShouldPoll(false);
