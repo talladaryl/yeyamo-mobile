@@ -17,6 +17,8 @@ export interface Event {
   organizer?: UserSummary | null;
   participants_count: number;
   max_participants?: number;
+  /** Derived from the server's capacity and confirmed registrations only. */
+  remaining_capacity?: number;
   participants?: UserSummary[];
   interested_count?: number;
   is_participating: boolean;

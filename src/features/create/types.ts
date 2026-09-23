@@ -28,6 +28,7 @@ export interface CreateEventForm {
   end_time: string;
   max_participants: number;
   share_to_feed: boolean;
+  share_to_story: boolean;
 }
 
 export interface EventSettings {
@@ -49,6 +50,7 @@ export interface SuggestPlaceForm {
   type: string;
   description: string;
   region: string;
+  administrative_area_id?: string;
   
   // Step 2 - Location
   coordinates: {
@@ -57,11 +59,13 @@ export interface SuggestPlaceForm {
   };
   city: string;
   city_id?: string;
-  region_id?: number;
+  locality: string;
+  locality_id?: string;
   route_details: string;
   
   // Step 3+ (à compléter selon les étapes suivantes)
-  images?: string[];
+  /** Local upload drafts. Server media identifiers are created at final submit. */
+  media_assets?: SuggestionMediaDraft[];
   amenities?: string[];
   opening_hours?: string;
   phone?: string;
@@ -110,6 +114,13 @@ export interface PublicationForm {
   media_assets?: PublicationMediaDraft[];
   location?: string;
   tags?: string[];
+}
+
+export interface SuggestionMediaDraft {
+  uri: string;
+  mimeType?: string | null;
+  fileName?: string | null;
+  type: 'image' | 'video';
 }
 
 export interface PublicationMediaDraft {

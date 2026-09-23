@@ -1,6 +1,6 @@
-import { apiGet, apiPost } from '@/services/api/client';
+import { apiDelete, apiGet, apiPost } from '@/services/api/client';
 import { normalizeDiscoveryId } from '@/features/discovery/discovery.navigation';
-import { createIdempotencyKey, toPaginatedResponse } from '@/services/api/contracts';
+import { createIdempotencyKey, toPaginatedResponse, type SpringPage } from '@/services/api/contracts';
 import type { EntityId, PaginatedResponse } from '@/types/api.types';
 import type {
   BackendActivity,
@@ -47,6 +47,58 @@ export interface PlaceSuggestionInput {
   cityId?: string;
   localityId?: string;
   mediaIds?: string[];
+  latitude: number;
+  longitude: number;
+}
+
+export interface PlaceSuggestionMedia {
+  mediaId: string;
+  type: 'IMAGE' | 'VIDEO';
+  contentType: string | null;
+  contentUrl: string | null;
+  thumbnailUrl: string | null;
+  displayOrder: number;
+}
+
+/** Exact public response from place-service for a moderated suggestion. */
+export interface PlaceSuggestion {
+  id: string;
+  submitterUserId: string;
+  name: string;
+  address: string;
+  description: string | null;
+  category: string | null;
+  placeType: string | null;
+  region: string | null;
+  countryCode: string;
+  latitude: number;
+  longitude: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  canonicalPlaceId: string | null;
+  moderationReason: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  administrativeAreaId: string | null;
+  cityId: string | null;
+  localityId: string | null;
+  media: PlaceSuggestionMedia[];
+}
+
+export interface PlaceSuggestionDuplicateCandidate {
+  kind: 'CANONICAL_PLACE' | 'PENDING_SUGGESTION';
+  id: string;
+  name: string;
+  address: string;
+  distanceMeters: number;
+  certain: boolean;
+}
+
+export interface PlaceSuggestionDuplicateCheckInput {
+  name: string;
+  address: string;
+  countryCode: string;
+  cityId?: string;
   latitude: number;
   longitude: number;
 }
@@ -99,8 +151,12 @@ export const placesApi = {
   cities: (regionId: number) => apiGet<PlaceCityReference[]>(`/cities/region/${regionId}`),
   myPlaces: () => apiGet<PartnerPlacePage>('/places/me?page=0&size=20'),
   createPlace: (input: CreatePlaceInput) => apiPost<BackendPlace>('/places', input),
-  suggestPlace: (input: PlaceSuggestionInput) => apiPost('/place-suggestions', input),
-  myPlaceSuggestions: () => apiGet('/place-suggestions/me?page=0&size=20'),
+  suggestPlace: (input: PlaceSuggestionInput) => apiPost<PlaceSuggestion>('/place-suggestions', input),
+  checkPlaceSuggestionDuplicates: (input: PlaceSuggestionDuplicateCheckInput) =>
+    apiPost<{ possibleDuplicates: PlaceSuggestionDuplicateCandidate[] }>('/place-suggestions/check-duplicates', input),
+  myPlaceSuggestions: (page = 0, size = 20) =>
+    apiGet<SpringPage<PlaceSuggestion>>('/place-suggestions/me', { params: { page, size } }),
+  deleteOwnedMedia: (mediaId: string) => apiDelete<void>(`/media/${encodeURIComponent(mediaId)}`),
   getPlaces: async (query: PlacesQuery): Promise<PaginatedResponse<Place>> => {
     const page = query.page ?? 0;
     if (query.lat != null && query.lng != null) {

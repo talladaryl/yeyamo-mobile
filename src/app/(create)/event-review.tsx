@@ -72,7 +72,7 @@ export default function EventReviewScreen() {
         showParticipants: eventSettings.show_participants_list,
         sharingEnabled: eventSettings.allow_share_outside,
         countryCode,
-        socialDistribution: { publishToFeed: Boolean(eventForm.share_to_feed), publishToStory: false },
+        socialDistribution: { publishToFeed: Boolean(eventForm.share_to_feed), publishToStory: Boolean(eventForm.share_to_story) },
       });
       setCreatedEvent(created);
       resetEventForm();
@@ -87,8 +87,10 @@ export default function EventReviewScreen() {
     return <YeyamoFormScreen><View className="flex-1 items-center justify-center px-6">
       <View className="w-full rounded-3xl border p-6" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
         <Text className="text-center text-3xl">🎉</Text>
-        <Text className="mt-4 text-center text-2xl font-extrabold" style={{ color: colors.text }}>Sortie créée</Text>
-        <Text className="mt-3 text-center text-sm leading-6" style={{ color: colors.textSecondary }}>{createdEvent.status === 'PUBLISHED' ? 'Votre sortie est maintenant disponible sur Yeyamo.' : 'Votre sortie a été envoyée pour validation. Elle ne sera visible qu’après publication par le serveur.'}</Text>
+        <Text className="mt-4 text-center text-2xl font-extrabold" style={{ color: colors.text }}>{createdEvent.status === 'PUBLISHED' ? 'Sortie publiée' : 'Sortie soumise'}</Text>
+        <Text className="mt-3 text-center text-sm leading-6" style={{ color: colors.textSecondary }}>{createdEvent.status === 'PUBLISHED' ? 'Votre sortie est maintenant disponible sur Yeyamo.' : 'Votre sortie est en attente de modération. Elle ne sera visible qu’après publication par le serveur.'}</Text>
+        <Text className="mt-2 text-center text-xs" style={{ color: colors.textMuted }}>Statut serveur : {createdEvent.status ?? 'PENDING'}</Text>
+        {createdEvent.social_distribution?.publishToFeed || createdEvent.social_distribution?.publishToStory ? <Text className="mt-2 text-center text-xs leading-5" style={{ color: colors.textMuted }}>La diffusion Feed/Story demandée reste en attente de la publication et de son traitement serveur.</Text> : null}
         <View className="mt-6 gap-3"><Button label="Voir la sortie" onPress={() => router.replace(`/(events)/${createdEvent.id}` as never)} /><Button label="Retour à Explorer" variant="secondary" onPress={() => router.replace('/(tabs)/explore')} /></View>
       </View>
     </View></YeyamoFormScreen>;
@@ -116,7 +118,7 @@ export default function EventReviewScreen() {
         <SummaryCard title="Visibilité" editLabel="Modifier la visibilité" onPress={() => router.push('/(create)/event-settings')}>
           <SummaryRow label="Visibilité" value={eventSettings.visibility === 'public' ? 'Public' : 'Sur invitation'} />
           <SummaryRow label="Partage extérieur" value={eventSettings.allow_share_outside ? 'Autorisé' : 'Désactivé'} />
-          {eventForm.share_to_feed ? <Text className="mt-3 text-xs leading-5" style={{ color: colors.textSecondary }}>La préférence de partage Feed est enregistrée dans le brouillon uniquement : aucune publication n’est créée par le contrat actuel.</Text> : null}
+          {eventForm.share_to_feed || eventForm.share_to_story ? <Text className="mt-3 text-xs leading-5" style={{ color: colors.textSecondary }}>La diffusion demandée est transmise au serveur. Elle ne crée ni post ni Story localement et sera traitée après publication.</Text> : null}
         </SummaryCard>
       </View>
     </YeyamoFormStep>

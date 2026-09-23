@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EntityId } from '@/types/api.types';
 import { placesApi } from './places.api';
 import type { BackendActivity, BackendActivityPage, BackendBooking, CreateActivityBookingInput } from './types';
@@ -23,7 +23,15 @@ export function useActivityAvailability(activityId: EntityId | undefined) {
 }
 
 export function useCreateActivityBooking() {
-  return useMutation({ mutationFn: (input: CreateActivityBookingInput) => placesApi.createActivityBooking(input) });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateActivityBookingInput) => placesApi.createActivityBooking(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['activity-availability'] });
+      void queryClient.invalidateQueries({ queryKey: ['place-activities'] });
+      void queryClient.invalidateQueries({ queryKey: ['reservations', 'backend'] });
+    },
+  });
 }
 
 export function useActivityBookingStatus(bookingId: EntityId | undefined, shouldPoll: boolean) {
@@ -31,7 +39,11 @@ export function useActivityBookingStatus(bookingId: EntityId | undefined, should
     queryKey: ['activity-booking', 'backend', bookingId],
     queryFn: () => placesApi.getActivityBooking(bookingId!),
     enabled: Boolean(bookingId) && shouldPoll,
-    refetchInterval: 5_000,
+    refetchInterval: (query) => {
+      const booking = query.state.data;
+      return booking && ['CONFIRMED', 'CANCELLED', 'COMPLETED'].includes(booking.status) ? false : 5_000;
+    },
+    refetchIntervalInBackground: false,
     staleTime: 0,
   });
 }

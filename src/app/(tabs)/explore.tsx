@@ -35,10 +35,11 @@ import { useExploreLocationStore } from '@/features/explore/explore-location.sto
 const HERO_FALLBACK_COLORS = ['#7F1D1D', '#EF4444', '#F59E0B'] as const;
 
 function recommendationFeedbackTarget(type: DiscoveryType): ExplorerFeedbackTarget | undefined {
-  if (type === 'PLACE') return 'PLACE';
+  if (type === 'PLACE' || type === 'DESTINATION') return 'PLACE';
   if (type === 'EVENT') return 'EVENT';
-  if (type === 'EXPERIENCE') return 'EXPERIENCE';
-  if (type === 'CONTENT' || type === 'CULTURE') return 'CULTURE_CONTENT';
+  if (type === 'EXPERIENCE') return 'ACTIVITY';
+  if (type === 'CONTENT') return 'POST';
+  if (type === 'CULTURE' || type === 'LANGUAGE' || type === 'TRADITION') return 'CULTURE_CONTENT';
   return undefined;
 }
 
@@ -126,9 +127,10 @@ export default function ExploreHomeScreen() {
   const applyRecommendationFeedback = (item: DiscoveryItem, feedbackType: FeedbackType) => {
     const targetType = recommendationFeedbackTarget(item.type);
     if (!targetType || feedbackMutation.isPending) return;
-    feedbackMutation.mutate({ targetType, targetId: item.sourceId.split(':').slice(1).join(':') || item.id, feedbackType }, {
+    const targetId = item.interactionTargetId ?? (item.sourceId.split(':').slice(1).join(':') || item.id);
+    feedbackMutation.mutate({ targetType, targetId, feedbackType }, {
       onSuccess: () => {
-        if (feedbackType === 'NOT_INTERESTED') setUndoFeedback({ targetType, targetId: item.sourceId.split(':').slice(1).join(':') || item.id });
+        if (feedbackType === 'NOT_INTERESTED') setUndoFeedback({ targetType, targetId });
       },
     });
   };

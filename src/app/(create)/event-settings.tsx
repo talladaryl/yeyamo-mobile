@@ -23,6 +23,7 @@ export default function EventSettingsScreen() {
   const [showParticipants, setShowParticipants] = useState(initialSettings.show_participants_list ?? true);
   const [sharingEnabled, setSharingEnabled] = useState(initialSettings.allow_share_outside ?? false);
   const [shareToFeed, setShareToFeed] = useState(initialForm.share_to_feed ?? false);
+  const [shareToStory, setShareToStory] = useState(initialForm.share_to_story ?? false);
 
   const continueToReview = () => {
     setEventSettings({
@@ -31,7 +32,7 @@ export default function EventSettingsScreen() {
       show_participants_list: showParticipants,
       allow_share_outside: sharingEnabled,
     });
-    setEventForm({ share_to_feed: shareToFeed });
+    setEventForm({ share_to_feed: shareToFeed, share_to_story: shareToStory });
     router.push('/(create)/event-review');
   };
 
@@ -50,7 +51,8 @@ export default function EventSettingsScreen() {
         </View>
         <View className="rounded-2xl border px-4" style={{ borderColor: colors.border, backgroundColor: colors.surface }}>
           <Toggle label="Partager aussi dans le Feed" value={shareToFeed} onValueChange={setShareToFeed} />
-          <Text className="pb-4 text-xs leading-5" style={{ color: colors.textSecondary }}>Cette préférence est conservée dans le brouillon, mais l’API de création de sortie ne crée pas encore de publication Feed. Aucun post ne sera simulé.</Text>
+          <Toggle label="Partager aussi en Story" value={shareToStory} onValueChange={setShareToStory} />
+          <Text className="pb-4 text-xs leading-5" style={{ color: colors.textSecondary }}>Le serveur recevra ces intentions. La diffusion démarre seulement après publication de la sortie et ses statuts restent asynchrones.</Text>
         </View>
       </View>
     </YeyamoFormStep>

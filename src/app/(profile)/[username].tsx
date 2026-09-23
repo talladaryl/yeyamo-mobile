@@ -202,7 +202,7 @@ export default function PublicProfileScreen() {
           <View className="items-center px-8 py-20"><Icon name={PUBLIC_TABS.find((tab) => tab.id === activeTab)?.icon ?? 'grid-outline'} size={42} color={colors.textMuted} /><Text className="mt-4 text-base font-bold" style={{ color: colors.text }}>Aucun contenu public</Text><Text className="mt-1 text-center text-sm" style={{ color: colors.textSecondary }}>Les contenus visibles dans cette section apparaîtront ici.</Text></View>
         )}
       </ScrollView>
-      <ProfileSafetySheet visible={safetySheetOpen} onClose={() => setSafetySheetOpen(false)} profileId={profile.id} displayName={profile.display_name} />
+      <ProfileSafetySheet visible={safetySheetOpen} onClose={() => setSafetySheetOpen(false)} profileId={String(profile.id)} displayName={profile.display_name} />
     </SafeScreen>
   );
 }

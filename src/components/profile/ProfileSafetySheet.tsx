@@ -22,7 +22,6 @@ const REPORT_REASONS: { value: ReportReason; label: string }[] = [
 ];
 
 export function ProfileSafetySheet({ visible, onClose, profileId, displayName }: { visible: boolean; onClose: () => void; profileId: string; displayName: string }) {
-  const colors = useThemeStore((state) => state.colors);
   const mutedUsers = useMutedUsers();
   const blockedUsers = useBlockedUsers();
   const safety = useSocialSafetyActions();

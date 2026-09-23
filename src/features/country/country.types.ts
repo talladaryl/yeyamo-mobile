@@ -49,6 +49,30 @@ export interface CountryCity {
   active: boolean;
 }
 
+/**
+ * Geographic references owned by country-config-service.  Their identifiers
+ * are passed through to write APIs; a rendered name is never used as an ID.
+ */
+export interface CountryAdministrativeArea {
+  id: string;
+  countryCode: string;
+  parentId: string | null;
+  level: number;
+  name: string;
+  slug: string;
+  active: boolean;
+}
+
+export interface CountryLocality {
+  id: string;
+  countryCode: string;
+  administrativeAreaId: string | null;
+  cityId: string;
+  name: string;
+  slug: string;
+  active: boolean;
+}
+
 export interface UserCountryPreferences {
   countryCode: string | null;
   cityId: string | null;

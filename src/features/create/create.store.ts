@@ -43,11 +43,11 @@ const initialEventSettings: EventSettings = {
 
 export const useCreateStore = create<CreateStore>((set) => ({
   // Event
-  eventForm: { share_to_feed: true, max_participants: 20 },
+  eventForm: { share_to_feed: true, share_to_story: false, max_participants: 20 },
   eventSettings: initialEventSettings,
   setEventForm: (form) => set((state) => ({ eventForm: { ...state.eventForm, ...form } })),
   setEventSettings: (settings) => set((state) => ({ eventSettings: { ...state.eventSettings, ...settings } })),
-  resetEventForm: () => set({ eventForm: { share_to_feed: true, max_participants: 20 }, eventSettings: initialEventSettings }),
+  resetEventForm: () => set({ eventForm: { share_to_feed: true, share_to_story: false, max_participants: 20 }, eventSettings: initialEventSettings }),
 
   // Place
   placeForm: {},

@@ -9,6 +9,7 @@ const titles: Record<string, string> = {
   'social-settings': 'Paramètres réseau',
   followers: 'Abonnés',
   following: 'Abonnements',
+  'place-suggestions': 'Mes suggestions de lieux',
 };
 
 export default function ProfileLayout() {

@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { genericInteractionsApi, type ExplorerFavoriteTarget, type ExplorerFeedbackTarget, type FeedbackType, type InteractionTarget, type InteractionType } from './generic-interactions.api';
 import type { SpringPage } from '@/services/api/contracts';
@@ -68,15 +68,26 @@ export function useExplorerFeedback() {
     onMutate: async (variables) => {
       await client.cancelQueries({ queryKey: ['recommendations'] });
       const recommendations = client.getQueriesData<RecommendationPage>({ queryKey: ['recommendations'] });
+      const feedbackKey = genericInteractionKeys.feedback(variables.targetType, variables.targetId);
+      const previousFeedback = client.getQueryData<FeedbackType>(feedbackKey);
       if (variables.feedbackType === 'NOT_INTERESTED') {
         client.setQueriesData<RecommendationPage>({ queryKey: ['recommendations'] }, (current) => current
           ? { ...current, items: current.items.filter((item) => item.targetId !== variables.targetId) }
           : current);
+      } else {
+        client.setQueriesData<RecommendationPage>({ queryKey: ['recommendations'] }, (current) => current
+          ? { ...current, items: current.items.map((item) => item.targetId === variables.targetId ? { ...item, viewerState: { feedbackType: variables.feedbackType } } : item) }
+          : current);
       }
-      client.setQueryData(genericInteractionKeys.feedback(variables.targetType, variables.targetId), variables.feedbackType);
-      return { recommendations };
+      client.setQueryData(feedbackKey, variables.feedbackType);
+      return { recommendations, feedbackKey, previousFeedback };
     },
-    onError: (_error, _variables, context) => context?.recommendations.forEach(([queryKey, value]) => client.setQueryData(queryKey, value)),
+    onError: (_error, _variables, context) => {
+      context?.recommendations.forEach(([queryKey, value]) => client.setQueryData(queryKey, value));
+      if (!context) return;
+      if (context.previousFeedback === undefined) client.removeQueries({ queryKey: context.feedbackKey });
+      else client.setQueryData(context.feedbackKey, context.previousFeedback);
+    },
     onSuccess: (_result, variables) => {
       client.invalidateQueries({ queryKey: ['recommendations'] });
       client.invalidateQueries({ queryKey: genericInteractionKeys.feedback(variables.targetType, variables.targetId) });
@@ -104,7 +115,7 @@ export function useExplorerFavorites() {
   return useInfiniteQuery({
     queryKey: genericInteractionKeys.favoriteList,
     initialPageParam: 0,
-    queryFn: ({ pageParam }) => demo ? Promise.resolve({ content: [], number: pageParam, last: true } as SpringPage<import('./generic-interactions.api').GenericInteraction>) : genericInteractionsApi.favorites(pageParam),
+    queryFn: ({ pageParam }) => demo ? Promise.resolve({ content: [], number: pageParam, size: 20, totalElements: 0, totalPages: 0, first: true, last: true } satisfies SpringPage<import('./generic-interactions.api').GenericInteraction>) : genericInteractionsApi.favorites(pageParam),
     getNextPageParam: (lastPage) => lastPage.last ? undefined : lastPage.number + 1,
   });
 }

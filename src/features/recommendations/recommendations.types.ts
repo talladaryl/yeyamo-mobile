@@ -11,6 +11,7 @@ export interface RecommendationItem {
   latitude: number | null;
   longitude: number | null;
   score: { total: number; components: Record<string, number> };
+  viewerState: { feedbackType: 'INTERESTED' | 'NOT_INTERESTED' | null };
 }
 
 export interface RecommendationPage {
@@ -50,5 +51,7 @@ export function recommendationAsDiscoveryItem(item: RecommendationItem): Discove
     availabilityStatus: null,
     priceMin: null,
     priceMax: null,
+    interactionTargetId: item.targetId,
+    viewerFeedbackType: item.viewerState?.feedbackType ?? null,
   };
 }

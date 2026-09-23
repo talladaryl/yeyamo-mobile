@@ -9,7 +9,9 @@ export const countryKeys = {
   all: ['countries'] as const,
   available: () => [...countryKeys.all, 'available'] as const,
   configuration: (code: string | null) => [...countryKeys.all, 'configuration', code] as const,
+  administrativeAreas: (code: string | null) => [...countryKeys.all, 'administrative-areas', code] as const,
   cities: (code: string | null) => [...countryKeys.all, 'cities', code] as const,
+  localities: (cityId: string | null) => [...countryKeys.all, 'localities', cityId] as const,
   profile: () => [...countryKeys.all, 'profile'] as const,
 };
 
@@ -81,6 +83,22 @@ export function useCountryCities(countryCode: string | null) {
         throw error;
       }
     },
+  });
+}
+
+export function useCountryAdministrativeAreas(countryCode: string | null) {
+  return useQuery({
+    queryKey: countryKeys.administrativeAreas(countryCode), enabled: Boolean(countryCode),
+    queryFn: () => countryApi.administrativeAreas(countryCode!),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCountryLocalities(cityId: string | null) {
+  return useQuery({
+    queryKey: countryKeys.localities(cityId), enabled: Boolean(cityId),
+    queryFn: () => countryApi.localities(cityId!),
+    staleTime: 5 * 60 * 1000,
   });
 }
 

@@ -2,7 +2,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from '@/services/api/client';
 import type { SpringPage } from '@/services/api/contracts';
 
 export type InteractionTarget = 'POST' | 'PLACE' | 'EVENT' | 'ACTIVITY' | 'EXPERIENCE' | 'ARTWORK' | 'CULTURE_CONTENT' | 'ARTISAN';
-export type ExplorerFeedbackTarget = 'PLACE' | 'EVENT' | 'ACTIVITY' | 'EXPERIENCE' | 'CULTURE_CONTENT';
+export type ExplorerFeedbackTarget = 'POST' | 'PLACE' | 'EVENT' | 'ACTIVITY' | 'EXPERIENCE' | 'CULTURE_CONTENT';
 export type ExplorerFavoriteTarget = ExplorerFeedbackTarget;
 export type FeedbackType = 'INTERESTED' | 'NOT_INTERESTED';
 export type InteractionType = 'FAVORITE' | 'LIKE' | 'COMMENT' | 'FOLLOW';

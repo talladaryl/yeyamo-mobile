@@ -1,5 +1,10 @@
 import { apiGet, apiPatch } from '@/services/api/client';
-import type { CountryCity, UserCountryPreferences } from './country.types';
+import type {
+  CountryAdministrativeArea,
+  CountryCity,
+  CountryLocality,
+  UserCountryPreferences,
+} from './country.types';
 import type { CountryConfigurationDto, CountryDto } from './country.mappers';
 
 type FeatureFlagsDto = Omit<CountryDto, 'code' | 'name' | 'defaultLanguageCode' | 'defaultCurrencyCode' | 'defaultTimezone' | 'phoneCountryCode' | 'launchStatus'>;
@@ -15,7 +20,9 @@ export const countryApi = {
   languages: (countryCode: string) => apiGet<CountryConfigurationDto['languages']>(`/countries/${code(countryCode)}/languages`),
   currencies: (countryCode: string) => apiGet<CountryConfigurationDto['currencies']>(`/countries/${code(countryCode)}/currencies`),
   timezones: (countryCode: string) => apiGet<CountryConfigurationDto['timezones']>(`/countries/${code(countryCode)}/timezones`),
+  administrativeAreas: (countryCode: string) => apiGet<CountryAdministrativeArea[]>(`/countries/${code(countryCode)}/administrative-areas`),
   cities: (countryCode: string) => apiGet<CountryCity[]>(`/countries/${code(countryCode)}/cities`),
+  localities: (cityId: string) => apiGet<CountryLocality[]>(`/cities/${encodeURIComponent(cityId)}/localities`),
   myPreferences: () => apiGet<UserCountryPreferences>('/users/me'),
   updateLocation: (input: Pick<UserCountryPreferences, 'countryCode' | 'cityId' | 'timezone'> & { adminLevel1Id?: string | null; adminLevel2Id?: string | null; localityId?: string | null }) =>
     apiPatch<UserCountryPreferences>('/users/me/location', input),

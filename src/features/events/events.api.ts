@@ -5,7 +5,8 @@ import type { Event } from './types';
 
 interface BackendEvent {
   id: string;
-  placeId: string;
+  placeId: string | null;
+  ownerUserId?: string;
   title: string;
   description?: string | null;
   startAt: string;
@@ -16,6 +17,8 @@ interface BackendEvent {
   createdAt?: string;
   locationName?: string | null;
   locationAddress?: string | null;
+  locationLatitude?: number | null;
+  locationLongitude?: number | null;
   visibility?: 'PUBLIC' | 'PRIVATE';
   status?: 'DRAFT' | 'PENDING' | 'PENDING_REVIEW' | 'PUBLISHED' | 'SUSPENDED' | 'REJECTED' | 'ARCHIVED' | 'CANCELLED' | 'COMPLETED';
   socialDistribution?: {
@@ -68,8 +71,11 @@ function mapEvent(event: BackendEvent): Event {
     end_time: new Date(event.endAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     participants_count: event.registeredCount,
     max_participants: event.capacity ?? undefined,
+    remaining_capacity: event.capacity == null ? undefined : Math.max(0, event.capacity - event.registeredCount),
     is_participating: false,
     price: null,
+    location: event.locationName ?? null,
+    address: event.locationAddress ?? null,
     created_at: event.createdAt ?? event.startAt,
     status: event.status,
     social_distribution: event.socialDistribution ? {
