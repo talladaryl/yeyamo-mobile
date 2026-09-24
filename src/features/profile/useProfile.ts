@@ -1,5 +1,6 @@
 // Hooks personnalisés pour le profil utilisateur
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toSpringPage } from '@/services/api/contracts';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { profileApi } from './profile.api';
 import { MOCK_USER_PUBLICATIONS, MOCK_USER_FAVORITES, MOCK_USER_EVENTS, MOCK_USER_RESERVATIONS, MOCK_USER_REVIEWS } from './mockData';
@@ -51,12 +52,15 @@ export function useUserEvents() {
  */
 export function useUserReservations() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
-  return useQuery({
-    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'reservations'],
-    queryFn: () =>
-      isDemo ? Promise.resolve(MOCK_USER_RESERVATIONS) : profileApi.getUserReservations(),
+  return useInfiniteQuery({
+    queryKey: ['reservations', isDemo ? 'demo' : 'backend'],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      isDemo
+        ? Promise.resolve(toSpringPage(MOCK_USER_RESERVATIONS, Number(pageParam), 20))
+        : profileApi.getUserReservations(Number(pageParam), 20),
+    getNextPageParam: (lastPage) => lastPage.last ? undefined : lastPage.number + 1,
     staleTime: 1000 * 60 * 5,
-    placeholderData: isDemo ? MOCK_USER_RESERVATIONS : undefined,
   });
 }
 
@@ -64,11 +68,11 @@ export function useCancelUserReservation() {
   const queryClient = useQueryClient();
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) => {
+    mutationFn: ({ id, reason, idempotencyKey }: { id: string; reason: string; idempotencyKey: string }) => {
       if (isDemo) return Promise.reject(new Error('L’annulation de réservation n’est pas disponible en mode démo.'));
-      return profileApi.cancelUserReservation(id, reason);
+      return profileApi.cancelUserReservation(id, reason, idempotencyKey);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile', 'backend', 'reservations'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reservations', 'backend'] }),
   });
 }
 

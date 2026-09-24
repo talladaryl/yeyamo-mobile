@@ -9,6 +9,7 @@ import { usePlaceActivities } from '@/features/places/usePlaceActivities';
 import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
 import { reviewsApi, usePublicReviews } from '@/features/reviews/reviews.api';
 import { CreateVerifiedReviewSheet } from '@/components/reviews/CreateVerifiedReviewSheet';
+import { ErrorState, LoadingState } from '@/components/ui/ViewStates';
 
 const { width } = Dimensions.get('window');
 
@@ -16,7 +17,7 @@ export default function PlaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
-  const { data: place, isLoading } = usePlaceDetail(id);
+  const { data: place, isLoading, refetch: refetchPlace } = usePlaceDetail(id);
   const activities = usePlaceActivities(id);
   const favorite = useInteractionStatus('PLACE', id);
   const toggleFavorite = useToggleInteraction('PLACE', id);
@@ -24,12 +25,17 @@ export default function PlaceDetailScreen() {
   const [reviewComposerOpen, setReviewComposerOpen] = useState(false);
   const verifiedReviews = usePublicReviews('PLACE', id);
 
-  if (isLoading || !place) {
+  if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
-        <ActivityIndicator color={colors.primary} />
+        <Stack.Screen options={{ headerShown: false }} />
+        <LoadingState label="Chargement du lieu…" />
       </View>
     );
+  }
+
+  if (!place) {
+    return <View className="flex-1" style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, title: 'Lieu' }} /><ErrorState title="Lieu indisponible" message="Les informations de ce lieu n’ont pas pu être récupérées." retry={() => void refetchPlace()} /></View>;
   }
 
   const openDirections = () => router.push(`/(places)/route/${place.id}`);
@@ -126,14 +132,12 @@ export default function PlaceDetailScreen() {
             <Text style={{ color: colors.text }} className=" text-sm">Ouvert • {place.opening_hours}</Text>
           </View>
 
-          {/* Price Range */}
-          <View className="rounded-2xl border p-4 mb-5" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-            <Text style={{ color: colors.textSecondary }} className=" text-xs mb-1">Prix par nuit</Text>
-            <Text style={{ color: colors.text }} className=" text-xl font-bold">
-              {place.price_from?.toLocaleString()} - {place.price_to?.toLocaleString()} {place.currency}
-              <Text className="text-sm font-normal text-[#52525B] dark:text-[#A1A1AA]"> / nuit</Text>
-            </Text>
-          </View>
+          {/* The place contract does not promise a nightly rate. Show pricing only
+              when all three fields are actually supplied by the backend. */}
+          {place.price_from !== undefined && place.price_to !== undefined && place.currency ? <View className="rounded-2xl border p-4 mb-5" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
+            <Text style={{ color: colors.textSecondary }} className=" text-xs mb-1">Fourchette de prix</Text>
+            <Text style={{ color: colors.text }} className=" text-xl font-bold">{place.price_from.toLocaleString()} - {place.price_to.toLocaleString()} {place.currency}</Text>
+          </View> : null}
 
           {/* Action Buttons */}
           <View className="flex-row gap-3 mb-6">

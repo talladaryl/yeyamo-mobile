@@ -8,6 +8,7 @@ import type { EntityId } from '@/types/api.types';
 export type ResourceType =
   | 'post'
   | 'place'
+  | 'place_suggestion'
   | 'event'
   | 'experience'
   | 'story'
@@ -33,6 +34,7 @@ export type ResourceRouteResolution =
 const aliases: Record<string, ResourceType> = {
   post: 'post',
   place: 'place',
+  place_suggestion: 'place_suggestion',
   event: 'event',
   experience: 'experience',
   story: 'story',
@@ -77,6 +79,9 @@ export function resolveResourceRoute({ type, id, metadata }: ResourceRouteInput)
   const routes: Record<Exclude<ResourceType, 'profile'>, string> = {
     post: `/(post)/${encodedId}`,
     place: `/(places)/${encodedId}`,
+    // place-service does not expose a user detail endpoint for suggestions;
+    // the authenticated list is the only supported destination.
+    place_suggestion: '/(profile)/place-suggestions',
     event: `/(events)/${encodedId}`,
     experience: `/(experiences)/${encodedId}`,
     story: `/(story)/${encodedId}`,

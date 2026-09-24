@@ -81,18 +81,18 @@ export default function AdventurePlanScreen() {
   };
 
   if (planId && savedPlan.isPending) {
-    return <SafeAreaView className="flex-1" edges={['top']} style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: false }} /><LoadingState label="Chargement du planning…" /></SafeAreaView>;
+    return <SafeAreaView className="flex-1" edges={['top', 'bottom']} style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: false }} /><LoadingState label="Chargement du planning…" /></SafeAreaView>;
   }
 
   if (!criteria || !days || !selectedDay) {
     const unavailableMessage = planId && savedPlan.isError
       ? 'Ce planning est introuvable ou vous n’y avez plus accès.'
       : 'Commencez une nouvelle aventure pour créer votre planning.';
-    return <SafeAreaView className="flex-1" edges={['top']} style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: false }} /><View className="flex-1 px-6"><EmptyState title="Aventure introuvable" message={unavailableMessage} icon={<Icon name="compass-outline" size={56} color={colors.textMuted} />} /><Button label="Créer une aventure" onPress={() => router.replace('/(explore)/adventure')} /></View></SafeAreaView>;
+    return <SafeAreaView className="flex-1" edges={['top', 'bottom']} style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: false }} /><View className="flex-1 px-6"><EmptyState title="Aventure introuvable" message={unavailableMessage} icon={<Icon name="compass-outline" size={56} color={colors.textMuted} />} /><Button label="Créer une aventure" onPress={() => router.replace('/(explore)/adventure')} /></View></SafeAreaView>;
   }
 
   return (
-    <SafeAreaView className="flex-1" edges={['top']} style={{ backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1" edges={['top', 'bottom']} style={{ backgroundColor: colors.background }}>
       <Stack.Screen options={{ headerShown: false }} />
       <View className="flex-row items-center border-b px-3 py-2" style={{ borderColor: colors.border }}>
         <TouchableOpacity onPress={() => router.back()} className="h-11 w-11 items-center justify-center" accessibilityRole="button" accessibilityLabel="Retour"><Icon name="chevron-back" size={26} color={colors.text} /></TouchableOpacity>

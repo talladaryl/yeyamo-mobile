@@ -1,15 +1,16 @@
-import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Linking, Share } from 'react-native';
+import { Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Linking, Share } from 'react-native';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '@/features/theme/theme.store';
-import { useEventDetail, useUpcomingEvents } from '@/features/events/useEvents';
+import { useEventDetail, useEventRegistration, useUpcomingEvents } from '@/features/events/useEvents';
 import { useEventTickets } from '@/features/ticketing/useTicketing';
 import { usePlaceDetail } from '@/features/places/usePlaces';
 import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
 import { reviewsApi, usePublicReviews } from '@/features/reviews/reviews.api';
 import { CreateVerifiedReviewSheet } from '@/components/reviews/CreateVerifiedReviewSheet';
+import { ErrorState, LoadingState } from '@/components/ui/ViewStates';
 
 const { width } = Dimensions.get('window');
 
@@ -26,17 +27,36 @@ export default function EventDetailScreen() {
   const favorite = useInteractionStatus('EVENT', id);
   const toggleFavorite = useToggleInteraction('EVENT', id);
   const verifiedReviews = usePublicReviews('EVENT', id);
+  const registration = useEventRegistration(event?.id ?? id);
   const [reviewComposerOpen, setReviewComposerOpen] = useState(false);
 
-  if (isLoading || !event) {
+  if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}>
-        <ActivityIndicator color={colors.primary} />
+        <Stack.Screen options={{ headerShown: false }} />
+        <LoadingState label="Chargement de la sortie…" />
       </View>
     );
   }
 
+  if (!event) {
+    return <View className="flex-1" style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, title: 'Sortie' }} /><ErrorState title="Sortie indisponible" message="Les informations de cette sortie n’ont pas pu être récupérées." retry={() => void eventQuery.refetch()} /></View>;
+  }
+
   const shareEvent = () => Share.share({ message: `${event.title}\n${new Date(event.start_date).toLocaleString('fr-FR')}` });
+  const canRegister = event.status === 'PUBLISHED';
+  const locationLabel = eventPlace
+    ? [eventPlace.name, eventPlace.address, eventPlace.city].filter(Boolean).join(' · ')
+    : [event.location, event.address].filter(Boolean).join(' · ');
+  const changeRegistration = () => {
+    if (!canRegister) {
+      Alert.alert('Sortie en attente', 'Cette sortie doit d’abord être publiée par la modération avant de pouvoir accepter des participants.');
+      return;
+    }
+    registration.mutate(event.is_participating, {
+      onError: (error) => Alert.alert('Participation impossible', error instanceof Error ? error.message : 'Réessayez plus tard.'),
+    });
+  };
   const addToCalendar = () => {
     const dates = `${event.start_date.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')}/${event.end_date.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')}`;
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${encodeURIComponent(dates)}&details=${encodeURIComponent(event.description ?? '')}`;
@@ -98,6 +118,7 @@ export default function EventDetailScreen() {
           
           {/* Location */}
           {eventPlace ? <TouchableOpacity onPress={() => event.place_id && router.push(`/(places)/${event.place_id}`)} className="flex-row items-center gap-2 mb-3"><Ionicons name="location-outline" size={18} color="#A1A1AA" /><Text style={{ color: colors.textSecondary }} className=" text-sm">{[eventPlace.name, eventPlace.address, eventPlace.city].filter(Boolean).join(' · ')}</Text></TouchableOpacity> : null}
+          {!eventPlace && locationLabel ? <View className="flex-row items-center gap-2 mb-3"><Ionicons name="location-outline" size={18} color="#A1A1AA" /><Text style={{ color: colors.textSecondary }} className=" text-sm">{locationLabel}</Text></View> : null}
 
           {/* Date & Time */}
           <View className="flex-row items-center gap-2 mb-4">
@@ -116,7 +137,7 @@ export default function EventDetailScreen() {
           <View className="flex-row items-center gap-2 mb-5">
             <Ionicons name="people-outline" size={18} color="#A1A1AA" />
             <Text style={{ color: colors.text }} className=" text-sm">
-              {event.participants_count} participants intéressés
+              {event.participants_count} inscription(s) confirmée(s){event.remaining_capacity !== undefined ? ` · ${event.remaining_capacity} place(s) restante(s)` : ''}
             </Text>
           </View>
 
@@ -155,10 +176,12 @@ export default function EventDetailScreen() {
           {(!event.ticket_types || event.ticket_types.length === 0) && (
             <View className="flex-row gap-3 mb-5">
               <TouchableOpacity
-                onPress={() => router.push({ pathname: '/(bookings)/event/[id]' as never, params: { id: String(event.id) } } as never)}
+                onPress={changeRegistration}
+                disabled={registration.isPending}
+                style={{ opacity: registration.isPending ? 0.6 : 1 }}
                 className="flex-1 bg-[#EF4444] py-3.5 rounded-xl items-center"
               >
-                <Text className="text-base font-semibold text-white">Participer</Text>
+                <Text className="text-base font-semibold text-white">{event.is_participating ? 'Se désinscrire' : 'Participer'}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => void shareEvent()} className="border px-5 py-3.5 rounded-xl items-center justify-center" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
                 <Ionicons name="share-social-outline" size={20} color={colors.text} />
@@ -192,39 +215,6 @@ export default function EventDetailScreen() {
           ) : null}
 
           <View className="mb-5"><View className="mb-2 flex-row items-center justify-between"><Text className="text-lg font-bold" style={{ color: colors.text }}>Avis vérifiés</Text><TouchableOpacity onPress={() => setReviewComposerOpen(true)}><Text className="font-semibold" style={{ color: colors.primary }}>Laisser un avis</Text></TouchableOpacity></View><Text className="text-sm" style={{ color: colors.textSecondary }}>{verifiedReviews.aggregate.data?.averageRating?.toFixed(1) ?? '—'} · {verifiedReviews.aggregate.data?.count ?? 0} avis</Text>{verifiedReviews.reviews.data?.content.map((review) => <View key={review.id} className="mt-3 rounded-xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.card }}><Text className="font-semibold" style={{ color: colors.text }}>Utilisateur vérifié · {review.rating}/5</Text>{review.comment ? <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{review.comment}</Text> : null}<TouchableOpacity onPress={() => void reviewsApi.report(review.id).then(() => Alert.alert('Signalement envoyé', 'Cet avis a été transmis à la modération.')).catch((error) => Alert.alert('Signalement impossible', error instanceof Error ? error.message : 'Réessayez plus tard.'))} className="mt-2 self-start"><Text className="text-xs font-semibold text-[#EF4444]">Signaler</Text></TouchableOpacity></View>)}</View>
-
-          {/* Participants Section */}
-          <View className="mb-5">
-            <View className="mb-3">
-              <Text style={{ color: colors.text }} className=" text-lg font-bold">
-                Participants ({event.participants_count})
-              </Text>
-            </View>
-
-            <View className="flex-row items-center">
-              {/* Participant Avatars */}
-              <View className="flex-row -space-x-3 mr-3">
-                {(event.participants ?? []).slice(0, 4).map((participant, index) => (
-                  <Image
-                    key={participant.id}
-                    source={{ uri: participant.avatar_url || '' }}
-                    style={{ 
-                      width: 36, 
-                      height: 36,
-                      borderWidth: 2,
-                      borderColor: colors.background,
-                    }}
-                    className="rounded-full"
-                  />
-                ))}
-              </View>
-              {event.participants_count > 4 && (
-                <Text style={{ color: colors.textSecondary }} className=" text-sm">
-                  +{event.participants_count - 4} autres
-                </Text>
-              )}
-            </View>
-          </View>
 
           {/* Événements similaires Section */}
           <View className="mb-5">

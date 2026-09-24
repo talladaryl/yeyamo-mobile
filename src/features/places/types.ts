@@ -105,9 +105,14 @@ export interface BackendBooking {
   unitPrice: number;
   totalAmount: number;
   currency: string | null;
+  countryCode?: string | null;
   status: string;
   paymentStatus: string;
+  cancellationReason?: string | null;
   createdAt: string;
+  confirmedAt?: string | null;
+  cancelledAt?: string | null;
+  completedAt?: string | null;
   activityType?: 'ACTIVITY' | 'EXPERIENCE';
   automaticRefundAvailable?: boolean;
 }

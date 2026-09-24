@@ -128,12 +128,22 @@ export function handleNotificationNavigation(data: Record<string, unknown> | und
   if (!data) return;
   const type = typeof data.type === 'string' ? data.type : '';
   const id = typeof data.targetId === 'string' ? data.targetId : undefined;
+  const eventId = typeof data.eventId === 'string' ? data.eventId : id;
+  const ticketId = typeof data.ticketId === 'string' ? data.ticketId : id;
   const routes: Record<string, Href | undefined> = {
     MESSAGE_RECEIVED: id ? (`/(chat)/${id}` as Href) : undefined,
-    EVENT_REMINDER: id ? (`/(events)/${id}` as Href) : undefined,
-    TICKET_PURCHASED: id ? (`/(profile)/ticket/${id}` as Href) : undefined,
+    EVENT_REMINDER: eventId ? (`/(events)/${eventId}` as Href) : undefined,
+    EVENT_REGISTRATION_CREATED: eventId ? (`/(events)/${eventId}` as Href) : undefined,
+    EVENT_REGISTRATION_CANCELLED: eventId ? (`/(events)/${eventId}` as Href) : undefined,
+    EVENT_INVITATION_CREATED: eventId ? (`/(events)/${eventId}` as Href) : undefined,
+    EVENT_CANCELLED: eventId ? (`/(events)/${eventId}` as Href) : undefined,
+    EVENT_COMPLETED: eventId ? (`/(events)/${eventId}` as Href) : undefined,
+    TICKET_PURCHASED: ticketId ? (`/(profile)/ticket/${ticketId}` as Href) : undefined,
     BOOKING_CONFIRMED: '/(profile)/reservations',
     BOOKING_CANCELLED: '/(profile)/reservations',
+    BOOKING_COMPLETED: '/(profile)/reservations',
+    PLACE_SUGGESTION_APPROVED: '/(profile)/place-suggestions',
+    PLACE_SUGGESTION_REJECTED: '/(profile)/place-suggestions',
     CAMPAIGN_APPROVED: id ? (`/(partner-dashboard)/campaign/${id}` as Href) : undefined,
     CAMPAIGN_REJECTED: id ? (`/(partner-dashboard)/campaign/${id}` as Href) : undefined,
     FOLLOW_RECEIVED: id ? (`/(profile)/${id}` as Href) : undefined,

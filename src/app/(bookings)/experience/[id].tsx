@@ -13,7 +13,7 @@ import type { BackendBooking } from '@/features/places/types';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { createIdempotencyKey } from '@/services/api/contracts';
 
-const terminalStatuses = ['CONFIRMED', 'CANCELLED', 'EXPIRED', 'COMPLETED'];
+const terminalStatuses = ['CONFIRMED', 'CANCELLED', 'COMPLETED'];
 const formatDate = (value: string) => new Date(value).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
 
 export default function ExperienceBooking() {
@@ -34,7 +34,7 @@ export default function ExperienceBooking() {
   const slots = (availability.data ?? []).filter((slot) => slot.activityType === 'EXPERIENCE');
   const selectedSlot = slots.find((slot) => slot.id === selectedSlotId) ?? slots.find((slot) => slot.available > 0) ?? null;
   const current = status.data ?? createdBooking;
-  const pending = current?.status === 'PENDING' || current?.paymentStatus === 'PENDING';
+  const pending = current?.status === 'PENDING' || current?.paymentStatus === 'AUTHORIZATION_PENDING';
   const failed = current?.status === 'CANCELLED' || current?.paymentStatus === 'FAILED';
   const confirmed = current?.status === 'CONFIRMED' || current?.status === 'COMPLETED' || current?.paymentStatus === 'AUTHORIZED' || current?.paymentStatus === 'NOT_REQUIRED';
 
@@ -55,7 +55,7 @@ export default function ExperienceBooking() {
     try {
       const result = await booking.mutateAsync({ slotId: selectedSlot.id, quantity, ...(payment ?? {}), idempotencyKey: bookingAttempt.current.key });
       setCreatedBooking(result);
-      if (result.status === 'PENDING' || result.paymentStatus === 'PENDING') {
+      if (result.status === 'PENDING' || result.paymentStatus === 'AUTHORIZATION_PENDING') {
         setBookingId(result.id); setPollingTimedOut(false); setShouldPoll(true); return;
       }
       Alert.alert('Réservation créée', `Votre référence est ${result.reference}.`, [{ text: 'Voir mes réservations', onPress: () => router.replace('/(profile)/reservations') }]);

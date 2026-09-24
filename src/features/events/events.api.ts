@@ -61,7 +61,9 @@ export interface CreateEventInput {
 function mapEvent(event: BackendEvent): Event {
   return {
     id: event.id,
-    place_id: event.placeId ?? event.locationName ?? event.id,
+    // A custom location is not a canonical place. Keeping this undefined avoids
+    // querying place-service with a display label or an event id.
+    place_id: event.placeId ?? undefined,
     title: event.title,
     description: event.description ?? null,
     cover_image_url: event.coverMediaId ? mediaContentUrl(event.coverMediaId) : null,

@@ -16,6 +16,7 @@ import { useThemeStore } from '@/features/theme/theme.store';
 
 type LocationMode = 'YEYAMO_PLACE' | 'CUSTOM_LOCATION';
 type Coordinates = { latitude: number; longitude: number };
+const neutralMapRegion = { latitude: 0, longitude: 0, latitudeDelta: 80, longitudeDelta: 80 };
 
 function asCoordinates(latitude?: string, longitude?: string): Coordinates | null {
   const parsedLatitude = Number(latitude);
@@ -96,11 +97,11 @@ export default function EventLocationScreen() {
           <Input label="Nom du lieu *" value={locationName} onChangeText={setLocationName} placeholder="Ex. Point de rendez-vous Bonanjo" autoCapitalize="words" returnKeyType="next" />
           <Input label="Adresse ou indication *" value={locationAddress} onChangeText={setLocationAddress} placeholder="Ex. Entrée principale, avenue…" autoCapitalize="sentences" returnKeyType="done" />
           <View className="h-60 overflow-hidden rounded-2xl border" style={{ borderColor: colors.border }}>
-            <NativeMap provider={PROVIDER_GOOGLE} style={{ flex: 1 }} initialRegion={{ latitude: coordinates?.latitude ?? 4.0511, longitude: coordinates?.longitude ?? 9.7679, latitudeDelta: 0.08, longitudeDelta: 0.08 }} onPress={(event: { nativeEvent: { coordinate: Coordinates } }) => setCoordinates(event.nativeEvent.coordinate)}>
+            <NativeMap provider={PROVIDER_GOOGLE} style={{ flex: 1 }} initialRegion={coordinates ? { latitude: coordinates.latitude, longitude: coordinates.longitude, latitudeDelta: 0.08, longitudeDelta: 0.08 } : neutralMapRegion} onPress={(event: { nativeEvent: { coordinate: Coordinates } }) => setCoordinates(event.nativeEvent.coordinate)}>
               {coordinates ? <NativeMarker coordinate={coordinates} pinColor={colors.primary} draggable onDragEnd={(event: { nativeEvent: { coordinate: Coordinates } }) => setCoordinates(event.nativeEvent.coordinate)} /> : null}
             </NativeMap>
             <View className="absolute left-3 right-3 top-3 rounded-xl p-3" style={{ backgroundColor: colors.surfaceGlassStrong }}>
-              <Text className="text-xs font-semibold" style={{ color: colors.text }}>{coordinates ? 'Position choisie' : 'Touchez la carte pour positionner le lieu'}</Text>
+              <Text className="text-xs font-semibold" style={{ color: colors.text }}>{coordinates ? 'Position choisie' : 'Touchez la carte pour positionner le lieu. Aucune ville n’est présélectionnée.'}</Text>
             </View>
           </View>
           <Text className="text-xs leading-5" style={{ color: colors.textSecondary }}>Cette localisation ne crée pas un lieu public Yeyamo. Pour proposer un lieu à la communauté, utilisez « Suggérer un lieu ».</Text>

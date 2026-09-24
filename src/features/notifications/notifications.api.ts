@@ -24,6 +24,37 @@ interface NotificationSlice {
   items: BackendNotification[];
 }
 
+function asTargetId(value: unknown): string | number | undefined {
+  return typeof value === 'string' || typeof value === 'number' ? value : undefined;
+}
+
+function resolveBackendTarget(eventType: string, data: Record<string, unknown>): Pick<Notification, 'target_id' | 'target_type'> {
+  const explicitId = asTargetId(data.targetId);
+  const explicitType = toTargetType(data.targetType ?? data.target_type);
+  if (explicitId && explicitType) return { target_id: explicitId, target_type: explicitType };
+
+  switch (eventType) {
+    case 'PLACE_SUGGESTION_APPROVED':
+      return data.canonicalPlaceId
+        ? { target_id: asTargetId(data.canonicalPlaceId), target_type: 'place' }
+        : { target_id: asTargetId(data.suggestionId), target_type: 'place_suggestion' };
+    case 'PLACE_SUGGESTION_REJECTED':
+      return { target_id: asTargetId(data.suggestionId), target_type: 'place_suggestion' };
+    case 'BOOKING_CONFIRMED':
+    case 'BOOKING_CANCELLED':
+    case 'BOOKING_COMPLETED':
+      return { target_id: asTargetId(data.bookingId), target_type: 'reservation' };
+    case 'EVENT_REGISTRATION_CREATED':
+    case 'EVENT_REGISTRATION_CANCELLED':
+    case 'EVENT_INVITATION_CREATED':
+    case 'EVENT_CANCELLED':
+    case 'EVENT_COMPLETED':
+      return { target_id: asTargetId(data.eventId), target_type: 'event' };
+    default:
+      return { target_id: explicitId, target_type: explicitType };
+  }
+}
+
 function mapNotification(item: BackendNotification): Notification {
   let data: Record<string, unknown> = {};
   try {
@@ -31,17 +62,14 @@ function mapNotification(item: BackendNotification): Notification {
   } catch {
     data = {};
   }
+  const target = resolveBackendTarget(item.eventType, data);
   return {
     id: item.id,
     type: item.eventType,
     title: item.title,
     content: item.body,
     action_url: typeof data.actionUrl === 'string' ? data.actionUrl : undefined,
-    target_id:
-      typeof data.targetId === 'string' || typeof data.targetId === 'number'
-        ? data.targetId
-        : undefined,
-    target_type: toTargetType(data.targetType ?? data.target_type),
+    ...target,
     target_metadata: data,
     is_read: item.readAt !== null,
     created_at: item.createdAt,
@@ -50,7 +78,7 @@ function mapNotification(item: BackendNotification): Notification {
 
 function toTargetType(value: unknown): Notification['target_type'] {
   const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
-  if (normalized === 'post' || normalized === 'event' || normalized === 'place' || normalized === 'reservation' || normalized === 'culture' || normalized === 'challenge' || normalized === 'artwork' || normalized === 'order' || normalized === 'artisan' || normalized === 'story' || normalized === 'experience' || normalized === 'collection' || normalized === 'profile') return normalized;
+  if (normalized === 'post' || normalized === 'event' || normalized === 'place' || normalized === 'place_suggestion' || normalized === 'reservation' || normalized === 'culture' || normalized === 'challenge' || normalized === 'artwork' || normalized === 'order' || normalized === 'artisan' || normalized === 'story' || normalized === 'experience' || normalized === 'collection' || normalized === 'profile') return normalized;
   return undefined;
 }
 

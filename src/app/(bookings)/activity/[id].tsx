@@ -19,7 +19,7 @@ function formatDate(value: string) {
   return new Date(value).toLocaleString();
 }
 
-const terminalBookingStatuses = ['CONFIRMED', 'CANCELLED', 'EXPIRED', 'COMPLETED'];
+const terminalBookingStatuses = ['CONFIRMED', 'CANCELLED', 'COMPLETED'];
 
 export default function ActivityBookingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,7 +40,7 @@ export default function ActivityBookingScreen() {
     ?? slots.find((slot) => slot.available > 0)
     ?? null;
   const currentBooking = bookingStatus.data ?? createdBooking;
-  const paymentPending = currentBooking?.status === 'PENDING' || currentBooking?.paymentStatus === 'PENDING';
+  const paymentPending = currentBooking?.status === 'PENDING' || currentBooking?.paymentStatus === 'AUTHORIZATION_PENDING';
   const paymentFailed = currentBooking?.status === 'CANCELLED' || currentBooking?.paymentStatus === 'FAILED';
   const bookingConfirmed = currentBooking?.status === 'CONFIRMED'
     || currentBooking?.status === 'COMPLETED'
@@ -79,7 +79,7 @@ export default function ActivityBookingScreen() {
         idempotencyKey: bookingAttempt.current.key,
       });
       setCreatedBooking(result);
-      if (result.status === 'PENDING' || result.paymentStatus === 'PENDING') {
+      if (result.status === 'PENDING' || result.paymentStatus === 'AUTHORIZATION_PENDING') {
         setBookingId(result.id);
         setPollingTimedOut(false);
         setShouldPoll(true);
