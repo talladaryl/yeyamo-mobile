@@ -1,5 +1,4 @@
-import { apiClient } from '@/services/api/client';
-import { apiGet } from '@/services/api/client';
+import { apiClient, apiGet } from '@/services/api/client';
 import { absoluteApiUrl, mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId, MediaAttachment } from '@/types/api.types';
 
@@ -57,9 +56,10 @@ export async function uploadMedia(
   if (options.aggregateType) form.append('aggregateType', options.aggregateType);
   if (options.aggregateId) form.append('aggregateId', options.aggregateId);
   if (options.altText) form.append('altText', options.altText);
-  const { data } = await apiClient.post<MediaUploadResponse>('/media/culture', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 120_000,
-  });
+  // The extended endpoint requires a usageType. General uploads (profile,
+  // public creation flows) use the canonical endpoint instead. Do not set
+  // Content-Type manually: React Native supplies the multipart boundary.
+  const endpoint = options.usageType ? '/media/culture' : '/media';
+  const { data } = await apiClient.post<MediaUploadResponse>(endpoint, form, { timeout: 120_000 });
   return data;
 }

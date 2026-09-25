@@ -15,8 +15,21 @@ export type PickedMediaAsset = {
 const extensionByMime: Record<string, string> = {
   'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
   'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov',
+  'audio/mpeg': 'mp3', 'audio/ogg': 'ogg', 'audio/flac': 'flac',
+  'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a', 'audio/wav': 'wav',
+  'audio/x-wav': 'wav', 'application/pdf': 'pdf',
 };
-const mimeByExtension: Record<string, string> = Object.fromEntries(Object.entries(extensionByMime).map(([mime, extension]) => [extension, mime]));
+const mimeByExtension: Record<string, string> = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+  mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
+  mp3: 'audio/mpeg', ogg: 'audio/ogg', flac: 'audio/flac', m4a: 'audio/mp4',
+  wav: 'audio/wav', pdf: 'application/pdf',
+};
+const mimeAliases: Record<string, string> = {
+  'image/jpg': 'image/jpeg',
+  'video/x-m4v': 'video/mp4',
+  'audio/m4a': 'audio/mp4',
+};
 
 function extensionFromName(name?: string | null) {
   const extension = name?.split('.').pop()?.trim().toLocaleLowerCase();
@@ -25,7 +38,9 @@ function extensionFromName(name?: string | null) {
 
 /** Keeps the picker MIME when present and only falls back from a known name/type. */
 export function resolveMediaMimeType(asset: PickedMediaAsset): string {
-  if (asset.mimeType && extensionByMime[asset.mimeType.toLocaleLowerCase()]) return asset.mimeType.toLocaleLowerCase();
+  const declaredMime = asset.mimeType?.toLocaleLowerCase();
+  const normalizedMime = declaredMime ? mimeAliases[declaredMime] ?? declaredMime : undefined;
+  if (normalizedMime && extensionByMime[normalizedMime]) return normalizedMime;
   const namedExtension = extensionFromName(asset.fileName);
   if (namedExtension && mimeByExtension[namedExtension]) return mimeByExtension[namedExtension];
   return asset.type === 'video' ? 'video/mp4' : 'image/jpeg';

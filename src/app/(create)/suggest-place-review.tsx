@@ -33,8 +33,10 @@ export default function SuggestPlaceReviewScreen() {
   const [error, setError] = useState<string | null>(null);
   const [duplicates, setDuplicates] = useState<PlaceSuggestionDuplicateCandidate[]>([]);
   const [createdSuggestion, setCreatedSuggestion] = useState<PlaceSuggestion | null>(null);
+  const [uploadedMediaByUri, setUploadedMediaByUri] = useState<Record<string, string>>({});
 
   const submit = async () => {
+    if (isSubmitting) return;
     const coordinates = placeForm.coordinates;
     if (!placeForm.name?.trim() || !placeForm.address?.trim() || !coordinates || !countryCode) {
       setError('Le nom, le pays, l’adresse et la position du lieu sont requis.');
@@ -43,7 +45,7 @@ export default function SuggestPlaceReviewScreen() {
     setError(null);
     setDuplicates([]);
     setIsSubmitting(true);
-    const uploadedMediaIds: string[] = [];
+    const resolvedMediaIds = { ...uploadedMediaByUri };
     try {
       const duplicateCheck = await placesApi.checkPlaceSuggestionDuplicates({
         name: placeForm.name.trim(),
@@ -63,8 +65,10 @@ export default function SuggestPlaceReviewScreen() {
       setDuplicates(candidates);
 
       for (const [index, media] of (placeForm.media_assets ?? []).entries()) {
+        if (resolvedMediaIds[media.uri]) continue;
         const uploaded = await postApi.uploadMedia(toMediaFormData({ ...media, width: 0, height: 0 }, 'place-suggestion', index));
-        uploadedMediaIds.push(String(uploaded.data.id));
+        resolvedMediaIds[media.uri] = String(uploaded.data.id);
+        setUploadedMediaByUri((current) => ({ ...current, [media.uri]: String(uploaded.data.id) }));
       }
 
       const created = await placesApi.suggestPlace({
@@ -78,17 +82,15 @@ export default function SuggestPlaceReviewScreen() {
         administrativeAreaId: placeForm.administrative_area_id,
         cityId: placeForm.city_id,
         localityId: placeForm.locality_id,
-        mediaIds: uploadedMediaIds.length ? uploadedMediaIds : undefined,
+        mediaIds: (placeForm.media_assets ?? []).map((media) => resolvedMediaIds[media.uri]).filter(Boolean),
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
       });
       setCreatedSuggestion(created);
+      setUploadedMediaByUri({});
       resetPlaceForm();
       void queryClient.invalidateQueries({ queryKey: placeSuggestionKeys.mine() });
     } catch (submissionError) {
-      // Media is only an attachment candidate until place-service accepts the
-      // suggestion. Remove uploads made by this failed attempt when possible.
-      await Promise.allSettled(uploadedMediaIds.map((mediaId) => placesApi.deleteOwnedMedia(mediaId)));
       setError(normalizeApiError(submissionError).message);
     } finally {
       setIsSubmitting(false);

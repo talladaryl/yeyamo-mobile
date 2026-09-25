@@ -20,6 +20,20 @@ import { useThemeStore } from '@/features/theme/theme.store';
 type Coordinates = { latitude: number; longitude: number };
 const neutralMapRegion = { latitude: 0, longitude: 0, latitudeDelta: 80, longitudeDelta: 80 };
 
+function isAdministrativeDescendant(
+  areaId: string | null,
+  selectedAreaId: string | undefined,
+  parents: ReadonlyMap<string, string | null>,
+): boolean {
+  if (!selectedAreaId) return true;
+  let currentId = areaId;
+  while (currentId) {
+    if (currentId === selectedAreaId) return true;
+    currentId = parents.get(currentId) ?? null;
+  }
+  return false;
+}
+
 export default function SuggestPlaceStep2Screen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
@@ -29,6 +43,9 @@ export default function SuggestPlaceStep2Screen() {
   const countryCode = useCountryStore((state) => state.selectedCountryCode);
   const administrativeAreas = useCountryAdministrativeAreas(countryCode);
   const cities = useCountryCities(countryCode);
+  // The visible selection may be a top-level region (Centre). The API stores
+  // cities under their direct administrative parent (Mfoundi), so retain both.
+  const [selectedAdministrativeAreaId, setSelectedAdministrativeAreaId] = useState(initial.administrative_area_id);
   const [administrativeAreaId, setAdministrativeAreaId] = useState(initial.administrative_area_id);
   const [region, setRegion] = useState(initial.region ?? '');
   const [city, setCity] = useState(initial.city ?? '');
@@ -39,14 +56,19 @@ export default function SuggestPlaceStep2Screen() {
   const [address, setAddress] = useState(initial.address ?? '');
   const [coordinates, setCoordinates] = useState<Coordinates | null>(initial.coordinates ?? null);
 
+  const administrativeParents = useMemo(
+    () => new Map((administrativeAreas.data ?? []).map((item) => [item.id, item.parentId])),
+    [administrativeAreas.data],
+  );
   const availableCities = useMemo(
     () => (cities.data ?? []).filter((item) => item.active
-      && (!administrativeAreaId || item.administrativeAreaId === administrativeAreaId)),
-    [administrativeAreaId, cities.data],
+      && isAdministrativeDescendant(item.administrativeAreaId, selectedAdministrativeAreaId, administrativeParents)),
+    [administrativeParents, cities.data, selectedAdministrativeAreaId],
   );
 
   const changeAdministrativeArea = (value: string) => {
     const selected = (administrativeAreas.data ?? []).find((item) => item.id === value);
+    setSelectedAdministrativeAreaId(selected?.id);
     setAdministrativeAreaId(selected?.id);
     setRegion(selected?.name ?? '');
     setCity('');
@@ -60,11 +82,9 @@ export default function SuggestPlaceStep2Screen() {
     if (!selected) return;
     setCityId(selected.id);
     setCity(selected.name);
-    if (selected.administrativeAreaId) {
-      const parent = (administrativeAreas.data ?? []).find((item) => item.id === selected.administrativeAreaId);
-      setAdministrativeAreaId(selected.administrativeAreaId);
-      setRegion(parent?.name ?? region);
-    }
+    // Place-service validates the direct parent of a city, while the visible
+    // selector remains on the user’s broader region selection.
+    setAdministrativeAreaId(selected.administrativeAreaId ?? undefined);
     setLocality('');
     setLocalityId(undefined);
   };
@@ -100,7 +120,7 @@ export default function SuggestPlaceStep2Screen() {
     <YeyamoFormStep title="Où se situe ce lieu ?" description="Les identifiants de géographie proviennent du service Pays Yeyamo ; les coordonnées sont choisies sur la carte.">
       <View className="gap-4">
         <Input label="Pays" value={countryCode ?? ''} placeholder="Choisissez un pays dans vos préférences" editable={false} helperText="Le code pays sélectionné sera envoyé au backend avec la suggestion." />
-        <FormSelect label="Zone administrative (facultatif)" value={administrativeAreaId} options={(administrativeAreas.data ?? []).filter((item) => item.active).map((item) => ({ label: item.name, value: item.id }))} placeholder={administrativeAreas.isLoading ? 'Chargement…' : 'Choisir une zone'} onChange={changeAdministrativeArea} />
+        <FormSelect label="Zone administrative (facultatif)" value={selectedAdministrativeAreaId} options={(administrativeAreas.data ?? []).filter((item) => item.active).map((item) => ({ label: item.name, value: item.id }))} placeholder={administrativeAreas.isLoading ? 'Chargement…' : 'Choisir une zone'} onChange={changeAdministrativeArea} />
         {administrativeAreas.isError ? <Text className="-mt-3 text-xs" style={{ color: colors.textSecondary }}>Les zones administratives sont momentanément indisponibles. Elles restent facultatives.</Text> : null}
         <FormSelect label="Ville (facultatif)" value={cityId} options={availableCities.map((item) => ({ label: item.name, value: item.id }))} placeholder={cities.isLoading ? 'Chargement des villes…' : 'Choisir une ville'} onChange={changeCity} />
         {cities.isError ? <Text className="-mt-3 text-xs" style={{ color: colors.textSecondary }}>Les villes sont momentanément indisponibles. Elles restent facultatives.</Text> : null}

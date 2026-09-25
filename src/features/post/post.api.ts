@@ -21,9 +21,10 @@ export class PostPublicationError extends Error {
 
 export const postApi = {
   uploadMedia: async (formData: FormData): Promise<{ data: UploadedMedia }> => {
-    const media = await apiPost<BackendMedia>('/media', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    // React Native must generate the multipart boundary itself. Supplying a
+    // bare multipart Content-Type makes valid Expo assets unreadable by the
+    // server on some Android/iOS transports.
+    const media = await apiPost<BackendMedia>('/media', formData);
     return {
       data: {
         id: media.id,

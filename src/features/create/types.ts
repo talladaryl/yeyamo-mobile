@@ -16,6 +16,9 @@ export interface CreateEventForm {
   description: string;
   cover_image_url: string | null;
   cover_image_mime_type?: string | null;
+  /** Kept after upload so a failed event submit retries the event, not the file. */
+  cover_media_id?: string | null;
+  cover_media_uri?: string | null;
   location: string;
   /** Presentation-only draft data for the event create contract. */
   location_label?: string;

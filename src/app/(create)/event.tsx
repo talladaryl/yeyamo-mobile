@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { YeyamoFormFooter } from '@/components/forms/YeyamoFormFooter';
@@ -33,6 +33,7 @@ export default function CreateEventScreen() {
       if (!asset) return;
       setCoverImage(asset.uri);
       setCoverMimeType(asset.mimeType ?? 'image/jpeg');
+      setEventForm({ cover_media_id: null, cover_media_uri: null });
     } catch (error) {
       Alert.alert('Image indisponible', error instanceof Error ? error.message : 'Réessayez dans quelques instants.');
     }
@@ -66,7 +67,7 @@ export default function CreateEventScreen() {
           {coverImage ? <Image source={{ uri: coverImage }} style={{ width: '100%', height: 190 }} contentFit="cover" accessibilityLabel="Aperçu de l'image de couverture" /> : <View className="h-44 items-center justify-center px-6"><Icon name="image-outline" size={42} color={colors.textMuted} /><Text className="mt-3 text-center text-sm" style={{ color: colors.textSecondary }}>Ajoutez une image pour rendre votre sortie plus facile à repérer.</Text></View>}
           <View className="flex-row gap-3 p-3">
             <View className="flex-1"><Button label={coverImage ? 'Remplacer' : 'Ajouter une image'} variant="secondary" size="sm" onPress={() => void pickCoverImage()} /></View>
-            {coverImage ? <Button label="Retirer" variant="ghost" size="sm" fullWidth={false} onPress={() => { setCoverImage(null); setCoverMimeType(null); }} /> : null}
+            {coverImage ? <Button label="Retirer" variant="ghost" size="sm" fullWidth={false} onPress={() => { setCoverImage(null); setCoverMimeType(null); setEventForm({ cover_media_id: null, cover_media_uri: null }); }} /> : null}
           </View>
         </View>
         <Input label="Titre de la sortie *" value={title} onChangeText={setTitle} placeholder="Ex. Randonnée au Mont Cameroun" maxLength={100} autoCapitalize="sentences" returnKeyType="next" />

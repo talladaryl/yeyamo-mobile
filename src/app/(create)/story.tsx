@@ -10,6 +10,7 @@ import { useYeyamoMediaPicker, YeyamoMediaPickerError } from '@/components/media
 import { isVideoAsset, toMediaFormData, type PickedMediaAsset } from '@/features/media/media.utils';
 import { useUploadMedia } from '@/features/post/usePost';
 import { useCreateStory } from '@/features/story/useStory';
+import { normalizeApiError } from '@/services/api/errors';
 
 const { width, height } = Dimensions.get('window');
 const imageDurations = [5, 10, 15] as const;
@@ -32,6 +33,7 @@ export default function CreateStoryScreen() {
   const [duration, setDuration] = useState<number>(15);
   const [error, setError] = useState<string | null>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [uploadedMediaId, setUploadedMediaId] = useState<string | null>(null);
   const uploadMedia = useUploadMedia();
   const createStory = useCreateStory();
   const pending = uploadMedia.isPending || createStory.isPending;
@@ -51,7 +53,7 @@ export default function CreateStoryScreen() {
     setError(null);
     try {
       const result = await pickFromLibrary({ mediaTypes: ['images', 'videos'], allowsEditing: false, quality: 0.9 });
-      if (!result.cancelled && result.assets[0]) setAsset(result.assets[0]);
+      if (!result.cancelled && result.assets[0]) { setAsset(result.assets[0]); setUploadedMediaId(null); }
     } catch (caught) {
       setError(caught instanceof YeyamoMediaPickerError ? caught.message : 'Le média ne peut pas être sélectionné pour le moment.');
     }
@@ -62,7 +64,7 @@ export default function CreateStoryScreen() {
     setError(null);
     try {
       const result = await takePhoto({ mediaTypes: ['images'], allowsEditing: true, quality: 0.9 });
-      if (!result.cancelled && result.assets[0]) setAsset(result.assets[0]);
+      if (!result.cancelled && result.assets[0]) { setAsset(result.assets[0]); setUploadedMediaId(null); }
     } catch (caught) {
       setError(caught instanceof YeyamoMediaPickerError ? caught.message : 'La caméra ne peut pas être ouverte pour le moment.');
     }
@@ -71,14 +73,23 @@ export default function CreateStoryScreen() {
   const publish = async () => {
     if (!asset || pending) return;
     setError(null);
+    let mediaId = uploadedMediaId;
+    if (!mediaId) {
+      try {
+        const uploaded = await uploadMedia.mutateAsync(toMediaFormData(asset, 'story', 0));
+        mediaId = String(uploaded.data.id);
+        setUploadedMediaId(mediaId);
+      } catch (caught) {
+        setError(`Le média n’a pas pu être envoyé. ${normalizeApiError(caught).message}`);
+        return;
+      }
+    }
     try {
-      const uploaded = await uploadMedia.mutateAsync(toMediaFormData(asset, 'story', 0));
-      await createStory.mutateAsync({ mediaId: uploaded.data.id, caption: caption.trim() || undefined, durationSeconds: effectiveDuration });
+      await createStory.mutateAsync({ mediaId, caption: caption.trim() || undefined, durationSeconds: effectiveDuration });
+      setUploadedMediaId(null);
       Alert.alert('Story publiée', 'Votre story est visible pendant 24 heures.', [{ text: 'Voir le Feed', onPress: () => router.replace('/(tabs)') }]);
-    } catch {
-      setError(uploadMedia.isError
-        ? 'Le média n’a pas pu être envoyé. Vérifiez votre connexion puis réessayez.'
-        : 'La story n’a pas pu être publiée. Réessayez sans changer votre média.');
+    } catch (caught) {
+      setError(`La story n’a pas pu être publiée. Réessayez sans changer votre média. ${normalizeApiError(caught).message}`);
     }
   };
 
@@ -101,7 +112,7 @@ export default function CreateStoryScreen() {
 
       <View className="absolute left-0 right-0 top-0 flex-row items-center justify-between px-4 pt-14">
         <TouchableOpacity onPress={() => router.back()} disabled={pending} className="h-11 w-11 items-center justify-center rounded-full bg-black/50" accessibilityLabel="Fermer"><Icon name="close" size={25} color="#FFFFFF" /></TouchableOpacity>
-        {asset ? <TouchableOpacity onPress={() => setAsset(null)} disabled={pending} className="h-11 w-11 items-center justify-center rounded-full bg-black/50" accessibilityLabel="Retirer le média"><Icon name="trash-outline" size={22} color="#FFFFFF" /></TouchableOpacity> : null}
+         {asset ? <TouchableOpacity onPress={() => { setAsset(null); setUploadedMediaId(null); }} disabled={pending} className="h-11 w-11 items-center justify-center rounded-full bg-black/50" accessibilityLabel="Retirer le média"><Icon name="trash-outline" size={22} color="#FFFFFF" /></TouchableOpacity> : null}
       </View>
 
       {asset ? <View className="absolute left-4 right-4 top-28"><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2"><TouchableOpacity onPress={() => void chooseMedia()} disabled={pending} className="rounded-full bg-black/55 px-4 py-2"><Text className="text-xs font-bold text-white">Changer le média</Text></TouchableOpacity>{isVideoAsset(asset) ? <View className="rounded-full bg-black/55 px-4 py-2"><Text className="text-xs font-bold text-white">Vidéo · {effectiveDuration}s</Text></View> : imageDurations.map((value) => <TouchableOpacity key={value} onPress={() => setDuration(value)} disabled={pending} className="rounded-full px-4 py-2" style={{ backgroundColor: value === duration ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.55)' }}><Text className="text-xs font-bold" style={{ color: value === duration ? '#000000' : '#FFFFFF' }}>{value}s</Text></TouchableOpacity>)}</ScrollView></View> : null}

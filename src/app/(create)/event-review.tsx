@@ -12,6 +12,7 @@ import { useCountryStore } from '@/features/country/country.store';
 import { eventsApi } from '@/features/events/events.api';
 import type { Event } from '@/features/events/types';
 import { postApi } from '@/features/post/post.api';
+import { toMediaFormData } from '@/features/media/media.utils';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { normalizeApiError } from '@/services/api/errors';
 
@@ -28,11 +29,13 @@ export default function EventReviewScreen() {
   const eventSettings = useCreateStore((state) => state.eventSettings);
   const countryCode = useCountryStore((state) => state.selectedCountryCode);
   const resetEventForm = useCreateStore((state) => state.resetEventForm);
+  const setEventForm = useCreateStore((state) => state.setEventForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdEvent, setCreatedEvent] = useState<Event | null>(null);
 
   const submit = async () => {
+    if (isSubmitting) return;
     const hasCustomLocation = eventForm.location_mode === 'CUSTOM_LOCATION';
     const latitude = Number(eventForm.latitude);
     const longitude = Number(eventForm.longitude);
@@ -50,11 +53,20 @@ export default function EventReviewScreen() {
     setError(null);
     setIsSubmitting(true);
     try {
-      let coverMediaId: string | undefined;
+      let coverMediaId = eventForm.cover_media_id ?? undefined;
       if (eventForm.cover_image_url) {
-        const cover = new FormData();
-        cover.append('file', { uri: eventForm.cover_image_url, name: 'event-cover.jpg', type: eventForm.cover_image_mime_type ?? 'image/jpeg' } as unknown as Blob);
-        coverMediaId = String((await postApi.uploadMedia(cover)).data.id);
+        if (eventForm.cover_media_uri !== eventForm.cover_image_url) coverMediaId = undefined;
+        if (!coverMediaId) {
+          coverMediaId = String((await postApi.uploadMedia(toMediaFormData({
+            uri: eventForm.cover_image_url,
+            type: 'image',
+            mimeType: eventForm.cover_image_mime_type,
+            fileName: 'event-cover.jpg',
+            width: 0,
+            height: 0,
+          }, 'event-cover'))).data.id);
+          setEventForm({ cover_media_id: coverMediaId, cover_media_uri: eventForm.cover_image_url });
+        }
       }
       const created = await eventsApi.createEvent({
         ...(hasCustomLocation
