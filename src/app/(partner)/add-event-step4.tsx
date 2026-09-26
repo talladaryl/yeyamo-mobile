@@ -8,6 +8,8 @@ import { CTAButton } from '@/components/ui/CTAButton';
 import { usePartnerStore } from '@/features/partner/partner.store';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { eventsApi } from '@/features/events/events.api';
+import { postApi } from '@/features/post/post.api';
+import { toMediaFormData } from '@/features/media/media.utils';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 function messageFor(error: unknown) {
@@ -25,7 +27,7 @@ export default function AddEventStep4Screen() {
   const colors = useThemeStore((state) => state.colors);
   const sessionMode = useAuthStore((state) => state.sessionMode);
   const isDemo = sessionMode?.startsWith('demo-') ?? false;
-  const { eventForm, resetEventForm } = usePartnerStore();
+  const { eventForm, setEventForm, resetEventForm } = usePartnerStore();
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
@@ -47,10 +49,27 @@ export default function AddEventStep4Screen() {
     }
     setIsPublishing(true);
     try {
+      let coverMediaId = eventForm.cover_media_id ?? undefined;
+      if (eventForm.cover_image_url) {
+        if (eventForm.cover_media_uri !== eventForm.cover_image_url) coverMediaId = undefined;
+        if (!coverMediaId) {
+          coverMediaId = String((await postApi.uploadMedia(toMediaFormData({
+            uri: eventForm.cover_image_url,
+            type: 'image',
+            mimeType: eventForm.cover_image_mime_type,
+            fileName: eventForm.cover_image_file_name ?? 'partner-event-cover.jpg',
+            width: 0,
+            height: 0,
+          }, 'partner-event-cover'))).data.id);
+          // A failed event submission can be retried without another upload.
+          setEventForm({ cover_media_id: coverMediaId, cover_media_uri: eventForm.cover_image_url });
+        }
+      }
       await eventsApi.createEvent({
         placeId: eventForm.placeId,
         title: eventForm.name,
         description: eventForm.description || undefined,
+        coverMediaId,
         startAt,
         endAt,
         capacity: eventForm.max_seats,
@@ -70,7 +89,7 @@ export default function AddEventStep4Screen() {
   return <View className="flex-1" style={{ backgroundColor: colors.background }}><Stack.Screen options={{ headerShown: true, headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text, headerTitle: 'Ajouter un événement', headerTitleStyle: { fontSize: 18, fontWeight: '600' }, headerLeft: () => <TouchableOpacity onPress={() => router.back()} className="ml-4"><Icon library="ionicons" name="arrow-back" size={24} color={colors.text} /></TouchableOpacity> }} />
     <ScrollView className="flex-1" showsVerticalScrollIndicator={false}><View className="px-4 py-6"><Stepper currentStep={4} totalSteps={4} /><View className="mb-6 mt-4 items-center"><View className="mb-4 h-24 w-24 items-center justify-center rounded-full bg-[#EF4444]/20"><Icon library="ionicons" name="checkmark-circle" size={48} color="#EF4444" /></View><Text className="mb-2 text-lg font-bold" style={{ color: colors.text }}>Aperçu</Text><Text className="text-center text-sm" style={{ color: colors.textSecondary }}>Vérifiez les informations avant envoi</Text></View>
       <View className="mb-6 overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>{eventForm.cover_image_url ? <Image source={{ uri: eventForm.cover_image_url }} style={{ width: '100%', height: 192 }} contentFit="cover" /> : null}<View className="p-4"><Text className="mb-2 text-lg font-bold" style={{ color: colors.text }}>{eventForm.name || 'Événement non renseigné'}</Text><Detail label="Lieu" value={eventForm.place} /><Detail label="Début" value={eventForm.start_date && eventForm.start_time ? `${eventForm.start_date} · ${eventForm.start_time}` : undefined} /><Detail label="Fin" value={eventForm.end_date && eventForm.end_time ? `${eventForm.end_date} · ${eventForm.end_time}` : undefined} /><Detail label="Description" value={eventForm.description} />{showFullPreview ? <><Detail label="Capacité" value={eventForm.max_seats ? `${eventForm.max_seats} personnes` : undefined} /><Detail label="Statut" value="En attente de validation" /></> : null}<TouchableOpacity className="mt-4" onPress={() => setShowFullPreview((value) => !value)}><Text className="text-sm font-medium" style={{ color: colors.primary }}>{showFullPreview ? 'Voir moins' : 'Voir plus'}</Text></TouchableOpacity></View></View>
-      <View className="flex-row rounded-xl border p-4" style={{ backgroundColor: colors.accentSoft, borderColor: colors.border }}><Icon library="ionicons" name="information-circle" size={20} color={colors.primary} /><Text className="ml-3 flex-1 text-xs leading-5" style={{ color: colors.textSecondary }}>L’image et les données de billetterie restent visibles dans le brouillon local : le contrat Event actuel ne les accepte pas encore.</Text></View>
+      <View className="flex-row rounded-xl border p-4" style={{ backgroundColor: colors.accentSoft, borderColor: colors.border }}><Icon library="ionicons" name="information-circle" size={20} color={colors.primary} /><Text className="ml-3 flex-1 text-xs leading-5" style={{ color: colors.textSecondary }}>L’image de couverture est envoyée avec l’événement. Les tarifs de billetterie restent dans le brouillon : ils nécessitent une création de ticket distincte après validation de l’événement.</Text></View>
     </View><View className="h-24" /></ScrollView>
     <View className="absolute bottom-0 left-0 right-0 border-t px-4 py-4" style={{ backgroundColor: colors.background, borderColor: colors.border }}><View className="flex-row gap-3"><View className="flex-1"><CTAButton title="Retour" variant="secondary" onPress={() => router.back()} disabled={isPublishing} /></View><View className="flex-1"><CTAButton title={isDemo ? 'Publier l’événement' : 'Envoyer'} onPress={handlePublish} loading={isPublishing} /></View></View></View>
   </View>;

@@ -13,26 +13,13 @@ import {
   useCountryCities,
   useCountryLocalities,
 } from '@/features/country/country.hooks';
+import { isAdministrativeDescendant } from '@/features/country/country.geography';
 import { useCountryStore } from '@/features/country/country.store';
 import { useCreateStore } from '@/features/create/create.store';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 type Coordinates = { latitude: number; longitude: number };
 const neutralMapRegion = { latitude: 0, longitude: 0, latitudeDelta: 80, longitudeDelta: 80 };
-
-function isAdministrativeDescendant(
-  areaId: string | null,
-  selectedAreaId: string | undefined,
-  parents: ReadonlyMap<string, string | null>,
-): boolean {
-  if (!selectedAreaId) return true;
-  let currentId = areaId;
-  while (currentId) {
-    if (currentId === selectedAreaId) return true;
-    currentId = parents.get(currentId) ?? null;
-  }
-  return false;
-}
 
 export default function SuggestPlaceStep2Screen() {
   const router = useRouter();

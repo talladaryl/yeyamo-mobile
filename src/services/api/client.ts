@@ -6,6 +6,7 @@ import axios, {
 import ENV from '@/config/env';
 import { secureStore } from '@/services/storage/secure-store';
 import { normalizeApiError } from './errors';
+import { removeJsonContentTypeForMultipart } from './multipart';
 
 // ─── Singleton router ref (set from root layout) ────────────────────────────
 // Avoids importing expo-router directly in a service (no React context here)
@@ -39,7 +40,6 @@ export const apiClient = createClient({
   timeout: 15_000,
   headers: {
     Accept: 'application/json',
-    'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
 });
@@ -47,6 +47,11 @@ export const apiClient = createClient({
 // ─── Request interceptor — inject Bearer token ───────────────────────────────
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    // Axios serializes plain objects as JSON. FormData must instead remain
+    // untouched and have no explicit Content-Type so React Native supplies
+    // the multipart boundary at transport time.
+    removeJsonContentTypeForMultipart(config);
+
     const token = await secureStore.get(secureStore.KEYS.AUTH_TOKEN);
     // An expired bearer token makes otherwise public Spring Security endpoints
     // answer 401 before their permitAll rule is evaluated. Registration and

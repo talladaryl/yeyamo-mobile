@@ -62,6 +62,11 @@ export interface AddEventForm {
   // Step 3 - Details & Billing
   description: string;
   cover_image_url?: string | null;
+  cover_image_mime_type?: string | null;
+  cover_image_file_name?: string | null;
+  /** Persisted media reference, retained so a retry does not upload the same cover twice. */
+  cover_media_id?: string | null;
+  cover_media_uri?: string | null;
   ticket_price_enabled: boolean;
   ticket_price?: number;
   max_seats?: number;

@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/Input';
 import { useCountryFeature } from '@/features/country/country.hooks';
 import { useCountryStore } from '@/features/country/country.store';
 import { useCreateCultureContribution, useCultureLanguages, useSubmitContribution } from '@/features/culture/culture.hooks';
+import { toCultureLanguageOptions } from '@/features/culture/culture.language-options';
 import type { CultureContentType, CultureContributionInput } from '@/features/culture/culture.types';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { normalizeApiError } from '@/services/api/errors';
@@ -136,8 +137,8 @@ function TypeStep({ type, onSelect }: { type: ContributionType; onSelect: (value
   })}</View></YeyamoFormStep>;
 }
 
-function OriginStep({ control, countryCode, languages, selectedLanguage, onLanguageChange, error }: { control: Control<ContributionValues>; countryCode: string | null; languages: { code: string; nativeName: string; name: string }[]; selectedLanguage: string; onLanguageChange: (value: string) => void; error?: string }) {
-  return <YeyamoFormStep title="Quelle est son origine ?" description="Ces informations permettent de situer votre contribution avec respect."><View className="gap-5"><Input label="Pays" value={countryCode ?? ''} placeholder="Pays défini dans votre profil" editable={false} /><FormSelect label="Langue principale *" value={selectedLanguage} options={languages.map((language) => ({ label: language.nativeName || language.name, value: language.code, description: language.name }))} placeholder="Choisir une langue" onChange={onLanguageChange} error={error} required /><ControlledInput control={control} name="communityName" label="Peuple ou communauté (facultatif)" placeholder="Ex. Bassa, Sawa…" autoCapitalize="words" /></View></YeyamoFormStep>;
+function OriginStep({ control, countryCode, languages, selectedLanguage, onLanguageChange, error }: { control: Control<ContributionValues>; countryCode: string | null; languages: { code: string; nativeName: string; name: string; countryCodes: string[]; writingSystem: string | null; status: string; description: string | null; speakerEstimate: number | null; verified: boolean }[]; selectedLanguage: string; onLanguageChange: (value: string) => void; error?: string }) {
+  return <YeyamoFormStep title="Quelle est son origine ?" description="Ces informations permettent de situer votre contribution avec respect."><View className="gap-5"><Input label="Pays" value={countryCode ?? ''} placeholder="Pays défini dans votre profil" editable={false} /><FormSelect label="Langue principale *" value={selectedLanguage} options={toCultureLanguageOptions(languages)} placeholder="Choisir une langue" onChange={onLanguageChange} error={error} required /><ControlledInput control={control} name="communityName" label="Peuple ou communauté (facultatif)" placeholder="Ex. Bassa, Sawa…" autoCapitalize="words" /></View></YeyamoFormStep>;
 }
 
 function ContentStep({ control, type, errors }: { control: Control<ContributionValues>; type: ContributionType; errors: ReturnType<typeof useForm<ContributionValues>>['formState']['errors'] }) {

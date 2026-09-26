@@ -9,6 +9,7 @@ import { FormSelect } from '@/components/ui/FormSelect';
 import { Input } from '@/components/ui/Input';
 import { useCountryStore } from '@/features/country/country.store';
 import { useCreateStore } from '@/features/create/create.store';
+import { toActivePlaceCategoryOptions } from '@/features/places/place.categories';
 import { usePlaceCategories } from '@/features/places/placeReferences.hooks';
 import { useThemeStore } from '@/features/theme/theme.store';
 
@@ -36,7 +37,7 @@ export default function SuggestPlaceStep1Screen() {
     <YeyamoFormStep title="Quel lieu souhaitez-vous proposer ?" description="Cette suggestion sera examinée avant d’être publiée sur Yeyamo.">
       <View className="gap-5">
         <Input label="Nom du lieu *" value={name} onChangeText={setName} placeholder="Ex. Jardin botanique de Limbé" maxLength={120} autoCapitalize="words" returnKeyType="next" />
-        <FormSelect label="Catégorie" value={category} options={(categories.data ?? []).filter((item) => item.active).map((item) => ({ label: item.name, value: item.name }))} onChange={setCategory} placeholder={categories.isLoading ? 'Chargement des catégories…' : 'Choisir une catégorie'} />
+        <FormSelect label="Catégorie" value={category} options={toActivePlaceCategoryOptions(categories.data ?? []).map((item) => ({ ...item, value: item.label }))} onChange={setCategory} placeholder={categories.isLoading ? 'Chargement des catégories…' : 'Choisir une catégorie'} />
         {categories.isError ? <Text className="-mt-3 text-xs" style={{ color: colors.textSecondary }}>Les catégories sont momentanément indisponibles. Elles sont facultatives pour l’envoi de la suggestion.</Text> : null}
         <Input label="Type de lieu (facultatif)" value={type} onChangeText={setType} placeholder="Ex. Jardin, restaurant, musée…" maxLength={80} autoCapitalize="sentences" returnKeyType="done" />
         <View className="rounded-xl border p-4" style={{ borderColor: colors.border, backgroundColor: colors.accentSoft }}>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -15,6 +15,7 @@ export default function PartnerPublicationScreen() {
   const colors = useThemeStore((state) => state.colors);
   const { pickFromLibrary, takePhoto } = useYeyamoMediaPicker();
   const [selectedMedia, setSelectedMedia] = useState<PickedMediaAsset[]>([]);
+  const uploadedMediaIds = useRef<Record<string, string | number>>({});
   const [caption, setCaption] = useState('');
   const [pickerError, setPickerError] = useState<string | null>(null);
   const uploadMedia = useUploadMedia();
@@ -47,7 +48,10 @@ export default function PartnerPublicationScreen() {
     try {
       const mediaIds: (string | number)[] = [];
       for (const [index, media] of selectedMedia.entries()) {
-        mediaIds.push((await uploadMedia.mutateAsync(toMediaFormData(media, 'partner-publication', index))).data.id);
+        const existingId = uploadedMediaIds.current[media.uri];
+        const mediaId = existingId ?? (await uploadMedia.mutateAsync(toMediaFormData(media, 'partner-publication', index))).data.id;
+        uploadedMediaIds.current[media.uri] = mediaId;
+        mediaIds.push(mediaId);
       }
       const type = selectedMedia.length > 1 ? 'carousel' : selectedMedia[0] && isVideoAsset(selectedMedia[0]) ? 'video' : 'image';
       await createPost.mutateAsync({ type, caption: caption.trim() || undefined, media_ids: mediaIds });

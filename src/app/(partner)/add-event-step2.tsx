@@ -17,12 +17,18 @@ export default function AddEventStep2Screen() {
   const colors = useThemeStore((state) => state.colors);
   const { eventForm, setEventForm, setEventStep } = usePartnerStore();
   const [coverImage, setCoverImage] = useState<string | null>(eventForm.cover_image_url || null);
+  const [coverMimeType, setCoverMimeType] = useState<string | null>(eventForm.cover_image_mime_type || null);
+  const [coverFileName, setCoverFileName] = useState<string | null>(eventForm.cover_image_file_name || null);
   const [endDate, setEndDate] = useState(eventForm.end_date || '');
   const [endTime, setEndTime] = useState(eventForm.end_time || '');
   const [error, setError] = useState<string>();
   const pick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 0.9 });
-    if (!result.canceled && result.assets[0]) setCoverImage(result.assets[0].uri);
+    if (!result.canceled && result.assets[0]) {
+      setCoverImage(result.assets[0].uri);
+      setCoverMimeType(result.assets[0].mimeType ?? null);
+      setCoverFileName(result.assets[0].fileName ?? null);
+    }
   };
   const continueForm = () => {
     const next = formValidation.date(endDate, 'Date de fin')
@@ -30,7 +36,15 @@ export default function AddEventStep2Screen() {
       ?? formValidation.dateOrder(eventForm.start_date || '', endDate);
     setError(next);
     if (next) return Alert.alert('Période à vérifier', next);
-    setEventForm({ cover_image_url: coverImage, end_date: endDate, end_time: endTime });
+    setEventForm({
+      cover_image_url: coverImage,
+      cover_image_mime_type: coverMimeType,
+      cover_image_file_name: coverFileName,
+      // A newly selected local image must never reuse a previous media ID.
+      ...(eventForm.cover_media_uri === coverImage ? {} : { cover_media_id: null, cover_media_uri: null }),
+      end_date: endDate,
+      end_time: endTime,
+    });
     setEventStep(3);
     router.push('/(partner)/add-event-step3');
   };

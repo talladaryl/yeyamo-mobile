@@ -11,6 +11,7 @@ import { FormSelect } from '@/components/ui/FormSelect';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { usePartnerStore } from '@/features/partner/partner.store';
+import { toActivePlaceCategoryOptions } from '@/features/places/place.categories';
 import { placesApi } from '@/features/places/places.api';
 import { formValidation } from '@/utils/formValidation';
 
@@ -39,8 +40,7 @@ export default function AddPlaceStep1Screen() {
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const categoryOptions = isDemo
     ? DEMO_CATEGORIES
-    : (categories.data ?? []).filter((category) => category.active)
-      .map((category) => ({ label: category.name, value: String(category.id) }));
+    : toActivePlaceCategoryOptions(categories.data ?? []);
 
   const continueForm = () => {
     const selectedCategory = categoryOptions.find((option) => option.value === categoryValue);
