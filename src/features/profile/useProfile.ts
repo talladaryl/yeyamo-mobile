@@ -10,8 +10,9 @@ import { MOCK_USER_PUBLICATIONS, MOCK_USER_FAVORITES, MOCK_USER_EVENTS, MOCK_USE
  */
 export function useUserPublications() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const userId = useAuthStore((state) => state.user?.id);
   return useQuery({
-    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'publications'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'publications', String(userId ?? 'anonymous')],
     queryFn: () =>
       isDemo ? Promise.resolve(MOCK_USER_PUBLICATIONS) : profileApi.getUserPublications(),
     staleTime: 1000 * 60 * 5,
@@ -24,8 +25,9 @@ export function useUserPublications() {
  */
 export function useUserFavorites() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const userId = useAuthStore((state) => state.user?.id);
   return useQuery({
-    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'favorites'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'favorites', String(userId ?? 'anonymous')],
     queryFn: () =>
       isDemo ? Promise.resolve(MOCK_USER_FAVORITES) : profileApi.getUserFavorites(),
     staleTime: 1000 * 60 * 5,
@@ -38,8 +40,9 @@ export function useUserFavorites() {
  */
 export function useUserEvents() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const userId = useAuthStore((state) => state.user?.id);
   return useQuery({
-    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'events'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'events', String(userId ?? 'anonymous')],
     queryFn: () =>
       isDemo ? Promise.resolve(MOCK_USER_EVENTS) : profileApi.getUserEvents(),
     staleTime: 1000 * 60 * 5,
@@ -52,8 +55,9 @@ export function useUserEvents() {
  */
 export function useUserReservations() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const userId = useAuthStore((state) => state.user?.id);
   return useInfiniteQuery({
-    queryKey: ['reservations', isDemo ? 'demo' : 'backend'],
+    queryKey: ['reservations', isDemo ? 'demo' : 'backend', String(userId ?? 'anonymous')],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       isDemo
@@ -81,8 +85,9 @@ export function useCancelUserReservation() {
  */
 export function useUserReviews() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const userId = useAuthStore((state) => state.user?.id);
   return useQuery({
-    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'reviews'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'reviews', String(userId ?? 'anonymous')],
     queryFn: () =>
       isDemo ? Promise.resolve(MOCK_USER_REVIEWS) : profileApi.getUserReviews(),
     staleTime: 1000 * 60 * 5,
@@ -95,8 +100,9 @@ export function useUserReviews() {
  */
 export function useProfileStats() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const userId = useAuthStore((state) => state.user?.id);
   return useQuery({
-    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'stats'],
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'stats', String(userId ?? 'anonymous')],
     queryFn: () =>
       isDemo
         ? Promise.resolve({

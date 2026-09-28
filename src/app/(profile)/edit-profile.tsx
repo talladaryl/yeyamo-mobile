@@ -59,7 +59,7 @@ export default function EditProfileScreen() {
     let avatarUrl = settings.avatar_url;
     if (avatarAsset) {
       try {
-        avatarUrl = (await uploadMedia.mutateAsync(toMediaFormData(avatarAsset, 'avatar'))).data.url;
+        avatarUrl = (await uploadMedia.mutateAsync(await toMediaFormData(avatarAsset, 'avatar'))).data.url;
       } catch (error) {
         setFailure(errorMessage(error, 'La photo n’a pas été envoyée. Le profil est inchangé.'));
         return;

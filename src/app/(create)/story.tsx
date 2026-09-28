@@ -76,7 +76,7 @@ export default function CreateStoryScreen() {
     let mediaId = uploadedMediaId;
     if (!mediaId) {
       try {
-        const uploaded = await uploadMedia.mutateAsync(toMediaFormData(asset, 'story', 0));
+        const uploaded = await uploadMedia.mutateAsync(await toMediaFormData(asset, 'story', 0));
         mediaId = String(uploaded.data.id);
         setUploadedMediaId(mediaId);
       } catch (caught) {

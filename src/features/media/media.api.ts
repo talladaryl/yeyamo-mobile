@@ -2,6 +2,7 @@ import { apiClient, apiGet } from '@/services/api/client';
 import { absoluteApiUrl, mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId, MediaAttachment } from '@/types/api.types';
 import { registerMediaFormData, traceMediaRuntime } from './media.runtime-trace';
+import { normalizeImageForUpload, resolveMediaFileName, resolveMediaMimeType, type PickedMediaAsset } from './media.utils';
 
 export interface MediaUploadAsset {
   uri: string;
@@ -47,13 +48,22 @@ export async function uploadMedia(
   asset: MediaUploadAsset,
   options: { usageType?: string; aggregateType?: string; aggregateId?: string; altText?: string } = {},
 ): Promise<MediaUploadResponse> {
-  const mimeType = asset.mimeType ?? (asset.type === 'image' ? 'image/jpeg' : asset.type === 'video' ? 'video/mp4' : 'application/octet-stream');
   const flow = options.usageType?.startsWith('ARTWORK_') ? 'artwork' : options.usageType ? 'culture' : 'generic-media';
+  const normalizedAsset = await normalizeImageForUpload({
+    uri: asset.uri,
+    type: asset.type === 'video' ? 'video' : 'image',
+    mimeType: asset.mimeType,
+    fileName: asset.name,
+    width: 0,
+    height: 0,
+  } satisfies PickedMediaAsset, flow);
+  const mimeType = resolveMediaMimeType(normalizedAsset);
+  const fileName = resolveMediaFileName(normalizedAsset, flow);
   traceMediaRuntime('NORMALIZE', { flow, mediaType: asset.type ?? 'unknown', mimeType, hasFileName: Boolean(asset.name) });
   const form = new FormData();
   form.append('file', {
-    uri: asset.uri,
-    name: asset.name ?? `yeyamo-${Date.now()}`,
+    uri: normalizedAsset.uri,
+    name: fileName,
     type: mimeType,
   } as unknown as Blob);
   if (options.usageType) form.append('usageType', options.usageType);
@@ -65,6 +75,13 @@ export async function uploadMedia(
   // public creation flows) use the canonical endpoint instead. Do not set
   // Content-Type manually: React Native supplies the multipart boundary.
   const endpoint = options.usageType ? '/media/culture' : '/media';
-  const { data } = await apiClient.post<MediaUploadResponse>(endpoint, form, { timeout: 120_000 });
-  return data;
+  traceMediaRuntime('MEDIA_UPLOAD_REQUEST', { flow, method: 'POST', url: endpoint, mimeType });
+  try {
+    const { data } = await apiClient.post<MediaUploadResponse>(endpoint, form, { timeout: 120_000 });
+    traceMediaRuntime('MEDIA_UPLOAD_RESPONSE', { flow, method: 'POST', url: endpoint, status: 201, mediaId: String(data.id) });
+    return data;
+  } catch (error) {
+    traceMediaRuntime('MEDIA_UPLOAD_ERROR', { flow, method: 'POST', url: endpoint, errorType: error instanceof Error ? error.name : 'UnknownError' });
+    throw error;
+  }
 }

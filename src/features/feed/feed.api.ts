@@ -7,6 +7,8 @@ import {
   toPaginatedResponse,
 } from '@/services/api/contracts';
 import { getMediaAttachment } from '@/features/media/media.api';
+import { socialApi, type ContentAuthorIdentity } from '@/features/social/social.api';
+import { traceFeedRuntime, traceInteractionRuntime } from '@/features/social/social.runtime-trace';
 import type { FeedPost , PostComment } from './types';
 
 interface BackendFeedItem {
@@ -74,10 +76,21 @@ interface BackendComment {
   createdAt: string;
 }
 
-function mapComment(comment: BackendComment): PostComment {
+function mapAuthor(authUserId: string, identity?: ContentAuthorIdentity) {
+  if (!identity) return fallbackUser(authUserId);
+  return {
+    id: identity.profileId,
+    username: identity.profileId,
+    display_name: identity.displayName,
+    avatar_url: identity.avatarUrl,
+    is_verified: false,
+  };
+}
+
+function mapComment(comment: BackendComment, identity?: ContentAuthorIdentity): PostComment {
   return {
     id: comment.id,
-    author: fallbackUser(comment.authorId),
+    author: mapAuthor(comment.authorId, identity),
     text: comment.body,
     likes_count: 0,
     is_liked: false,
@@ -99,7 +112,11 @@ function fallbackMediaAttachment(id: string) {
   };
 }
 
-async function mapFeedItem(item: OrganicBackendFeedItem): Promise<FeedPost> {
+async function mapFeedItem(
+  item: OrganicBackendFeedItem,
+  identity?: ContentAuthorIdentity,
+  interaction?: InteractionSummary,
+): Promise<FeedPost> {
   const metadata = await Promise.allSettled(item.mediaIds.map((id) => getMediaAttachment(id)));
   const media = metadata.map((result, index) => result.status === 'fulfilled' ? result.value : fallbackMediaAttachment(item.mediaIds[index]));
   const hasVideo = media.some((attachment) => attachment.type === 'video');
@@ -108,12 +125,13 @@ async function mapFeedItem(item: OrganicBackendFeedItem): Promise<FeedPost> {
     type: item.mediaIds.length === 0 ? 'text' : item.mediaIds.length > 1 ? 'carousel' : hasVideo ? 'video' : 'image',
     caption: item.caption,
     media,
-    author: fallbackUser(item.authorId),
-    likes_count: item.likes ?? 0,
-    comments_count: item.comments ?? 0,
-    shares_count: item.shares ?? 0,
-    is_liked: false,
-    is_saved: false,
+    author: mapAuthor(item.authorId, identity),
+    author_is_following: identity?.isFollowing ?? false,
+    likes_count: interaction?.likes ?? item.likes ?? 0,
+    comments_count: interaction?.comments ?? item.comments ?? 0,
+    shares_count: interaction?.shares ?? item.shares ?? 0,
+    is_liked: interaction?.likedByViewer ?? false,
+    is_saved: interaction?.favoriteByViewer ?? false,
     place_tag: item.catalogAssetId
       ? { id: item.catalogAssetId, name: 'Lieu associé' }
       : null,
@@ -128,7 +146,22 @@ export const feedApi = {
     const page = Number.isInteger(pageParam) && pageParam! >= 0 ? pageParam! : 0;
     const response = await apiGet<BackendFeedPage>(`/feed?page=${page}&size=20`);
     const organicItems = (response.items ?? []).filter(isOrganicFeedItem);
-    const posts = await Promise.all(organicItems.map(mapFeedItem));
+    const identities = await socialApi.resolveContentAuthorIdentities(organicItems.map((item) => item.authorId));
+    const identityByAuthUserId = new Map(identities.map((identity) => [identity.authUserId, identity]));
+    const posts = await Promise.all(organicItems.map(async (item) => {
+      const interaction = await apiGet<InteractionSummary>(`/interactions/posts/${item.postId}/summary`)
+        .catch(() => undefined);
+      const post = await mapFeedItem(item, identityByAuthUserId.get(item.authorId), interaction);
+      traceFeedRuntime('FEED_ITEM_RESOLVED', {
+        flow: 'feed', postId: item.postId, postAuthorId: item.authorId,
+        resolvedAuthorId: String(post.author.id),
+        hasAuthor: Boolean(identityByAuthUserId.get(item.authorId)),
+        mediaCount: post.media.length, likeCount: post.likes_count,
+        viewerLiked: post.is_liked, commentCount: post.comments_count,
+        hasActiveStory: false,
+      });
+      return post;
+    }));
     return toPaginatedResponse(
       posts,
       response.page,
@@ -158,11 +191,18 @@ export const feedApi = {
     }),
 
   getPost: async (postId: EntityId): Promise<{ data: FeedPost }> => {
+    traceInteractionRuntime('COMMENT_LIST_REQUEST', { flow: 'comment', method: 'GET', postId: String(postId), url: `/interactions/posts/${postId}/comments` });
     const [post, summary, comments] = await Promise.all([
       apiGet<BackendPost>(`/posts/${postId}`),
       apiGet<InteractionSummary>(`/interactions/posts/${postId}/summary`),
       apiGet<BackendComment[]>(`/interactions/posts/${postId}/comments?limit=50`),
     ]);
+    traceInteractionRuntime('COMMENT_LIST_RESPONSE', { flow: 'comment', method: 'GET', postId: String(postId), status: 200, count: comments.length });
+    const identities = await socialApi.resolveContentAuthorIdentities([
+      post.authorId,
+      ...comments.map((comment) => comment.authorId),
+    ]);
+    const identityByAuthUserId = new Map(identities.map((identity) => [identity.authUserId, identity]));
     const feedPost = await mapFeedItem({
       postId: post.id,
       authorId: post.authorId,
@@ -175,19 +215,22 @@ export const feedApi = {
       comments: summary.comments,
       shares: summary.shares,
       linkedContent: post.linkedContent ?? null,
-    });
-    feedPost.is_liked = summary.likedByViewer;
-    feedPost.is_saved = summary.favoriteByViewer;
-    feedPost.comments = comments.map(mapComment);
+    }, identityByAuthUserId.get(post.authorId), summary);
+    feedPost.comments = comments.map((comment) => mapComment(comment, identityByAuthUserId.get(comment.authorId)));
     return { data: feedPost };
   },
 
-  addComment: async (postId: EntityId, body: string): Promise<PostComment> =>
-    mapComment(await apiPost<BackendComment>(
+  addComment: async (postId: EntityId, body: string): Promise<PostComment> => {
+    traceInteractionRuntime('COMMENT_SUBMIT', { flow: 'comment', method: 'POST', postId: String(postId), bodyLength: body.length });
+    const created = await apiPost<BackendComment>(
       `/interactions/posts/${postId}/comments`,
       { parentId: null, body },
       { headers: { 'Idempotency-Key': createIdempotencyKey() } },
-    )),
+    );
+    const [identity] = await socialApi.resolveContentAuthorIdentities([created.authorId]);
+    traceInteractionRuntime('COMMENT_CREATE_RESPONSE', { flow: 'comment', method: 'POST', postId: String(postId), commentId: created.id, status: 201 });
+    return mapComment(created, identity);
+  },
 
   recordShare: (postId: EntityId) =>
     apiPost<void>(

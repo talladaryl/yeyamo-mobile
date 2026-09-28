@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, FlatList, RefreshControl, Text, View } from 'react-native';
 import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
@@ -11,7 +11,7 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { useConversations, useSendMessage } from '@/features/chat/useChat';
 import { useLikePost } from '@/features/feed/useFeed';
 import { isSponsoredFeedItem, type FeedItem, type FeedPost } from '@/features/feed/types';
-import { socialApi } from '@/features/social/social.api';
+import { useFollowActions } from '@/features/social/useSocial';
 import { useThemeStore } from '@/features/theme/theme.store';
 import type { EntityId } from '@/types/api.types';
 import { Button } from '@/components/ui/Button';
@@ -42,6 +42,7 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
   const [playbackRates, setPlaybackRates] = useState<Record<string, number>>({});
   const [sharePost, setSharePost] = useState<FeedPost | null>(null);
   const { mutate: toggleLike } = useLikePost();
+  const { follow, unfollow } = useFollowActions();
   const { data: conversations = [] } = useConversations();
   const sendMessage = useSendMessage();
   const trackImpression = useTrackAdImpression();
@@ -51,6 +52,13 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
     () => posts.filter((post) => isSponsoredFeedItem(post) || !hiddenPostIds.has(post.id)),
     [hiddenPostIds, posts],
   );
+
+  useEffect(() => {
+    setFollowedAuthorIds(new Set(posts
+      .filter((post): post is FeedPost => !isSponsoredFeedItem(post))
+      .filter((post) => post.author_is_following)
+      .map((post) => post.author.id)));
+  }, [posts]);
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -82,7 +90,7 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
 
     if (isDemo) return;
     try {
-      await (wasFollowing ? socialApi.unfollowUser(authorId) : socialApi.followUser(authorId));
+      await (wasFollowing ? unfollow.mutateAsync(authorId) : follow.mutateAsync(authorId));
     } catch {
       setFollowedAuthorIds((current) => {
         const next = new Set(current);

@@ -1,7 +1,9 @@
 import { apiClient } from '@/services/api/client';
 import { collectionsApi } from '@/features/collections/collections.api';
-import { createIdempotencyKey, mediaContentUrl, type SpringPage } from '@/services/api/contracts';
+import { createIdempotencyKey, type SpringPage } from '@/services/api/contracts';
 import { secureStore } from '@/services/storage/secure-store';
+import { getMediaAttachment } from '@/features/media/media.api';
+import { traceProfileRuntime } from '@/features/social/social.runtime-trace';
 import type {
   EventParticipation,
   FavoritePlace,
@@ -16,6 +18,9 @@ interface BackendPost {
   id: string;
   mediaIds: string[];
   createdAt: string;
+  caption?: string | null;
+  content?: string | null;
+  status?: string | null;
 }
 
 interface BackendEvent {
@@ -114,15 +119,36 @@ function mapReservation(booking: BackendBooking): Reservation {
 
 export const profileApi = {
   getUserPublications: async (): Promise<UserPublication[]> => {
+    traceProfileRuntime('PROFILE_POSTS_REQUEST', { flow: 'profile', method: 'GET', url: '/posts/me' });
     const { data } = await apiClient.get<BackendPost[]>('/posts/me');
-    return data.map((post) => ({
-      id: post.id,
-      type: post.mediaIds.length > 1 ? 'carousel' : 'image',
-      media_url: post.mediaIds[0] ? mediaContentUrl(post.mediaIds[0]) : '',
-      likes_count: 0,
-      comments_count: 0,
-      is_saved: false,
-      created_at: post.createdAt,
+    traceProfileRuntime('PROFILE_POSTS_RESPONSE', { flow: 'profile', method: 'GET', url: '/posts/me', status: 200, postCount: data.length });
+    return Promise.all(data.map(async (post) => {
+      const firstMediaId = post.mediaIds[0];
+      let attachment = null;
+      try {
+        attachment = firstMediaId ? await getMediaAttachment(firstMediaId) : null;
+      } catch (error) {
+        traceProfileRuntime('PROFILE_MEDIA_RESOLUTION_ERROR', {
+          postId: post.id,
+          mediaId: firstMediaId ?? null,
+          errorType: error instanceof Error ? error.name : 'UnknownError',
+        });
+      }
+      traceProfileRuntime('PROFILE_POST_MEDIA_RESOLVE', {
+        postId: post.id,
+        mediaId: firstMediaId ?? null,
+        found: Boolean(attachment?.url),
+        mediaType: attachment?.type ?? 'text',
+      });
+      return {
+        id: post.id,
+        type: !attachment ? 'text' : post.mediaIds.length > 1 ? 'carousel' : attachment.type,
+        media_url: attachment?.thumbnail_url ?? attachment?.url ?? '',
+        likes_count: 0,
+        comments_count: 0,
+        is_saved: false,
+        created_at: post.createdAt,
+      };
     }));
   },
 
@@ -218,10 +244,12 @@ export const profileApi = {
       apiClient.get<BackendStats>('/users/social/stats'),
       profileApi.getUserPublications(),
     ]);
-    return {
+    const result = {
       publications_count: publications.length,
       followers_count: stats.followersCount,
       following_count: stats.followingCount,
     };
+    traceProfileRuntime('PROFILE_POST_COUNT', { flow: 'profile', count: result.publications_count, source: '/posts/me' });
+    return result;
   },
 };

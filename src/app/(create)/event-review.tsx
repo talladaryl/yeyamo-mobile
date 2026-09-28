@@ -57,7 +57,7 @@ export default function EventReviewScreen() {
       if (eventForm.cover_image_url) {
         if (eventForm.cover_media_uri !== eventForm.cover_image_url) coverMediaId = undefined;
         if (!coverMediaId) {
-          coverMediaId = String((await postApi.uploadMedia(toMediaFormData({
+          coverMediaId = String((await postApi.uploadMedia(await toMediaFormData({
             uri: eventForm.cover_image_url,
             type: 'image',
             mimeType: eventForm.cover_image_mime_type,

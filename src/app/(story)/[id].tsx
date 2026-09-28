@@ -7,6 +7,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMarkStoryViewed, useStories, useStoryDetail } from '@/features/story/useStory';
 import type { Story } from '@/features/story/types';
+import { traceStoryRuntime } from '@/features/social/social.runtime-trace';
 
 const { width, height } = Dimensions.get('window');
 
@@ -68,7 +69,12 @@ export default function StoryViewerScreen() {
   useEffect(() => {
     setProgress(0);
     setIsPaused(false);
-    if (currentStoryId && !currentStoryViewed) markViewed(currentStoryId);
+    if (currentStoryId && !currentStoryViewed) {
+      traceStoryRuntime('STORY_VIEWER_OPEN', { flow: 'story-viewer', storyId: String(currentStoryId) });
+      markViewed(currentStoryId, {
+        onSuccess: () => traceStoryRuntime('STORY_VIEWER_RESULT', { flow: 'story-viewer', storyId: String(currentStoryId), receivedState: 'viewed' }),
+      });
+    }
   }, [currentStoryId, currentStoryViewed, markViewed]);
 
   const goPrevious = useCallback(() => {

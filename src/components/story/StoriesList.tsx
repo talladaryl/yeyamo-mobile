@@ -41,7 +41,7 @@ export function StoriesList({ stories, currentUserId, overlay = false }: Stories
         showsHorizontalScrollIndicator={false}
         contentContainerClassName="gap-3 px-4 py-3"
         renderItem={({ item }) => {
-          const isOwn = String(item.author.id) === String(currentUserId);
+          const isOwn = item.stories.some((story) => String(story.author_auth_user_id) === String(currentUserId));
           return (
             <View className="items-center gap-1">
               <StoryRing

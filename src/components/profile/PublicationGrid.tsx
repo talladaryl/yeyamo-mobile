@@ -20,15 +20,27 @@ export function PublicationGrid({ publications, onPressPublication }: Publicatio
       style={{ width: itemSize, height: itemSize }}
       activeOpacity={0.7}
     >
-      <Image
-        source={{ uri: item.media_url }}
-        className="w-full h-full"
-        resizeMode="cover"
-      />
+      {item.type === 'text' ? (
+        <View className="w-full h-full items-center justify-center bg-slate-800 p-3">
+          <Ionicons name="document-text-outline" size={24} color="#FFFFFF" />
+          <Text className="mt-1 text-center text-xs font-semibold text-white">Publication texte</Text>
+        </View>
+      ) : (
+        <Image
+          source={{ uri: item.media_url }}
+          className="w-full h-full"
+          resizeMode="cover"
+        />
+      )}
       {/* Indicateur vidéo */}
       {item.type === 'video' && (
         <View className="absolute top-2 right-2">
           <Ionicons name="play-circle" size={20} color="#FFFFFF" />
+        </View>
+      )}
+      {item.type === 'carousel' && (
+        <View className="absolute top-2 right-2">
+          <Ionicons name="copy-outline" size={18} color="#FFFFFF" />
         </View>
       )}
       {/* Nombre de likes */}

@@ -20,6 +20,14 @@ interface BackendProfileSummary {
   followingCount: number;
 }
 
+export interface ContentAuthorIdentity {
+  profileId: string;
+  authUserId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isFollowing: boolean;
+}
+
 interface BackendActivity {
   follower: BackendProfileSummary;
   followee: BackendProfileSummary;
@@ -90,6 +98,15 @@ function mapSettings(settings: BackendSocialSettings): SocialSettings {
 }
 
 export const socialApi = {
+  resolveContentAuthorIdentities: async (authUserIds: string[]): Promise<ContentAuthorIdentity[]> => {
+    const unique = [...new Set(authUserIds.filter(Boolean))];
+    if (!unique.length) return [];
+    // Spring reliably binds repeated parameters. Avoid Axios' bracket-array
+    // encoding (`authUserIds[]`), which is not the backend's contract.
+    const query = unique.map((id) => `authUserIds=${encodeURIComponent(id)}`).join('&');
+    const { data } = await apiClient.get<ContentAuthorIdentity[]>(`/users/social/identities?${query}`);
+    return data;
+  },
   searchUsers: async (filters: SearchFilters): Promise<UserSearchResult[]> => {
     const { data } = await apiClient.get<SpringPage<BackendProfileSummary>>(
       '/users/social/search',

@@ -3,10 +3,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { usePostDetail } from '@/features/post/usePost';
 import { feedService } from '@/features/feed/feed.service';
 import { feedApi } from '@/features/feed/feed.api';
+import { FEED_QUERY_KEY } from '@/features/feed/useFeed';
+import { useAuthStore } from '@/features/auth/auth.store';
+import { traceInteractionRuntime } from '@/features/social/social.runtime-trace';
 
 const { width } = Dimensions.get('window');
 
@@ -14,6 +18,8 @@ export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const queryClient = useQueryClient();
+  const viewerUserId = useAuthStore((state) => state.user?.id ?? null);
   const [interactionState, setInteractionState] = useState<{
     postId: string;
     isLiked: boolean;
@@ -38,7 +44,13 @@ export default function PostDetailScreen() {
       likesCount: previousCount + (previous ? -1 : 1),
     });
     try {
+      traceInteractionRuntime('LIKE_REQUEST', { flow: 'post-detail', postId: id, viewerUserId, beforeLiked: previous });
       await feedService.toggleLike(id, previous);
+      await Promise.all([
+        refetch(),
+        queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY, refetchType: 'active' }),
+      ]);
+      traceInteractionRuntime('LIKE_REFETCH', { flow: 'post-detail', postId: id, viewerUserId, afterLiked: !previous });
     } catch {
       setInteractionState({ postId: id, isLiked: previous, isSaved, likesCount: previousCount });
       Alert.alert('Action impossible', 'Le like n’a pas pu être enregistré.');
@@ -60,9 +72,14 @@ export default function PostDetailScreen() {
     const body = comment.trim();
     if (!body) return;
     try {
+      traceInteractionRuntime('COMMENT_REQUEST', { flow: 'post-detail', postId: id, viewerUserId, bodyLength: body.length });
       await feedApi.addComment(id, body);
       setComment('');
-      await refetch();
+      await Promise.all([
+        refetch(),
+        queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY, refetchType: 'active' }),
+      ]);
+      traceInteractionRuntime('COMMENT_REFETCH', { flow: 'post-detail', postId: id, viewerUserId });
     } catch {
       Alert.alert('Envoi impossible', 'Le commentaire n’a pas pu être publié.');
     }

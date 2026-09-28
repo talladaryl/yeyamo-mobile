@@ -59,7 +59,7 @@ export interface ProfilePost {
 
 export interface UserPublication {
   id: EntityId;
-  type: 'video' | 'image' | 'carousel';
+  type: 'video' | 'image' | 'carousel' | 'text';
   media_url: string;
   likes_count: number;
   comments_count: number;

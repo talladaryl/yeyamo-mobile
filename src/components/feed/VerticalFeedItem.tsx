@@ -62,7 +62,7 @@ export function VerticalFeedItem({
 
   useEffect(() => {
     if (post.type === 'video') player.playbackRate = playbackRate;
-  }, [isVideo, playbackRate, player]);
+  }, [isVideo, playbackRate, player, post.type]);
 
   return (
     <View style={{ height }} className="bg-[#0A0A0A]">
@@ -91,7 +91,7 @@ export function VerticalFeedItem({
       {/* Bottom info */}
       <View className="absolute left-4 right-20" style={{ bottom: bottomOverlayInset + 8 }}>
         <Pressable onPress={() => router.push(`/(profile)/${post.author.username}`)} className="mb-2 flex-row items-center gap-1.5">
-          <Text className="text-[15px] font-extrabold text-white">@{post.author.username}</Text>
+          <Text className="text-[15px] font-extrabold text-white">{post.author.display_name}</Text>
           {post.author.is_verified && <VerifiedBadge size={15} />}
         </Pressable>
 

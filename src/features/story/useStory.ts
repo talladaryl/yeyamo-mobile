@@ -4,20 +4,22 @@ import { MOCK_STORIES } from '@/features/mock/mockData';
 import type { EntityId } from '@/types/api.types';
 import { storyApi, type CreateStoryPayload } from './story.api';
 import type { Story } from './types';
+import { traceStoryRuntime } from '@/features/social/social.runtime-trace';
 
 export const STORIES_QUERY_KEY = ['stories'] as const;
 
-function storyCacheKey(isDemo: boolean) {
-  return [...STORIES_QUERY_KEY, isDemo ? 'demo' : 'backend'] as const;
+function storyCacheKey(isDemo: boolean, viewerId?: string | number) {
+  return [...STORIES_QUERY_KEY, isDemo ? 'demo' : 'backend', String(viewerId ?? 'anonymous')] as const;
 }
 
 export function useStories() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const viewerId = useAuthStore((state) => state.user?.id);
 
   return useQuery({
-    queryKey: storyCacheKey(isDemo),
+    queryKey: storyCacheKey(isDemo, viewerId),
     queryFn: () => isDemo ? Promise.resolve({ data: MOCK_STORIES }) : storyApi.getStories(),
     select: (res) => res.data,
     staleTime: 1000 * 60 * 5,
@@ -29,9 +31,10 @@ export function useStoryDetail(storyId: EntityId) {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const viewerId = useAuthStore((state) => state.user?.id);
 
   return useQuery({
-    queryKey: ['story', isDemo ? 'demo' : 'backend', storyId],
+    queryKey: ['story', isDemo ? 'demo' : 'backend', String(viewerId ?? 'anonymous'), storyId],
     queryFn: () => isDemo
       ? Promise.resolve({ data: MOCK_STORIES.find((story) => String(story.id) === String(storyId)) ?? MOCK_STORIES[0] })
       : storyApi.getStory(storyId),
@@ -57,6 +60,7 @@ export function useMarkStoryViewed() {
 export function useCreateStory() {
   const queryClient = useQueryClient();
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => state.user?.id);
 
   return useMutation({
     mutationFn: (payload: CreateStoryPayload) => isDemo
@@ -74,7 +78,7 @@ export function useCreateStory() {
         })
       : storyApi.createStory(payload),
     onSuccess: ({ data: createdStory }) => {
-      queryClient.setQueryData<Story[]>(storyCacheKey(isDemo), (stories) => {
+      queryClient.setQueryData<Story[]>(storyCacheKey(isDemo, viewerId), (stories) => {
         const current = stories ?? [];
         return current.some((story) => String(story.id) === String(createdStory.id))
           ? current
@@ -86,6 +90,8 @@ export function useCreateStory() {
           ? current
           : [...current, createdStory];
       });
+      void queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY, refetchType: 'active' });
+      traceStoryRuntime('STORY_ACTIVE_QUERY', { flow: 'story', storyId: String(createdStory.id), expectedState: 'active story readable after create' });
     },
   });
 }

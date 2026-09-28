@@ -66,7 +66,7 @@ export default function SuggestPlaceReviewScreen() {
 
       for (const [index, media] of (placeForm.media_assets ?? []).entries()) {
         if (resolvedMediaIds[media.uri]) continue;
-        const uploaded = await postApi.uploadMedia(toMediaFormData({ ...media, width: 0, height: 0 }, 'place-suggestion', index));
+        const uploaded = await postApi.uploadMedia(await toMediaFormData({ ...media, width: 0, height: 0 }, 'place-suggestion', index));
         resolvedMediaIds[media.uri] = String(uploaded.data.id);
         setUploadedMediaByUri((current) => ({ ...current, [media.uri]: String(uploaded.data.id) }));
       }

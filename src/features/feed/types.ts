@@ -6,6 +6,8 @@ export interface FeedPost {
   caption: string | null;
   media: MediaAttachment[];
   author: UserSummary;
+  /** Server-derived relationship state for the current authenticated viewer. */
+  author_is_following?: boolean;
   likes_count: number;
   comments_count: number;
   shares_count: number;

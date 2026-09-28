@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { postApi } from './post.api';
 import type { CreatePostPayload } from './types';
+import { toMediaFormData } from '@/features/media/media.utils';
 
 export const postService = {
   async pickMedia(type: 'image' | 'video') {
@@ -19,9 +20,14 @@ export const postService = {
   },
 
   async uploadAsset(uri: string, mimeType: string, fileName: string) {
-    const formData = new FormData();
-    // React Native FormData accepts { uri, type, name }
-    formData.append('file', { uri, type: mimeType, name: fileName } as unknown as Blob);
+    const formData = await toMediaFormData({
+      uri,
+      mimeType,
+      fileName,
+      type: mimeType.startsWith('video/') ? 'video' : 'image',
+      width: 0,
+      height: 0,
+    }, 'post-service');
     const { data } = await postApi.uploadMedia(formData);
     return data;
   },

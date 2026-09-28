@@ -1,6 +1,6 @@
 import '../../global.css';
 import '@/i18n'; // Initialiser i18n
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Alert, AppState, Appearance, Platform, TouchableOpacity, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +26,7 @@ import {
 import { AppErrorScreen } from '@/components/ui/AppErrorScreen';
 import { FEED_QUERY_KEY } from '@/features/feed/useFeed';
 import { STORIES_QUERY_KEY } from '@/features/story/useStory';
+import { traceSocialRuntime } from '@/features/social/social.runtime-trace';
 import type { ErrorBoundaryProps } from 'expo-router';
 
 const queryClient = new QueryClient({
@@ -85,6 +86,7 @@ function RootNavigator() {
   const setCountryProfileLoading = useCountryStore((state) => state.setProfileLoading);
   const resetCountry = useCountryStore((state) => state.reset);
   const markCountryConfigurationUnavailable = useCountryStore((state) => state.markConfigurationUnavailable);
+  const previousAuthUserId = useRef<string | null>(null);
 
   // Register 401 handler — clears store and redirects to login
   useEffect(() => {
@@ -151,6 +153,27 @@ function RootNavigator() {
     return () => unsubscribe();
   }, [isAuthenticated, isHydrated]);
 
+  // A cache must be scoped to its viewer even when a host replaces session A
+  // by session B without unmounting the React Query provider.
+  useEffect(() => {
+    if (!isHydrated) return;
+    const currentUserId = isAuthenticated && user ? String(user.id) : null;
+    const previousUserId = previousAuthUserId.current;
+    if (previousUserId !== currentUserId) {
+      traceSocialRuntime('AUTH_SESSION_CHANGED', { previousUserId, currentUserId });
+      if (previousUserId) {
+        [FEED_QUERY_KEY, STORIES_QUERY_KEY, ['profile'], ['social'], ['post'], ['interactions']]
+          .forEach((queryKey) => queryClient.removeQueries({ queryKey }));
+        traceSocialRuntime('SOCIAL_CACHE_RESET', { previousUserId, currentUserId });
+        traceSocialRuntime('PROFILE_CACHE_RESET', { previousUserId, currentUserId });
+        traceSocialRuntime('FEED_VIEWER_RESET', { previousUserId, currentUserId });
+        traceSocialRuntime('INTERACTION_VIEWER_RESET', { previousUserId, currentUserId });
+        traceSocialRuntime('STORY_VIEWER_RESET', { previousUserId, currentUserId });
+      }
+      previousAuthUserId.current = currentUserId;
+    }
+  }, [isAuthenticated, isHydrated, user]);
+
   // Protected feed and story queries must never leak a previous session or
   // remain failed after a newly restored/authenticated session becomes ready.
   useEffect(() => {
@@ -178,7 +201,7 @@ function RootNavigator() {
     }
     void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
     void queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
-  }, [isAuthenticated, isHydrated]);
+  }, [isAuthenticated, isHydrated, user?.id]);
 
   // Profile remains the source of truth once authenticated. The persisted
   // selection only avoids a blank UI while the profile request is in flight.

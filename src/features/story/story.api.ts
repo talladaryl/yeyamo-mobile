@@ -3,7 +3,8 @@ import { apiGet, apiPost } from '@/services/api/client';
 import { fallbackUser, mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
 import type { Story, StoryViewPayload } from './types';
-import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
+import { socialApi, type ContentAuthorIdentity } from '@/features/social/social.api';
+import { traceStoryRuntime } from '@/features/social/social.runtime-trace';
 
 interface BackendStory {
   id: string;
@@ -23,7 +24,17 @@ export interface CreateStoryPayload {
   durationSeconds: number;
 }
 
-async function mapStory(story: BackendStory): Promise<Story> {
+function mapAuthor(story: BackendStory, identity?: ContentAuthorIdentity) {
+  return identity ? {
+    id: identity.profileId,
+    username: identity.profileId,
+    display_name: identity.displayName,
+    avatar_url: identity.avatarUrl,
+    is_verified: false,
+  } : fallbackUser(story.authorId);
+}
+
+async function mapStory(story: BackendStory, identity?: ContentAuthorIdentity): Promise<Story> {
   let media: Story['media'];
   try {
     media = await getMediaAttachment(story.mediaId);
@@ -43,7 +54,8 @@ async function mapStory(story: BackendStory): Promise<Story> {
 
   return {
     id: story.id,
-    author: fallbackUser(story.authorId),
+    author: mapAuthor(story, identity),
+    author_auth_user_id: story.authorId,
     media,
     text: story.caption ?? undefined,
     views_count: story.viewCount,
@@ -55,21 +67,33 @@ async function mapStory(story: BackendStory): Promise<Story> {
 }
 
 export const storyApi = {
-  getStories: async (): Promise<{ data: Story[] }> => ({
-    data: await Promise.all((await apiGet<BackendStory[]>('/stories')).map(mapStory)),
-  }),
+  getStories: async (): Promise<{ data: Story[] }> => {
+    traceStoryRuntime('STORY_ACTIVE_QUERY', { flow: 'story', method: 'GET', url: '/stories' });
+    const stories = await apiGet<BackendStory[]>('/stories');
+    const identities = await socialApi.resolveContentAuthorIdentities(stories.map((story) => story.authorId));
+    traceStoryRuntime('STORY_AUTHOR_RESOLUTION', { flow: 'story', requestedAuthorCount: stories.length, resolvedAuthorCount: identities.length });
+    const byAuthUserId = new Map(identities.map((identity) => [identity.authUserId, identity]));
+    const mapped = await Promise.all(stories.map((story) => mapStory(story, byAuthUserId.get(story.authorId))));
+    traceStoryRuntime('STORY_ACTIVE_RESPONSE', { flow: 'story', method: 'GET', url: '/stories', receivedState: mapped.length, status: 200 });
+    return { data: mapped };
+  },
 
-  getStory: async (storyId: EntityId): Promise<{ data: Story }> => ({
-    data: await mapStory(await apiGet<BackendStory>(`/stories/${storyId}`)),
-  }),
+  getStory: async (storyId: EntityId): Promise<{ data: Story }> => {
+    const story = await apiGet<BackendStory>(`/stories/${storyId}`);
+    const [identity] = await socialApi.resolveContentAuthorIdentities([story.authorId]);
+    return { data: await mapStory(story, identity) };
+  },
 
   createStory: async (payload: CreateStoryPayload): Promise<{ data: Story }> => {
     try {
-      traceMediaRuntime('STORY_CREATE_DISPATCHED', { flow: 'story', url: '/stories' });
+      traceStoryRuntime('STORY_CREATE_REQUEST', { flow: 'story', method: 'POST', url: '/stories', mediaId: String(payload.mediaId) });
       const created = await apiPost<BackendStory>('/stories', payload, { yeyamoTrace: { flow: 'story', stage: 'STORY_CREATE' } });
-      return { data: await mapStory(created) };
+      const [identity] = await socialApi.resolveContentAuthorIdentities([created.authorId]);
+      const mapped = await mapStory(created, identity);
+      traceStoryRuntime('STORY_CREATE_RESPONSE', { flow: 'story', storyId: String(mapped.id), status: 201, expectedState: 'active' });
+      return { data: mapped };
     } catch (error) {
-      traceMediaRuntime('STORY_CREATE_ERROR', { flow: 'story', url: '/stories' });
+      traceStoryRuntime('STORY_CREATE_ERROR', { flow: 'story', url: '/stories', errorType: error instanceof Error ? error.name : 'UnknownError' });
       throw error;
     }
   },

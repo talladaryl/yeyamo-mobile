@@ -6,11 +6,13 @@ import { postApi } from './post.api';
 import type { CreatePostPayload } from './types';
 import { FEED_QUERY_KEY } from '../feed/useFeed';
 import type { EntityId } from '@/types/api.types';
+import { traceProfileRuntime } from '@/features/social/social.runtime-trace';
 
 export function usePostDetail(postId: EntityId) {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => state.user?.id);
   return useQuery({
-    queryKey: ['post', isDemo ? 'demo' : 'backend', postId],
+    queryKey: ['post', isDemo ? 'demo' : 'backend', String(viewerId ?? 'anonymous'), postId],
     queryFn: () =>
       isDemo
         ? Promise.resolve({
@@ -29,8 +31,11 @@ export function useCreatePost() {
       isDemo
         ? Promise.resolve({ data: { id: Date.now() } })
         : postApi.createPost(payload),
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['profile', 'backend', 'publications'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', 'backend', 'stats'] });
+      traceProfileRuntime('PROFILE_POSTS_INVALIDATED_AFTER_PUBLISH', { flow: 'post', postId: String(result.data.id) });
     },
   });
 }

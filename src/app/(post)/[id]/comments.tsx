@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ActivityIndicator,
   Alert,
@@ -19,6 +20,8 @@ import { i18n } from '@/i18n';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAuthStore } from '@/features/auth/auth.store';
 import type { Comment } from '@/features/comments/types';
+import { FEED_QUERY_KEY } from '@/features/feed/useFeed';
+import { traceInteractionRuntime } from '@/features/social/social.runtime-trace';
 
 export default function CommentsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,10 +29,14 @@ export default function CommentsScreen() {
   const colors = useThemeStore((state) => state.colors);
   const { user } = useAuth();
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const queryClient = useQueryClient();
   const [localComments, setLocalComments] = useState<Comment[]>([]);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['62%', '90%'], []);
   const { data: post, isLoading, refetch } = usePostDetail(id);
+  useEffect(() => {
+    traceInteractionRuntime('COMMENT_OPEN', { flow: 'comment', postId: id, viewerUserId: user?.id ?? null });
+  }, [id, user?.id]);
   const comments = useMemo<Comment[]>(
     () => [
       ...(post?.comments ?? []).map((item) => ({
@@ -64,8 +71,12 @@ export default function CommentsScreen() {
       return;
     }
     try {
+      traceInteractionRuntime('COMMENT_REQUEST', { flow: 'comment', postId: id, viewerUserId: user?.id ?? null, bodyLength: text.length });
       await feedApi.addComment(id, text);
       await refetch();
+      await queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY, refetchType: 'active' });
+      traceInteractionRuntime('COMMENT_CACHE_UPDATE', { flow: 'comment', postId: id, viewerUserId: user?.id ?? null });
+      traceInteractionRuntime('COMMENT_REFETCH', { flow: 'comment', postId: id, viewerUserId: user?.id ?? null });
     } catch (error) {
       Alert.alert(i18n.t('comments.sendErrorTitle'), i18n.t('comments.sendError'));
       throw error;

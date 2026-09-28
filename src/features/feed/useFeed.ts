@@ -9,11 +9,12 @@ import { useInterestsStore } from '@/features/interests/interests.store';
 import { mockSponsoredFeedItems } from './sponsoredMockData';
 import { sponsoredFeedApi } from './sponsored-feed.api';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
+import { traceInteractionRuntime } from '@/features/social/social.runtime-trace';
 
 export const FEED_QUERY_KEY = ['feed'] as const;
 
 export function useFeed(enabled = true) {
-  const { sessionMode, isAuthenticated, isHydrated } = useAuthStore();
+  const { sessionMode, isAuthenticated, isHydrated, user } = useAuthStore();
   const isDemo = sessionMode?.startsWith('demo-') ?? false;
   const selectedInterestIds = useInterestsStore((state) => state.selectedInterestIds);
   const canLoad = enabled && isHydrated && isAuthenticated;
@@ -22,7 +23,7 @@ export function useFeed(enabled = true) {
     // The backend currently accepts only page and size. Interest/region values
     // remain limited to explicitly selected demo sessions and are not presented
     // as production personalization.
-    queryKey: [...FEED_QUERY_KEY, isDemo ? 'demo' : 'backend', ...(isDemo ? [selectedInterestIds.join(',')] : [])],
+    queryKey: [...FEED_QUERY_KEY, isDemo ? 'demo' : 'backend', String(user?.id ?? 'anonymous'), ...(isDemo ? [selectedInterestIds.join(',')] : [])],
     queryFn: ({ pageParam }) =>
       isDemo
         ? Promise.resolve(personalizeMockFeed(selectedInterestIds))
@@ -74,6 +75,7 @@ function personalizeMockFeed(selectedInterestIds: string[]): PaginatedResponse<F
 export function useLikePost() {
   const queryClient = useQueryClient();
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => state.user?.id ?? null);
 
   return useMutation({
     mutationFn: ({ postId, isLiked }: { postId: EntityId; isLiked: boolean }) =>
@@ -81,6 +83,10 @@ export function useLikePost() {
 
     // Optimistic update
     onMutate: async ({ postId, isLiked }) => {
+      const current = queryClient.getQueriesData<InfiniteData<PaginatedResponse<FeedPost>>>({ queryKey: FEED_QUERY_KEY })
+        .flatMap(([, data]) => data?.pages.flatMap((page) => page.data) ?? [])
+        .find((post) => String(post.id) === String(postId));
+      traceInteractionRuntime('LIKE_REQUEST', { flow: 'like', postId: String(postId), viewerUserId: viewerId, beforeViewerLiked: isLiked, beforeCount: current?.likes_count ?? 0, afterCount: Math.max(0, (current?.likes_count ?? 0) + (isLiked ? -1 : 1)) });
       await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
       const previous = queryClient.getQueriesData<InfiniteData<PaginatedResponse<FeedPost>>>({ queryKey: FEED_QUERY_KEY });
 
@@ -106,11 +112,21 @@ export function useLikePost() {
         },
       );
 
+      traceInteractionRuntime('LIKE_LOCAL_APPLY', { flow: 'like', postId: String(postId), viewerUserId: viewerId, afterViewerLiked: !isLiked });
+
       return { previous };
     },
 
     onError: (_err, _vars, context) => {
       context?.previous.forEach(([queryKey, data]) => queryClient.setQueryData(queryKey, data));
+      traceInteractionRuntime('LIKE_ROLLBACK', { flow: 'like', postId: String(_vars.postId), viewerUserId: viewerId });
+    },
+    onSuccess: async (_result, variables) => {
+      traceInteractionRuntime('LIKE_RESPONSE', { flow: 'like', postId: String(variables.postId), viewerUserId: viewerId, status: 204 });
+      traceInteractionRuntime('LIKE_QUERY_INVALIDATE', { flow: 'like', postId: String(variables.postId), viewerUserId: viewerId });
+      await queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY, refetchType: 'active' });
+      traceInteractionRuntime('LIKE_FEED_REFETCH', { flow: 'like', postId: String(variables.postId), viewerUserId: viewerId });
+      traceInteractionRuntime('LIKE_REFETCH_RESULT', { flow: 'like', postId: String(variables.postId), viewerUserId: viewerId, expectedState: variables.isLiked ? 'unliked' : 'liked' });
     },
   });
 }

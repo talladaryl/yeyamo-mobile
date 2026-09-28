@@ -129,7 +129,7 @@ export default function CreatePublicationScreen() {
       for (const [index, asset] of media.entries()) {
         if (resolvedIds[asset.uri]) continue;
         try {
-          const uploaded = await uploadMedia.mutateAsync(toMediaFormData(asset, 'publication', index));
+          const uploaded = await uploadMedia.mutateAsync(await toMediaFormData(asset, 'publication', index));
           resolvedIds[asset.uri] = String(uploaded.data.id);
           setUploadedIds((current) => ({ ...current, [asset.uri]: String(uploaded.data.id) }));
         } catch (error) {

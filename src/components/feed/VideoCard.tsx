@@ -109,7 +109,7 @@ export function VideoCard({ post, isActive }: VideoCardProps) {
             size={36}
           />
           <Text className="text-white font-semibold text-sm">
-            @{post.author.username}
+            {post.author.display_name}
           </Text>
         </View>
         {post.caption ? (

@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { MediaGrid } from '@/components/profile/MediaGrid';
 import { ProfileSafetySheet } from '@/components/profile/ProfileSafetySheet';
+import { StoryRing } from '@/components/story/StoryRing';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useCreateConversation } from '@/features/chat/useChat';
@@ -16,6 +17,8 @@ import { MOCK_FEED_POSTS } from '@/features/mock/mockData';
 import type { ProfilePost, UserProfile } from '@/features/profile/types';
 import { useFollowActions, useUserSearch } from '@/features/social/useSocial';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useStories } from '@/features/story/useStory';
+import { traceStoryRuntime } from '@/features/social/social.runtime-trace';
 import type { PaginatedResponse } from '@/types/api.types';
 
 type PublicProfileTab = 'posts' | 'reposts' | 'liked';
@@ -46,6 +49,7 @@ export default function PublicProfileScreen() {
   const colors = useThemeStore((state) => state.colors);
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const { user: currentUser } = useAuth();
+  const storiesQuery = useStories();
   const [activeTab, setActiveTab] = useState<PublicProfileTab>('posts');
   const [isFollowing, setFollowing] = useState(false);
   const [safetySheetOpen, setSafetySheetOpen] = useState(false);
@@ -123,6 +127,8 @@ export default function PublicProfileScreen() {
     reposts: postContent.slice(2, 8).reverse(),
     liked: postContent.slice(1, 7),
   };
+  const profileStories = profile ? (storiesQuery.data ?? []).filter((story) => String(story.author.id) === String(profile.id)) : [];
+  const profileStory = profileStories.find((story) => !story.viewed) ?? profileStories[0];
 
   if (isOwnProfile || isLoading) {
     return <SafeScreen><Stack.Screen options={{ headerShown: false }} /><View className="flex-1 items-center justify-center"><ActivityIndicator color={colors.primary} /></View></SafeScreen>;
@@ -174,7 +180,7 @@ export default function PublicProfileScreen() {
         </View>
 
         <View className="items-center px-5 pb-5 pt-3">
-          <View className="rounded-full border-[3px] border-[#1689FF] p-[3px]"><Avatar uri={profile.avatar_url} displayName={profile.display_name} size={96} /></View>
+          {profileStory ? <StoryRing uri={profile.avatar_url} displayName={profile.display_name} size={102} isViewed={profileStory.viewed} onPress={() => { traceStoryRuntime('STORY_RING_RESOLUTION', { flow: 'public-profile', storyId: String(profileStory.id), profileId: String(profile.id), active: true }); router.push({ pathname: '/(story)/[id]', params: { id: String(profileStory.id), storyIds: profileStories.map((story) => String(story.id)).join(',') } }); }} /> : <Avatar uri={profile.avatar_url} displayName={profile.display_name} size={96} />}
           <View className="mt-3 flex-row items-center gap-1.5"><Text className="text-xl font-extrabold" style={{ color: colors.text }}>{profile.display_name}</Text>{profile.is_verified ? <Icon name="checkmark-circle" size={18} color="#1689FF" /> : null}</View>
           <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>@{profile.username}</Text>
           {profile.bio ? <Text className="mt-3 max-w-[330px] text-center text-sm leading-5" style={{ color: colors.text }}>{profile.bio}</Text> : null}

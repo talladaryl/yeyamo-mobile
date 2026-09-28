@@ -49,7 +49,7 @@ export default function PartnerPublicationScreen() {
       const mediaIds: (string | number)[] = [];
       for (const [index, media] of selectedMedia.entries()) {
         const existingId = uploadedMediaIds.current[media.uri];
-        const mediaId = existingId ?? (await uploadMedia.mutateAsync(toMediaFormData(media, 'partner-publication', index))).data.id;
+        const mediaId = existingId ?? (await uploadMedia.mutateAsync(await toMediaFormData(media, 'partner-publication', index))).data.id;
         uploadedMediaIds.current[media.uri] = mediaId;
         mediaIds.push(mediaId);
       }

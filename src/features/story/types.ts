@@ -3,6 +3,9 @@ import type { EntityId, MediaAttachment, UserSummary } from '@/types/api.types';
 export interface Story {
   id: EntityId;
   author: UserSummary;
+  /** Auth subject is retained only to determine the connected user's own ring.
+   * Public navigation/follow actions continue to use author.id (profile UUID). */
+  author_auth_user_id?: string;
   media: MediaAttachment;
   text?: string;
   location_tag?: {

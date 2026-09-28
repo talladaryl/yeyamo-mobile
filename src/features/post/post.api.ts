@@ -25,14 +25,21 @@ export const postApi = {
     // React Native must generate the multipart boundary itself. Supplying a
     // bare multipart Content-Type makes valid Expo assets unreadable by the
     // server on some Android/iOS transports.
-    const media = await apiPost<BackendMedia>('/media', formData);
-    return {
-      data: {
-        id: media.id,
-        url: absoluteApiUrl(media.contentUrl) ?? media.contentUrl,
-        type: media.type.toLowerCase() as UploadedMedia['type'],
-      },
-    };
+    traceMediaRuntime('MEDIA_UPLOAD_REQUEST', { flow: 'post', method: 'POST', url: '/media' });
+    try {
+      const media = await apiPost<BackendMedia>('/media', formData);
+      traceMediaRuntime('MEDIA_UPLOAD_RESPONSE', { flow: 'post', method: 'POST', url: '/media', status: 201, mediaId: media.id });
+      return {
+        data: {
+          id: media.id,
+          url: absoluteApiUrl(media.contentUrl) ?? media.contentUrl,
+          type: media.type.toLowerCase() as UploadedMedia['type'],
+        },
+      };
+    } catch (error) {
+      traceMediaRuntime('MEDIA_UPLOAD_ERROR', { flow: 'post', method: 'POST', url: '/media', errorType: error instanceof Error ? error.name : 'UnknownError' });
+      throw error;
+    }
   },
 
   createPost: async (payload: CreatePostPayload): Promise<{ data: { id: EntityId } }> => {
