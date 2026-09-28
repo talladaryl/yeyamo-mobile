@@ -52,7 +52,7 @@ export default function CultureContributionScreen() {
   const languageCode = useCountryStore((state) => state.preferredLanguageCode);
   const cultureEnabled = useCountryFeature('cultureModuleEnabled');
   const contentPublishingEnabled = useCountryFeature('contentPublishingEnabled');
-  const languages = useCultureLanguages();
+  const languages = useCultureLanguages(countryCode);
   const create = useCreateCultureContribution();
   const submit = useSubmitContribution();
   const [step, setStep] = useState(1);

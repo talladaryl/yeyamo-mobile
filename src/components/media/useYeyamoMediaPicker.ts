@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import type { PickedMediaAsset } from '@/features/media/media.utils';
+import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
 
 type MediaPickerOptions = Omit<NonNullable<Parameters<typeof ImagePicker.launchImageLibraryAsync>[0]>, 'mediaTypes'> & {
   mediaTypes?: NonNullable<Parameters<typeof ImagePicker.launchImageLibraryAsync>[0]>['mediaTypes'];
@@ -30,7 +31,17 @@ export function useYeyamoMediaPicker() {
     );
     try {
       const result = await ImagePicker.launchImageLibraryAsync(options);
-      return result.canceled ? { cancelled: true } : { cancelled: false, assets: result.assets };
+      if (result.canceled) {
+        traceMediaRuntime('PICK_CANCELLED', { source: 'library' });
+        return { cancelled: true };
+      }
+      traceMediaRuntime('PICK', {
+        source: 'library',
+        assetCount: result.assets.length,
+        mediaTypes: result.assets.map((asset) => asset.type ?? 'unknown'),
+        mimeTypes: result.assets.map((asset) => asset.mimeType ?? 'unknown'),
+      });
+      return { cancelled: false, assets: result.assets };
     } catch {
       throw new YeyamoMediaPickerError('MEDIA_PICKER_UNAVAILABLE', 'Le sélecteur de médias ne peut pas être ouvert pour le moment.');
     }
@@ -46,7 +57,17 @@ export function useYeyamoMediaPicker() {
     );
     try {
       const result = await ImagePicker.launchCameraAsync(options);
-      return result.canceled ? { cancelled: true } : { cancelled: false, assets: result.assets };
+      if (result.canceled) {
+        traceMediaRuntime('PICK_CANCELLED', { source: 'camera' });
+        return { cancelled: true };
+      }
+      traceMediaRuntime('PICK', {
+        source: 'camera',
+        assetCount: result.assets.length,
+        mediaTypes: result.assets.map((asset) => asset.type ?? 'unknown'),
+        mimeTypes: result.assets.map((asset) => asset.mimeType ?? 'unknown'),
+      });
+      return { cancelled: false, assets: result.assets };
     } catch {
       throw new YeyamoMediaPickerError('MEDIA_PICKER_UNAVAILABLE', 'L’appareil photo ne peut pas être ouvert pour le moment.');
     }

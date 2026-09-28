@@ -3,7 +3,7 @@ export const cultureKeys = {
   all: ['culture'] as const,
   contents: (filters: CultureFilters) => [...cultureKeys.all, 'contents', filters] as const,
   content: (id: string) => [...cultureKeys.all, 'content', id] as const,
-  languages: () => [...cultureKeys.all, 'languages'] as const,
+  languages: (countryCode?: string | null) => [...cultureKeys.all, 'languages', countryCode ?? 'all'] as const,
   language: (code: string) => [...cultureKeys.all, 'language', code] as const,
   lessons: (code: string) => [...cultureKeys.all, 'lessons', code] as const,
   lesson: (id: string) => [...cultureKeys.all, 'lesson', id] as const,

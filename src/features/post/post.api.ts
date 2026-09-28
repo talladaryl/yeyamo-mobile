@@ -2,6 +2,7 @@ import { apiPost, apiDelete } from '@/services/api/client';
 import { absoluteApiUrl } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
 import type { CreatePostPayload, UploadedMedia } from './types';
+import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
 
 interface BackendMedia {
   id: string;
@@ -37,6 +38,7 @@ export const postApi = {
   createPost: async (payload: CreatePostPayload): Promise<{ data: { id: EntityId } }> => {
     let draft: BackendPost;
     try {
+      traceMediaRuntime('POST_CREATE_DISPATCHED', { flow: 'post', url: '/posts', mediaCount: payload.media_ids.length });
       draft = await apiPost<BackendPost>('/posts', {
         caption: payload.caption,
         visibility: 'PUBLIC',
@@ -44,14 +46,17 @@ export const postApi = {
         mediaIds: payload.media_ids,
         hashtags: [],
         ...(payload.target_type && payload.target_id ? { targetType: payload.target_type, targetId: payload.target_id } : {}),
-      });
+      }, { yeyamoTrace: { flow: 'post', stage: 'POST_CREATE' } });
     } catch (error) {
+      traceMediaRuntime('POST_CREATE_ERROR', { flow: 'post', url: '/posts' });
       throw new PostPublicationError('create', error);
     }
     try {
-      const published = await apiPost<BackendPost>(`/posts/${draft.id}/publish`);
+      traceMediaRuntime('POST_PUBLISH_DISPATCHED', { flow: 'post', url: '/posts/{id}/publish' });
+      const published = await apiPost<BackendPost>(`/posts/${draft.id}/publish`, undefined, { yeyamoTrace: { flow: 'post', stage: 'POST_PUBLISH' } });
       return { data: { id: published.id } };
     } catch (error) {
+      traceMediaRuntime('POST_PUBLISH_ERROR', { flow: 'post', url: '/posts/{id}/publish' });
       throw new PostPublicationError('publish', error);
     }
   },

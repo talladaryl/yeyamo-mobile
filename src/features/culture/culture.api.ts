@@ -1,6 +1,7 @@
 import { apiGet, apiPost, apiPut } from '@/services/api/client';
 import type { SpringPage } from '@/services/api/contracts';
 import type { CultureChallenge, CultureContent, CultureContentDetail, CultureContributionInput, CultureFilters, CultureLanguage, CulturePage, CultureRelation, CultureTranslation, LanguageLesson, LanguageProgress, LessonDetail } from './culture.types';
+import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
 
 function query<T extends object>(filters: T) {
   return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined && value !== null && value !== ''));
@@ -29,14 +30,23 @@ export const cultureApi = {
   challenge: (id: string) => apiGet<CultureChallenge>(`/culture/challenges/${id}`),
   joinChallenge: (id: string) => apiPost(`/culture/challenges/${id}/join`),
   submitChallenge: (id: string, input: Record<string, unknown>) => apiPost(`/culture/challenges/${id}/submissions`, input),
-  createContribution: (input: CultureContributionInput) => apiPost<CultureContent>('/culture/contributions', {
-    type: input.type, slug: input.slug, primaryLanguageCode: input.primaryLanguageCode, countryCode: input.countryCode,
-    adminLevel1Id: input.adminLevel1Id, cityId: input.cityId, communityName: input.communityName,
-    contributorType: 'USER', sourceType: input.sourceType, sensitivityLevel: input.sensitivityLevel, visibility: 'PUBLIC',
-    translation: { languageCode: input.primaryLanguageCode, title: input.title, summary: input.summary, body: input.body },
-    recipeDetails: input.recipeDetails,
-    proverbDetails: input.proverbDetails,
-  }),
+  createContribution: async (input: CultureContributionInput) => {
+    try {
+      traceMediaRuntime('KNOWLEDGE_CREATE_DISPATCHED', { flow: 'knowledge-contribution', url: '/culture/contributions' });
+      const created = await apiPost<CultureContent>('/culture/contributions', {
+        type: input.type, slug: input.slug, primaryLanguageCode: input.primaryLanguageCode, countryCode: input.countryCode,
+        adminLevel1Id: input.adminLevel1Id, cityId: input.cityId, communityName: input.communityName,
+        contributorType: 'USER', sourceType: input.sourceType, sensitivityLevel: input.sensitivityLevel, visibility: 'PUBLIC',
+        translation: { languageCode: input.primaryLanguageCode, title: input.title, summary: input.summary, body: input.body },
+        recipeDetails: input.recipeDetails,
+        proverbDetails: input.proverbDetails,
+      }, { yeyamoTrace: { flow: 'knowledge-contribution', stage: 'KNOWLEDGE_CREATE' } });
+      return created;
+    } catch (error) {
+      traceMediaRuntime('KNOWLEDGE_CREATE_ERROR', { flow: 'knowledge-contribution', url: '/culture/contributions' });
+      throw error;
+    }
+  },
   updateContribution: (id: string, input: CultureContributionInput) => apiPut<CultureContent>(`/culture/contributions/${id}`, {
     type: input.type, slug: input.slug, primaryLanguageCode: input.primaryLanguageCode, countryCode: input.countryCode,
     adminLevel1Id: input.adminLevel1Id, cityId: input.cityId, communityName: input.communityName,

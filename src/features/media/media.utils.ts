@@ -1,4 +1,5 @@
 import type * as ImagePicker from 'expo-image-picker';
+import { registerMediaFormData, traceMediaRuntime } from './media.runtime-trace';
 
 /** Picker metadata kept through upload retries and local create drafts. */
 export type PickedMediaAsset = {
@@ -57,8 +58,17 @@ export function resolveMediaFileName(asset: PickedMediaAsset, prefix = 'yeyamo-m
 }
 
 export function toMediaFormData(asset: PickedMediaAsset, prefix?: string, index?: number): FormData {
+  const mimeType = resolveMediaMimeType(asset);
+  const fileName = resolveMediaFileName(asset, prefix, index);
+  traceMediaRuntime('NORMALIZE', {
+    flow: prefix ?? 'media',
+    mediaType: asset.type ?? 'unknown',
+    mimeType,
+    hasFileSize: typeof asset.fileSize === 'number',
+  });
   const formData = new FormData();
-  formData.append('file', { uri: asset.uri, name: resolveMediaFileName(asset, prefix, index), type: resolveMediaMimeType(asset) } as unknown as Blob);
+  formData.append('file', { uri: asset.uri, name: fileName, type: mimeType } as unknown as Blob);
+  registerMediaFormData(formData, prefix ?? 'media', mimeType);
   return formData;
 }
 

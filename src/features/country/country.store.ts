@@ -15,6 +15,7 @@ export const useCountryStore = create<CountryState>((set, get) => ({
   ...defaults,
   countryConfiguration: null,
   isHydrated: false,
+  resolutionStatus: 'PROFILE_LOADING',
   configurationError: null,
   hydrate: async () => {
     let restored = defaults;
@@ -28,8 +29,20 @@ export const useCountryStore = create<CountryState>((set, get) => ({
         discoveryScope: parsed.discoveryScope === 'LOCAL' || parsed.discoveryScope === 'COUNTRY' || parsed.discoveryScope === 'AFRICA' || parsed.discoveryScope === 'TRAVEL' ? parsed.discoveryScope : defaults.discoveryScope,
       };
     } catch { /* A corrupted local preference must not block startup. */ }
-    set({ ...restored, countryConfiguration: null, isHydrated: true, configurationError: null });
+    set({
+      ...restored,
+      countryConfiguration: null,
+      isHydrated: true,
+      // Never treat a device-cached country as a backend profile result.
+      resolutionStatus: 'PROFILE_LOADING',
+      configurationError: null,
+    });
   },
+  reset: async () => {
+    try { await SecureStore.deleteItemAsync(STORAGE_KEY); } catch { /* The in-memory reset still protects account switching. */ }
+    set({ ...defaults, countryConfiguration: null, isHydrated: true, resolutionStatus: 'PROFILE_LOADING', configurationError: null });
+  },
+  setProfileLoading: () => set({ resolutionStatus: 'PROFILE_LOADING', configurationError: null }),
   selectCountry: async (countryConfiguration) => {
     const current = get();
     const next = {
@@ -39,6 +52,7 @@ export const useCountryStore = create<CountryState>((set, get) => ({
       // Refreshing a configuration must not discard a city returned by the profile API.
       // A genuinely new country still resets the location, which avoids a cross-country city id.
       selectedCityId: current.selectedCountryCode === countryConfiguration.code ? current.selectedCityId : null,
+      resolutionStatus: 'COUNTRY_READY' as const,
       configurationError: null,
     };
     set(next); await persist(persisted(next));
@@ -47,10 +61,16 @@ export const useCountryStore = create<CountryState>((set, get) => ({
     const next = {
       ...get(), selectedCountryCode: preferences.countryCode?.toUpperCase() ?? null,
       selectedCityId: preferences.cityId, preferredLanguageCode: preferences.preferredLanguageCode,
+      resolutionStatus: preferences.countryCode ? 'COUNTRY_LOADING' as const : 'COUNTRY_MISSING' as const,
+      countryConfiguration: preferences.countryCode ? get().countryConfiguration : null,
     };
     set(next); await persist(persisted(next));
   },
-  markConfigurationUnavailable: () => set({ countryConfiguration: null, configurationError: 'unavailable' }),
+  markConfigurationUnavailable: () => set({
+    countryConfiguration: null,
+    configurationError: 'unavailable',
+    resolutionStatus: 'COUNTRY_ERROR',
+  }),
   setSelectedCityId: async (selectedCityId) => { const next = { ...get(), selectedCityId }; set(next); await persist(persisted(next)); },
   setPreferredLanguageCode: async (preferredLanguageCode) => { const next = { ...get(), preferredLanguageCode }; set(next); await persist(persisted(next)); },
   setDiscoveryScope: async (discoveryScope) => { const next = { ...get(), discoveryScope }; set(next); await persist(persisted(next)); },

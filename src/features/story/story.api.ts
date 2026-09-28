@@ -3,6 +3,7 @@ import { apiGet, apiPost } from '@/services/api/client';
 import { fallbackUser, mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
 import type { Story, StoryViewPayload } from './types';
+import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
 
 interface BackendStory {
   id: string;
@@ -62,9 +63,16 @@ export const storyApi = {
     data: await mapStory(await apiGet<BackendStory>(`/stories/${storyId}`)),
   }),
 
-  createStory: async (payload: CreateStoryPayload): Promise<{ data: Story }> => ({
-    data: await mapStory(await apiPost<BackendStory>('/stories', payload)),
-  }),
+  createStory: async (payload: CreateStoryPayload): Promise<{ data: Story }> => {
+    try {
+      traceMediaRuntime('STORY_CREATE_DISPATCHED', { flow: 'story', url: '/stories' });
+      const created = await apiPost<BackendStory>('/stories', payload, { yeyamoTrace: { flow: 'story', stage: 'STORY_CREATE' } });
+      return { data: await mapStory(created) };
+    } catch (error) {
+      traceMediaRuntime('STORY_CREATE_ERROR', { flow: 'story', url: '/stories' });
+      throw error;
+    }
+  },
 
   markViewed: (payload: StoryViewPayload) =>
     apiPost<void>(`/stories/${payload.story_id}/view`),

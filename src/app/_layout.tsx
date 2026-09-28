@@ -17,6 +17,7 @@ import { useInterestsStore } from '@/features/interests/interests.store';
 import { useCountryStore } from '@/features/country/country.store';
 import { countryApi } from '@/features/country/country.api';
 import { mapCountryConfiguration } from '@/features/country/country.mappers';
+import { traceCountryRuntime } from '@/features/country/country.runtime-trace';
 import {
   subscribeToNotificationEvents,
   subscribeToPushTokenChanges,
@@ -76,19 +77,24 @@ function RootNavigator() {
     checkOnboardingStatus,
   } = useOnboardingStore();
   const hydrateCountry = useCountryStore((state) => state.hydrate);
+  const isCountryHydrated = useCountryStore((state) => state.isHydrated);
+  const countryResolutionStatus = useCountryStore((state) => state.resolutionStatus);
   const selectedCountryCode = useCountryStore((state) => state.selectedCountryCode);
   const selectCountry = useCountryStore((state) => state.selectCountry);
   const applyCountryProfile = useCountryStore((state) => state.applyProfilePreferences);
+  const setCountryProfileLoading = useCountryStore((state) => state.setProfileLoading);
+  const resetCountry = useCountryStore((state) => state.reset);
   const markCountryConfigurationUnavailable = useCountryStore((state) => state.markConfigurationUnavailable);
 
   // Register 401 handler — clears store and redirects to login
   useEffect(() => {
     registerUnauthenticatedHandler(() => {
       clearAuth();
+      void resetCountry();
       Alert.alert('Session expirée', 'Reconnectez-vous pour continuer.');
       router.replace('/(auth)/login');
     });
-  }, [clearAuth, router]);
+  }, [clearAuth, resetCountry, router]);
 
   // Hydrate session from SecureStore on boot
   useEffect(() => {
@@ -177,24 +183,45 @@ function RootNavigator() {
   // Profile remains the source of truth once authenticated. The persisted
   // selection only avoids a blank UI while the profile request is in flight.
   useEffect(() => {
-    if (!isAuthenticated || !isHydrated || useAuthStore.getState().sessionMode !== 'backend') return;
+    if (!isAuthenticated || !isHydrated || !isCountryHydrated || useAuthStore.getState().sessionMode !== 'backend') return;
     let active = true;
+    setCountryProfileLoading();
+    traceCountryRuntime('PROFILE_COUNTRY_REQUEST', { queryKey: ['countries', 'profile', 'backend'], url: '/users/me' });
     void countryApi.myPreferences()
-      .then(async (preferences) => { if (active) await applyCountryProfile(preferences); })
-      .catch(() => { if (active) markCountryConfigurationUnavailable(); });
+      .then(async (preferences) => {
+        traceCountryRuntime('PROFILE_COUNTRY_RESPONSE', {
+          queryKey: ['countries', 'profile', 'backend'],
+          url: '/users/me',
+          rawCountryCode: preferences.countryCode ?? null,
+          normalizedCountryCode: preferences.countryCode?.toUpperCase() ?? null,
+        });
+        if (active) await applyCountryProfile(preferences);
+      })
+      .catch(() => {
+        traceCountryRuntime('PROFILE_COUNTRY_ERROR', { queryKey: ['countries', 'profile', 'backend'], url: '/users/me' });
+        if (active) markCountryConfigurationUnavailable();
+      });
     return () => { active = false; };
-  }, [applyCountryProfile, isAuthenticated, isHydrated, markCountryConfigurationUnavailable]);
+  }, [applyCountryProfile, isAuthenticated, isCountryHydrated, isHydrated, markCountryConfigurationUnavailable, setCountryProfileLoading]);
 
   useEffect(() => {
     if (!selectedCountryCode) return;
+    // Do not issue Create reference/configuration requests from a stale
+    // SecureStore country while the authoritative backend profile is loading.
+    if (useAuthStore.getState().sessionMode === 'backend' && countryResolutionStatus === 'PROFILE_LOADING') return;
     let active = true;
+    traceCountryRuntime('COUNTRY_CONFIGURATION_REQUEST', { queryKey: ['countries', 'configuration', selectedCountryCode], countryCode: selectedCountryCode });
     void Promise.all([countryApi.configuration(selectedCountryCode), countryApi.features(selectedCountryCode)])
       .then(async ([configuration, features]) => {
+        traceCountryRuntime('COUNTRY_CONFIGURATION_RESPONSE', { queryKey: ['countries', 'configuration', selectedCountryCode], countryCode: selectedCountryCode });
         if (active) await selectCountry(mapCountryConfiguration(configuration, features));
       })
-      .catch(() => { if (active) markCountryConfigurationUnavailable(); });
+      .catch(() => {
+        traceCountryRuntime('COUNTRY_CONFIGURATION_ERROR', { queryKey: ['countries', 'configuration', selectedCountryCode], countryCode: selectedCountryCode });
+        if (active) markCountryConfigurationUnavailable();
+      });
     return () => { active = false; };
-  }, [markCountryConfigurationUnavailable, selectCountry, selectedCountryCode]);
+  }, [countryResolutionStatus, markCountryConfigurationUnavailable, selectCountry, selectedCountryCode]);
 
   // Route guard — runs after hydration
   useEffect(() => {

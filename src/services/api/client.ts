@@ -6,7 +6,8 @@ import axios, {
 import ENV from '@/config/env';
 import { secureStore } from '@/services/storage/secure-store';
 import { normalizeApiError } from './errors';
-import { removeJsonContentTypeForMultipart } from './multipart';
+import { isMultipartFormData, removeJsonContentTypeForMultipart } from './multipart';
+import { mediaTraceForFormData, traceMediaRuntime } from '@/features/media/media.runtime-trace';
 
 // ─── Singleton router ref (set from root layout) ────────────────────────────
 // Avoids importing expo-router directly in a service (no React context here)
@@ -27,6 +28,70 @@ export function resetUnauthenticatedSessionHandler() {
 const apiBaseUrl = `${ENV.API_BASE_URL.replace(/\/$/, '')}/api/v1`;
 let refreshPromise: Promise<string> | null = null;
 
+export type YeyamoApiRequestConfig = AxiosRequestConfig & {
+  /** Development trace metadata; Axios does not serialize unknown config keys. */
+  yeyamoTrace?: { flow: string; stage: string };
+};
+
+function headerValue(headers: unknown, name: string): string | null {
+  if (!headers || typeof headers !== 'object') return null;
+  const candidate = headers as { get?: (key: string) => unknown; [key: string]: unknown };
+  const fromGetter = candidate.get?.(name);
+  if (typeof fromGetter === 'string') return fromGetter;
+  const direct = candidate[name] ?? candidate[name.toLowerCase()];
+  return typeof direct === 'string' ? direct : null;
+}
+
+function traceMediaHttp(config: InternalAxiosRequestConfig, stage: 'HTTP_MEDIA_REQUEST' | 'HTTP_MEDIA_RESPONSE' | 'HTTP_MEDIA_ERROR', status?: number, responseBody?: unknown) {
+  const context = mediaTraceForFormData(config.data);
+  if (!context || !isMultipartFormData(config.data)) return;
+  const body = responseBody && typeof responseBody === 'object' ? responseBody as { code?: unknown; message?: unknown } : undefined;
+  traceMediaRuntime(stage, {
+    traceId: context.id,
+    flow: context.flow,
+    method: config.method?.toUpperCase() ?? 'POST',
+    url: `${apiBaseUrl}${config.url ?? ''}`,
+    bodyType: 'FormData',
+    // null is intentional: RN must attach the multipart boundary itself.
+    explicitContentType: headerValue(config.headers, 'Content-Type'),
+    correlationId: headerValue(config.headers, 'X-Correlation-ID'),
+    status: status ?? null,
+    serverCode: typeof body?.code === 'string' ? body.code : null,
+    serverMessage: typeof body?.message === 'string' ? body.message : null,
+  });
+}
+
+function traceMediaTransportReady(data: unknown, headers: unknown): void {
+  const context = mediaTraceForFormData(data);
+  if (!context || !isMultipartFormData(data)) return;
+  traceMediaRuntime('HTTP_MEDIA_TRANSPORT_READY', {
+    traceId: context.id,
+    flow: context.flow,
+    bodyType: 'FormData',
+    isFormData: true,
+    // Must remain null here. The React Native transport adds the multipart
+    // boundary rather than receiving a hand-written Content-Type.
+    explicitContentType: headerValue(headers, 'Content-Type'),
+  });
+}
+
+function traceBusinessHttp(config: InternalAxiosRequestConfig, phase: 'HTTP_BUSINESS_REQUEST' | 'HTTP_BUSINESS_RESPONSE' | 'HTTP_BUSINESS_ERROR', status?: number, responseBody?: unknown) {
+  const trace = (config as InternalAxiosRequestConfig & { yeyamoTrace?: { flow: string; stage: string } }).yeyamoTrace;
+  if (!trace) return;
+  const body = responseBody && typeof responseBody === 'object' ? responseBody as { code?: unknown; message?: unknown } : undefined;
+  traceMediaRuntime(phase, {
+    flow: trace.flow,
+    stage: trace.stage,
+    method: config.method?.toUpperCase() ?? 'POST',
+    url: `${apiBaseUrl}${config.url ?? ''}`,
+    bodyType: isMultipartFormData(config.data) ? 'FormData' : typeof config.data,
+    status: status ?? null,
+    serverCode: typeof body?.code === 'string' ? body.code : null,
+    serverMessage: typeof body?.message === 'string' ? body.message : null,
+    correlationId: headerValue(config.headers, 'X-Correlation-ID'),
+  });
+}
+
 function isPublicRequest(config: InternalAxiosRequestConfig): boolean {
   const url = config.url ?? '';
   return url.startsWith('/countries')
@@ -42,6 +107,25 @@ export const apiClient = createClient({
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
+  // Axios 1.18 recognises the native FormData implementation in normal Expo
+  // runtimes. React Native may nevertheless expose a FormData-shaped object
+  // that Axios itself does not recognise. Preserve that object before the
+  // default JSON transformer can stringify it, while retaining the exact
+  // default transform chain for every non-multipart request.
+  transformRequest: [function transformRequest(data, headers) {
+    if (isMultipartFormData(data)) {
+      removeJsonContentTypeForMultipart({ data, headers });
+      traceMediaTransportReady(data, headers);
+      return data;
+    }
+    const defaults = axios.defaults.transformRequest;
+    const transforms = Array.isArray(defaults) ? defaults : [defaults];
+    let transformed = data;
+    for (const transform of transforms) {
+      if (transform) transformed = transform.call(this as unknown as InternalAxiosRequestConfig, transformed, headers);
+    }
+    return transformed;
+  }],
 });
 
 // ─── Request interceptor — inject Bearer token ───────────────────────────────
@@ -62,6 +146,8 @@ apiClient.interceptors.request.use(
     if (config.headers && !config.headers['X-Correlation-ID'] && !config.headers['X-Correlation-Id']) {
       config.headers['X-Correlation-ID'] = `mobile-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     }
+    traceMediaHttp(config, 'HTTP_MEDIA_REQUEST');
+    traceBusinessHttp(config, 'HTTP_BUSINESS_REQUEST');
     return config;
   },
   (error: unknown) => Promise.reject(error),
@@ -69,9 +155,15 @@ apiClient.interceptors.request.use(
 
 // ─── Response interceptor — handle 401 ───────────────────────────────────────
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    traceMediaHttp(response.config, 'HTTP_MEDIA_RESPONSE', response.status, response.data);
+    traceBusinessHttp(response.config, 'HTTP_BUSINESS_RESPONSE', response.status, response.data);
+    return response;
+  },
   async (error: AxiosError) => {
     const request = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    if (request) traceMediaHttp(request, 'HTTP_MEDIA_ERROR', error.response?.status, error.response?.data);
+    if (request) traceBusinessHttp(request, 'HTTP_BUSINESS_ERROR', error.response?.status, error.response?.data);
     const isAuthenticationRequest = request?.url?.startsWith('/auth/login')
       || request?.url?.startsWith('/auth/register')
       || request?.url?.startsWith('/auth/refresh');
@@ -137,7 +229,7 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 // ─── Typed helper wrappers ────────────────────────────────────────────────────
-export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+export async function apiGet<T>(url: string, config?: YeyamoApiRequestConfig): Promise<T> {
   const { data } = await apiClient.get<T>(url, config);
   return data;
 }
@@ -145,7 +237,7 @@ export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promi
 export async function apiPost<T>(
   url: string,
   body?: unknown,
-  config?: AxiosRequestConfig,
+  config?: YeyamoApiRequestConfig,
 ): Promise<T> {
   const { data } = await apiClient.post<T>(url, body, config);
   return data;
@@ -154,7 +246,7 @@ export async function apiPost<T>(
 export async function apiPatch<T>(
   url: string,
   body?: unknown,
-  config?: AxiosRequestConfig,
+  config?: YeyamoApiRequestConfig,
 ): Promise<T> {
   const { data } = await apiClient.patch<T>(url, body, config);
   return data;
@@ -163,13 +255,13 @@ export async function apiPatch<T>(
 export async function apiPut<T>(
   url: string,
   body?: unknown,
-  config?: AxiosRequestConfig,
+  config?: YeyamoApiRequestConfig,
 ): Promise<T> {
   const { data } = await apiClient.put<T>(url, body, config);
   return data;
 }
 
-export async function apiDelete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+export async function apiDelete<T>(url: string, config?: YeyamoApiRequestConfig): Promise<T> {
   const { data } = await apiClient.delete<T>(url, config);
   return data;
 }

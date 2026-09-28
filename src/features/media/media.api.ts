@@ -1,6 +1,7 @@
 import { apiClient, apiGet } from '@/services/api/client';
 import { absoluteApiUrl, mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId, MediaAttachment } from '@/types/api.types';
+import { registerMediaFormData, traceMediaRuntime } from './media.runtime-trace';
 
 export interface MediaUploadAsset {
   uri: string;
@@ -46,16 +47,20 @@ export async function uploadMedia(
   asset: MediaUploadAsset,
   options: { usageType?: string; aggregateType?: string; aggregateId?: string; altText?: string } = {},
 ): Promise<MediaUploadResponse> {
+  const mimeType = asset.mimeType ?? (asset.type === 'image' ? 'image/jpeg' : asset.type === 'video' ? 'video/mp4' : 'application/octet-stream');
+  const flow = options.usageType?.startsWith('ARTWORK_') ? 'artwork' : options.usageType ? 'culture' : 'generic-media';
+  traceMediaRuntime('NORMALIZE', { flow, mediaType: asset.type ?? 'unknown', mimeType, hasFileName: Boolean(asset.name) });
   const form = new FormData();
   form.append('file', {
     uri: asset.uri,
     name: asset.name ?? `yeyamo-${Date.now()}`,
-    type: asset.mimeType ?? (asset.type === 'image' ? 'image/jpeg' : asset.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
+    type: mimeType,
   } as unknown as Blob);
   if (options.usageType) form.append('usageType', options.usageType);
   if (options.aggregateType) form.append('aggregateType', options.aggregateType);
   if (options.aggregateId) form.append('aggregateId', options.aggregateId);
   if (options.altText) form.append('altText', options.altText);
+  registerMediaFormData(form, flow, mimeType);
   // The extended endpoint requires a usageType. General uploads (profile,
   // public creation flows) use the canonical endpoint instead. Do not set
   // Content-Type manually: React Native supplies the multipart boundary.

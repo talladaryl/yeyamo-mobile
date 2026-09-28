@@ -5,6 +5,7 @@ import { useAuthStore, type SessionMode } from './auth.store';
 import { authApi } from './auth.api';
 import type { AuthApiUser, AuthUser, LoginCredentials, RegisterCredentials, SocialLoginCredentials } from './types';
 import { useInterestsStore } from '@/features/interests/interests.store';
+import { useCountryStore } from '@/features/country/country.store';
 import { registerTokenRefreshedHandler, resetUnauthenticatedSessionHandler } from '@/services/api/client';
 import { synchronizePushToken, unregisterCurrentPushToken } from '@/features/notifications/push.service';
 import ENV from '@/config/env';
@@ -152,5 +153,6 @@ export const authService = {
     await secureStore.clearAuthSession();
     useAuthStore.getState().clearAuth();
     useInterestsStore.getState().reset();
+    await useCountryStore.getState().reset();
   },
 };

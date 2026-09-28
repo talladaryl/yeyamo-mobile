@@ -1,4 +1,5 @@
 import { apiDelete, apiGet, apiPost } from '@/services/api/client';
+import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
 import { normalizeDiscoveryId } from '@/features/discovery/discovery.navigation';
 import { createIdempotencyKey, toPaginatedResponse, type SpringPage } from '@/services/api/contracts';
 import type { EntityId, PaginatedResponse } from '@/types/api.types';
@@ -150,8 +151,26 @@ export const placesApi = {
   regions: () => apiGet<PlaceRegionReference[]>('/regions'),
   cities: (regionId: number) => apiGet<PlaceCityReference[]>(`/cities/region/${regionId}`),
   myPlaces: () => apiGet<PartnerPlacePage>('/places/me?page=0&size=20'),
-  createPlace: (input: CreatePlaceInput) => apiPost<BackendPlace>('/places', input),
-  suggestPlace: (input: PlaceSuggestionInput) => apiPost<PlaceSuggestion>('/place-suggestions', input),
+  createPlace: async (input: CreatePlaceInput) => {
+    try {
+      traceMediaRuntime('PARTNER_PLACE_CREATE_DISPATCHED', { flow: 'partner-place', url: '/places' });
+      const created = await apiPost<BackendPlace>('/places', input, { yeyamoTrace: { flow: 'partner-place', stage: 'PARTNER_PLACE_CREATE' } });
+      return created;
+    } catch (error) {
+      traceMediaRuntime('PARTNER_PLACE_CREATE_ERROR', { flow: 'partner-place', url: '/places' });
+      throw error;
+    }
+  },
+  suggestPlace: async (input: PlaceSuggestionInput) => {
+    try {
+      traceMediaRuntime('PLACE_SUGGESTION_CREATE_DISPATCHED', { flow: 'place-suggestion', url: '/place-suggestions', mediaCount: input.mediaIds?.length ?? 0 });
+      const created = await apiPost<PlaceSuggestion>('/place-suggestions', input, { yeyamoTrace: { flow: 'place-suggestion', stage: 'PLACE_SUGGESTION_CREATE' } });
+      return created;
+    } catch (error) {
+      traceMediaRuntime('PLACE_SUGGESTION_CREATE_ERROR', { flow: 'place-suggestion', url: '/place-suggestions' });
+      throw error;
+    }
+  },
   checkPlaceSuggestionDuplicates: (input: PlaceSuggestionDuplicateCheckInput) =>
     apiPost<{ possibleDuplicates: PlaceSuggestionDuplicateCandidate[] }>('/place-suggestions/check-duplicates', input),
   myPlaceSuggestions: (page = 0, size = 20) =>

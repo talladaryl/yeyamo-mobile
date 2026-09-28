@@ -14,6 +14,18 @@ export type CountryFeatureCode =
 
 export type DiscoveryScope = 'LOCAL' | 'COUNTRY' | 'AFRICA' | 'TRAVEL';
 
+/**
+ * Explicit country-resolution lifecycle for authenticated Create flows.
+ * A country from SecureStore is only a temporary display value; the profile
+ * response remains authoritative once a backend session is restored.
+ */
+export type CountryResolutionStatus =
+  | 'PROFILE_LOADING'
+  | 'COUNTRY_LOADING'
+  | 'COUNTRY_MISSING'
+  | 'COUNTRY_ERROR'
+  | 'COUNTRY_READY';
+
 export interface CountryConfiguration {
   code: string;
   name: string;
@@ -92,8 +104,11 @@ export interface CountryState {
   preferredLanguageCode: string | null;
   discoveryScope: DiscoveryScope;
   isHydrated: boolean;
+  resolutionStatus: CountryResolutionStatus;
   configurationError: 'unavailable' | null;
   hydrate: () => Promise<void>;
+  reset: () => Promise<void>;
+  setProfileLoading: () => void;
   selectCountry: (configuration: CountryConfiguration) => Promise<void>;
   applyProfilePreferences: (preferences: UserCountryPreferences) => Promise<void>;
   markConfigurationUnavailable: () => void;

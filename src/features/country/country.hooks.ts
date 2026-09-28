@@ -3,6 +3,7 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { countryApi } from './country.api';
 import { mapCountryConfiguration, mapCountrySummary } from './country.mappers';
 import { useCountryStore } from './country.store';
+import { traceCountryRuntime } from './country.runtime-trace';
 import type { CountryConfiguration, CountryFeatureCode, CountrySummary } from './country.types';
 
 export const countryKeys = {
@@ -71,11 +72,15 @@ export function useCountryConfiguration(countryCode: string | null) {
 }
 
 export function useCountryCities(countryCode: string | null) {
+  const referencesEnabled = useCountryReferenceQueriesEnabled(countryCode);
   return useQuery({
-    queryKey: countryKeys.cities(countryCode), enabled: Boolean(countryCode),
+    queryKey: countryKeys.cities(countryCode), enabled: referencesEnabled,
     queryFn: async () => {
       try {
-        return await countryApi.cities(countryCode!);
+        traceCountryRuntime('CITIES_REQUEST', { queryKey: countryKeys.cities(countryCode), url: `/countries/${countryCode}/cities`, countryCode });
+        const cities = await countryApi.cities(countryCode!);
+        traceCountryRuntime('CITIES_RESPONSE', { queryKey: countryKeys.cities(countryCode), url: `/countries/${countryCode}/cities`, countryCode, rawCount: cities.length, parsedCount: cities.length });
+        return cities;
       } catch (error) {
         // City selection remains optional on registration. The legacy API has
         // no country-scoped city route, so expose an empty optional list.
@@ -87,17 +92,31 @@ export function useCountryCities(countryCode: string | null) {
 }
 
 export function useCountryAdministrativeAreas(countryCode: string | null) {
+  const referencesEnabled = useCountryReferenceQueriesEnabled(countryCode);
   return useQuery({
-    queryKey: countryKeys.administrativeAreas(countryCode), enabled: Boolean(countryCode),
-    queryFn: () => countryApi.administrativeAreas(countryCode!),
+    queryKey: countryKeys.administrativeAreas(countryCode), enabled: referencesEnabled,
+    queryFn: async () => {
+      traceCountryRuntime('ADMINISTRATIVE_AREAS_REQUEST', { queryKey: countryKeys.administrativeAreas(countryCode), url: `/countries/${countryCode}/administrative-areas`, countryCode });
+      const areas = await countryApi.administrativeAreas(countryCode!);
+      traceCountryRuntime('ADMINISTRATIVE_AREAS_RESPONSE', { queryKey: countryKeys.administrativeAreas(countryCode), url: `/countries/${countryCode}/administrative-areas`, countryCode, rawCount: areas.length, parsedCount: areas.length });
+      return areas;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
 
 export function useCountryLocalities(cityId: string | null) {
+  const resolutionStatus = useCountryStore((state) => state.resolutionStatus);
+  const backendSession = useAuthStore((state) => state.sessionMode === 'backend');
   return useQuery({
-    queryKey: countryKeys.localities(cityId), enabled: Boolean(cityId),
-    queryFn: () => countryApi.localities(cityId!),
+    queryKey: countryKeys.localities(cityId),
+    enabled: Boolean(cityId) && (!backendSession || resolutionStatus !== 'PROFILE_LOADING'),
+    queryFn: async () => {
+      traceCountryRuntime('LOCALITIES_REQUEST', { queryKey: countryKeys.localities(cityId), url: `/cities/${cityId}/localities`, cityId });
+      const localities = await countryApi.localities(cityId!);
+      traceCountryRuntime('LOCALITIES_RESPONSE', { queryKey: countryKeys.localities(cityId), url: `/cities/${cityId}/localities`, cityId, rawCount: localities.length, parsedCount: localities.length });
+      return localities;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -164,8 +183,21 @@ export function useCountry() {
     selectedCityId: state.selectedCityId,
     preferredLanguageCode: state.preferredLanguageCode,
     discoveryScope: state.discoveryScope,
+    resolutionStatus: state.resolutionStatus,
     configurationError: state.configurationError,
   }));
+}
+
+/**
+ * Registration remains a guest flow.  Authenticated Create screens, however,
+ * must wait for the canonical `/users/me` country before requesting dependent
+ * references; otherwise a previous account's SecureStore country can leak
+ * into the query cache during a cold login.
+ */
+function useCountryReferenceQueriesEnabled(countryCode: string | null): boolean {
+  const resolutionStatus = useCountryStore((state) => state.resolutionStatus);
+  const backendSession = useAuthStore((state) => state.sessionMode === 'backend');
+  return Boolean(countryCode) && (!backendSession || resolutionStatus !== 'PROFILE_LOADING');
 }
 
 function isLegacyCountryEndpointError(error: unknown): boolean {

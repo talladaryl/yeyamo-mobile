@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useCountryStore } from '@/features/country/country.store';
+import { traceCountryRuntime } from '@/features/country/country.runtime-trace';
 import { createIdempotencyKey, toSpringPage } from '@/services/api/contracts';
 import { cultureApi } from './culture.api';
 import { demoChallenges, demoCultureContents, demoCultureTranslations, demoLanguages, demoLessonDetails, demoLessons } from './culture.demo';
@@ -10,7 +11,24 @@ import type { CultureFilters } from './culture.types';
 const useDemoMode = () => useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 export function useCultureContents(filters: CultureFilters = {}) { const demo = useDemoMode(); return useQuery({ queryKey: ['culture', demo ? 'demo' : 'backend', 'contents', filters], queryFn: () => demo ? Promise.resolve(toSpringPage(demoCultureContents.filter((item)=>(!filters.type||item.type===filters.type)&&(!filters.countryCode||item.countryCode===filters.countryCode)&&(!filters.search||item.slug.includes(filters.search.toLowerCase()))))) : cultureApi.listContents(filters) }); }
 export function useCultureContent(id?: string) { const demo = useDemoMode(); return useQuery({ queryKey: ['culture', demo ? 'demo' : 'backend', 'content', id ?? ''], enabled: Boolean(id), queryFn: () => { if (!demo) return cultureApi.getContent(id!); const selected=demoCultureContents.find((item)=>item.id===id)??demoCultureContents[0]; return Promise.resolve({ content: selected, translations: demoCultureTranslations.filter((translation)=>translation.id.includes(selected.id)) }); } }); }
-export function useCultureLanguages() { const demo = useDemoMode(); return useQuery({ queryKey: cultureKeys.languages(), queryFn: () => demo ? Promise.resolve(demoLanguages) : cultureApi.languages() }); }
+export function useCultureLanguages(countryCode?: string | null) {
+ const demo = useDemoMode();
+ const resolutionStatus = useCountryStore((state) => state.resolutionStatus);
+ const backendSession = useAuthStore((state) => state.sessionMode === 'backend');
+ const normalizedCountry = countryCode?.toUpperCase() ?? null;
+ const enabled = demo || !normalizedCountry || !backendSession || resolutionStatus === 'COUNTRY_READY';
+ return useQuery({
+  queryKey: cultureKeys.languages(normalizedCountry),
+  enabled,
+  queryFn: async () => {
+   traceCountryRuntime('CULTURE_LANGUAGES_REQUEST', { queryKey: cultureKeys.languages(normalizedCountry), url: '/culture/languages', countryCode: normalizedCountry, enabled });
+   const languages = demo ? demoLanguages : await cultureApi.languages();
+   const filtered = normalizedCountry ? languages.filter((language) => language.countryCodes.map((code) => code.toUpperCase()).includes(normalizedCountry)) : languages;
+   traceCountryRuntime('CULTURE_LANGUAGES_RESPONSE', { queryKey: cultureKeys.languages(normalizedCountry), url: '/culture/languages', countryCode: normalizedCountry, rawCount: languages.length, parsedCount: filtered.length });
+   return filtered;
+  },
+ });
+}
 export function useLanguage(code?: string) { const demo = useDemoMode(); return useQuery({ queryKey: cultureKeys.language(code ?? ''), enabled: Boolean(code), queryFn: () => demo ? Promise.resolve(demoLanguages.find((item)=>item.code===code)??demoLanguages[0]) : cultureApi.language(code!) }); }
 export function useLanguageLessons(code?: string) { const demo = useDemoMode(); return useQuery({ queryKey: cultureKeys.lessons(code ?? ''), enabled: Boolean(code), queryFn: () => demo ? Promise.resolve(demoLessons.filter((lesson)=>lesson.languageCode===code)) : cultureApi.lessons(code!) }); }
 export function useLesson(id?: string) { const demo = useDemoMode(); return useQuery({ queryKey: cultureKeys.lesson(id ?? ''), enabled: Boolean(id), queryFn: () => demo ? Promise.resolve(demoLessonDetails.find((item)=>item.lesson.id===id)??demoLessonDetails[0]) : cultureApi.lesson(id!) }); }

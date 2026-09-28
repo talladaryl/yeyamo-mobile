@@ -2,6 +2,7 @@ import { apiDelete, apiGet, apiPost } from '@/services/api/client';
 import { mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
 import type { Event } from './types';
+import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
 
 interface BackendEvent {
   id: string;
@@ -92,14 +93,23 @@ function mapEvent(event: BackendEvent): Event {
 }
 
 export const eventsApi = {
-  createEvent: (input: CreateEventInput) => apiPost<BackendEvent>('/events', {
-    visibility: 'PUBLIC',
-    allowUninvitedParticipants: true,
-    commentsParticipantsOnly: false,
-    showParticipants: true,
-    sharingEnabled: true,
-    ...input,
-  }).then(mapEvent),
+  createEvent: async (input: CreateEventInput) => {
+    try {
+      traceMediaRuntime('EVENT_CREATE_DISPATCHED', { flow: 'event', url: '/events', hasCoverMedia: Boolean(input.coverMediaId) });
+      const created = await apiPost<BackendEvent>('/events', {
+        visibility: 'PUBLIC',
+        allowUninvitedParticipants: true,
+        commentsParticipantsOnly: false,
+        showParticipants: true,
+        sharingEnabled: true,
+        ...input,
+      }, { yeyamoTrace: { flow: 'event', stage: 'EVENT_CREATE' } });
+      return mapEvent(created);
+    } catch (error) {
+      traceMediaRuntime('EVENT_CREATE_ERROR', { flow: 'event', url: '/events' });
+      throw error;
+    }
+  },
   upcoming: async (): Promise<Event[]> =>
     (await apiGet<BackendEvent[]>('/events/upcoming')).map(mapEvent),
 
