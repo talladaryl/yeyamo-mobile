@@ -20,17 +20,21 @@ export interface UserProfile extends UserSummary {
 }
 
 export interface UserSearchResult extends UserSummary {
+  content_author_id?: string;
   bio?: string;
   city?: string;
   followers_count: number;
+  following_count?: number;
   is_following: boolean;
   mutual_friends_count: number;
 }
 
 export interface FollowUser extends UserSummary {
+  content_author_id?: string;
   bio?: string;
   city?: string;
   followers_count: number;
+  following_count?: number;
   is_following: boolean;
   is_followed_by: boolean;
 }

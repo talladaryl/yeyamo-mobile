@@ -9,8 +9,8 @@ function useDemoMode() {
   return useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 }
 
-function profileKey(isDemo: boolean) {
-  return ['settings', isDemo ? 'demo' : 'backend', 'profile'] as const;
+function profileKey(isDemo: boolean, viewerId?: string | number | null) {
+  return ['settings', isDemo ? 'demo' : 'backend', String(viewerId ?? 'anonymous'), 'profile'] as const;
 }
 
 function mapProfile(profile: BackendUserProfile, username: string, interests: string[]): ProfileSettings {
@@ -32,7 +32,7 @@ export function useProfileSettings() {
   const authUser = useAuthStore((state) => state.user);
   const interests = useInterestsStore((state) => state.selectedInterestIds);
   return useQuery({
-    queryKey: profileKey(isDemo),
+    queryKey: profileKey(isDemo, authUser?.id),
     enabled: Boolean(authUser),
     queryFn: async (): Promise<ProfileSettings> => {
       if (isDemo) return MOCK_USER_SETTINGS.profile;
@@ -61,7 +61,7 @@ export function useUpdateProfileSettings() {
       return mapProfile(await settingsApi.updateProfile(input), profile.username, interests);
     },
     onSuccess: (profile) => {
-      queryClient.setQueryData(profileKey(isDemo), profile);
+      queryClient.setQueryData(profileKey(isDemo, useAuthStore.getState().user?.id), profile);
       updateAuthUser({ display_name: profile.display_name, avatar_url: profile.avatar_url });
       void queryClient.invalidateQueries({ queryKey: ['profile'] });
       void queryClient.invalidateQueries({ queryKey: ['social'] });

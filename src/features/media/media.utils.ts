@@ -135,7 +135,10 @@ export async function toMediaFormData(asset: PickedMediaAsset, prefix?: string, 
   });
   const formData = new FormData();
   formData.append('file', { uri: normalizedAsset.uri, name: fileName, type: mimeType } as unknown as Blob);
-  registerMediaFormData(formData, flow, mimeType);
+  registerMediaFormData(formData, flow, mimeType, {
+    mediaType: normalizedAsset.type ?? (mimeType.startsWith('video/') ? 'video' : 'image'),
+    fileSize: normalizedAsset.fileSize,
+  });
   return formData;
 }
 

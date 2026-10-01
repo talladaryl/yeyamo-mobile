@@ -7,6 +7,7 @@ import type { Story } from './types';
 import { traceStoryRuntime } from '@/features/social/social.runtime-trace';
 
 export const STORIES_QUERY_KEY = ['stories'] as const;
+type StoriesResponse = { data: Story[] };
 
 function storyCacheKey(isDemo: boolean, viewerId?: string | number) {
   return [...STORIES_QUERY_KEY, isDemo ? 'demo' : 'backend', String(viewerId ?? 'anonymous')] as const;
@@ -50,8 +51,9 @@ export function useMarkStoryViewed() {
   return useMutation({
     mutationFn: (storyId: EntityId) => isDemo ? Promise.resolve() : storyApi.markViewed({ story_id: storyId }),
     onSuccess: (_, storyId) => {
-      queryClient.setQueriesData<Story[]>({ queryKey: STORIES_QUERY_KEY }, (stories) =>
-        stories?.map((story) => String(story.id) === String(storyId) ? { ...story, viewed: true } : story),
+      queryClient.setQueriesData<StoriesResponse>({ queryKey: STORIES_QUERY_KEY }, (response) => response
+        ? { data: response.data.map((story) => String(story.id) === String(storyId) ? { ...story, viewed: true } : story) }
+        : response,
       );
     },
   });
@@ -78,20 +80,31 @@ export function useCreateStory() {
         })
       : storyApi.createStory(payload),
     onSuccess: ({ data: createdStory }) => {
-      queryClient.setQueryData<Story[]>(storyCacheKey(isDemo, viewerId), (stories) => {
-        const current = stories ?? [];
-        return current.some((story) => String(story.id) === String(createdStory.id))
-          ? current
-          : [...current, createdStory];
+      // `select` affects observers only: React Query still stores { data }.
+      // Treating this cache entry as Story[] threw after a successful POST and
+      // made the editor wrongly report that publishing had failed.
+      const merge = (response: StoriesResponse | undefined): StoriesResponse => {
+        const current = response?.data ?? [];
+        return {
+          data: current.some((story) => String(story.id) === String(createdStory.id))
+            ? current
+            : [...current, createdStory],
+        };
+      };
+      queryClient.setQueryData<StoriesResponse>(storyCacheKey(isDemo, viewerId), merge);
+      queryClient.setQueriesData<StoriesResponse>({ queryKey: STORIES_QUERY_KEY }, merge);
+      traceStoryRuntime('STORY_PERSISTENCE_CONFIRMED', {
+        flow: 'story', storyId: String(createdStory.id), viewerAuthUserId: String(viewerId ?? 'anonymous'),
+        createdAt: createdStory.created_at, expectedExpiresAt: createdStory.expires_at,
       });
-      queryClient.setQueriesData<Story[]>({ queryKey: STORIES_QUERY_KEY }, (stories) => {
-        const current = stories ?? [];
-        return current.some((story) => String(story.id) === String(createdStory.id))
-          ? current
-          : [...current, createdStory];
-      });
-      void queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY, refetchType: 'active' });
-      traceStoryRuntime('STORY_ACTIVE_QUERY', { flow: 'story', storyId: String(createdStory.id), expectedState: 'active story readable after create' });
+      traceStoryRuntime('STORY_CACHE_INVALIDATE', { flow: 'story', storyId: String(createdStory.id) });
+      // Creation is confirmed by POST. Reconciliation failure must not turn a
+      // successful mutateAsync call into a false publication error.
+      void queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY, refetchType: 'active' })
+        .then(() => traceStoryRuntime('STORY_POST_CREATE_REFETCH', { flow: 'story', storyId: String(createdStory.id) }))
+        .catch((error: unknown) => traceStoryRuntime('STORY_POST_CREATE_REFETCH_ERROR', {
+          flow: 'story', storyId: String(createdStory.id), errorType: error instanceof Error ? error.name : 'UnknownError',
+        }));
     },
   });
 }

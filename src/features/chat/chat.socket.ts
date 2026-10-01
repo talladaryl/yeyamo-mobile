@@ -2,6 +2,7 @@ import { reverbClient } from '@/services/socket/reverb.client';
 import { useChatStore } from './chat.store';
 import type { EntityId } from '@/types/api.types';
 import { mapBackendMessage, type BackendMessage } from './chat.api';
+import { traceMessageRuntime } from '@/features/social/social.runtime-trace';
 
 const CHAT_EVENTS = new Set([
   'messaging.message.sent',
@@ -24,6 +25,10 @@ export const chatSocket = {
         const eventConversationId = payload.conversationId;
         if (String(eventConversationId) === String(conversationId) && event === 'messaging.message.sent') {
           useChatStore.getState().appendMessage(conversationId, mapBackendMessage(payload));
+          traceMessageRuntime('MESSAGE_REALTIME_RECEIVED', {
+            conversationId: String(conversationId),
+            messageId: payload.id,
+          });
         }
       }
     });

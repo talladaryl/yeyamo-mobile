@@ -16,12 +16,16 @@ interface BackendStory {
   viewCount: number;
   viewedByMe: boolean;
   durationSeconds: number;
+  referenceType?: string | null;
+  referenceId?: string | null;
 }
 
 export interface CreateStoryPayload {
   mediaId: EntityId;
   caption?: string;
   durationSeconds: number;
+  /** Stable for a retry of one editor submission, never derived from media. */
+  idempotencyKey?: string;
 }
 
 function mapAuthor(story: BackendStory, identity?: ContentAuthorIdentity) {
@@ -58,6 +62,8 @@ async function mapStory(story: BackendStory, identity?: ContentAuthorIdentity): 
     author_auth_user_id: story.authorId,
     media,
     text: story.caption ?? undefined,
+    reference_type: story.referenceType ?? undefined,
+    reference_id: story.referenceId ?? null,
     views_count: story.viewCount,
     viewed: story.viewedByMe,
     duration_seconds: story.durationSeconds,
@@ -70,7 +76,13 @@ export const storyApi = {
   getStories: async (): Promise<{ data: Story[] }> => {
     traceStoryRuntime('STORY_ACTIVE_QUERY', { flow: 'story', method: 'GET', url: '/stories' });
     const stories = await apiGet<BackendStory[]>('/stories');
-    const identities = await socialApi.resolveContentAuthorIdentities(stories.map((story) => story.authorId));
+    let identities: ContentAuthorIdentity[] = [];
+    try {
+      identities = await socialApi.resolveContentAuthorIdentities(stories.map((story) => story.authorId));
+    } catch (error) {
+      // A profile lookup cannot be allowed to hide canonical active stories.
+      traceStoryRuntime('STORY_AUTHOR_RESOLUTION_ERROR', { flow: 'story', requestedAuthorCount: stories.length, errorType: error instanceof Error ? error.name : 'UnknownError' });
+    }
     traceStoryRuntime('STORY_AUTHOR_RESOLUTION', { flow: 'story', requestedAuthorCount: stories.length, resolvedAuthorCount: identities.length });
     const byAuthUserId = new Map(identities.map((identity) => [identity.authUserId, identity]));
     const mapped = await Promise.all(stories.map((story) => mapStory(story, byAuthUserId.get(story.authorId))));
@@ -87,8 +99,17 @@ export const storyApi = {
   createStory: async (payload: CreateStoryPayload): Promise<{ data: Story }> => {
     try {
       traceStoryRuntime('STORY_CREATE_REQUEST', { flow: 'story', method: 'POST', url: '/stories', mediaId: String(payload.mediaId) });
-      const created = await apiPost<BackendStory>('/stories', payload, { yeyamoTrace: { flow: 'story', stage: 'STORY_CREATE' } });
-      const [identity] = await socialApi.resolveContentAuthorIdentities([created.authorId]);
+      const { idempotencyKey, ...body } = payload;
+      const created = await apiPost<BackendStory>('/stories', body, {
+        headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+        yeyamoTrace: { flow: 'story', stage: 'STORY_CREATE' },
+      });
+      let identity: ContentAuthorIdentity | undefined;
+      try {
+        [identity] = await socialApi.resolveContentAuthorIdentities([created.authorId]);
+      } catch (error) {
+        traceStoryRuntime('STORY_AUTHOR_RESOLUTION_ERROR', { flow: 'story', requestedAuthorCount: 1, errorType: error instanceof Error ? error.name : 'UnknownError' });
+      }
       const mapped = await mapStory(created, identity);
       traceStoryRuntime('STORY_CREATE_RESPONSE', { flow: 'story', storyId: String(mapped.id), status: 201, expectedState: 'active' });
       return { data: mapped };

@@ -5,6 +5,10 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { profileApi } from './profile.api';
 import { MOCK_USER_PUBLICATIONS, MOCK_USER_FAVORITES, MOCK_USER_EVENTS, MOCK_USER_RESERVATIONS, MOCK_USER_REVIEWS } from './mockData';
 
+function profileKey(mode: 'demo' | 'backend', viewerId: string | number | null | undefined, resource: string) {
+  return ['profile', mode, String(viewerId ?? 'anonymous'), resource] as const;
+}
+
 /**
  * Hook pour récupérer les publications de l'utilisateur
  */
@@ -12,7 +16,7 @@ export function useUserPublications() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const userId = useAuthStore((state) => state.user?.id);
   return useQuery({
-    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'publications', String(userId ?? 'anonymous')],
+    queryKey: profileKey(isDemo ? 'demo' : 'backend', userId, 'posts'),
     queryFn: () =>
       isDemo ? Promise.resolve(MOCK_USER_PUBLICATIONS) : profileApi.getUserPublications(),
     staleTime: 1000 * 60 * 5,
@@ -102,7 +106,7 @@ export function useProfileStats() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const userId = useAuthStore((state) => state.user?.id);
   return useQuery({
-    queryKey: ['profile', isDemo ? 'demo' : 'backend', 'stats', String(userId ?? 'anonymous')],
+    queryKey: profileKey(isDemo ? 'demo' : 'backend', userId, 'stats'),
     queryFn: () =>
       isDemo
         ? Promise.resolve({
@@ -117,5 +121,28 @@ export function useProfileStats() {
       followers_count: 2300,
       following_count: 340,
     } : undefined,
+  });
+}
+
+/** The private Likes tab is deliberately fetched only for its owner. */
+export function useUserLikedPublications(enabled = true) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const userId = useAuthStore((state) => state.user?.id);
+  return useQuery({
+    queryKey: profileKey(isDemo ? 'demo' : 'backend', userId, 'likes'),
+    queryFn: () => isDemo ? Promise.resolve([]) : profileApi.getLikedPublications(),
+    enabled: enabled && Boolean(userId),
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function usePublicProfilePublications(authorId: string | undefined) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => state.user?.id);
+  return useQuery({
+    queryKey: ['profile', isDemo ? 'demo' : 'backend', String(viewerId ?? 'anonymous'), 'public-posts', String(authorId ?? '')],
+    queryFn: () => isDemo ? Promise.resolve(MOCK_USER_PUBLICATIONS) : profileApi.getPublicationsByAuthor(authorId!),
+    enabled: isDemo || Boolean(authorId),
+    staleTime: 1000 * 60 * 2,
   });
 }

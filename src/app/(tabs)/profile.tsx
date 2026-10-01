@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
-import { useRouter, type Href } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { RefreshControl, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Avatar } from '@/components/ui/Avatar';
@@ -10,85 +10,174 @@ import { PublicationGrid } from '@/components/profile/PublicationGrid';
 import { StoryRing } from '@/components/story/StoryRing';
 import { useAuth } from '@/features/auth/useAuth';
 import { useProfileSettings } from '@/features/settings/useSettings';
-import { useProfileStats, useUserPublications } from '@/features/profile/useProfile';
-import { useUnreadCount } from '@/features/notifications/useNotifications';
+import { useProfileStats, useUserLikedPublications, useUserPublications } from '@/features/profile/useProfile';
+import { useUserCollections } from '@/features/collections/useCollections';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useStories } from '@/features/story/useStory';
 import { traceProfileRuntime, traceStoryRuntime } from '@/features/social/social.runtime-trace';
+import type { UserPublication } from '@/features/profile/types';
 
-const explorerSections = [
-  ['Accès rapide', [['images-outline', 'Mes publications', '/(profile)/publications'], ['heart-outline', 'Mes favoris', '/(profile)/favorites'], ['calendar-outline', 'Mes sorties', '/(profile)/events'], ['star-outline', 'Mes avis', '/(profile)/reviews'], ['notifications-outline', 'Notifications', '/(profile)/notifications'], ['settings-outline', 'Paramètres', '/(profile)/settings']]],
-  ['Réseau social', [['search-outline', 'Rechercher des utilisateurs', '/(profile)/search'], ['people-outline', 'Suggestions à suivre', '/(profile)/suggestions'], ['person-add-outline', 'Trouver des amis', '/(profile)/find-friends'], ['pulse-outline', 'Activité du réseau', '/(profile)/activity'], ['options-outline', 'Paramètres du réseau social', '/(profile)/social-settings'], ['airplane-outline', 'Passeport Yeyamo', '/(social-graph)/passport']]],
-  ['Mes activités', [['ticket-outline', 'Mes billets', '/(profile)/tickets'], ['calendar-number-outline', 'Mes réservations', '/(profile)/reservations'], ['location-outline', 'Mes suggestions de lieux', '/(profile)/place-suggestions'], ['albums-outline', 'Mes collections', '/(collections)']]],
-  ['Culture et découvertes', [['language-outline', 'Progression linguistique', '/(profile)/language-progress'], ['leaf-outline', 'Mes contributions culturelles', '/(profile)/culture-contributions'], ['trophy-outline', 'Mes défis culturels', '/(profile)/culture-challenges'], ['color-palette-outline', 'Œuvres enregistrées', '/(profile)/saved-artworks'], ['people-circle-outline', 'Artisans suivis', '/(profile)/followed-artisans'], ['receipt-outline', 'Commandes d’œuvres', '/(profile)/artwork-orders']]],
-] as const;
-const explorerPlannerSection = ['Aventures', [['calendar-clear-outline', 'Gérer vos plannings', '/(profile)/plannings']]] as const;
-const partnerSections = [
-  ['Gestion partenaire', [['business-outline', 'Mes établissements', '/(partner-dashboard)/establishments'], ['calendar-outline', 'Mes événements', '/(partner-dashboard)/events'], ['calendar-number-outline', 'Réservations', '/(partner-dashboard)/reservations'], ['star-outline', 'Avis clients', '/(partner-dashboard)/reviews']]],
-  ['Créer et publier', [['add-circle-outline', 'Ajouter un établissement', '/(partner)/add-place-step1'], ['calendar-clear-outline', 'Créer un événement', '/(partner)/add-event-step1'], ['images-outline', 'Nouvelle publication', '/(partner)/publication'], ['book-outline', 'Partager une story', '/(partner)/story']]],
-  ['Compte professionnel', [['stats-chart-outline', 'Statistiques', '/(partner-dashboard)/statistics'], ['settings-outline', 'Paramètres partenaire', '/(partner-dashboard)/settings'], ['help-circle-outline', 'Aide et assistance', '/(profile)/support']]],
-] as const;
+type ProfileTab = 'posts' | 'reposts' | 'collections' | 'likes';
+
+const PROFILE_TABS: { id: ProfileTab; label: string; icon: string; activeIcon: string }[] = [
+  { id: 'posts', label: 'Publications', icon: 'grid-outline', activeIcon: 'grid' },
+  { id: 'reposts', label: 'Republications', icon: 'repeat-outline', activeIcon: 'repeat' },
+  { id: 'collections', label: 'Collections', icon: 'albums-outline', activeIcon: 'albums' },
+  { id: 'likes', label: 'J’aime', icon: 'heart-outline', activeIcon: 'heart' },
+];
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const colors = useThemeStore((state) => state.colors);
   const tabBarHeight = useYeyamoTabBarHeight();
   const profile = useProfileSettings();
   const publications = useUserPublications();
   const stats = useProfileStats();
-  const unread = useUnreadCount();
   const stories = useStories();
-  const [menuOpen, setMenuOpen] = useState(false);
-  traceProfileRuntime('PROFILE_LOAD', { flow: 'profile', viewerUserId: user?.id ?? null, profileState: profile.status });
+  const [selectedTab, setSelectedTab] = useState<ProfileTab>('posts');
+  const collections = useUserCollections(selectedTab === 'collections');
+  const likes = useUserLikedPublications(selectedTab === 'likes');
+
+  const data = profile.data;
+  const posts = useMemo(() => publications.data ?? [], [publications.data]);
+  const likedPosts = useMemo(() => likes.data ?? [], [likes.data]);
+  const displayedPosts = selectedTab === 'likes' ? likedPosts : posts;
+  const ownStories = useMemo(
+    () => (stories.data ?? []).filter((story) => String(story.author_auth_user_id) === String(user?.id)),
+    [stories.data, user?.id],
+  );
+  const ownStory = ownStories.find((story) => !story.viewed) ?? ownStories[0];
+  const publicationCount = publications.isSuccess ? posts.length : undefined;
+  const refreshing = publications.isRefetching || profile.isRefetching || stats.isRefetching || (selectedTab === 'likes' && likes.isRefetching) || (selectedTab === 'collections' && collections.isRefetching);
+
+  useEffect(() => {
+    traceProfileRuntime('PROFILE_LOAD', { flow: 'profile', viewerAuthUserId: user?.id ?? null, profileStatus: profile.status, postsStatus: publications.status });
+  }, [profile.status, publications.status, user?.id]);
+
+  useEffect(() => {
+    if (!data || !user) return;
+    traceProfileRuntime('PROFILE_IDENTITY_RESOLVED', { flow: 'profile', viewerAuthUserId: user.id, profileId: user.id, hasAvatar: Boolean(data.avatar_url), hasBio: Boolean(data.bio) });
+  }, [data, user]);
+
+  useEffect(() => {
+    const selectedPosts = selectedTab === 'likes' ? likedPosts : posts;
+    traceProfileRuntime('PROFILE_GRID_STATE', {
+      viewerAuthUserId: user?.id ?? null,
+      profileId: user?.id ?? null,
+      selectedTab,
+      rawPostCount: selectedPosts.length,
+      mappedPostCount: selectedPosts.length,
+      mediaResolvedCount: selectedPosts.filter((post) => Boolean(post.media_url)).length,
+      renderableCount: selectedPosts.length,
+      queryStatus: selectedTab === 'likes' ? likes.status : publications.status,
+      isFetching: selectedTab === 'likes' ? likes.isFetching : publications.isFetching,
+      isRefreshing: refreshing,
+    });
+    traceProfileRuntime('PROFILE_GRID_RENDER', { flow: 'profile', viewerAuthUserId: user?.id ?? null, selectedTab, postCount: selectedPosts.length, hasOwnActiveStory: Boolean(ownStory) });
+  }, [likedPosts, likes.isFetching, likes.status, ownStory, posts, publications.isFetching, publications.status, refreshing, selectedTab, user?.id]);
+
+  useEffect(() => {
+    if (selectedTab !== 'reposts') return;
+    traceProfileRuntime('PROFILE_REPOSTS_REQUEST', { flow: 'profile', source: 'backend-contract-missing' });
+    traceProfileRuntime('PROFILE_REPOSTS_RESPONSE', { flow: 'profile', status: 'MISSING', postCount: 0 });
+  }, [selectedTab]);
+
+  useEffect(() => {
+    if (selectedTab !== 'collections') return;
+    traceProfileRuntime('PROFILE_COLLECTIONS_REQUEST', { flow: 'profile', viewerAuthUserId: user?.id ?? null });
+  }, [selectedTab, user?.id]);
+
+  useEffect(() => {
+    if (selectedTab !== 'collections' || !collections.isSuccess) return;
+    traceProfileRuntime('PROFILE_COLLECTIONS_RESPONSE', { flow: 'profile', collectionCount: collections.data.length });
+  }, [collections.data, collections.isSuccess, selectedTab]);
+
+  const selectTab = useCallback((tab: ProfileTab) => {
+    setSelectedTab(tab);
+    traceProfileRuntime('PROFILE_TAB_CHANGED', { flow: 'profile', selectedTab: tab, viewerAuthUserId: user?.id ?? null });
+  }, [user?.id]);
+
+  const refresh = useCallback(async () => {
+    traceProfileRuntime('PROFILE_REFRESH_START', { flow: 'profile', selectedTab, viewerAuthUserId: user?.id ?? null });
+    const activeTabRefetch = selectedTab === 'likes' ? likes.refetch : selectedTab === 'collections' ? collections.refetch : undefined;
+    await Promise.all([profile.refetch(), publications.refetch(), stats.refetch(), activeTabRefetch?.()]);
+    traceProfileRuntime('PROFILE_REFRESH_COMPLETE', { flow: 'profile', selectedTab, viewerAuthUserId: user?.id ?? null });
+  }, [collections.refetch, likes.refetch, profile, publications, selectedTab, stats, user?.id]);
+
+  const onPublicationPress = useCallback((post: UserPublication) => {
+    const destination = `/(post)/${post.id}`;
+    traceProfileRuntime('PROFILE_GRID_ITEM_PRESS', {
+      viewerAuthUserId: user?.id ?? null,
+      profileId: user?.id ?? null,
+      postId: String(post.id),
+      mediaId: post.media_id == null ? null : String(post.media_id),
+      mediaType: post.media_type ?? post.type,
+      selectedTab,
+      destination,
+    });
+    router.push(`/(post)/${post.id}`);
+  }, [router, selectedTab, user?.id]);
 
   if (!user) return null;
   if (profile.isLoading) return <LoadingState label="Chargement du profil…" />;
-  if (profile.isError || !profile.data) return <ErrorState title="Profil indisponible" message="Impossible de récupérer vos informations." retry={() => void profile.refetch()} />;
-
-  const data = profile.data;
-  const sections = user.user_type === 'partner' ? partnerSections : [explorerPlannerSection, ...explorerSections];
-  const ownStories = (stories.data ?? []).filter((story) => String(story.author_auth_user_id) === String(user.id));
-  const ownStory = ownStories.find((story) => !story.viewed) ?? ownStories[0];
-  traceProfileRuntime('PROFILE_GRID_RENDER', { flow: 'profile', viewerUserId: user.id, postCount: publications.data?.length ?? 0, hasOwnActiveStory: Boolean(ownStory) });
+  if (profile.isError || !data) return <ErrorState title="Profil indisponible" message="Impossible de récupérer vos informations." retry={() => void profile.refetch()} />;
 
   const share = () => void Share.share({ title: `Profil de ${data.display_name}`, message: `Découvrez le profil de ${data.display_name} sur Yeyamo.`, url: `https://yeyamo.app/@${data.username}` });
-  const navigate = (route: string) => { setMenuOpen(false); router.push(route as Href); };
   const openOwnStory = () => {
     if (!ownStory) return;
     traceStoryRuntime('STORY_RING_RESOLUTION', { flow: 'profile', storyId: String(ownStory.id), profileId: String(ownStory.author.id), active: true });
     router.push({ pathname: '/(story)/[id]', params: { id: String(ownStory.id), storyIds: ownStories.map((story) => String(story.id)).join(',') } });
   };
 
+  const content = () => {
+    if (selectedTab === 'reposts') return <ProfileEmptyState icon="repeat-outline" title="Aucun repost" message="Les republications apparaîtront ici lorsqu’un contrat backend persistant sera disponible." />;
+    if (selectedTab === 'collections') {
+      if (collections.isLoading) return <View className="h-40"><LoadingState label="Chargement des collections…" /></View>;
+      if (collections.isError) return <View className="h-40"><ErrorState title="Collections indisponibles" retry={() => void collections.refetch()} /></View>;
+      if (!collections.data?.length) return <ProfileEmptyState icon="albums-outline" title="Aucune collection" message="Vos collections de lieux apparaîtront ici." />;
+      return <View className="gap-2 px-4 py-4">{collections.data.map((collection) => <TouchableOpacity key={collection.id} onPress={() => router.push('/(collections)')} className="rounded-xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }} accessibilityLabel={`Ouvrir la collection ${collection.name}`}><Text className="font-bold" style={{ color: colors.text }}>{collection.name}</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{collection.places_count} lieu{collection.places_count > 1 ? 'x' : ''} · {collection.visibility === 'public' ? 'Publique' : 'Privée'}</Text></TouchableOpacity>)}</View>;
+    }
+    const query = selectedTab === 'likes' ? likes : publications;
+    if (query.isLoading) return <View className="h-40"><LoadingState label={selectedTab === 'likes' ? 'Chargement des mentions J’aime…' : 'Chargement des publications…'} /></View>;
+    if (query.isError) return <View className="h-40"><ErrorState title={selectedTab === 'likes' ? 'Mentions J’aime indisponibles' : 'Publications indisponibles'} retry={() => void query.refetch()} /></View>;
+    if (!displayedPosts.length) return <ProfileEmptyState icon={selectedTab === 'likes' ? 'heart-outline' : 'grid-outline'} title={selectedTab === 'likes' ? 'Aucune publication aimée' : 'Aucune publication'} message={selectedTab === 'likes' ? 'Les publications que vous aimez apparaîtront ici.' : 'Vos publications réellement créées apparaîtront ici.'} />;
+    return <PublicationGrid publications={displayedPosts} onPressPublication={onPublicationPress} />;
+  };
+
   return (
     <SafeScreen style={{ backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 18 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 18 }} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} tintColor={colors.primary} />}>
         <View className="h-14 flex-row items-center px-3">
           <TouchableOpacity onPress={() => router.push('/(profile)/find-friends')} className="h-11 w-11 items-center justify-center" accessibilityLabel="Trouver des amis"><Icon name="person-add-outline" size={25} color={colors.text} /></TouchableOpacity>
           <Text className="flex-1 text-center font-extrabold" style={{ color: colors.text }}>@{data.username}</Text>
           <TouchableOpacity onPress={share} className="h-11 w-11 items-center justify-center" accessibilityLabel="Partager le profil"><Icon name="arrow-redo-outline" size={25} color={colors.text} /></TouchableOpacity>
-          <TouchableOpacity onPress={() => setMenuOpen(true)} className="h-11 w-11 items-center justify-center" accessibilityLabel="Ouvrir le menu"><Icon name="menu" size={28} color={colors.text} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => { traceProfileRuntime('PROFILE_MENU_OPEN', { flow: 'profile', viewerAuthUserId: user.id }); router.push('/(profile)/menu'); }} className="h-11 w-11 items-center justify-center" accessibilityLabel="Ouvrir le menu"><Icon name="menu" size={28} color={colors.text} /></TouchableOpacity>
         </View>
         <View className="items-center px-5 pb-5 pt-4">
           {ownStory ? <StoryRing uri={data.avatar_url} displayName={data.display_name} size={100} isViewed={ownStory.viewed} showAddButton onPress={openOwnStory} /> : <Avatar uri={data.avatar_url} displayName={data.display_name} size={100} />}
           <Text className="mt-4 text-xl font-extrabold" style={{ color: colors.text }}>{data.display_name}</Text>
           <Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>@{data.username}</Text>
           {data.bio ? <Text className="mt-3 text-center leading-6" style={{ color: colors.textSecondary }}>{data.bio}</Text> : null}
-          <View className="mt-5 w-full flex-row items-center justify-center"><Stat value={stats.data?.following_count} label="Abonnements" onPress={() => router.push('/(profile)/following')} /><Divider /><Stat value={stats.data?.followers_count} label="Abonnés" onPress={() => router.push('/(profile)/followers')} /><Divider /><Stat value={stats.data?.publications_count} label="Publications" /></View>
-          <View className="mt-5 flex-row gap-2"><TouchableOpacity onPress={() => router.push('/(profile)/edit-profile')} className="min-w-36 items-center rounded-lg border px-5 py-2.5" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Text className="font-bold" style={{ color: colors.text }}>Modifier le profil</Text></TouchableOpacity><TouchableOpacity onPress={share} className="h-10 w-11 items-center justify-center rounded-lg border" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Icon name="share-outline" size={20} color={colors.text} /></TouchableOpacity></View>
+          <View className="mt-5 w-full flex-row items-center justify-center"><Stat value={stats.data?.following_count} label="Abonnements" onPress={() => router.push('/(profile)/following')} /><Divider /><Stat value={stats.data?.followers_count} label="Abonnés" onPress={() => router.push('/(profile)/followers')} /><Divider /><Stat value={publicationCount} label="Publications" /></View>
+          <View className="mt-5 flex-row gap-2"><TouchableOpacity onPress={() => router.push('/(profile)/edit-profile')} className="min-w-36 items-center rounded-lg border px-5 py-2.5" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Text className="font-bold" style={{ color: colors.text }}>Modifier le profil</Text></TouchableOpacity><TouchableOpacity onPress={share} className="h-10 w-11 items-center justify-center rounded-lg border" style={{ backgroundColor: colors.card, borderColor: colors.border }} accessibilityLabel="Partager le profil"><Icon name="share-outline" size={20} color={colors.text} /></TouchableOpacity></View>
         </View>
-        <View className="border-y px-4 py-3" style={{ borderColor: colors.border }}><Text className="font-bold" style={{ color: colors.text }}>Publications</Text></View>
-        {publications.isLoading ? <View className="h-40"><LoadingState label="Chargement des publications…" /></View> : publications.isError ? <View className="h-40"><ErrorState title="Publications indisponibles" retry={() => void publications.refetch()} /></View> : publications.data?.length ? <PublicationGrid publications={publications.data} onPressPublication={(postId) => router.push(`/(post)/${postId}`)} /> : <View className="h-48"><EmptyState title="Aucune publication" message="Vos publications réellement créées apparaîtront ici." /></View>}
+        <View className="flex-row border-y" style={{ backgroundColor: colors.background, borderColor: colors.border }}>{PROFILE_TABS.map((tab) => <ProfileTabButton key={tab.id} tab={tab} active={selectedTab === tab.id} onPress={() => selectTab(tab.id)} />)}</View>
+        {content()}
       </ScrollView>
-      <ProfileMenu visible={menuOpen} onClose={() => setMenuOpen(false)} sections={sections} data={data} unread={unread.data} colors={colors} navigate={navigate} logout={logout} />
     </SafeScreen>
   );
 }
 
-function ProfileMenu({ visible, onClose, sections, data, unread, colors, navigate, logout }: { visible: boolean; onClose: () => void; sections: readonly (readonly [string, readonly (readonly [string, string, string])[]])[]; data: { avatar_url: string | null; display_name: string; username: string }; unread?: number; colors: ReturnType<typeof useThemeStore.getState>['colors']; navigate: (route: string) => void; logout: () => void }) {
-  return <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}><View className="flex-1 flex-row"><Pressable className="flex-1 bg-black/45" onPress={onClose} /><View className="w-[88%] border-l" style={{ backgroundColor: colors.background, borderColor: colors.border }}><View className="flex-row items-center border-b px-4 pb-3 pt-14" style={{ borderColor: colors.border }}><Avatar uri={data.avatar_url} displayName={data.display_name} size={44} /><View className="ml-3 flex-1"><Text className="font-extrabold" style={{ color: colors.text }}>{data.display_name}</Text><Text className="text-xs" style={{ color: colors.textSecondary }}>@{data.username}</Text></View><TouchableOpacity onPress={onClose} className="p-2"><Icon name="close" size={25} color={colors.text} /></TouchableOpacity></View><ScrollView contentContainerStyle={{ paddingBottom: 34 }}>{sections.map(([title, items]) => <View key={title} className="px-4 pt-6"><Text className="mb-2 px-1 text-xs font-bold uppercase" style={{ color: colors.textMuted }}>{title}</Text><View className="overflow-hidden rounded-2xl border" style={{ backgroundColor: colors.card, borderColor: colors.border }}>{items.map(([icon, label, route], index) => <MenuRow key={route} icon={icon} label={label} badge={route.includes('notifications') ? unread : undefined} isLast={index === items.length - 1} onPress={() => navigate(route)} />)}</View></View>)}<View className="px-4 pt-6"><TouchableOpacity onPress={() => Alert.alert('Déconnexion', 'Voulez-vous vraiment vous déconnecter ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Se déconnecter', style: 'destructive', onPress: logout }])} className="flex-row items-center rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Icon name="log-out-outline" size={21} color={colors.primary} /><Text className="ml-3 font-bold" style={{ color: colors.primary }}>Se déconnecter</Text></TouchableOpacity></View></ScrollView></View></View></Modal>;
+function ProfileTabButton({ tab, active, onPress }: { tab: (typeof PROFILE_TABS)[number]; active: boolean; onPress: () => void }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <TouchableOpacity onPress={onPress} className="flex-1 items-center border-b-2 py-3" style={{ borderColor: active ? colors.primary : 'transparent' }} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={tab.label}><Icon name={active ? tab.activeIcon : tab.icon} size={23} color={active ? colors.primary : colors.textMuted} /></TouchableOpacity>;
+}
+
+function ProfileEmptyState({ icon, title, message }: { icon: string; title: string; message: string }) {
+  const colors = useThemeStore((state) => state.colors);
+  return <View className="h-52"><EmptyState icon={<Icon name={icon} size={42} color={colors.textMuted} />} title={title} message={message} /></View>;
 }
 
 function Stat({ value, label, onPress }: { value?: number; label: string; onPress?: () => void }) { const colors = useThemeStore((state) => state.colors); return <TouchableOpacity disabled={!onPress} onPress={onPress} className="min-w-24 items-center px-3"><Text className="text-lg font-extrabold" style={{ color: colors.text }}>{value == null ? '—' : value > 999 ? `${(value / 1000).toFixed(1)}K` : value}</Text><Text className="mt-0.5 text-xs" style={{ color: colors.textSecondary }}>{label}</Text></TouchableOpacity>; }
 function Divider() { const colors = useThemeStore((state) => state.colors); return <View className="h-8 w-px" style={{ backgroundColor: colors.border }} />; }
-function MenuRow({ icon, label, badge, isLast, onPress }: { icon: string; label: string; badge?: number; isLast: boolean; onPress: () => void }) { const colors = useThemeStore((state) => state.colors); return <TouchableOpacity onPress={onPress} className="flex-row items-center px-4 py-3.5" style={{ borderBottomWidth: isLast ? 0 : 1, borderColor: colors.border }}><View className="h-9 w-9 items-center justify-center rounded-xl" style={{ backgroundColor: colors.elevated }}><Icon name={icon} size={19} color={colors.text} /></View><Text className="ml-3 flex-1 text-sm font-semibold" style={{ color: colors.text }}>{label}</Text>{badge ? <View className="mr-2 min-w-5 items-center rounded-full px-1.5 py-0.5" style={{ backgroundColor: colors.primary }}><Text className="text-[10px] font-bold text-white">{badge > 99 ? '99+' : badge}</Text></View> : null}<Icon name="chevron-forward" size={18} color={colors.textMuted} /></TouchableOpacity>; }

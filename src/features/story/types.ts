@@ -8,6 +8,12 @@ export interface Story {
   author_auth_user_id?: string;
   media: MediaAttachment;
   text?: string;
+  /**
+   * Preserved from the Content service for generated stories (for example an
+   * outing). The viewer deliberately does not navigate from this metadata yet.
+   */
+  reference_type?: string;
+  reference_id?: string | null;
   location_tag?: {
     id: EntityId;
     name: string;

@@ -1,8 +1,8 @@
 import { apiDelete, apiGet, apiPost } from '@/services/api/client';
-import { mediaContentUrl } from '@/services/api/contracts';
+import { createIdempotencyKey, mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
 import type { Event } from './types';
-import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
+import { traceCreateRuntime } from '@/features/create/create.runtime-trace';
 
 interface BackendEvent {
   id: string;
@@ -56,6 +56,7 @@ export interface CreateEventInput {
   };
   /** Retained for existing partner creation screens; public API ignores client publishing status. */
   status?: string;
+  idempotencyKey?: string;
 }
 
 /** Maps only fields returned by EventResponse/EventSummaryResponse. */
@@ -95,18 +96,21 @@ function mapEvent(event: BackendEvent): Event {
 export const eventsApi = {
   createEvent: async (input: CreateEventInput) => {
     try {
-      traceMediaRuntime('EVENT_CREATE_DISPATCHED', { flow: 'event', url: '/events', hasCoverMedia: Boolean(input.coverMediaId) });
+      traceCreateRuntime('OUTING_CREATE_REQUEST', { flow: 'outing', hasCoverMedia: Boolean(input.coverMediaId) });
+      const { idempotencyKey = createIdempotencyKey(), ...body } = input;
       const created = await apiPost<BackendEvent>('/events', {
         visibility: 'PUBLIC',
         allowUninvitedParticipants: true,
         commentsParticipantsOnly: false,
         showParticipants: true,
         sharingEnabled: true,
-        ...input,
-      }, { yeyamoTrace: { flow: 'event', stage: 'EVENT_CREATE' } });
-      return mapEvent(created);
+        ...body,
+      }, { headers: { 'Idempotency-Key': idempotencyKey }, yeyamoTrace: { flow: 'outing', stage: 'OUTING_CREATE' } });
+      const mapped = mapEvent(created);
+      traceCreateRuntime('OUTING_CREATE_RESPONSE', { flow: 'outing', outingId: mapped.id, status: mapped.status ?? 'UNKNOWN' });
+      return mapped;
     } catch (error) {
-      traceMediaRuntime('EVENT_CREATE_ERROR', { flow: 'event', url: '/events' });
+      traceCreateRuntime('OUTING_CREATE_ERROR', { flow: 'outing', errorType: error instanceof Error ? error.name : 'UnknownError' });
       throw error;
     }
   },

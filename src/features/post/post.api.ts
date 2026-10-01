@@ -3,6 +3,7 @@ import { absoluteApiUrl } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
 import type { CreatePostPayload, UploadedMedia } from './types';
 import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
+import { uploadMediaFormData } from '@/features/media/media.api';
 
 interface BackendMedia {
   id: string;
@@ -25,10 +26,8 @@ export const postApi = {
     // React Native must generate the multipart boundary itself. Supplying a
     // bare multipart Content-Type makes valid Expo assets unreadable by the
     // server on some Android/iOS transports.
-    traceMediaRuntime('MEDIA_UPLOAD_REQUEST', { flow: 'post', method: 'POST', url: '/media' });
     try {
-      const media = await apiPost<BackendMedia>('/media', formData);
-      traceMediaRuntime('MEDIA_UPLOAD_RESPONSE', { flow: 'post', method: 'POST', url: '/media', status: 201, mediaId: media.id });
+      const media = await uploadMediaFormData(formData) as BackendMedia;
       return {
         data: {
           id: media.id,
@@ -37,7 +36,6 @@ export const postApi = {
         },
       };
     } catch (error) {
-      traceMediaRuntime('MEDIA_UPLOAD_ERROR', { flow: 'post', method: 'POST', url: '/media', errorType: error instanceof Error ? error.name : 'UnknownError' });
       throw error;
     }
   },

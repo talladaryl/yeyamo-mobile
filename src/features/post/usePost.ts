@@ -33,9 +33,8 @@ export function useCreatePost() {
         : postApi.createPost(payload),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: ['profile', 'backend', 'publications'] });
-      queryClient.invalidateQueries({ queryKey: ['profile', 'backend', 'stats'] });
-      traceProfileRuntime('PROFILE_POSTS_INVALIDATED_AFTER_PUBLISH', { flow: 'post', postId: String(result.data.id) });
+      queryClient.invalidateQueries({ queryKey: ['profile', 'backend'] });
+      traceProfileRuntime('PROFILE_CACHE_INVALIDATED', { flow: 'post', postId: String(result.data.id), resource: 'posts-and-stats' });
     },
   });
 }

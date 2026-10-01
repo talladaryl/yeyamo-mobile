@@ -15,6 +15,8 @@ import { postApi } from '@/features/post/post.api';
 import { toMediaFormData } from '@/features/media/media.utils';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { normalizeApiError } from '@/services/api/errors';
+import { traceCreateRuntime } from '@/features/create/create.runtime-trace';
+import { createIdempotencyKey } from '@/services/api/contracts';
 
 function formatDateTime(date?: string, time?: string) {
   if (!date || !time) return 'À définir';
@@ -33,6 +35,7 @@ export default function EventReviewScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdEvent, setCreatedEvent] = useState<Event | null>(null);
+  const [submissionKey, setSubmissionKey] = useState<string | null>(null);
 
   const submit = async () => {
     if (isSubmitting) return;
@@ -52,6 +55,9 @@ export default function EventReviewScreen() {
 
     setError(null);
     setIsSubmitting(true);
+    traceCreateRuntime('OUTING_CREATE_REQUEST', { flow: 'outing', hasCover: Boolean(eventForm.cover_image_url) });
+    const idempotencyKey = submissionKey ?? createIdempotencyKey();
+    setSubmissionKey(idempotencyKey);
     try {
       let coverMediaId = eventForm.cover_media_id ?? undefined;
       if (eventForm.cover_image_url) {
@@ -64,7 +70,7 @@ export default function EventReviewScreen() {
             fileName: 'event-cover.jpg',
             width: 0,
             height: 0,
-          }, 'event-cover'))).data.id);
+          }, 'outing'))).data.id);
           setEventForm({ cover_media_id: coverMediaId, cover_media_uri: eventForm.cover_image_url });
         }
       }
@@ -85,10 +91,14 @@ export default function EventReviewScreen() {
         sharingEnabled: eventSettings.allow_share_outside,
         countryCode,
         socialDistribution: { publishToFeed: Boolean(eventForm.share_to_feed), publishToStory: Boolean(eventForm.share_to_story) },
+        idempotencyKey,
       });
       setCreatedEvent(created);
+      setSubmissionKey(null);
+      traceCreateRuntime('OUTING_CREATE_RESPONSE', { flow: 'outing', outingId: created.id, status: created.status ?? 'UNKNOWN' });
       resetEventForm();
     } catch (submissionError) {
+      traceCreateRuntime('OUTING_CREATE_ERROR', { flow: 'outing', errorType: submissionError instanceof Error ? submissionError.name : 'UnknownError' });
       setError(normalizeApiError(submissionError).message);
     } finally {
       setIsSubmitting(false);

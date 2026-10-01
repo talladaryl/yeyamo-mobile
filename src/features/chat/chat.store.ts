@@ -8,6 +8,7 @@ interface ChatState {
   appendMessage: (conversationId: EntityId, message: ChatMessage) => void;
   prependMessages: (conversationId: EntityId, messages: ChatMessage[]) => void;
   clearConversation: (conversationId: EntityId) => void;
+  reset: () => void;
   preferences: Record<string, ConversationPreferences>;
   setConversationPreferences: (conversationId: EntityId, preferences: Partial<ConversationPreferences>) => void;
 }
@@ -27,10 +28,11 @@ export const useChatStore = create<ChatState>((set) => ({
     set((state) => ({
       messages: {
         ...state.messages,
-        [String(conversationId)]: [
-          ...(state.messages[String(conversationId)] ?? []),
-          message,
-        ],
+        [String(conversationId)]: (state.messages[String(conversationId)] ?? []).some(
+          (current) => String(current.id) === String(message.id),
+        )
+          ? state.messages[String(conversationId)]
+          : [...(state.messages[String(conversationId)] ?? []), message],
       },
     })),
 
@@ -51,6 +53,8 @@ export const useChatStore = create<ChatState>((set) => ({
       delete next[String(conversationId)];
       return { messages: next };
     }),
+
+  reset: () => set({ messages: {}, preferences: {} }),
 
   setConversationPreferences: (conversationId, preferences) =>
     set((state) => {

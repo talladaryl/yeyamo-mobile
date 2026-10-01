@@ -9,12 +9,14 @@ import type { EntityId } from '@/types/api.types';
 /**
  * Hook pour récupérer toutes les collections de l'utilisateur
  */
-export function useUserCollections() {
+export function useUserCollections(enabled = true) {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const userId = useAuthStore((state) => state.user?.id);
   return useQuery({
-    queryKey: ['collections', isDemo ? 'demo' : 'backend', 'user'],
+    queryKey: ['collections', isDemo ? 'demo' : 'backend', String(userId ?? 'anonymous'), 'user'],
     queryFn: () =>
       isDemo ? Promise.resolve(MOCK_COLLECTIONS) : collectionsApi.getUserCollections(),
+    enabled: enabled && Boolean(userId),
     staleTime: 1000 * 60 * 5, // 5 minutes
     placeholderData: isDemo ? MOCK_COLLECTIONS : undefined,
   });

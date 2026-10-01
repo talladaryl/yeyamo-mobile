@@ -1,11 +1,11 @@
 import { apiDelete, apiGet, apiPost, apiPut } from '@/services/api/client';
-import type { EntityId } from '@/types/api.types';
+import type { EntityId, MediaAttachment } from '@/types/api.types';
 import {
   createIdempotencyKey,
   mediaContentUrl,
   toPaginatedResponse,
 } from '@/services/api/contracts';
-import { getMediaAttachment } from '@/features/media/media.api';
+import { getMediaAttachment, getMediaAttachments } from '@/features/media/media.api';
 import { socialApi, type ContentAuthorIdentity } from '@/features/social/social.api';
 import { traceFeedRuntime, traceInteractionRuntime } from '@/features/social/social.runtime-trace';
 import type { FeedAudience, FeedPost , PostComment } from './types';
@@ -125,9 +125,14 @@ async function mapFeedItem(
   item: OrganicBackendFeedItem,
   identity?: ContentAuthorIdentity,
   interaction?: InteractionSummary,
+  mediaById?: Map<string, MediaAttachment>,
 ): Promise<FeedPost> {
-  const metadata = await Promise.allSettled(item.mediaIds.map((id) => getMediaAttachment(id)));
-  const media = metadata.map((result, index) => result.status === 'fulfilled' ? result.value : fallbackMediaAttachment(item.mediaIds[index]));
+  const metadata = mediaById
+    ? item.mediaIds.map((id) => mediaById.get(id))
+    : await Promise.allSettled(item.mediaIds.map((id) => getMediaAttachment(id)));
+  const media = mediaById
+    ? item.mediaIds.map((id) => mediaById.get(id) ?? fallbackMediaAttachment(id))
+    : (metadata as PromiseSettledResult<MediaAttachment>[]).map((result, index) => result.status === 'fulfilled' ? result.value : fallbackMediaAttachment(item.mediaIds[index]));
   const hasVideo = media.some((attachment) => attachment.type === 'video');
   return {
     id: item.postId,
@@ -148,7 +153,9 @@ async function mapFeedItem(
       : null,
     created_at: item.publishedAt,
     linkedContent: item.linkedContent ?? null,
-    media_metadata_complete: metadata.every((result) => result.status === 'fulfilled'),
+    media_metadata_complete: mediaById
+      ? item.mediaIds.every((id) => mediaById.has(id))
+      : (metadata as PromiseSettledResult<MediaAttachment>[]).every((result) => result.status === 'fulfilled'),
   };
 }
 
@@ -159,6 +166,13 @@ export const feedApi = {
     const organicItems = (response.items ?? []).filter(isOrganicFeedItem);
     const identities = await socialApi.resolveContentAuthorIdentities(organicItems.map((item) => item.authorId));
     const identityByAuthUserId = new Map(identities.map((identity) => [identity.authUserId, identity]));
+    let mediaById: Map<string, MediaAttachment> | undefined;
+    try {
+      mediaById = await getMediaAttachments(organicItems.flatMap((item) => item.mediaIds));
+    } catch {
+      // Compatibility during a rolling deployment of media-service.
+      mediaById = undefined;
+    }
     const interactionByPostId = new Map<string, InteractionSummary>();
     try {
       const summaries = await apiPost<(InteractionSummary & { postId: string })[]>('/interactions/posts/summaries', {
@@ -175,7 +189,7 @@ export const feedApi = {
     }
     const posts = await Promise.all(organicItems.map(async (item) => {
       const interaction = interactionByPostId.get(item.postId);
-      const post = await mapFeedItem(item, identityByAuthUserId.get(item.authorId), interaction);
+      const post = await mapFeedItem(item, identityByAuthUserId.get(item.authorId), interaction, mediaById);
       traceFeedRuntime('FEED_ITEM_RESOLVED', {
         flow: 'feed', postId: item.postId, postAuthorId: item.authorId,
         resolvedAuthorId: String(post.author.id),

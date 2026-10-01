@@ -15,6 +15,7 @@ import { placesApi, type PlaceSuggestion, type PlaceSuggestionDuplicateCandidate
 import { postApi } from '@/features/post/post.api';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { normalizeApiError } from '@/services/api/errors';
+import { traceCreateRuntime } from '@/features/create/create.runtime-trace';
 
 function statusDescription(suggestion: PlaceSuggestion) {
   if (suggestion.status === 'APPROVED') return 'Votre suggestion a été approuvée par le serveur.';
@@ -45,6 +46,7 @@ export default function SuggestPlaceReviewScreen() {
     setError(null);
     setDuplicates([]);
     setIsSubmitting(true);
+    traceCreateRuntime('PLACE_FORM_OPEN', { flow: 'place_suggestion' });
     const resolvedMediaIds = { ...uploadedMediaByUri };
     try {
       const duplicateCheck = await placesApi.checkPlaceSuggestionDuplicates({
@@ -56,6 +58,7 @@ export default function SuggestPlaceReviewScreen() {
         longitude: coordinates.longitude,
       });
       const candidates = duplicateCheck.possibleDuplicates ?? [];
+      traceCreateRuntime('PLACE_DUPLICATE_CHECK', { flow: 'place_suggestion', candidateCount: candidates.length, certainCount: candidates.filter((candidate) => candidate.certain).length });
       const certain = candidates.filter((candidate) => candidate.certain);
       if (certain.length) {
         setDuplicates(candidates);
@@ -66,8 +69,9 @@ export default function SuggestPlaceReviewScreen() {
 
       for (const [index, media] of (placeForm.media_assets ?? []).entries()) {
         if (resolvedMediaIds[media.uri]) continue;
-        const uploaded = await postApi.uploadMedia(await toMediaFormData({ ...media, width: 0, height: 0 }, 'place-suggestion', index));
+        const uploaded = await postApi.uploadMedia(await toMediaFormData({ ...media, width: 0, height: 0 }, 'place_suggestion', index));
         resolvedMediaIds[media.uri] = String(uploaded.data.id);
+        traceCreateRuntime('PLACE_MEDIA_READY', { flow: 'place_suggestion', mediaId: String(uploaded.data.id) });
         setUploadedMediaByUri((current) => ({ ...current, [media.uri]: String(uploaded.data.id) }));
       }
 
@@ -87,6 +91,7 @@ export default function SuggestPlaceReviewScreen() {
         longitude: coordinates.longitude,
       });
       setCreatedSuggestion(created);
+      traceCreateRuntime('PLACE_STATUS_RESOLVED', { flow: 'place_suggestion', suggestionId: created.id, status: created.status });
       setUploadedMediaByUri({});
       resetPlaceForm();
       void queryClient.invalidateQueries({ queryKey: placeSuggestionKeys.mine() });

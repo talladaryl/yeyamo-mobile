@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
 import { ChatListItem } from '@/components/chat/ChatListItem';
@@ -20,7 +20,9 @@ import type { EntityId } from '@/types/api.types';
 type InboxSection = 'messages' | 'notifications';
 
 function conversationName(conversation: Conversation) {
-  return conversation.type === 'group' ? conversation.group_name ?? '' : conversation.participant?.display_name ?? '';
+  return conversation.type === 'group'
+    ? conversation.group_name ?? 'Groupe'
+    : conversation.participant?.display_name ?? 'Compte indisponible';
 }
 
 export default function ChatsScreen() {
@@ -30,7 +32,7 @@ export default function ChatsScreen() {
   const [inboxSection, setInboxSection] = useState<InboxSection>('messages');
   const [activeTab, setActiveTab] = useState<ChatTab>('recent');
   const [search, setSearch] = useState('');
-  const { data: conversations = [], isLoading, isError } = useConversations();
+  const { data: conversations = [], isLoading, isError, isRefetching, refetch } = useConversations();
   const { data: unreadNotifications = 0 } = useUnreadCount();
   const { data: stories = [] } = useStories();
   const { user } = useAuth();
@@ -86,13 +88,14 @@ export default function ChatsScreen() {
           {isLoading ? (
             <View className="flex-1 items-center justify-center"><ActivityIndicator color={colors.primary} /></View>
           ) : isError ? (
-            <View className="flex-1 items-center justify-center px-8"><Icon name="cloud-offline-outline" size={44} color={colors.primary} /><Text className="mt-3 text-center font-semibold" style={{ color: colors.text }}>Impossible de charger les conversations</Text></View>
+            <View className="flex-1 items-center justify-center px-8"><Icon name="cloud-offline-outline" size={44} color={colors.primary} /><Text className="mt-3 text-center font-semibold" style={{ color: colors.text }}>Impossible de charger les conversations</Text><TouchableOpacity onPress={() => void refetch()} className="mt-4 rounded-full px-5 py-2.5" style={{ backgroundColor: colors.primary }}><Text className="font-bold text-white">Réessayer</Text></TouchableOpacity></View>
           ) : (
             <View className="flex-1">
               <FlatList
                 data={filteredConversations}
                 keyExtractor={(item) => String(item.id)}
                 keyboardShouldPersistTaps="handled"
+                refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={colors.primary} />}
                 contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
                 ListHeaderComponent={activeTab === 'recent' && !search ? <><PinnedChats conversations={pinnedConversations} onPress={openConversation} /><Text className="mb-3 px-4 text-sm font-bold" style={{ color: colors.text }}>Conversations</Text></> : null}
                 renderItem={({ item }) => <ChatListItem conversation={item} onPress={() => openConversation(item.id)} />}

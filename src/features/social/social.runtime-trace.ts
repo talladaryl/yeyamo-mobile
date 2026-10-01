@@ -14,3 +14,4 @@ export const traceProfileRuntime = (stage: string, details: Record<string, unkno
 export const traceFeedRuntime = (stage: string, details: Record<string, unknown>) => trace('YEYAMO_FEED_TRACE', stage, details);
 export const traceInteractionRuntime = (stage: string, details: Record<string, unknown>) => trace('YEYAMO_INTERACTION_TRACE', stage, details);
 export const traceStoryRuntime = (stage: string, details: Record<string, unknown>) => trace('YEYAMO_STORY_TRACE', stage, details);
+export const traceMessageRuntime = (stage: string, details: Record<string, unknown>) => trace('YEYAMO_MESSAGE_TRACE', stage, details);

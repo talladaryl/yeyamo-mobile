@@ -21,9 +21,19 @@ export interface ChatMessage {
   type: 'text' | 'image' | 'video' | 'file';
   media_url: string | null;
   attachments: Attachment[];
+  reply_to?: MessageReply | null;
   event_data?: EventData;
   read_at: string | null;
   created_at: string;
+}
+
+export interface MessageReply {
+  id: EntityId;
+  sender: UserSummary;
+  body: string;
+  type: ChatMessage['type'];
+  created_at: string;
+  deleted: boolean;
 }
 
 export interface Attachment {
@@ -49,6 +59,7 @@ export interface SendMessagePayload {
   body: string;
   type?: ChatMessage['type'];
   media_url?: string;
+  reply_to_message_id?: EntityId | null;
 }
 
 export type ChatTab = 'recent' | 'main' | 'unread' | 'groups';

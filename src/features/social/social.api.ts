@@ -12,6 +12,7 @@ import type {
 
 interface BackendProfileSummary {
   id: string;
+  authUserId: string;
   displayName: string;
   avatarUrl: string | null;
   bio: string | null;
@@ -57,9 +58,11 @@ interface BackendSocialSettings {
 function mapFollowUser(profile: BackendProfileSummary): FollowUser {
   return {
     ...fallbackUser(profile.id, profile.displayName),
+    content_author_id: profile.authUserId,
     avatar_url: profile.avatarUrl,
     bio: profile.bio ?? undefined,
     followers_count: profile.followersCount,
+    following_count: profile.followingCount,
     is_following: profile.isFollowing,
     is_followed_by: false,
   };

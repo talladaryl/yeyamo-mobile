@@ -26,7 +26,8 @@ import {
 import { AppErrorScreen } from '@/components/ui/AppErrorScreen';
 import { FEED_QUERY_KEY } from '@/features/feed/useFeed';
 import { STORIES_QUERY_KEY } from '@/features/story/useStory';
-import { traceSocialRuntime } from '@/features/social/social.runtime-trace';
+import { traceMessageRuntime, traceSocialRuntime } from '@/features/social/social.runtime-trace';
+import { useChatStore } from '@/features/chat/chat.store';
 import type { ErrorBoundaryProps } from 'expo-router';
 
 const queryClient = new QueryClient({
@@ -92,6 +93,8 @@ function RootNavigator() {
   useEffect(() => {
     registerUnauthenticatedHandler(() => {
       clearAuth();
+      useChatStore.getState().reset();
+      queryClient.removeQueries({ queryKey: ['messaging'] });
       void resetCountry();
       Alert.alert('Session expirée', 'Reconnectez-vous pour continuer.');
       router.replace('/(auth)/login');
@@ -164,11 +167,15 @@ function RootNavigator() {
       if (previousUserId) {
         [FEED_QUERY_KEY, STORIES_QUERY_KEY, ['profile'], ['social'], ['post'], ['interactions']]
           .forEach((queryKey) => queryClient.removeQueries({ queryKey }));
+        [['messaging'], ['conversations'], ['messages']]
+          .forEach((queryKey) => queryClient.removeQueries({ queryKey }));
+        useChatStore.getState().reset();
         traceSocialRuntime('SOCIAL_CACHE_RESET', { previousUserId, currentUserId });
         traceSocialRuntime('PROFILE_CACHE_RESET', { previousUserId, currentUserId });
         traceSocialRuntime('FEED_VIEWER_RESET', { previousUserId, currentUserId });
         traceSocialRuntime('INTERACTION_VIEWER_RESET', { previousUserId, currentUserId });
         traceSocialRuntime('STORY_VIEWER_RESET', { previousUserId, currentUserId });
+        traceMessageRuntime('MESSAGE_ACCOUNT_RESET', { previousUserId, currentUserId });
       }
       previousAuthUserId.current = currentUserId;
     }
@@ -196,7 +203,12 @@ function RootNavigator() {
         ['favorites'],
         ['reservations'],
         ['auth', 'sessions'],
+        ['messaging'],
+        ['conversations'],
+        ['messages'],
       ].forEach((queryKey) => queryClient.removeQueries({ queryKey }));
+      useChatStore.getState().reset();
+      traceMessageRuntime('MESSAGE_ACCOUNT_RESET', { previousUserId: previousAuthUserId.current, currentUserId: null });
       return;
     }
     void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });

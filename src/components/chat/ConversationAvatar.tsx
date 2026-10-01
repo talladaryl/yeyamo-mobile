@@ -10,7 +10,9 @@ type Props = {
 
 export function ConversationAvatar({ conversation, size = 52, showOnline = true }: Props) {
   const isGroup = conversation.type === 'group';
-  const displayName = isGroup ? conversation.group_name : conversation.participant?.display_name;
+  const displayName = isGroup
+    ? conversation.group_name ?? 'Groupe'
+    : conversation.participant?.display_name ?? 'Compte indisponible';
 
   if (isGroup && conversation.participants.length > 1) {
     const itemSize = Math.round(size * 0.68);

@@ -5,23 +5,32 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { useCreateConversation } from '@/features/chat/useChat';
+import { useAuth } from '@/features/auth/useAuth';
 import { useUserSearch } from '@/features/social/useSocial';
 import { useThemeStore } from '@/features/theme/theme.store';
-import type { EntityId } from '@/types/api.types';
 
 export default function NewConversationScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const [search, setSearch] = useState('');
-  const [openingUserId, setOpeningUserId] = useState<EntityId | null>(null);
+  const [openingUserId, setOpeningUserId] = useState<string | null>(null);
+  const { user: currentUser } = useAuth();
   const { data: users = [], isLoading } = useUserSearch(search);
   const createConversation = useCreateConversation();
 
-  const startConversation = async (userId: EntityId) => {
+  const startConversation = async (recipientAuthUserId?: string) => {
+    if (!recipientAuthUserId) {
+      Alert.alert('Conversation indisponible', 'Ce profil ne peut pas encore être contacté.');
+      return;
+    }
+    if (recipientAuthUserId === String(currentUser?.id)) {
+      Alert.alert('Conversation impossible', 'Vous ne pouvez pas vous écrire à vous-même.');
+      return;
+    }
     if (openingUserId !== null) return;
-    setOpeningUserId(userId);
+    setOpeningUserId(recipientAuthUserId);
     try {
-      const conversation = await createConversation.mutateAsync(userId);
+      const conversation = await createConversation.mutateAsync(recipientAuthUserId);
       router.replace(`/(chat)/${conversation.data.id}`);
     } catch {
       Alert.alert('Conversation impossible', "La conversation n'a pas pu être créée.");
@@ -51,12 +60,14 @@ export default function NewConversationScreen() {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
           renderItem={({ item }) => {
-            const opening = String(openingUserId) === String(item.id);
+            const recipientAuthUserId = item.content_author_id;
+            const isOwnProfile = recipientAuthUserId === String(currentUser?.id);
+            const opening = String(openingUserId) === String(recipientAuthUserId);
             return (
-              <TouchableOpacity onPress={() => void startConversation(item.id)} disabled={openingUserId !== null} className="flex-row items-center border-b py-4" style={{ borderColor: colors.border }} activeOpacity={0.75}>
+              <TouchableOpacity onPress={() => void startConversation(recipientAuthUserId)} disabled={openingUserId !== null || isOwnProfile || !recipientAuthUserId} className="flex-row items-center border-b py-4" style={{ borderColor: colors.border, opacity: isOwnProfile || !recipientAuthUserId ? 0.55 : 1 }} activeOpacity={0.75}>
                 <Avatar uri={item.avatar_url} displayName={item.display_name} size={48} />
                 <View className="ml-3 flex-1"><View className="flex-row items-center"><Text className="text-[15px] font-extrabold" style={{ color: colors.text }}>{item.display_name}</Text>{item.is_verified ? <View className="ml-1"><Icon name="checkmark-circle" size={15} color="#1689FF" /></View> : null}</View><Text className="mt-0.5 text-xs" style={{ color: colors.textSecondary }}>@{item.username}</Text></View>
-                {opening ? <ActivityIndicator color={colors.primary} /> : <View className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name="chatbubble-outline" size={20} color={colors.primary} /></View>}
+                {opening ? <ActivityIndicator color={colors.primary} /> : <View className="h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: colors.elevated }}><Icon name={isOwnProfile ? 'person-outline' : 'chatbubble-outline'} size={20} color={colors.primary} /></View>}
               </TouchableOpacity>
             );
           }}

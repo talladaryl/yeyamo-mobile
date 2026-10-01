@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Platform, View, Text, TextInput, type TextInputProps } from 'react-native';
+import { Platform, View, Text, TextInput, type TextInputProps, type StyleProp, type TextStyle } from 'react-native';
 import { useThemeStore } from '@/features/theme/theme.store';
 
 interface InputProps extends TextInputProps {
@@ -9,9 +9,10 @@ interface InputProps extends TextInputProps {
   containerClassName?: string;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
+  inputStyle?: StyleProp<TextStyle>;
 }
 
-export function Input({ label, error, helperText, containerClassName = '', leftIcon, rightIcon, editable = true, ...props }: InputProps) {
+export function Input({ label, error, helperText, containerClassName = '', leftIcon, rightIcon, editable = true, inputStyle, ...props }: InputProps) {
   const colors = useThemeStore((state) => state.colors);
   const multiline = Boolean(props.multiline);
 
@@ -25,14 +26,17 @@ export function Input({ label, error, helperText, containerClassName = '', leftI
         {leftIcon ? <View className="pl-4">{leftIcon}</View> : null}
         <TextInput
           className="flex-1 px-4 text-base"
-          style={{
-            color: colors.text,
-            minHeight: multiline ? 112 : 52,
-            paddingVertical: multiline ? 12 : 0,
-            lineHeight: 22,
-            textAlignVertical: multiline ? 'top' : 'center',
-            ...(Platform.OS === 'android' ? { includeFontPadding: true } : {}),
-          }}
+          style={[
+            {
+              color: colors.text,
+              minHeight: multiline ? 112 : 52,
+              paddingVertical: multiline ? 12 : 0,
+              lineHeight: 22,
+              textAlignVertical: multiline ? 'top' : 'center',
+              ...(Platform.OS === 'android' ? { includeFontPadding: true } : {}),
+            },
+            inputStyle,
+          ]}
           placeholderTextColor={colors.textMuted}
           editable={editable}
           accessibilityLabel={label}

@@ -1,7 +1,9 @@
-import { apiGet, apiPost } from '@/services/api/client';
-import { fallbackUser, mediaContentUrl, toPaginatedResponse } from '@/services/api/contracts';
-import type { EntityId, PaginatedResponse } from '@/types/api.types';
-import type { ChatMessage, Conversation, SendMessagePayload } from './types';
+import { apiGet, apiPost, type YeyamoApiRequestConfig } from '@/services/api/client';
+import { createIdempotencyKey, fallbackUser, mediaContentUrl, toPaginatedResponse } from '@/services/api/contracts';
+import type { EntityId, PaginatedResponse, UserSummary } from '@/types/api.types';
+import { socialApi, type ContentAuthorIdentity } from '@/features/social/social.api';
+import { traceMessageRuntime } from '@/features/social/social.runtime-trace';
+import type { ChatMessage, Conversation, MessageReply, SendMessagePayload } from './types';
 
 interface BackendConversation {
   id: string;
@@ -10,10 +12,25 @@ interface BackendConversation {
   updatedAt: string;
   lastMessagePreview: string | null;
   lastMessageAt: string | null;
+  memberIds?: string[];
+  unreadCount?: number;
 }
 
 interface BackendConversationView extends BackendConversation {
-  members: { userId: string }[];
+  members?: { userId: string }[];
+}
+
+type BackendConversationPayload = BackendConversation & {
+  members?: { userId: string }[];
+};
+
+interface BackendReplyPreview {
+  id: string;
+  senderId: string;
+  body: string | null;
+  type: 'TEXT' | 'MEDIA' | 'MIXED' | 'SYSTEM';
+  sentAt: string;
+  deleted: boolean;
 }
 
 export interface BackendMessage {
@@ -23,6 +40,8 @@ export interface BackendMessage {
   type: 'TEXT' | 'MEDIA' | 'MIXED' | 'SYSTEM';
   body: string | null;
   attachmentIds: string[];
+  replyToMessageId?: string | null;
+  replyTo?: BackendReplyPreview | null;
   sentAt: string;
   deletedAt: string | null;
 }
@@ -30,17 +49,56 @@ export interface BackendMessage {
 interface BackendMessageSlice {
   items: BackendMessage[];
   nextBefore: string | null;
+  nextBeforeId: string | null;
   hasNext: boolean;
 }
 
-export function mapBackendMessage(message: BackendMessage): ChatMessage {
+type IdentityByAuthId = Map<string, ContentAuthorIdentity>;
+
+function messagingRequestConfig(correlationId: string, stage: string): YeyamoApiRequestConfig {
+  return {
+    headers: { 'X-Correlation-ID': correlationId },
+    yeyamoTrace: { flow: 'messaging', stage },
+  };
+}
+
+function messageType(type: BackendMessage['type']): ChatMessage['type'] {
+  return type === 'TEXT' || type === 'SYSTEM' ? 'text' : 'file';
+}
+
+function userForAuthId(authUserId: string, identities: IdentityByAuthId): UserSummary {
+  const identity = identities.get(authUserId);
+  if (!identity) return fallbackUser(authUserId, 'Compte indisponible');
+  return {
+    ...fallbackUser(identity.authUserId, identity.displayName),
+    avatar_url: identity.avatarUrl,
+  };
+}
+
+function memberIds(conversation: BackendConversationPayload): string[] {
+  return conversation.memberIds ?? conversation.members?.map((member) => member.userId) ?? [];
+}
+
+function mapReply(reply: BackendReplyPreview | null | undefined, identities: IdentityByAuthId): MessageReply | null {
+  if (!reply) return null;
+  return {
+    id: reply.id,
+    sender: userForAuthId(reply.senderId, identities),
+    body: reply.deleted ? 'Message supprimé' : reply.body ?? '',
+    type: messageType(reply.type),
+    created_at: reply.sentAt,
+    deleted: reply.deleted,
+  };
+}
+
+export function mapBackendMessage(message: BackendMessage, identities: IdentityByAuthId = new Map()): ChatMessage {
   return {
     id: message.id,
     conversation_id: message.conversationId,
-    sender: fallbackUser(message.senderId),
+    sender: userForAuthId(message.senderId, identities),
     body: message.deletedAt ? 'Message supprimé' : message.body ?? '',
     message_type: message.type === 'SYSTEM' ? 'system' : 'text',
-    type: message.type === 'TEXT' || message.type === 'SYSTEM' ? 'text' : 'file',
+    type: messageType(message.type),
     media_url: null,
     attachments: message.attachmentIds.map((id) => ({
       id,
@@ -49,17 +107,30 @@ export function mapBackendMessage(message: BackendMessage): ChatMessage {
       url: mediaContentUrl(id),
       size: 0,
     })),
+    reply_to: mapReply(message.replyTo, identities),
     read_at: null,
     created_at: message.sentAt,
   };
 }
 
-function mapConversation(conversation: BackendConversation): Conversation {
+function mapConversation(
+  conversation: BackendConversationPayload,
+  viewerAuthUserId: string,
+  identities: IdentityByAuthId,
+): Conversation {
+  const activeMemberIds = memberIds(conversation);
+  const peerAuthUserId = activeMemberIds.find((memberId) => memberId !== viewerAuthUserId);
+  const participants = activeMemberIds
+    .filter((memberId) => memberId !== viewerAuthUserId)
+    .map((memberId) => userForAuthId(memberId, identities));
+  const participant = conversation.type === 'DIRECT'
+    ? userForAuthId(peerAuthUserId ?? 'unavailable', identities)
+    : null;
   const lastMessage: ChatMessage | null = conversation.lastMessageAt
     ? {
         id: `${conversation.id}-last`,
         conversation_id: conversation.id,
-        sender: fallbackUser('unknown'),
+        sender: fallbackUser('system', 'Yeyamo'),
         body: conversation.lastMessagePreview ?? '',
         message_type: 'text',
         type: 'text',
@@ -73,19 +144,53 @@ function mapConversation(conversation: BackendConversation): Conversation {
     id: conversation.id,
     type: conversation.type === 'GROUP' ? 'group' : 'user',
     is_pinned: false,
-    participant: null,
-    participants: [],
+    participant,
+    participants,
     group_name: conversation.title ?? undefined,
     last_message: lastMessage,
-    unread_count: 0,
+    unread_count: conversation.unreadCount ?? 0,
     updated_at: conversation.updatedAt,
   };
 }
 
+async function resolveIdentities(authUserIds: string[], context: string): Promise<IdentityByAuthId> {
+  const requested = [...new Set(authUserIds.filter(Boolean))];
+  if (!requested.length) return new Map();
+  traceMessageRuntime('MESSAGE_PARTICIPANTS_REQUEST', { context, requestedCount: requested.length });
+  try {
+    const identities = await socialApi.resolveContentAuthorIdentities(requested);
+    const byAuthId = new Map(identities.map((identity) => [identity.authUserId, identity]));
+    traceMessageRuntime('MESSAGE_PARTICIPANTS_RESOLVED', {
+      context,
+      requestedCount: requested.length,
+      resolvedCount: byAuthId.size,
+      unresolvedCount: requested.length - byAuthId.size,
+    });
+    if (requested.length > byAuthId.size) {
+      traceMessageRuntime('MESSAGE_PARTICIPANT_UNRESOLVED', {
+        context,
+        unresolvedCount: requested.length - byAuthId.size,
+      });
+    }
+    return byAuthId;
+  } catch {
+    // A social profile lookup must not make already-authorized messaging unavailable.
+    traceMessageRuntime('MESSAGE_PARTICIPANTS_ERROR', { context, requestedCount: requested.length });
+    return new Map();
+  }
+}
+
 export const chatApi = {
-  getConversations: async (): Promise<PaginatedResponse<Conversation>> => {
+  getConversations: async (viewerAuthUserId: string): Promise<PaginatedResponse<Conversation>> => {
+    traceMessageRuntime('MESSAGE_INBOX_REQUEST', { viewerId: viewerAuthUserId });
     const conversations = await apiGet<BackendConversation[]>('/messaging/conversations');
-    return toPaginatedResponse(conversations.map(mapConversation), 0, Math.max(1, conversations.length));
+    const identities = await resolveIdentities(
+      conversations.flatMap((conversation) => memberIds(conversation).filter((memberId) => memberId !== viewerAuthUserId)),
+      'inbox',
+    );
+    const mapped = conversations.map((conversation) => mapConversation(conversation, viewerAuthUserId, identities));
+    traceMessageRuntime('MESSAGE_INBOX_RESPONSE', { viewerId: viewerAuthUserId, conversationCount: mapped.length });
+    return toPaginatedResponse(mapped, 0, Math.max(1, mapped.length));
   },
 
   getMessages: async (
@@ -93,60 +198,87 @@ export const chatApi = {
     before?: string,
   ): Promise<PaginatedResponse<ChatMessage>> => {
     const query = new URLSearchParams({ limit: '50' });
-    if (before) query.set('before', before);
+    if (before) {
+      const [beforeTimestamp, beforeId] = before.split('|', 2);
+      query.set('before', beforeTimestamp);
+      if (beforeId) query.set('beforeId', beforeId);
+    }
+    traceMessageRuntime('MESSAGE_HISTORY_REQUEST', { conversationId: String(conversationId), hasCursor: Boolean(before) });
     const response = await apiGet<BackendMessageSlice>(
       `/messaging/conversations/${conversationId}/messages?${query}`,
     );
+    const identities = await resolveIdentities(
+      response.items.flatMap((message) => [message.senderId, message.replyTo?.senderId ?? '']),
+      'history',
+    );
     const result = toPaginatedResponse(
-      response.items.map(mapBackendMessage),
+      response.items.map((message) => mapBackendMessage(message, identities)),
       0,
       50,
       response.hasNext,
     );
-    result.links.next = response.nextBefore;
+    result.links.next = response.nextBefore
+      ? `${response.nextBefore}${response.nextBeforeId ? `|${response.nextBeforeId}` : ''}`
+      : null;
+    traceMessageRuntime('MESSAGE_HISTORY_RESPONSE', {
+      conversationId: String(conversationId),
+      messageCount: result.data.length,
+      hasNext: response.hasNext,
+    });
     return result;
   },
 
-  sendMessage: async (
-    payload: SendMessagePayload,
-  ): Promise<{ data: ChatMessage }> => {
+  sendMessage: async (payload: SendMessagePayload): Promise<{ data: ChatMessage }> => {
+    const correlationId = createIdempotencyKey();
+    const clientMessageId = createIdempotencyKey();
+    traceMessageRuntime('MESSAGE_SEND_REQUEST', {
+      conversationId: String(payload.conversation_id),
+      hasReply: Boolean(payload.reply_to_message_id),
+      type: payload.type ?? 'text',
+      correlationId,
+    });
     const message = await apiPost<BackendMessage>(
       `/messaging/conversations/${payload.conversation_id}/messages`,
       {
-        clientMessageId: `mobile-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-        type: payload.type === 'text' ? 'TEXT' : 'MEDIA',
+        clientMessageId,
+        type: (payload.type ?? 'text') === 'text' ? 'TEXT' : 'MEDIA',
         body: payload.body,
         attachmentIds: [],
-        replyToMessageId: null,
+        replyToMessageId: payload.reply_to_message_id ?? null,
       },
+      messagingRequestConfig(correlationId, 'MESSAGE_SEND'),
     );
+    traceMessageRuntime('MESSAGE_SEND_RESPONSE', {
+      conversationId: String(payload.conversation_id),
+      messageId: message.id,
+      hasReply: Boolean(message.replyToMessageId),
+      correlationId,
+    });
     return { data: mapBackendMessage(message) };
   },
 
-  markRead: async (conversationId: EntityId): Promise<void> => {
-    const messages = await chatApi.getMessages(conversationId);
-    const latest = messages.data[0];
-    if (latest) {
-      await apiPost<void>(
-        `/messaging/conversations/${conversationId}/read/${latest.id}`,
-      );
-    }
+  markRead: async (conversationId: EntityId, messageId: EntityId): Promise<void> => {
+    traceMessageRuntime('MESSAGE_MARK_READ_REQUEST', { conversationId: String(conversationId), messageId: String(messageId) });
+    await apiPost<void>(`/messaging/conversations/${conversationId}/read/${messageId}`);
+    traceMessageRuntime('MESSAGE_MARK_READ_RESPONSE', { conversationId: String(conversationId), messageId: String(messageId) });
   },
 
-  createConversation: async (
-    userId: EntityId,
-  ): Promise<{ data: Conversation }> => {
+  createConversation: async (recipientAuthUserId: string, viewerAuthUserId: string): Promise<{ data: Conversation }> => {
+    traceMessageRuntime('MESSAGE_DIRECT_RESOLVE_REQUEST', { recipientAuthUserId });
     const conversation = await apiPost<BackendConversationView>(
       '/messaging/conversations',
-      { type: 'DIRECT', title: null, participantIds: [String(userId)] },
+      { type: 'DIRECT', title: null, participantIds: [recipientAuthUserId] },
     );
-    return { data: mapConversation(conversation) };
+    const identities = await resolveIdentities([recipientAuthUserId], 'direct-create');
+    const mapped = mapConversation(conversation, viewerAuthUserId, identities);
+    traceMessageRuntime('MESSAGE_DIRECT_RESOLVE_RESPONSE', { conversationId: String(mapped.id), recipientAuthUserId });
+    return { data: mapped };
   },
 
-  contactPartner: async (partnerId: EntityId): Promise<{ data: Conversation }> => {
-    const conversation = await apiPost<BackendConversation>(
+  contactPartner: async (partnerId: EntityId, viewerAuthUserId: string): Promise<{ data: Conversation }> => {
+    const conversation = await apiPost<BackendConversationView>(
       `/messaging/conversations/partner/${encodeURIComponent(String(partnerId))}`,
     );
-    return { data: mapConversation(conversation) };
+    return { data: mapConversation(conversation, viewerAuthUserId, new Map()) };
   },
 };

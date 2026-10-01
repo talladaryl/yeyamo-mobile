@@ -42,7 +42,7 @@ function headerValue(headers: unknown, name: string): string | null {
   return typeof direct === 'string' ? direct : null;
 }
 
-function traceMediaHttp(config: InternalAxiosRequestConfig, stage: 'HTTP_MEDIA_REQUEST' | 'HTTP_MEDIA_RESPONSE' | 'HTTP_MEDIA_ERROR', status?: number, responseBody?: unknown) {
+function traceMediaHttp(config: InternalAxiosRequestConfig, stage: 'HTTP_MEDIA_REQUEST' | 'HTTP_MEDIA_RESPONSE' | 'HTTP_MEDIA_ERROR', status?: number, responseBody?: unknown, transport?: { timeout?: boolean; errorType?: string } ) {
   const context = mediaTraceForFormData(config.data);
   if (!context || !isMultipartFormData(config.data)) return;
   const body = responseBody && typeof responseBody === 'object' ? responseBody as { code?: unknown; message?: unknown } : undefined;
@@ -52,12 +52,17 @@ function traceMediaHttp(config: InternalAxiosRequestConfig, stage: 'HTTP_MEDIA_R
     method: config.method?.toUpperCase() ?? 'POST',
     url: `${apiBaseUrl}${config.url ?? ''}`,
     bodyType: 'FormData',
+    mimeType: context.mimeType,
+    mediaType: context.mediaType,
+    fileSizeBucket: context.fileSizeBucket,
     // null is intentional: RN must attach the multipart boundary itself.
     explicitContentType: headerValue(config.headers, 'Content-Type'),
     correlationId: headerValue(config.headers, 'X-Correlation-ID'),
     status: status ?? null,
     serverCode: typeof body?.code === 'string' ? body.code : null,
     serverMessage: typeof body?.message === 'string' ? body.message : null,
+    transportError: transport?.errorType ?? null,
+    timeout: transport?.timeout ?? false,
   });
 }
 
@@ -162,7 +167,10 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const request = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
-    if (request) traceMediaHttp(request, 'HTTP_MEDIA_ERROR', error.response?.status, error.response?.data);
+    if (request) traceMediaHttp(request, 'HTTP_MEDIA_ERROR', error.response?.status, error.response?.data, {
+      timeout: error.code === 'ECONNABORTED' || /timeout/i.test(error.message ?? ''),
+      errorType: error.code ?? error.name,
+    });
     if (request) traceBusinessHttp(request, 'HTTP_BUSINESS_ERROR', error.response?.status, error.response?.data);
     const isAuthenticationRequest = request?.url?.startsWith('/auth/login')
       || request?.url?.startsWith('/auth/register')

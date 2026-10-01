@@ -13,8 +13,8 @@ export function ChatListItem({ conversation, onPress }: ChatListItemProps) {
   const colors = useThemeStore((state) => state.colors);
   const { last_message: lastMessage, unread_count: unreadCount } = conversation;
   const displayName = conversation.type === 'group'
-    ? conversation.group_name
-    : conversation.participant?.display_name;
+    ? conversation.group_name ?? 'Groupe'
+    : conversation.participant?.display_name ?? 'Compte indisponible';
 
   return (
     <TouchableOpacity

@@ -2,8 +2,9 @@ import { apiClient } from '@/services/api/client';
 import { collectionsApi } from '@/features/collections/collections.api';
 import { createIdempotencyKey, type SpringPage } from '@/services/api/contracts';
 import { secureStore } from '@/services/storage/secure-store';
-import { getMediaAttachment } from '@/features/media/media.api';
+import { getMediaAttachments } from '@/features/media/media.api';
 import { traceProfileRuntime } from '@/features/social/social.runtime-trace';
+import type { MediaAttachment } from '@/types/api.types';
 import type {
   EventParticipation,
   FavoritePlace,
@@ -21,6 +22,11 @@ interface BackendPost {
   caption?: string | null;
   content?: string | null;
   status?: string | null;
+}
+
+interface BackendLikedPost {
+  postId: string;
+  likedAt: string;
 }
 
 interface BackendEvent {
@@ -122,34 +128,22 @@ export const profileApi = {
     traceProfileRuntime('PROFILE_POSTS_REQUEST', { flow: 'profile', method: 'GET', url: '/posts/me' });
     const { data } = await apiClient.get<BackendPost[]>('/posts/me');
     traceProfileRuntime('PROFILE_POSTS_RESPONSE', { flow: 'profile', method: 'GET', url: '/posts/me', status: 200, postCount: data.length });
-    return Promise.all(data.map(async (post) => {
-      const firstMediaId = post.mediaIds[0];
-      let attachment = null;
-      try {
-        attachment = firstMediaId ? await getMediaAttachment(firstMediaId) : null;
-      } catch (error) {
-        traceProfileRuntime('PROFILE_MEDIA_RESOLUTION_ERROR', {
-          postId: post.id,
-          mediaId: firstMediaId ?? null,
-          errorType: error instanceof Error ? error.name : 'UnknownError',
-        });
-      }
-      traceProfileRuntime('PROFILE_POST_MEDIA_RESOLVE', {
-        postId: post.id,
-        mediaId: firstMediaId ?? null,
-        found: Boolean(attachment?.url),
-        mediaType: attachment?.type ?? 'text',
-      });
-      return {
-        id: post.id,
-        type: !attachment ? 'text' : post.mediaIds.length > 1 ? 'carousel' : attachment.type,
-        media_url: attachment?.thumbnail_url ?? attachment?.url ?? '',
-        likes_count: 0,
-        comments_count: 0,
-        is_saved: false,
-        created_at: post.createdAt,
-      };
-    }));
+    return mapProfilePosts(data);
+  },
+
+  getLikedPublications: async (): Promise<UserPublication[]> => {
+    traceProfileRuntime('PROFILE_LIKES_REQUEST', { flow: 'profile', method: 'GET', url: '/interactions/me/likes' });
+    const { data: likes } = await apiClient.get<BackendLikedPost[]>('/interactions/me/likes');
+    traceProfileRuntime('PROFILE_LIKES_RESPONSE', { flow: 'profile', method: 'GET', url: '/interactions/me/likes', status: 200, postCount: likes.length });
+    if (!likes.length) return [];
+    const query = likes.map(({ postId }) => `ids=${encodeURIComponent(postId)}`).join('&');
+    const { data: posts } = await apiClient.get<BackendPost[]>(`/posts/batch?${query}`);
+    return mapProfilePosts(posts);
+  },
+
+  getPublicationsByAuthor: async (authorId: string): Promise<UserPublication[]> => {
+    const { data } = await apiClient.get<BackendPost[]>(`/posts/authors/${encodeURIComponent(authorId)}`);
+    return mapProfilePosts(data);
   },
 
   getUserFavorites: async (): Promise<FavoritePlace[]> => {
@@ -240,16 +234,47 @@ export const profileApi = {
   },
 
   getProfileStats: async (): Promise<ProfileStats> => {
-    const [{ data: stats }, publications] = await Promise.all([
-      apiClient.get<BackendStats>('/users/social/stats'),
-      profileApi.getUserPublications(),
-    ]);
+    const { data: stats } = await apiClient.get<BackendStats>('/users/social/stats');
     const result = {
-      publications_count: publications.length,
+      // The canonical profile-post query owns this count. Keeping it out of
+      // social stats prevents a second competing GET /posts/me request.
+      publications_count: 0,
       followers_count: stats.followersCount,
       following_count: stats.followingCount,
     };
-    traceProfileRuntime('PROFILE_POST_COUNT', { flow: 'profile', count: result.publications_count, source: '/posts/me' });
     return result;
   },
 };
+
+/** Maps posts using one batch request and intentionally has no N+1 fallback. */
+export async function mapProfilePosts(posts: BackendPost[]): Promise<UserPublication[]> {
+  const mediaIds = [...new Set(posts.flatMap((post) => post.mediaIds ?? []).map(String).filter(Boolean))];
+  traceProfileRuntime('PROFILE_MEDIA_BATCH_REQUEST', { flow: 'profile', postCount: posts.length, uniqueMediaCount: mediaIds.length });
+  let mediaById = new Map<string, MediaAttachment>();
+  if (mediaIds.length) {
+    try {
+      mediaById = await getMediaAttachments(mediaIds);
+    } catch (error) {
+      traceProfileRuntime('PROFILE_MEDIA_RESOLUTION_ERROR', { flow: 'profile', request: 'batch', errorType: error instanceof Error ? error.name : 'UnknownError' });
+    }
+  }
+  traceProfileRuntime('PROFILE_MEDIA_BATCH_RESPONSE', { flow: 'profile', requestedCount: mediaIds.length, resolvedCount: mediaById.size });
+  return posts.map((post) => {
+    const firstMediaId = post.mediaIds?.[0] ?? null;
+    const attachment = firstMediaId ? mediaById.get(String(firstMediaId)) : undefined;
+    const type = !attachment ? 'text' : (post.mediaIds?.length ?? 0) > 1 ? 'carousel' : attachment.type;
+    traceProfileRuntime('PROFILE_POST_MEDIA_RESOLVE', { postId: post.id, mediaId: firstMediaId, found: Boolean(attachment?.url), mediaType: attachment?.type ?? 'text' });
+    return {
+      id: post.id,
+      type,
+      media_url: attachment?.thumbnail_url ?? attachment?.url ?? '',
+      media_id: firstMediaId,
+      media_type: attachment?.type ?? null,
+      caption: post.caption ?? post.content ?? null,
+      likes_count: 0,
+      comments_count: 0,
+      is_saved: false,
+      created_at: post.createdAt,
+    };
+  });
+}

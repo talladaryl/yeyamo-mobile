@@ -61,6 +61,9 @@ export interface UserPublication {
   id: EntityId;
   type: 'video' | 'image' | 'carousel' | 'text';
   media_url: string;
+  media_id: EntityId | null;
+  media_type: 'video' | 'image' | null;
+  caption?: string | null;
   likes_count: number;
   comments_count: number;
   is_saved: boolean;

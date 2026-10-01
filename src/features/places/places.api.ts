@@ -1,5 +1,6 @@
 import { apiDelete, apiGet, apiPost } from '@/services/api/client';
 import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
+import { traceCreateRuntime } from '@/features/create/create.runtime-trace';
 import { normalizeDiscoveryId } from '@/features/discovery/discovery.navigation';
 import { createIdempotencyKey, toPaginatedResponse, type SpringPage } from '@/services/api/contracts';
 import type { EntityId, PaginatedResponse } from '@/types/api.types';
@@ -163,11 +164,12 @@ export const placesApi = {
   },
   suggestPlace: async (input: PlaceSuggestionInput) => {
     try {
-      traceMediaRuntime('PLACE_SUGGESTION_CREATE_DISPATCHED', { flow: 'place-suggestion', url: '/place-suggestions', mediaCount: input.mediaIds?.length ?? 0 });
-      const created = await apiPost<PlaceSuggestion>('/place-suggestions', input, { yeyamoTrace: { flow: 'place-suggestion', stage: 'PLACE_SUGGESTION_CREATE' } });
+      traceCreateRuntime('PLACE_SUBMIT_REQUEST', { flow: 'place_suggestion', mediaCount: input.mediaIds?.length ?? 0, countryCode: input.countryCode });
+      const created = await apiPost<PlaceSuggestion>('/place-suggestions', input, { yeyamoTrace: { flow: 'place_suggestion', stage: 'PLACE_SUGGESTION_CREATE' } });
+      traceCreateRuntime('PLACE_SUBMIT_RESPONSE', { flow: 'place_suggestion', suggestionId: created.id, status: created.status });
       return created;
     } catch (error) {
-      traceMediaRuntime('PLACE_SUGGESTION_CREATE_ERROR', { flow: 'place-suggestion', url: '/place-suggestions' });
+      traceCreateRuntime('PLACE_SUBMIT_ERROR', { flow: 'place_suggestion', errorType: error instanceof Error ? error.name : 'UnknownError' });
       throw error;
     }
   },

@@ -34,8 +34,8 @@ export default function PublicationsScreen() {
         ) : publications?.length ? (
           <PublicationGrid
             publications={publications}
-            onPressPublication={(id) => {
-              const route = resolveResourceRoute({ type: 'post', id });
+            onPressPublication={(publication) => {
+              const route = resolveResourceRoute({ type: 'post', id: publication.id });
               if (route.href) router.push(route.href as never);
             }}
           />
