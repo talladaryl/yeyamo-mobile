@@ -13,6 +13,7 @@ import { socialApi } from './social.api';
 import type { SocialSettings } from './types';
 import { FEED_QUERY_KEY } from '@/features/feed/useFeed';
 import { traceSocialRuntime } from './social.runtime-trace';
+import type { ContentAuthorIdentity } from './social.api';
 
 export const socialKeys = {
   all: ['social'] as const,
@@ -26,6 +27,18 @@ function useDemoMode() {
 
 function useViewerKey() {
   return useAuthStore((state) => String(state.user?.id ?? 'anonymous'));
+}
+
+/** Canonical identity bridge used by Feed ownership/navigation decisions. */
+export function useCurrentViewerContentIdentity() {
+  const isDemo = useDemoMode();
+  const viewerId = useViewerKey();
+  return useQuery<ContentAuthorIdentity | null>({
+    queryKey: ['social', isDemo ? 'demo' : 'backend', 'content-identity', viewerId],
+    enabled: !isDemo && viewerId !== 'anonymous',
+    queryFn: async () => (await socialApi.resolveContentAuthorIdentities([viewerId]))[0] ?? null,
+    staleTime: 5 * 60_000,
+  });
 }
 
 export function useSocialSuggestions() {

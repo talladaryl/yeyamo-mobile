@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, FlatList, RefreshControl, Text, View } from 'react-native';
 import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
-import type { ViewToken } from 'react-native';
+import type { ListRenderItemInfo, ViewToken } from 'react-native';
 import { FeedShareSheet } from './FeedShareSheet';
 import { SponsoredFeedCard } from './SponsoredFeedCard';
 import { VerticalFeedItem } from './VerticalFeedItem';
@@ -11,9 +11,11 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { useConversations, useSendMessage } from '@/features/chat/useChat';
 import { useLikePost } from '@/features/feed/useFeed';
 import { isSponsoredFeedItem, type FeedItem, type FeedPost } from '@/features/feed/types';
-import { useFollowActions } from '@/features/social/useSocial';
+import { useCurrentViewerContentIdentity, useFollowActions } from '@/features/social/useSocial';
+import { traceFeedRuntime, traceSocialRuntime } from '@/features/social/social.runtime-trace';
+import { resolveFeedAuthorNavigation } from '@/features/feed/feed.identity';
 import { useThemeStore } from '@/features/theme/theme.store';
-import type { EntityId } from '@/types/api.types';
+import type { AppApiError, EntityId } from '@/types/api.types';
 import { Button } from '@/components/ui/Button';
 
 type VerticalFeedListProps = {
@@ -30,6 +32,8 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerAuthUserId = useAuthStore((state) => state.user?.id ? String(state.user.id) : null);
+  const { data: viewerIdentity } = useCurrentViewerContentIdentity();
   const [activeIndex, setActiveIndex] = useState(0);
   const [itemHeight, setItemHeight] = useState(0);
   const trackedDeliveries = useRef<Set<string>>(new Set());
@@ -57,7 +61,8 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
     setFollowedAuthorIds(new Set(posts
       .filter((post): post is FeedPost => !isSponsoredFeedItem(post))
       .filter((post) => post.author_is_following)
-      .map((post) => post.author.id)));
+      .map((post) => post.author_profile_id)
+      .filter((profileId): profileId is EntityId => profileId !== null && profileId !== undefined)));
   }, [posts]);
 
   const onViewableItemsChanged = useCallback(
@@ -79,7 +84,47 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50, minimumViewTime: 1_000 }).current;
 
-  const handleFollow = async (authorId: EntityId) => {
+  const viewer = useMemo(() => ({
+    authUserId: viewerAuthUserId,
+    profileId: viewerIdentity?.profileId ?? null,
+  }), [viewerAuthUserId, viewerIdentity?.profileId]);
+
+  const handleAuthorPress = useCallback((post: FeedPost) => {
+    const navigation = resolveFeedAuthorNavigation(viewer, {
+      authUserId: post.author_auth_user_id,
+      profileId: post.author_profile_id,
+    });
+    traceFeedRuntime('FEED_PROFILE_NAVIGATION', {
+      viewerAuthUserId, viewerProfileId: viewer.profileId,
+      postAuthorAuthUserId: post.author_auth_user_id ?? null,
+      postAuthorProfileId: post.author_profile_id ?? null,
+      isOwnPost: navigation.isOwnPost, destination: navigation.destination,
+      postId: String(post.id),
+    });
+    if (navigation.destination === 'OWN_PROFILE_TAB') router.push('/(tabs)/profile');
+    else if (navigation.destination === 'PUBLIC_PROFILE' && navigation.profileId) router.push(`/(profile)/${navigation.profileId}`);
+    else Alert.alert('Profil indisponible', "L'auteur de cette publication n'a pas encore de profil social utilisable.");
+  }, [router, viewer, viewerAuthUserId]);
+
+  const handleFollow = useCallback(async (post: FeedPost) => {
+    const navigation = resolveFeedAuthorNavigation(viewer, {
+      authUserId: post.author_auth_user_id,
+      profileId: post.author_profile_id,
+    });
+    const authorId = navigation.profileId;
+    if (!authorId) {
+      traceSocialRuntime('FOLLOW_TARGET_UNRESOLVED', {
+        flow: 'follow', viewerAuthUserId, viewerProfileId: viewer.profileId,
+        targetAuthUserId: post.author_auth_user_id ?? null, targetProfileId: null, postId: String(post.id),
+      });
+      return;
+    }
+    traceSocialRuntime('FOLLOW_TARGET_RESOLVED', {
+      flow: 'follow', viewerAuthUserId, viewerProfileId: viewer.profileId,
+      targetAuthUserId: post.author_auth_user_id ?? null, targetProfileId: String(authorId),
+      isSelf: navigation.isOwnPost, postId: String(post.id),
+    });
+    if (navigation.isOwnPost) return;
     const wasFollowing = followedAuthorIds.has(authorId);
     setFollowedAuthorIds((current) => {
       const next = new Set(current);
@@ -91,7 +136,13 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
     if (isDemo) return;
     try {
       await (wasFollowing ? unfollow.mutateAsync(authorId) : follow.mutateAsync(authorId));
-    } catch {
+    } catch (error) {
+      const apiError = error as AppApiError;
+      traceSocialRuntime('FOLLOW_ERROR', {
+        flow: 'follow', status: apiError.status ?? null, serverCode: apiError.code ?? null,
+        serverMessage: apiError.message ?? null, targetProfileId: String(authorId),
+        correlationId: apiError.correlationId ?? null,
+      });
       setFollowedAuthorIds((current) => {
         const next = new Set(current);
         if (wasFollowing) next.add(authorId);
@@ -100,16 +151,42 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
       });
       Alert.alert('Action impossible', "Votre abonnement n'a pas pu être mis à jour.");
     }
-  };
+  }, [follow, followedAuthorIds, isDemo, unfollow, viewer, viewerAuthUserId]);
 
-  const toggleSaved = (postId: EntityId) => {
+  const toggleSaved = useCallback((postId: EntityId) => {
     setSavedPostIds((current) => {
       const next = new Set(current);
       if (next.has(postId)) next.delete(postId);
       else next.add(postId);
       return next;
     });
-  };
+  }, []);
+
+  const renderItem = useCallback(({ item, index }: ListRenderItemInfo<FeedItem>) => {
+    if (isSponsoredFeedItem(item)) {
+      return <SponsoredFeedCard item={item} height={itemHeight} isActive={index === activeIndex} bottomOverlayInset={bottomOverlayInset} />;
+    }
+    const navigation = resolveFeedAuthorNavigation(viewer, {
+      authUserId: item.author_auth_user_id,
+      profileId: item.author_profile_id,
+    });
+    return <VerticalFeedItem
+      post={item}
+      height={itemHeight}
+      bottomOverlayInset={bottomOverlayInset}
+      isActive={index === activeIndex}
+      isFollowing={Boolean(item.author_profile_id && followedAuthorIds.has(item.author_profile_id))}
+      canFollow={!navigation.isOwnPost && navigation.profileId !== null}
+      isSaved={savedPostIds.has(item.id)}
+      playbackRate={playbackRates[String(item.id)] ?? 1}
+      onFollow={() => void handleFollow(item)}
+      onAuthorPress={() => handleAuthorPress(item)}
+      onLike={() => toggleLike({ postId: item.id, isLiked: item.is_liked })}
+      onComment={() => router.push(`/(post)/${item.id}/comments`)}
+      onShare={() => setSharePost(item)}
+      onSave={() => toggleSaved(item.id)}
+    />;
+  }, [activeIndex, bottomOverlayInset, followedAuthorIds, handleAuthorPress, handleFollow, itemHeight, playbackRates, router, savedPostIds, toggleLike, toggleSaved, viewer]);
 
   return (
     <View className="flex-1" onLayout={(event) => setItemHeight(Math.round(event.nativeEvent.layout.height))}>
@@ -118,24 +195,7 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
           style={{ flex: 1 }}
           data={visiblePosts}
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item, index }) => isSponsoredFeedItem(item) ? (
-            <SponsoredFeedCard item={item} height={itemHeight} isActive={index === activeIndex} bottomOverlayInset={bottomOverlayInset} />
-          ) : (
-            <VerticalFeedItem
-              post={item}
-              height={itemHeight}
-              bottomOverlayInset={bottomOverlayInset}
-              isActive={index === activeIndex}
-              isFollowing={followedAuthorIds.has(item.author.id)}
-              isSaved={savedPostIds.has(item.id)}
-              playbackRate={playbackRates[String(item.id)] ?? 1}
-              onFollow={() => void handleFollow(item.author.id)}
-              onLike={() => toggleLike({ postId: item.id, isLiked: item.is_liked })}
-              onComment={() => router.push(`/(post)/${item.id}/comments`)}
-              onShare={() => setSharePost(item)}
-              onSave={() => toggleSaved(item.id)}
-            />
-          )}
+          renderItem={renderItem}
           pagingEnabled
           snapToInterval={itemHeight}
           snapToAlignment="start"

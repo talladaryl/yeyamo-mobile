@@ -6,6 +6,10 @@ export interface FeedPost {
   caption: string | null;
   media: MediaAttachment[];
   author: UserSummary;
+  /** Auth subject remains distinct from the social-profile UUID. */
+  author_auth_user_id?: string;
+  /** Canonical social UUID, absent for a legacy/unresolved author. */
+  author_profile_id?: EntityId | null;
   /** Server-derived relationship state for the current authenticated viewer. */
   author_is_following?: boolean;
   likes_count: number;
@@ -50,5 +54,8 @@ export interface PostComment {
   text: string;
   likes_count: number;
   is_liked: boolean;
+  parent_id?: EntityId | null;
   created_at: string;
 }
+
+export type FeedAudience = 'FOR_YOU' | 'FOLLOWING';

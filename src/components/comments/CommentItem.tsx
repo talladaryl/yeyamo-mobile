@@ -27,11 +27,10 @@ export function CommentItem({ comment, onReply, onLike, onShowReplies }: Comment
         <View className="flex-row items-center gap-4">
           {onReply ? <TouchableOpacity onPress={onReply} activeOpacity={0.7}><Text className="text-xs font-medium" style={{ color: colors.textSecondary }}>Répondre</Text></TouchableOpacity> : null}
           <Text className="text-xs" style={{ color: colors.textSecondary }}>{timeAgo(comment.created_at)}</Text>
-          {comment.likes_count > 0 ? <Text className="text-xs" style={{ color: colors.textSecondary }}>{formatCount(comment.likes_count)} j'aime</Text> : null}
+          {onLike ? <TouchableOpacity onPress={onLike} activeOpacity={0.7} className="flex-row items-center gap-1"><Icon library="ionicons" name={comment.is_liked ? 'heart' : 'heart-outline'} size={15} color={comment.is_liked ? colors.primary : colors.textMuted} />{comment.likes_count > 0 ? <Text className="text-xs" style={{ color: colors.textSecondary }}>{formatCount(comment.likes_count)}</Text> : null}</TouchableOpacity> : null}
           {comment.replies_count > 0 && onShowReplies ? <TouchableOpacity onPress={onShowReplies} activeOpacity={0.7}><Text className="text-xs font-medium" style={{ color: colors.textSecondary }}>— Afficher {comment.replies_count} réponse{comment.replies_count > 1 ? 's' : ''}</Text></TouchableOpacity> : null}
         </View>
       </View>
-      {onLike ? <TouchableOpacity onPress={onLike} activeOpacity={0.7} className="pt-1"><Icon library="ionicons" name={comment.is_liked ? 'heart' : 'heart-outline'} size={20} color={comment.is_liked ? colors.primary : colors.textMuted} /></TouchableOpacity> : null}
     </View>
   );
 }

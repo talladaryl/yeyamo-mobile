@@ -16,9 +16,11 @@ type VerticalFeedItemProps = {
   bottomOverlayInset: number;
   isActive: boolean;
   isFollowing: boolean;
+  canFollow: boolean;
   isSaved: boolean;
   playbackRate: number;
   onFollow: () => void;
+  onAuthorPress: () => void;
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
@@ -31,9 +33,11 @@ export function VerticalFeedItem({
   bottomOverlayInset,
   isActive,
   isFollowing,
+  canFollow,
   isSaved,
   playbackRate,
   onFollow,
+  onAuthorPress,
   onLike,
   onComment,
   onShare,
@@ -90,7 +94,7 @@ export function VerticalFeedItem({
 
       {/* Bottom info */}
       <View className="absolute left-4 right-20" style={{ bottom: bottomOverlayInset + 8 }}>
-        <Pressable onPress={() => router.push(`/(profile)/${post.author.username}`)} className="mb-2 flex-row items-center gap-1.5">
+        <Pressable onPress={onAuthorPress} className="mb-2 flex-row items-center gap-1.5">
           <Text className="text-[15px] font-extrabold text-white">{post.author.display_name}</Text>
           {post.author.is_verified && <VerifiedBadge size={15} />}
         </Pressable>
@@ -126,14 +130,14 @@ export function VerticalFeedItem({
       <View className="absolute right-3 gap-5" style={{ bottom: bottomOverlayInset + 18 }}>
         {/* Author avatar (clickable) */}
         <View className="items-center pb-1">
-        <TouchableOpacity onPress={() => router.push(`/(profile)/${post.author.username}`)} activeOpacity={0.8}>
+        <TouchableOpacity onPress={onAuthorPress} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel={`Ouvrir le profil de ${post.author.display_name}`}>
           <Avatar
             uri={post.author.avatar_url}
             displayName={post.author.display_name}
             size={44}
           />
         </TouchableOpacity>
-        <TouchableOpacity
+        {canFollow ? <TouchableOpacity
           onPress={onFollow}
           activeOpacity={0.8}
           className="-mt-2 h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#EF4444]"
@@ -141,7 +145,7 @@ export function VerticalFeedItem({
           accessibilityLabel={isFollowing ? `Ne plus suivre ${post.author.display_name}` : `Suivre ${post.author.display_name}`}
         >
           <Icon library="ionicons" name={isFollowing ? 'checkmark' : 'add'} size={16} color="#FFFFFF" />
-        </TouchableOpacity>
+        </TouchableOpacity> : null}
         </View>
 
         {/* Like */}

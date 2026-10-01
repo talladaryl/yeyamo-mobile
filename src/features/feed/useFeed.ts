@@ -3,7 +3,7 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { MOCK_FEED_PAGE } from '@/features/mock/mockData';
 import { feedApi } from './feed.api';
 import { feedService } from './feed.service';
-import type { FeedPost } from './types';
+import type { FeedAudience, FeedPost } from './types';
 import type { PaginatedResponse , EntityId } from '@/types/api.types';
 import { useInterestsStore } from '@/features/interests/interests.store';
 import { mockSponsoredFeedItems } from './sponsoredMockData';
@@ -13,7 +13,7 @@ import { traceInteractionRuntime } from '@/features/social/social.runtime-trace'
 
 export const FEED_QUERY_KEY = ['feed'] as const;
 
-export function useFeed(enabled = true) {
+export function useFeed(audience: FeedAudience = 'FOR_YOU', enabled = true) {
   const { sessionMode, isAuthenticated, isHydrated, user } = useAuthStore();
   const isDemo = sessionMode?.startsWith('demo-') ?? false;
   const selectedInterestIds = useInterestsStore((state) => state.selectedInterestIds);
@@ -23,11 +23,11 @@ export function useFeed(enabled = true) {
     // The backend currently accepts only page and size. Interest/region values
     // remain limited to explicitly selected demo sessions and are not presented
     // as production personalization.
-    queryKey: [...FEED_QUERY_KEY, isDemo ? 'demo' : 'backend', String(user?.id ?? 'anonymous'), ...(isDemo ? [selectedInterestIds.join(',')] : [])],
+    queryKey: [...FEED_QUERY_KEY, isDemo ? 'demo' : 'backend', String(user?.id ?? 'anonymous'), audience, ...(isDemo ? [selectedInterestIds.join(',')] : [])],
     queryFn: ({ pageParam }) =>
       isDemo
         ? Promise.resolve(personalizeMockFeed(selectedInterestIds))
-        : feedApi.getFeed(pageParam),
+        : feedApi.getFeed(pageParam, audience),
     initialPageParam: 0,
     enabled: canLoad,
     getNextPageParam: (lastPage: PaginatedResponse<FeedPost>) => {
@@ -42,11 +42,11 @@ export function useFeed(enabled = true) {
   });
 }
 
-export function useSponsoredFeed(regionId?: number) {
+export function useSponsoredFeed(regionId?: number, enabled = true) {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({
     queryKey: ['feed', 'sponsored', regionId ?? 'all', isDemo ? 'demo' : 'backend'],
-    enabled: FEATURE_FLAGS.ads_delivery_enabled,
+    enabled: enabled && FEATURE_FLAGS.ads_delivery_enabled,
     queryFn: () => isDemo ? Promise.resolve(mockSponsoredFeedItems) : sponsoredFeedApi.deliveries(regionId),
   });
 }

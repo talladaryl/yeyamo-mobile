@@ -1,16 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { VerticalFeedList } from '@/components/feed/VerticalFeedList';
-import { StoriesList } from '@/components/story/StoriesList';
 import { Icon } from '@/components/ui/Icon';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/ViewStates';
 import { useFeed, useSponsoredFeed } from '@/features/feed/useFeed';
-import { isSponsoredFeedItem, type FeedItem } from '@/features/feed/types';
+import { isSponsoredFeedItem, type FeedAudience, type FeedItem } from '@/features/feed/types';
 import { useAuthStore } from '@/features/auth/auth.store';
-import { useStories } from '@/features/story/useStory';
+import { traceFeedRuntime } from '@/features/social/social.runtime-trace';
 
 function deduplicateFeed(items: FeedItem[]) {
   const seen = new Set<string>();
@@ -26,18 +25,17 @@ export default function FeedScreen() {
   const router = useRouter();
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const currentUserId = useAuthStore((state) => state.user?.id);
-  const feed = useFeed();
-  const { data: stories = [] } = useStories();
-  const { data: sponsoredItems = [] } = useSponsoredFeed();
+  const [audience, setAudience] = useState<FeedAudience>('FOR_YOU');
+  const feed = useFeed(audience);
+  const { data: sponsoredItems = [] } = useSponsoredFeed(undefined, audience === 'FOR_YOU');
 
   const posts = useMemo<FeedItem[]>(() => {
     const organic = feed.data?.pages.flatMap((page) => page.data) ?? [];
-    const withSponsored = sponsoredItems.length && organic.length >= 2
+    const withSponsored = audience === 'FOR_YOU' && sponsoredItems.length && organic.length >= 2
       ? [...organic.slice(0, 2), sponsoredItems[0], ...organic.slice(2)]
       : organic;
     return deduplicateFeed(withSponsored);
-  }, [feed.data, sponsoredItems]);
+  }, [audience, feed.data, sponsoredItems]);
 
   if (!isHydrated || !isAuthenticated || feed.isLoading) {
     return <View className="flex-1 bg-black"><StatusBar style="light" /><LoadingState label="Chargement de votre feed…" /></View>;
@@ -65,14 +63,34 @@ export default function FeedScreen() {
 
     <SafeAreaView pointerEvents="box-none" edges={['top']} className="absolute left-0 right-0 top-0 z-20">
       <View pointerEvents="box-none" className="h-16 flex-row items-center justify-between px-4">
-        <Text className="text-lg font-extrabold text-white" style={{ textShadowColor: 'rgba(0,0,0,0.8)', textShadowRadius: 4 }}>Pour vous</Text>
+        <View pointerEvents="box-none" className="absolute left-0 right-0 items-center">
+          <View className="flex-row items-center rounded-full bg-black/35 p-1" accessibilityRole="tablist">
+            {([
+              ['FOR_YOU', 'Pour vous'],
+              ['FOLLOWING', 'Abonnements'],
+            ] as const).map(([mode, label]) => {
+              const active = audience === mode;
+              return <TouchableOpacity
+                key={mode}
+                onPress={() => {
+                  setAudience(mode);
+                  traceFeedRuntime('FEED_MODE_CHANGED', { flow: 'feed', mode });
+                }}
+                className={`rounded-full px-3 py-2 ${active ? 'bg-white/25' : ''}`}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={label}
+              ><Text className={`text-xs ${active ? 'font-extrabold text-white' : 'font-semibold text-white/75'}`}>{label}</Text></TouchableOpacity>;
+            })}
+          </View>
+        </View>
+        <View />
         <View className="flex-row items-center gap-2">
           <TouchableOpacity onPress={() => void feed.refetch()} className="h-11 w-11 items-center justify-center" activeOpacity={0.75} accessibilityLabel="Actualiser le feed"><Icon name="refresh" size={24} color="#FFFFFF" /></TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/(explore)/search')} className="h-11 w-11 items-center justify-center" activeOpacity={0.75} accessibilityLabel="Rechercher"><Icon name="search" size={27} color="#FFFFFF" /></TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/(social-graph)/passport')} className="h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-[#EF4444]" style={{ shadowColor: '#000000', shadowOpacity: 0.35, shadowRadius: 5, elevation: 5 }} activeOpacity={0.8} accessibilityLabel="Ouvrir le Passport Yeyamo"><Icon name="id-card-outline" size={23} color="#FFFFFF" /></TouchableOpacity>
         </View>
       </View>
-      <StoriesList stories={stories} currentUserId={currentUserId} overlay />
     </SafeAreaView>
   </View>;
 }
