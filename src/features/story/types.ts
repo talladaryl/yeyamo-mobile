@@ -1,5 +1,15 @@
 import type { EntityId, MediaAttachment, UserSummary } from '@/types/api.types';
 
+export type StoryCaptionFont = 'SYSTEM' | 'SERIF' | 'MONOSPACE' | 'SANS_SERIF' | 'CONDENSED';
+
+export interface StoryCaptionStyle {
+  font_family: StoryCaptionFont;
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  strikethrough: boolean;
+}
+
 export interface Story {
   id: EntityId;
   author: UserSummary;
@@ -8,6 +18,7 @@ export interface Story {
   author_auth_user_id?: string;
   media: MediaAttachment;
   text?: string;
+  caption_style?: StoryCaptionStyle;
   /**
    * Preserved from the Content service for generated stories (for example an
    * outing). The viewer deliberately does not navigate from this metadata yet.

@@ -10,6 +10,7 @@ const titles: Record<string, string> = {
   followers: 'Abonnés',
   following: 'Abonnements',
   'place-suggestions': 'Mes suggestions de lieux',
+  'notification-settings': 'Préférences de notification',
 };
 
 export default function ProfileLayout() {

@@ -66,6 +66,9 @@ export function useUpdateProfileSettings() {
       void queryClient.invalidateQueries({ queryKey: ['profile'] });
       void queryClient.invalidateQueries({ queryKey: ['social'] });
       void queryClient.invalidateQueries({ queryKey: ['feed'] });
+      void queryClient.invalidateQueries({ queryKey: ['stories'] });
+      void queryClient.invalidateQueries({ queryKey: ['story'] });
+      void queryClient.invalidateQueries({ queryKey: ['chat'] });
     },
   });
 }

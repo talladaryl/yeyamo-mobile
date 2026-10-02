@@ -43,7 +43,7 @@ export default function LoginScreen() {
         return;
       }
       await login(data, turnstileToken ?? undefined);
-      router.replace('/interests');
+      router.replace('/(tabs)');
     } catch (requestError: unknown) {
       const code = typeof requestError === 'object' && requestError !== null && 'code' in requestError
         ? String(requestError.code)
@@ -66,7 +66,7 @@ export default function LoginScreen() {
   const demoLogin = async () => {
     try {
       await loginDemo('user');
-      router.replace('/interests');
+      router.replace('/(tabs)');
     } catch {
       // The request error is exposed by useAuth.
     }
@@ -74,7 +74,7 @@ export default function LoginScreen() {
 
   const handleGoogleLogin = async () => {
     const idToken = await requestGoogleIdToken();
-    if (idToken && await googleLogin(idToken)) router.replace('/interests');
+    if (idToken && await googleLogin(idToken)) router.replace('/(tabs)');
   };
 
   const handleAppleLogin = async () => {
@@ -82,7 +82,7 @@ export default function LoginScreen() {
     if (!idToken) return;
     try {
       await socialLogin({ provider: 'apple', token: idToken });
-      router.replace('/interests');
+      router.replace('/(tabs)');
     } catch {
       // The backend error is exposed by useAuth.
     }

@@ -57,9 +57,9 @@ export function MediaGrid({ posts, onPostPress }: MediaGridProps) {
               </Text>
             </View>
             <View className="flex-row items-center gap-1">
-              <Icon library="ionicons" name="chatbubble" size={14} color="#FFFFFF" />
+              <Icon library="ionicons" name="eye-outline" size={14} color="#FFFFFF" />
               <Text className="text-white text-xs font-semibold">
-                {formatCount(item.comments_count)}
+                {formatCount(item.views_count)}
               </Text>
             </View>
           </View>

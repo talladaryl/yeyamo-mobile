@@ -136,6 +136,18 @@ export function useUserLikedPublications(enabled = true) {
   });
 }
 
+/** Saved posts are private and fetched only for the authenticated owner. */
+export function useUserSavedPublications(enabled = true) {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const userId = useAuthStore((state) => state.user?.id);
+  return useQuery({
+    queryKey: profileKey(isDemo ? 'demo' : 'backend', userId, 'saved-posts'),
+    queryFn: () => isDemo ? Promise.resolve([]) : profileApi.getSavedPublications(),
+    enabled: enabled && Boolean(userId),
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
 export function usePublicProfilePublications(authorId: string | undefined) {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const viewerId = useAuthStore((state) => state.user?.id);

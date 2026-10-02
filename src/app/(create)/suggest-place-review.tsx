@@ -94,7 +94,7 @@ export default function SuggestPlaceReviewScreen() {
       traceCreateRuntime('PLACE_STATUS_RESOLVED', { flow: 'place_suggestion', suggestionId: created.id, status: created.status });
       setUploadedMediaByUri({});
       resetPlaceForm();
-      void queryClient.invalidateQueries({ queryKey: placeSuggestionKeys.mine() });
+      void queryClient.invalidateQueries({ queryKey: placeSuggestionKeys.all });
     } catch (submissionError) {
       setError(normalizeApiError(submissionError).message);
     } finally {

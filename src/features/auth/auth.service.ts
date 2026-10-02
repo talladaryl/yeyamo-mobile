@@ -9,6 +9,8 @@ import { useCountryStore } from '@/features/country/country.store';
 import { registerTokenRefreshedHandler, resetUnauthenticatedSessionHandler } from '@/services/api/client';
 import { synchronizePushToken, unregisterCurrentPushToken } from '@/features/notifications/push.service';
 import ENV from '@/config/env';
+import NetInfo from '@react-native-community/netinfo';
+import { interestsApi } from '@/features/interests/interests.api';
 
 function toAuthUser(user: AuthApiUser, displayName?: string): AuthUser {
   const identifier = user.email ?? user.phone ?? `user-${user.id}`;
@@ -43,12 +45,14 @@ async function persistSession(response: {
     secureStore.set(secureStore.KEYS.AUTH_TOKEN, response.accessToken),
     secureStore.set(secureStore.KEYS.REFRESH_TOKEN, response.refreshToken),
     secureStore.set(secureStore.KEYS.USER_ID, String(user.id)),
+    secureStore.set(secureStore.KEYS.AUTH_USER, JSON.stringify(user)),
     secureStore.set(secureStore.KEYS.SESSION_MODE, 'backend'),
   ]);
   useAuthStore.getState().setAuth(user, response.accessToken, 'backend');
   resetUnauthenticatedSessionHandler();
   reverbClient.connect(response.accessToken);
   void synchronizePushToken();
+  void interestsApi.activity(true).catch(() => undefined);
 }
 
 registerTokenRefreshedHandler((accessToken) => {
@@ -74,9 +78,15 @@ export const authService = {
    * Called once on app boot — restores session from SecureStore.
    */
   async hydrate(): Promise<void> {
+    console.info('SESSION_BOOTSTRAP_START');
     try {
-      const token = await secureStore.get(secureStore.KEYS.AUTH_TOKEN);
+      const [token, refreshToken, cachedUserJson] = await Promise.all([
+        secureStore.get(secureStore.KEYS.AUTH_TOKEN),
+        secureStore.get(secureStore.KEYS.REFRESH_TOKEN),
+        secureStore.get(secureStore.KEYS.AUTH_USER),
+      ]);
       if (token) {
+        console.info('SESSION_CREDENTIAL_FOUND');
         const storedMode = await secureStore.get(secureStore.KEYS.SESSION_MODE);
         if (storedMode === 'demo-user' || storedMode === 'demo-partner') {
           if (ENV.APP_ENV === 'production') {
@@ -89,21 +99,44 @@ export const authService = {
           return;
         }
 
+        let cachedUser: AuthUser | null = null;
+        try { cachedUser = cachedUserJson ? JSON.parse(cachedUserJson) as AuthUser : null; } catch { cachedUser = null; }
+        const network = await NetInfo.fetch();
+        if (network.isConnected === false && cachedUser && refreshToken) {
+          useAuthStore.getState().setAuth(cachedUser, token, 'backend');
+          resetUnauthenticatedSessionHandler();
+          console.info('SESSION_OFFLINE_RESTORE');
+          return;
+        }
         const apiUser = await authApi.me();
         const user = toAuthUser(apiUser);
         useAuthStore.getState().setAuth(user, token, 'backend');
+        await secureStore.set(secureStore.KEYS.AUTH_USER, JSON.stringify(user));
         resetUnauthenticatedSessionHandler();
         await secureStore.set(secureStore.KEYS.SESSION_MODE, 'backend');
         reverbClient.connect(token);
         void synchronizePushToken();
+        console.info('SESSION_RESTORE_SUCCESS');
       }
     } catch (error: unknown) {
       const status = typeof error === 'object' && error !== null && 'status' in error
         ? Number(error.status)
         : undefined;
-      if (status === 401) {
+      if (status === 401 || status === 403) {
+        console.info('SESSION_INVALID');
         await secureStore.clearAuthSession();
         useAuthStore.getState().clearAuth();
+      } else {
+        const [token, refreshToken, cachedUserJson] = await Promise.all([
+          secureStore.get(secureStore.KEYS.AUTH_TOKEN), secureStore.get(secureStore.KEYS.REFRESH_TOKEN), secureStore.get(secureStore.KEYS.AUTH_USER),
+        ]);
+        if (token && refreshToken && cachedUserJson) {
+          try {
+            useAuthStore.getState().setAuth(JSON.parse(cachedUserJson) as AuthUser, token, 'backend');
+            resetUnauthenticatedSessionHandler();
+            console.info('SESSION_OFFLINE_RESTORE');
+          } catch { /* An unreadable identity cannot establish an offline session. */ }
+        }
       }
     } finally {
       useAuthStore.getState().setHydrated(true);
@@ -149,6 +182,7 @@ export const authService = {
 
   /** Clears protected data only after an explicit server-side account action. */
   async clearLocalSession(): Promise<void> {
+    console.info('SESSION_LOGOUT');
     reverbClient.disconnect();
     await secureStore.clearAuthSession();
     useAuthStore.getState().clearAuth();

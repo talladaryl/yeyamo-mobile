@@ -9,17 +9,17 @@ import type { Notification } from './types';
 
 type NotificationCacheSnapshot = [readonly unknown[], Notification[] | number | undefined][];
 
-function notificationKeys(isDemo: boolean) {
+function notificationKeys(isDemo: boolean, viewerId: string) {
   const source = isDemo ? 'demo' : 'backend';
   return {
-    all: ['notifications', source] as const,
-    unread: ['notifications', source, 'unread'] as const,
-    count: ['notifications', source, 'unread', 'count'] as const,
+    all: ['notifications', source, viewerId] as const,
+    unread: ['notifications', source, viewerId, 'unread'] as const,
+    count: ['notifications', source, viewerId, 'unread', 'count'] as const,
   };
 }
 
-async function snapshotNotifications(queryClient: ReturnType<typeof useQueryClient>, isDemo: boolean): Promise<NotificationCacheSnapshot> {
-  const keys = notificationKeys(isDemo);
+async function snapshotNotifications(queryClient: ReturnType<typeof useQueryClient>, isDemo: boolean, viewerId: string): Promise<NotificationCacheSnapshot> {
+  const keys = notificationKeys(isDemo, viewerId);
   await queryClient.cancelQueries({ queryKey: ['notifications'] });
   return [
     [keys.all, queryClient.getQueryData<Notification[]>(keys.all)],
@@ -37,8 +37,9 @@ function restoreNotifications(queryClient: ReturnType<typeof useQueryClient>, sn
  */
 export function useNotifications() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => String(state.user?.id ?? 'anonymous'));
   return useQuery({
-    queryKey: ['notifications', isDemo ? 'demo' : 'backend'],
+    queryKey: notificationKeys(isDemo, viewerId).all,
     queryFn: () =>
       isDemo ? Promise.resolve(MOCK_NOTIFICATIONS) : notificationsApi.getNotifications(),
     staleTime: 1000 * 60, // 1 minute
@@ -51,8 +52,9 @@ export function useNotifications() {
  */
 export function useUnreadNotifications() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => String(state.user?.id ?? 'anonymous'));
   return useQuery({
-    queryKey: ['notifications', isDemo ? 'demo' : 'backend', 'unread'],
+    queryKey: notificationKeys(isDemo, viewerId).unread,
     queryFn: () =>
       isDemo
         ? Promise.resolve(MOCK_NOTIFICATIONS.filter((n) => !n.is_read))
@@ -67,8 +69,9 @@ export function useUnreadNotifications() {
  */
 export function useUnreadCount() {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => String(state.user?.id ?? 'anonymous'));
   return useQuery({
-    queryKey: ['notifications', isDemo ? 'demo' : 'backend', 'unread', 'count'],
+    queryKey: notificationKeys(isDemo, viewerId).count,
     queryFn: () =>
       isDemo
         ? Promise.resolve(MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length)
@@ -84,13 +87,14 @@ export function useUnreadCount() {
 export function useMarkAsRead() {
   const queryClient = useQueryClient();
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => String(state.user?.id ?? 'anonymous'));
 
   return useMutation({
     mutationFn: (id: EntityId) =>
       isDemo ? Promise.resolve() : notificationsApi.markAsRead(id),
     onMutate: async (id) => {
-      const snapshot = await snapshotNotifications(queryClient, isDemo);
-      const keys = notificationKeys(isDemo);
+      const snapshot = await snapshotNotifications(queryClient, isDemo, viewerId);
+      const keys = notificationKeys(isDemo, viewerId);
       const all = queryClient.getQueryData<Notification[]>(keys.all);
       const wasUnread = all?.some((notification) => notification.id === id && !notification.is_read) ?? false;
       queryClient.setQueryData<Notification[]>(keys.all, (current) => current?.map((notification) => notification.id === id ? { ...notification, is_read: true } : notification));
@@ -113,13 +117,14 @@ export function useMarkAsRead() {
 export function useMarkAllAsRead() {
   const queryClient = useQueryClient();
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => String(state.user?.id ?? 'anonymous'));
 
   return useMutation({
     mutationFn: () =>
       isDemo ? Promise.resolve() : notificationsApi.markAllAsRead(),
     onMutate: async () => {
-      const snapshot = await snapshotNotifications(queryClient, isDemo);
-      const keys = notificationKeys(isDemo);
+      const snapshot = await snapshotNotifications(queryClient, isDemo, viewerId);
+      const keys = notificationKeys(isDemo, viewerId);
       queryClient.setQueryData<Notification[]>(keys.all, (current) => current?.map((notification) => ({ ...notification, is_read: true })));
       queryClient.setQueryData<Notification[]>(keys.unread, []);
       queryClient.setQueryData<number>(keys.count, 0);
@@ -140,13 +145,14 @@ export function useMarkAllAsRead() {
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const viewerId = useAuthStore((state) => String(state.user?.id ?? 'anonymous'));
 
   return useMutation({
     mutationFn: (id: EntityId) =>
       isDemo ? Promise.resolve() : notificationsApi.deleteNotification(id),
     onMutate: async (id) => {
-      const snapshot = await snapshotNotifications(queryClient, isDemo);
-      const keys = notificationKeys(isDemo);
+      const snapshot = await snapshotNotifications(queryClient, isDemo, viewerId);
+      const keys = notificationKeys(isDemo, viewerId);
       const current = queryClient.getQueryData<Notification[]>(keys.all) ?? (isDemo ? MOCK_NOTIFICATIONS : []);
       const removedWasUnread = current.some((notification) => notification.id === id && !notification.is_read);
       queryClient.setQueryData<Notification[]>(keys.all, current.filter((notification) => notification.id !== id));

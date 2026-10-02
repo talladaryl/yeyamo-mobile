@@ -71,11 +71,12 @@ export function useFollowers() {
   });
 }
 
-export function useFollowing() {
+export function useFollowing(enabled = true) {
   const isDemo = useDemoMode();
   const viewerKey = useViewerKey();
   return useQuery({
     queryKey: ['social', isDemo ? 'demo' : 'backend', 'following', viewerKey],
+    enabled,
     queryFn: () => isDemo ? Promise.resolve(mockFollowing) : socialApi.getFollowing(),
     placeholderData: isDemo ? mockFollowing : undefined,
   });

@@ -110,6 +110,13 @@ export const socialApi = {
     const { data } = await apiClient.get<ContentAuthorIdentity[]>(`/users/social/identities?${query}`);
     return data;
   },
+  resolveMessagingIdentities: async (authUserIds: string[]): Promise<ContentAuthorIdentity[]> => {
+    const unique = [...new Set(authUserIds.filter(Boolean))];
+    if (!unique.length) return [];
+    const query = unique.map((id) => `authUserIds=${encodeURIComponent(id)}`).join('&');
+    const { data } = await apiClient.get<ContentAuthorIdentity[]>(`/users/social/messaging-identities?${query}`);
+    return data;
+  },
   searchUsers: async (filters: SearchFilters): Promise<UserSearchResult[]> => {
     const { data } = await apiClient.get<SpringPage<BackendProfileSummary>>(
       '/users/social/search',

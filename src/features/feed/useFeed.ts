@@ -13,6 +13,23 @@ import { traceInteractionRuntime } from '@/features/social/social.runtime-trace'
 
 export const FEED_QUERY_KEY = ['feed'] as const;
 
+/** Updates a single rendered post across For You and Following pages without
+ * invalidating/refetching the active feed. */
+export function incrementFeedCommentCount(queryClient: ReturnType<typeof useQueryClient>, postId: EntityId, delta: number) {
+  queryClient.setQueriesData<InfiniteData<PaginatedResponse<FeedPost>>>(
+    { queryKey: FEED_QUERY_KEY },
+    (current) => current ? {
+      ...current,
+      pages: current.pages.map((page) => ({
+        ...page,
+        data: page.data.map((post) => String(post.id) === String(postId)
+          ? { ...post, comments_count: Math.max(0, post.comments_count + delta) }
+          : post),
+      })),
+    } : current,
+  );
+}
+
 export function useFeed(audience: FeedAudience = 'FOR_YOU', enabled = true) {
   const { sessionMode, isAuthenticated, isHydrated, user } = useAuthStore();
   const isDemo = sessionMode?.startsWith('demo-') ?? false;

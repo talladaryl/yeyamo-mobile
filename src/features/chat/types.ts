@@ -57,6 +57,7 @@ export interface EventData {
 export interface SendMessagePayload {
   conversation_id: EntityId;
   body: string;
+  client_message_id?: string;
   type?: ChatMessage['type'];
   media_url?: string;
   reply_to_message_id?: EntityId | null;

@@ -19,7 +19,8 @@ export type ResourceType =
   | 'artwork'
   | 'artisan'
   | 'order'
-  | 'reservation';
+  | 'reservation'
+  | 'conversation';
 
 export type ResourceRouteInput = {
   type?: string | null;
@@ -50,6 +51,7 @@ const aliases: Record<string, ResourceType> = {
   artwork_order: 'order',
   reservation: 'reservation',
   booking: 'reservation',
+  conversation: 'conversation',
 };
 
 function normalizeType(value?: string | null): ResourceType | null {
@@ -94,6 +96,7 @@ export function resolveResourceRoute({ type, id, metadata }: ResourceRouteInput)
     // No booking detail route exists yet. The real, backed list remains the
     // safe fallback instead of routing to a fabricated detail screen.
     reservation: '/(profile)/reservations',
+    conversation: `/(chat)/${encodedId}`,
   };
 
   return { href: routes[normalizedType], type: normalizedType };

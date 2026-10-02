@@ -2,7 +2,7 @@ import { getMediaAttachment } from '@/features/media/media.api';
 import { apiGet, apiPost } from '@/services/api/client';
 import { fallbackUser, mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
-import type { Story, StoryViewPayload } from './types';
+import type { Story, StoryCaptionStyle, StoryViewPayload } from './types';
 import { socialApi, type ContentAuthorIdentity } from '@/features/social/social.api';
 import { traceStoryRuntime } from '@/features/social/social.runtime-trace';
 
@@ -12,6 +12,13 @@ interface BackendStory {
   mediaId: string;
   caption: string | null;
   createdAt: string;
+  captionStyle?: {
+    fontFamily: StoryCaptionStyle['font_family'];
+    bold: boolean;
+    italic: boolean;
+    underline: boolean;
+    strikethrough: boolean;
+  } | null;
   expiresAt: string;
   viewCount: number;
   viewedByMe: boolean;
@@ -25,6 +32,7 @@ export interface CreateStoryPayload {
   caption?: string;
   durationSeconds: number;
   /** Stable for a retry of one editor submission, never derived from media. */
+  captionStyle?: StoryCaptionStyle;
   idempotencyKey?: string;
 }
 
@@ -63,6 +71,13 @@ async function mapStory(story: BackendStory, identity?: ContentAuthorIdentity): 
     media,
     text: story.caption ?? undefined,
     reference_type: story.referenceType ?? undefined,
+    caption_style: story.captionStyle ? {
+      font_family: story.captionStyle.fontFamily,
+      bold: story.captionStyle.bold,
+      italic: story.captionStyle.italic,
+      underline: story.captionStyle.underline,
+      strikethrough: story.captionStyle.strikethrough,
+    } : undefined,
     reference_id: story.referenceId ?? null,
     views_count: story.viewCount,
     viewed: story.viewedByMe,
@@ -99,8 +114,17 @@ export const storyApi = {
   createStory: async (payload: CreateStoryPayload): Promise<{ data: Story }> => {
     try {
       traceStoryRuntime('STORY_CREATE_REQUEST', { flow: 'story', method: 'POST', url: '/stories', mediaId: String(payload.mediaId) });
-      const { idempotencyKey, ...body } = payload;
-      const created = await apiPost<BackendStory>('/stories', body, {
+      const { idempotencyKey, captionStyle, ...body } = payload;
+      const created = await apiPost<BackendStory>('/stories', {
+        ...body,
+        captionStyle: captionStyle ? {
+          fontFamily: captionStyle.font_family,
+          bold: captionStyle.bold,
+          italic: captionStyle.italic,
+          underline: captionStyle.underline,
+          strikethrough: captionStyle.strikethrough,
+        } : undefined,
+      }, {
         headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
         yeyamoTrace: { flow: 'story', stage: 'STORY_CREATE' },
       });

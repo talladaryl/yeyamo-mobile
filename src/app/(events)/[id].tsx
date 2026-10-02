@@ -1,4 +1,4 @@
-import { Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Linking, Share } from 'react-native';
+import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Dimensions, Linking, Share } from 'react-native';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter, Stack, type Href } from 'expo-router';
 import { Image } from 'expo-image';
@@ -8,6 +8,7 @@ import { useEventDetail, useEventRegistration, useUpcomingEvents } from '@/featu
 import { useEventTickets } from '@/features/ticketing/useTicketing';
 import { usePlaceDetail } from '@/features/places/usePlaces';
 import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
+import { useOutingGroup, useResolveOutingGroup } from '@/features/chat/useChat';
 import { reviewsApi, usePublicReviews } from '@/features/reviews/reviews.api';
 import { CreateVerifiedReviewSheet } from '@/components/reviews/CreateVerifiedReviewSheet';
 import { ErrorState, LoadingState } from '@/components/ui/ViewStates';
@@ -28,6 +29,8 @@ export default function EventDetailScreen() {
   const toggleFavorite = useToggleInteraction('EVENT', id);
   const verifiedReviews = usePublicReviews('EVENT', id);
   const registration = useEventRegistration(event?.id ?? id);
+  const outingGroup = useOutingGroup(event?.id ?? id, Boolean(event?.is_participating));
+  const resolveOutingGroup = useResolveOutingGroup();
   const [reviewComposerOpen, setReviewComposerOpen] = useState(false);
 
   if (isLoading) {
@@ -56,6 +59,18 @@ export default function EventDetailScreen() {
     registration.mutate(event.is_participating, {
       onError: (error) => Alert.alert('Participation impossible', error instanceof Error ? error.message : 'Réessayez plus tard.'),
     });
+  };
+  const openOutingGroup = async () => {
+    if (!event || resolveOutingGroup.isPending) return;
+    try {
+      const group = await resolveOutingGroup.mutateAsync(event.id);
+      router.push(`/(chat)/${group.id}`);
+    } catch (error) {
+      const status = (error as { status?: number } | null)?.status;
+      Alert.alert('Groupe indisponible', status === 403
+        ? 'Votre participation doit Ãªtre confirmÃ©e avant lâ€™accÃ¨s au groupe.'
+        : 'Le groupe de cette sortie est encore en cours de prÃ©paration. RÃ©essayez dans un instant.');
+    }
   };
   const addToCalendar = () => {
     const dates = `${event.start_date.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')}/${event.end_date.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')}`;
@@ -191,6 +206,12 @@ export default function EventDetailScreen() {
               </TouchableOpacity>
             </View>
           )}
+
+          {event.is_participating ? <View className="mb-5">
+            {outingGroup.isLoading ? <View className="flex-row items-center rounded-xl border px-4 py-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}><ActivityIndicator size="small" color={colors.primary} /><Text className="ml-3 flex-1 text-sm" style={{ color: colors.textSecondary }}>PrÃ©paration de votre groupe de sortieâ€¦</Text></View> : null}
+            {outingGroup.isSuccess ? <TouchableOpacity onPress={() => void openOutingGroup()} disabled={resolveOutingGroup.isPending} className="min-h-13 flex-row items-center justify-center rounded-xl bg-[#DC2626] px-4 py-3.5" style={{ opacity: resolveOutingGroup.isPending ? 0.65 : 1 }} accessibilityRole="button" accessibilityLabel="Accéder au groupe de cette sortie"><Ionicons name="people-outline" size={21} color="#FFFFFF" /><Text className="ml-2 text-base font-bold text-white">AccÃ©der au groupe</Text><Ionicons name="chevron-forward" size={20} color="#FFFFFF" /></TouchableOpacity> : null}
+            {outingGroup.isError ? <View className="rounded-xl border px-4 py-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Text className="text-sm" style={{ color: colors.textSecondary }}>Votre participation est confirmÃ©e. Le groupe sera accessible dÃ¨s sa prÃ©paration terminÃ©e.</Text><TouchableOpacity onPress={() => void outingGroup.refetch()} className="mt-2 min-h-10 self-start justify-center" accessibilityRole="button" accessibilityLabel="Réessayer de charger le groupe"><Text className="font-bold" style={{ color: colors.primary }}>RÃ©essayer</Text></TouchableOpacity></View> : null}
+          </View> : null}
 
           {ticketing && ticketing.tickets.some((ticket) => ticket.available) ? (
             <View className="mb-5 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>

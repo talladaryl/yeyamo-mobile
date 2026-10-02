@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
 import { useYeyamoMediaPicker, YeyamoMediaPickerError } from '@/components/media/useYeyamoMediaPicker';
+import { YeyamoImageFilterEditor } from '@/components/media/YeyamoImageFilterEditor';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
@@ -51,8 +52,9 @@ export default function CreatePublicationScreen() {
   const proverbs = useCultureContents({ type: 'PROVERB', size: 20 });
   const recipes = useCultureContents({ type: 'RECIPE', size: 20 });
   const colors = useThemeStore((state) => state.colors);
-  const { pickFromLibrary, takePhoto } = useYeyamoMediaPicker();
+  const { pickFromLibrary, captureFromCamera } = useYeyamoMediaPicker();
   const [media, setMedia] = useState<PublicationMediaDraft[]>(() => initial.media_assets ?? restoreMedia(initial.media_urls ?? [], initial.media_type ?? 'image'));
+  const [editingAsset, setEditingAsset] = useState<PickedMediaAsset | null>(null);
   const [caption, setCaption] = useState(initial.caption ?? '');
   const [linkedTarget, setLinkedTarget] = useState<LinkedTarget | null>(null);
   const [culturePickerVisible, setCulturePickerVisible] = useState(false);
@@ -84,22 +86,34 @@ export default function CreatePublicationScreen() {
         selectionLimit: MAX_MEDIA,
         quality: 0.9,
       });
-      if (!result.cancelled) addAssets(result.assets);
+      if (!result.cancelled) {
+        if (kind === 'images' && result.assets.length === 1) setEditingAsset(result.assets[0]);
+        else addAssets(result.assets);
+      }
     } catch (error) {
       const message = error instanceof YeyamoMediaPickerError ? error.message : 'Le sélecteur de médias ne peut pas être ouvert pour le moment.';
       setFailure({ phase: 'picker', message });
     }
   };
 
-  const capturePhoto = async () => {
+  const captureMedia = async (kind: 'photo' | 'video') => {
     try {
-      const result = await takePhoto({ allowsEditing: true, quality: 0.9 });
-      if (!result.cancelled) addAssets(result.assets);
+      const result = await captureFromCamera(kind, { allowsEditing: kind === 'photo', quality: 0.9, videoMaxDuration: 60 });
+      if (!result.cancelled) {
+        if (kind === 'photo' && result.assets[0]) setEditingAsset(result.assets[0]);
+        else addAssets(result.assets);
+      }
     } catch (error) {
       const message = error instanceof YeyamoMediaPickerError ? error.message : 'L’appareil photo ne peut pas être ouvert pour le moment.';
       setFailure({ phase: 'picker', message });
     }
   };
+
+  const chooseCameraMode = () => Alert.alert('Caméra', 'Que souhaitez-vous capturer ?', [
+    { text: 'Annuler', style: 'cancel' },
+    { text: 'Photo', onPress: () => void captureMedia('photo') },
+    { text: 'Vidéo', onPress: () => void captureMedia('video') },
+  ]);
 
   const removeMedia = (uri: string) => {
     setMedia((current) => {
@@ -174,13 +188,14 @@ export default function CreatePublicationScreen() {
       <View className="mt-5 gap-3">
         {media.length ? <MediaPreview asset={media[0]} /> : <TouchableOpacity onPress={() => void selectMedia('mixed')} className="h-56 items-center justify-center rounded-2xl border border-dashed px-8" style={{ borderColor: colors.border, backgroundColor: colors.surface }} accessibilityRole="button" accessibilityLabel="Ajouter une photo ou une vidéo"><Icon name="images-outline" size={48} color={colors.textMuted} /><Text className="mt-3 text-center text-sm font-semibold" style={{ color: colors.text }}>Ajouter une photo ou une vidéo</Text><Text className="mt-1 text-center text-xs" style={{ color: colors.textSecondary }}>Facultatif : vous pouvez aussi publier uniquement du texte.</Text></TouchableOpacity>}
         {media.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}><TouchableOpacity onPress={() => void selectMedia('mixed')} className="h-20 w-20 items-center justify-center rounded-xl border border-dashed" style={{ borderColor: colors.border, backgroundColor: colors.surface }} accessibilityLabel="Ajouter un média"><Icon name="add" size={28} color={colors.primary} /></TouchableOpacity>{media.map((asset) => <MediaTile key={asset.uri} asset={asset} onRemove={() => removeMedia(asset.uri)} />)}</ScrollView> : null}
-        <View className="flex-row gap-3"><View className="flex-1"><Button label="Photo" variant="secondary" size="sm" onPress={() => void selectMedia('images')} /></View><View className="flex-1"><Button label="Vidéo" variant="secondary" size="sm" onPress={() => void selectMedia('videos')} /></View><View className="flex-1"><Button label="Caméra" variant="secondary" size="sm" onPress={() => void capturePhoto()} /></View></View>
+        <View className="flex-row gap-3"><View className="flex-1"><Button label="Photo" variant="secondary" size="sm" onPress={() => void selectMedia('images')} /></View><View className="flex-1"><Button label="Vidéo" variant="secondary" size="sm" onPress={() => void selectMedia('videos')} /></View><View className="flex-1"><Button label="Caméra" variant="secondary" size="sm" onPress={chooseCameraMode} /></View></View>
       </View>
 
       <View className="mt-6"><Input label="Légende" value={caption} onChangeText={setCaption} placeholder="Qu’avez-vous envie de partager ?" multiline maxLength={5000} blurOnSubmit={false} returnKeyType="default" helperText="Une publication nécessite un texte ou au moins un média." /></View>
 
       <View className="mt-5"><TouchableOpacity onPress={() => setCulturePickerVisible((visible) => !visible)} className="flex-row items-center justify-between rounded-xl border px-4 py-3" style={{ backgroundColor: colors.surface, borderColor: colors.border }} accessibilityRole="button" accessibilityLabel="Associer un contenu culturel"><View className="flex-1"><Text className="text-sm font-semibold" style={{ color: colors.text }}>Contenu culturel (facultatif)</Text><Text className="mt-1 text-xs" style={{ color: colors.textSecondary }}>{linkedTarget ? linkedTarget.title : 'Associer un proverbe ou une recette réelle'}</Text></View><Icon name={culturePickerVisible ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSecondary} /></TouchableOpacity>{culturePickerVisible ? <View className="mt-2 rounded-xl border p-3" style={{ borderColor: colors.border, backgroundColor: colors.elevated }}><CultureOptions title="Proverbes" items={proverbs.data?.content ?? []} type="PROVERB" selected={linkedTarget?.id} onSelect={(target) => { setLinkedTarget(target); setCulturePickerVisible(false); }} /> <CultureOptions title="Recettes" items={recipes.data?.content ?? []} type="RECIPE" selected={linkedTarget?.id} onSelect={(target) => { setLinkedTarget(target); setCulturePickerVisible(false); }} />{proverbs.isLoading || recipes.isLoading ? <Text className="mt-3 text-xs" style={{ color: colors.textSecondary }}>Chargement des contenus culturels…</Text> : null}{linkedTarget ? <TouchableOpacity onPress={() => setLinkedTarget(null)} className="mt-3 self-start"><Text className="text-sm font-semibold" style={{ color: colors.primary }}>Retirer l’association</Text></TouchableOpacity> : null}</View> : null}</View>
     </View>
+    {editingAsset ? <YeyamoImageFilterEditor asset={editingAsset} onCancel={() => setEditingAsset(null)} onConfirm={(filtered) => { addAssets([filtered]); setEditingAsset(null); }} /> : null}
   </YeyamoFormScreen>;
 }
 

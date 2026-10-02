@@ -4,12 +4,12 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import { SafeScreen } from '@/components/ui/SafeScreen';
-import { MediaGrid } from '@/components/profile/MediaGrid';
+import { PublicationGrid } from '@/components/profile/PublicationGrid';
 import { ProfileSafetySheet } from '@/components/profile/ProfileSafetySheet';
 import { StoryRing } from '@/components/story/StoryRing';
 import { useAuth } from '@/features/auth/useAuth';
 import { useCreateConversation } from '@/features/chat/useChat';
-import type { ProfilePost, UserProfile } from '@/features/profile/types';
+import type { UserProfile } from '@/features/profile/types';
 import { usePublicProfilePublications } from '@/features/profile/useProfile';
 import { useFollowActions, useUserSearch } from '@/features/social/useSocial';
 import { useThemeStore } from '@/features/theme/theme.store';
@@ -64,16 +64,6 @@ export default function PublicProfileScreen() {
     if (profile) setFollowing(profile.is_following);
   }, [profile]);
 
-  const postContent = useMemo<ProfilePost[]>(() => (publicPosts.data ?? []).map((post) => ({
-    id: post.id,
-    type: post.type,
-    thumbnail_url: post.media_url,
-    media: [],
-    caption: post.caption ?? null,
-    likes_count: post.likes_count,
-    comments_count: post.comments_count,
-    created_at: post.created_at,
-  })), [publicPosts.data]);
   const profileStories = profile ? (storiesQuery.data ?? []).filter((story) => String(story.author.id) === String(profile.id)) : [];
   const profileStory = profileStories.find((story) => !story.viewed) ?? profileStories[0];
 
@@ -112,7 +102,7 @@ export default function PublicProfileScreen() {
         <View className="mt-5 w-full flex-row gap-2"><TouchableOpacity onPress={toggleFollow} disabled={follow.isPending || unfollow.isPending} className={`flex-1 items-center rounded-xl py-3 ${isFollowing ? '' : 'bg-[#EF4444]'}`} style={isFollowing ? { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border } : undefined}><Text className="font-extrabold" style={{ color: isFollowing ? colors.text : '#FFFFFF' }}>{isFollowing ? 'Abonné' : 'Suivre'}</Text></TouchableOpacity><TouchableOpacity onPress={() => void openConversation()} disabled={createConversation.isPending} className="flex-1 items-center rounded-xl border py-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Text className="font-extrabold" style={{ color: colors.text }}>{createConversation.isPending ? 'Ouverture…' : 'Message'}</Text></TouchableOpacity></View>
       </View>
       <View className="flex-row border-b" style={{ backgroundColor: colors.background, borderColor: colors.border }}><View className="flex-1 items-center border-b-2 py-3" style={{ borderColor: colors.primary }} accessibilityRole="tab" accessibilityState={{ selected: true }} accessibilityLabel="Publications"><Icon name="grid" size={24} color={colors.primary} /></View></View>
-      {publicPosts.isError ? <View className="items-center px-8 py-20"><Icon name="alert-circle-outline" size={42} color={colors.textMuted} /><Text className="mt-4 text-base font-bold" style={{ color: colors.text }}>Publications indisponibles</Text></View> : postContent.length ? <MediaGrid posts={postContent} onPostPress={(id) => { traceProfileRuntime('PROFILE_GRID_ITEM_PRESS', { flow: 'public-profile', viewerAuthUserId: currentUser?.id ?? null, profileId: String(profile.id), postId: String(id), selectedTab: 'posts', destination: `/(post)/${id}` }); router.push(`/(post)/${id}`); }} /> : <View className="items-center px-8 py-20"><Icon name="grid-outline" size={42} color={colors.textMuted} /><Text className="mt-4 text-base font-bold" style={{ color: colors.text }}>Aucune publication</Text><Text className="mt-1 text-center text-sm" style={{ color: colors.textSecondary }}>Les publications publiques de ce profil apparaîtront ici.</Text></View>}
+      {publicPosts.isError ? <View className="items-center px-8 py-20"><Icon name="alert-circle-outline" size={42} color={colors.textMuted} /><Text className="mt-4 text-base font-bold" style={{ color: colors.text }}>Publications indisponibles</Text></View> : (publicPosts.data ?? []).length ? <PublicationGrid publications={publicPosts.data ?? []} onPressPublication={(post) => { traceProfileRuntime('PROFILE_GRID_ITEM_PRESS', { flow: 'public-profile', viewerAuthUserId: currentUser?.id ?? null, profileId: String(profile.id), postId: String(post.id), selectedTab: 'posts', destination: '/(post)/' + post.id }); router.push(('/(post)/' + post.id) as never); }} /> : <View className="items-center px-8 py-20"><Icon name="grid-outline" size={42} color={colors.textMuted} /><Text className="mt-4 text-base font-bold" style={{ color: colors.text }}>Aucune publication</Text><Text className="mt-1 text-center text-sm" style={{ color: colors.textSecondary }}>Les publications publiques de ce profil apparaitront ici.</Text></View>}
     </ScrollView>
     <ProfileSafetySheet visible={safetySheetOpen} onClose={() => setSafetySheetOpen(false)} profileId={String(profile.id)} displayName={profile.display_name} />
   </SafeScreen>;

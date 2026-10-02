@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Dimensions, Pressable, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Dimensions, Platform, Pressable, ScrollView, StatusBar, Text, TouchableOpacity, View, type TextStyle } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMarkStoryViewed, useStories, useStoryDetail } from '@/features/story/useStory';
-import type { Story } from '@/features/story/types';
+import type { Story, StoryCaptionFont, StoryCaptionStyle } from '@/features/story/types';
 import { traceStoryRuntime } from '@/features/social/social.runtime-trace';
 
 const { width, height } = Dimensions.get('window');
 
-function StoryVideo({ uri, paused }: { uri: string; paused: boolean }) {
+const StoryVideo = memo(function StoryVideo({ uri, paused }: { uri: string; paused: boolean }) {
   const player = useVideoPlayer(uri, (instance) => {
     instance.loop = false;
   });
@@ -22,6 +23,56 @@ function StoryVideo({ uri, paused }: { uri: string; paused: boolean }) {
   }, [paused, player]);
 
   return <VideoView player={player} style={{ width, height }} contentFit="cover" nativeControls={false} />;
+});
+
+const DEFAULT_CAPTION_STYLE: StoryCaptionStyle = {
+  font_family: 'SYSTEM', bold: false, italic: false, underline: false, strikethrough: false,
+};
+
+function captionFontFamily(font: StoryCaptionFont): string | undefined {
+  if (font === 'SERIF') return Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' });
+  if (font === 'MONOSPACE') return Platform.select({ ios: 'Courier', android: 'monospace', default: 'monospace' });
+  if (font === 'SANS_SERIF') return Platform.select({ ios: 'Helvetica Neue', android: 'sans-serif', default: 'sans-serif' });
+  if (font === 'CONDENSED') return Platform.select({ ios: 'Avenir Next Condensed', android: 'sans-serif-condensed', default: 'sans-serif' });
+  return undefined;
+}
+
+function captionTextStyle(style: StoryCaptionStyle | undefined): TextStyle {
+  const resolved = style ?? DEFAULT_CAPTION_STYLE;
+  const textDecorationLine = resolved.underline && resolved.strikethrough
+    ? 'underline line-through'
+    : resolved.underline ? 'underline' : resolved.strikethrough ? 'line-through' : 'none';
+  return {
+    fontFamily: captionFontFamily(resolved.font_family),
+    fontWeight: resolved.bold ? '700' : '400',
+    fontStyle: resolved.italic ? 'italic' : 'normal',
+    textDecorationLine,
+  };
+}
+
+function StoryCaption({ story, bottomInset, onExpandedChange }: { story: Story; bottomInset: number; onExpandedChange: (expanded: boolean) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const expandable = (story.text?.length ?? 0) > 120;
+
+  useEffect(() => {
+    setExpanded(false);
+    onExpandedChange(false);
+  }, [onExpandedChange, story.id]);
+
+  if (!story.text) return null;
+  const toggle = () => {
+    const next = !expanded;
+    setExpanded(next);
+    onExpandedChange(next);
+  };
+  return (
+    <View className="absolute left-4 right-4 rounded-2xl bg-black/60 px-4 py-3" style={{ bottom: bottomInset + 16 }}>
+      <ScrollView style={{ maxHeight: expanded ? height * 0.38 : 92 }} scrollEnabled={expanded} showsVerticalScrollIndicator={false}>
+        <Text numberOfLines={expanded ? undefined : 3} className="text-center text-lg leading-6 text-white" style={captionTextStyle(story.caption_style)}>{story.text}</Text>
+      </ScrollView>
+      {expandable ? <TouchableOpacity onPress={toggle} className="mt-2 self-center px-3 py-1" accessibilityRole="button" accessibilityState={{ expanded }}><Text className="text-sm font-bold text-white">{expanded ? 'Voir moins' : 'Voir plus'}</Text></TouchableOpacity> : null}
+    </View>
+  );
 }
 
 function formatCreatedAt(value: string) {
@@ -42,6 +93,7 @@ function storyDurationMs(story: Story) {
 export default function StoryViewerScreen() {
   const { id, storyIds } = useLocalSearchParams<{ id: string; storyIds?: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data: stories = [] } = useStories();
   const detail = useStoryDetail(id);
   const { mutate: markViewed } = useMarkStoryViewed();
@@ -158,7 +210,7 @@ export default function StoryViewerScreen() {
         </TouchableOpacity>
       </View>
 
-      {currentStory.text ? <View className="absolute left-6 right-6" style={{ bottom: height * 0.24 }} pointerEvents="none"><Text className="text-center text-xl font-bold leading-7 text-white">{currentStory.text}</Text></View> : null}
+      <StoryCaption story={currentStory} bottomInset={insets.bottom} onExpandedChange={setIsPaused} />
     </View>
   );
 }

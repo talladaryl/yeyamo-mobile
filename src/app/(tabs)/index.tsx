@@ -10,6 +10,7 @@ import { useFeed, useSponsoredFeed } from '@/features/feed/useFeed';
 import { isSponsoredFeedItem, type FeedAudience, type FeedItem } from '@/features/feed/types';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { traceFeedRuntime } from '@/features/social/social.runtime-trace';
+import { useFollowing } from '@/features/social/useSocial';
 
 function deduplicateFeed(items: FeedItem[]) {
   const seen = new Set<string>();
@@ -27,6 +28,7 @@ export default function FeedScreen() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [audience, setAudience] = useState<FeedAudience>('FOR_YOU');
   const feed = useFeed(audience);
+  const following = useFollowing(audience === 'FOLLOWING');
   const { data: sponsoredItems = [] } = useSponsoredFeed(undefined, audience === 'FOR_YOU');
 
   const posts = useMemo<FeedItem[]>(() => {
@@ -46,7 +48,10 @@ export default function FeedScreen() {
   }
 
   if (!feed.isLoading && !feed.isError && posts.length === 0) {
-    return <View className="flex-1 bg-black"><StatusBar style="light" /><EmptyState title="Aucune publication pour le moment" message="Explorez Yeyamo ou revenez un peu plus tard." /></View>;
+    const followsNobody = audience === 'FOLLOWING' && following.data?.length === 0;
+    const title = followsNobody ? 'Vous ne suivez encore personne.' : audience === 'FOLLOWING' ? 'Aucune publication de vos abonnements' : 'Aucune publication pour le moment';
+    const message = followsNobody ? 'Suivez des profils pour retrouver ici leurs prochaines publications.' : audience === 'FOLLOWING' ? 'Les comptes que vous suivez nâ€™ont pas encore publiÃ© de contenu visible.' : 'Explorez Yeyamo ou revenez un peu plus tard.';
+    return <View className="flex-1 bg-black"><StatusBar style="light" /><EmptyState title={title} message={message} /></View>;
   }
 
   return <View className="flex-1 bg-black">

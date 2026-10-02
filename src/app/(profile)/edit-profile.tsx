@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { AVAILABLE_INTERESTS, type ProfileSettings } from '@/features/settings/types';
 import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
 import { useYeyamoMediaPicker } from '@/components/media/useYeyamoMediaPicker';
+import { YeyamoImageFilterEditor } from '@/components/media/YeyamoImageFilterEditor';
 import { FormSelect } from '@/components/ui/FormSelect';
 import { Input } from '@/components/ui/Input';
 import { MultiSelect } from '@/components/ui/MultiSelect';
@@ -34,6 +35,8 @@ export default function EditProfileScreen() {
   const setSelectedInterests = useInterestsStore((state) => state.setSelectedInterests);
   const [settings, setSettings] = useState<ProfileSettings | null>(null);
   const [avatarAsset, setAvatarAsset] = useState<PickedMediaAsset | null>(null);
+  const [editingAvatar, setEditingAvatar] = useState<PickedMediaAsset | null>(null);
+  const [uploadedAvatar, setUploadedAvatar] = useState<{ sourceUri: string; url: string } | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
 
   useEffect(() => { if (profileQuery.data && !settings) setSettings(profileQuery.data); }, [profileQuery.data, settings]);
@@ -47,7 +50,10 @@ export default function EditProfileScreen() {
     setFailure(null);
     try {
       const result = await pickFromLibrary({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.85 });
-      if (!result.cancelled && result.assets[0]) setAvatarAsset(result.assets[0]);
+      if (!result.cancelled && result.assets[0]) {
+        setEditingAvatar(result.assets[0]);
+        setUploadedAvatar(null);
+      }
     } catch (error) {
       setFailure(errorMessage(error, 'La sélection de la photo a échoué.'));
     }
@@ -59,7 +65,13 @@ export default function EditProfileScreen() {
     let avatarUrl = settings.avatar_url;
     if (avatarAsset) {
       try {
-        avatarUrl = (await uploadMedia.mutateAsync(await toMediaFormData(avatarAsset, 'avatar'))).data.url;
+        if (uploadedAvatar?.sourceUri === avatarAsset.uri) {
+          avatarUrl = uploadedAvatar.url;
+        } else {
+          const uploaded = await uploadMedia.mutateAsync(await toMediaFormData(avatarAsset, 'avatar'));
+          avatarUrl = uploaded.data.url;
+          setUploadedAvatar({ sourceUri: avatarAsset.uri, url: avatarUrl });
+        }
       } catch (error) {
         setFailure(errorMessage(error, 'La photo n’a pas été envoyée. Le profil est inchangé.'));
         return;
@@ -68,6 +80,8 @@ export default function EditProfileScreen() {
     const next = { ...settings, avatar_url: avatarUrl };
     try {
       await updateProfile.mutateAsync(next);
+      setAvatarAsset(null);
+      setUploadedAvatar(null);
     } catch (error) {
       setFailure(errorMessage(error, 'Les informations du profil n’ont pas été enregistrées.'));
       return;
@@ -111,6 +125,7 @@ export default function EditProfileScreen() {
         <MultiSelect label="Centres d’intérêt" values={settings.interests} options={AVAILABLE_INTERESTS.map((interest) => ({ label: interest.label, value: interest.id }))} onChange={(interests) => setSettings({ ...settings, interests })} />
         <Text className="-mt-2 text-xs leading-5" style={{ color: colors.textSecondary }}>Ces centres d’intérêt sont des préférences Explorer enregistrées sur cet appareil. Le profil backend ne fournit pas encore ce champ.</Text>
       </View>
+      {editingAvatar ? <YeyamoImageFilterEditor asset={editingAvatar} onCancel={() => setEditingAvatar(null)} onConfirm={(filtered) => { setAvatarAsset(filtered); setUploadedAvatar(null); setEditingAvatar(null); }} /> : null}
     </YeyamoFormScreen>
   </View>;
 }

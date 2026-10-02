@@ -70,7 +70,8 @@ export default function SettingsScreen() {
               value={i18n.language === 'en' ? 'English' : 'Français'}
               onPress={() => router.push('/(profile)/language')}
             />
-            <SettingsItem icon="notifications-outline" label="Notifications" onPress={() => router.push('/(profile)/notifications')} showBorder />
+            <SettingsItem icon="notifications-outline" label="Notifications" onPress={() => router.push('/(profile)/notification-settings')} showBorder />
+            <SettingsItem icon="sparkles-outline" label="Centres d’intérêt" onPress={() => router.push('/interests?mode=edit')} showBorder />
           </View>
         </View>
 

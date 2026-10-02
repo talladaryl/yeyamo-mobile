@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, FlatList, RefreshControl, Text, View } from 'react-native';
+import { Alert, FlatList, KeyboardAvoidingView, Platform, RefreshControl, Text, View } from 'react-native';
 import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
 import type { ListRenderItemInfo, ViewToken } from 'react-native';
@@ -8,15 +8,16 @@ import { SponsoredFeedCard } from './SponsoredFeedCard';
 import { VerticalFeedItem } from './VerticalFeedItem';
 import { useTrackAdImpression } from '@/features/ads/useAds';
 import { useAuthStore } from '@/features/auth/auth.store';
-import { useConversations, useSendMessage } from '@/features/chat/useChat';
+import { useConversations, useResolveOutingGroup, useSendMessage } from '@/features/chat/useChat';
 import { useLikePost } from '@/features/feed/useFeed';
 import { isSponsoredFeedItem, type FeedItem, type FeedPost } from '@/features/feed/types';
 import { useCurrentViewerContentIdentity, useFollowActions } from '@/features/social/useSocial';
-import { traceFeedRuntime, traceSocialRuntime } from '@/features/social/social.runtime-trace';
+import { traceFeedRuntime, traceMessageRuntime, traceSocialRuntime } from '@/features/social/social.runtime-trace';
 import { resolveFeedAuthorNavigation } from '@/features/feed/feed.identity';
 import { useThemeStore } from '@/features/theme/theme.store';
 import type { AppApiError, EntityId } from '@/types/api.types';
 import { Button } from '@/components/ui/Button';
+import { CommentsThread } from '@/components/comments/CommentsThread';
 
 type VerticalFeedListProps = {
   posts: FeedItem[];
@@ -45,10 +46,12 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
   const [interestedPostIds, setInterestedPostIds] = useState<Set<EntityId>>(new Set());
   const [playbackRates, setPlaybackRates] = useState<Record<string, number>>({});
   const [sharePost, setSharePost] = useState<FeedPost | null>(null);
+  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
   const { mutate: toggleLike } = useLikePost();
   const { follow, unfollow } = useFollowActions();
   const { data: conversations = [] } = useConversations();
   const sendMessage = useSendMessage();
+  const resolveOutingGroup = useResolveOutingGroup();
   const trackImpression = useTrackAdImpression();
   const tabBarHeight = useYeyamoTabBarHeight();
   const bottomOverlayInset = tabBarHeight + 18;
@@ -162,6 +165,26 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
     });
   }, []);
 
+  const handleOpenOutingGroup = useCallback(async (post: FeedPost) => {
+    const outingId = post.reference_type === 'EVENT' ? post.reference_id : null;
+    if (!outingId || resolveOutingGroup.isPending) return;
+    traceMessageRuntime('OUTING_GROUP_NAVIGATION_REQUEST', { outingId, source: 'feed', postId: String(post.id) });
+    try {
+      const group = await resolveOutingGroup.mutateAsync(outingId);
+      traceMessageRuntime('OUTING_GROUP_NAVIGATION_SUCCESS', { outingId, source: 'feed', conversationId: String(group.id) });
+      router.push(`/(chat)/${group.id}`);
+    } catch (error) {
+      const apiError = error as AppApiError;
+      traceMessageRuntime('OUTING_GROUP_NAVIGATION_ERROR', { outingId, source: 'feed', status: apiError.status ?? null, code: apiError.code ?? null });
+      const message = apiError.status === 403
+        ? 'Participez dâ€™abord Ã  cette sortie pour accÃ©der Ã  son groupe.'
+        : apiError.status === 404
+          ? 'Le groupe de cette sortie est encore en cours de prÃ©paration. RÃ©essayez dans un instant.'
+          : 'Le groupe nâ€™a pas pu Ãªtre ouvert. RÃ©essayez plus tard.';
+      Alert.alert('Groupe indisponible', message);
+    }
+  }, [resolveOutingGroup, router]);
+
   const renderItem = useCallback(({ item, index }: ListRenderItemInfo<FeedItem>) => {
     if (isSponsoredFeedItem(item)) {
       return <SponsoredFeedCard item={item} height={itemHeight} isActive={index === activeIndex} bottomOverlayInset={bottomOverlayInset} />;
@@ -182,11 +205,12 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
       onFollow={() => void handleFollow(item)}
       onAuthorPress={() => handleAuthorPress(item)}
       onLike={() => toggleLike({ postId: item.id, isLiked: item.is_liked })}
-      onComment={() => router.push(`/(post)/${item.id}/comments`)}
+      onComment={() => setCommentsPostId(String(item.id))}
       onShare={() => setSharePost(item)}
       onSave={() => toggleSaved(item.id)}
+      onOpenOutingGroup={item.reference_type === 'EVENT' && item.reference_id ? () => void handleOpenOutingGroup(item) : undefined}
     />;
-  }, [activeIndex, bottomOverlayInset, followedAuthorIds, handleAuthorPress, handleFollow, itemHeight, playbackRates, router, savedPostIds, toggleLike, toggleSaved, viewer]);
+  }, [activeIndex, bottomOverlayInset, followedAuthorIds, handleAuthorPress, handleFollow, handleOpenOutingGroup, itemHeight, playbackRates, savedPostIds, toggleLike, toggleSaved, viewer]);
 
   return (
     <View className="flex-1" onLayout={(event) => setItemHeight(Math.round(event.nativeEvent.layout.height))}>
@@ -266,6 +290,12 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
           setHiddenPostIds((current) => new Set(current).add(postId));
         }}
       />
+
+      {commentsPostId ? <View className="absolute bottom-0 left-0 right-0 overflow-hidden rounded-t-[28px] border-t" style={{ bottom: tabBarHeight, height: Math.max(300, Math.round((itemHeight - tabBarHeight) * 0.54)), backgroundColor: colors.surfaceElevated, borderColor: colors.border, shadowColor: '#000000', shadowOpacity: 0.28, shadowRadius: 16, elevation: 12 }}>
+        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
+          <CommentsThread postId={commentsPostId} onClose={() => setCommentsPostId(null)} presentation="sheet" />
+        </KeyboardAvoidingView>
+      </View> : null}
     </View>
   );
 }

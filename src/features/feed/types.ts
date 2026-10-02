@@ -21,6 +21,9 @@ export interface FeedPost {
   comments?: PostComment[];
   linked_content?: { type: 'proverb' | 'recipe' | 'artwork' | 'artist' | 'language' | 'culture'; id: string; label: string };
   linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
+  /** Canonical content reference emitted by feed-service (for example EVENT). */
+  reference_type?: string | null;
+  reference_id?: string | null;
   created_at: string;
   /** False only when a real media metadata lookup failed; the media ID is retained. */
   media_metadata_complete?: boolean;

@@ -7,6 +7,8 @@ import { YeyamoFormProgress } from '@/components/forms/YeyamoFormProgress';
 import { YeyamoFormScreen } from '@/components/forms/YeyamoFormScreen';
 import { YeyamoFormStep } from '@/components/forms/YeyamoFormStep';
 import { useYeyamoMediaPicker } from '@/components/media/useYeyamoMediaPicker';
+import { YeyamoImageFilterEditor } from '@/components/media/YeyamoImageFilterEditor';
+import type { PickedMediaAsset } from '@/features/media/media.utils';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
@@ -19,8 +21,9 @@ export default function CreateEventScreen() {
   const initial = useRef(useCreateStore.getState().eventForm).current;
   const setEventForm = useCreateStore((state) => state.setEventForm);
   const resetEventForm = useCreateStore((state) => state.resetEventForm);
-  const { pickFromLibrary } = useYeyamoMediaPicker();
+  const { pickFromLibrary, takePhoto } = useYeyamoMediaPicker();
   const [coverImage, setCoverImage] = useState<string | null>(initial.cover_image_url ?? null);
+  const [editingCover, setEditingCover] = useState<PickedMediaAsset | null>(null);
   const [coverMimeType, setCoverMimeType] = useState<string | null>(initial.cover_image_mime_type ?? null);
   const [title, setTitle] = useState(initial.title ?? '');
   const [description, setDescription] = useState(initial.description ?? '');
@@ -31,11 +34,20 @@ export default function CreateEventScreen() {
       if (result.cancelled) return;
       const asset = result.assets[0];
       if (!asset) return;
-      setCoverImage(asset.uri);
-      setCoverMimeType(asset.mimeType ?? 'image/jpeg');
-      setEventForm({ cover_media_id: null, cover_media_uri: null });
+      setEditingCover(asset);
     } catch (error) {
       Alert.alert('Image indisponible', error instanceof Error ? error.message : 'Réessayez dans quelques instants.');
+    }
+  };
+
+  const captureCoverImage = async () => {
+    try {
+      const result = await takePhoto({ allowsEditing: true, aspect: [16, 9], quality: 0.9 });
+      if (result.cancelled || !result.assets[0]) return;
+      const asset = result.assets[0];
+      setEditingCover(asset);
+    } catch (error) {
+      Alert.alert('Caméra indisponible', error instanceof Error ? error.message : 'Réessayez dans quelques instants.');
     }
   };
 
@@ -67,6 +79,7 @@ export default function CreateEventScreen() {
           {coverImage ? <Image source={{ uri: coverImage }} style={{ width: '100%', height: 190 }} contentFit="cover" accessibilityLabel="Aperçu de l'image de couverture" /> : <View className="h-44 items-center justify-center px-6"><Icon name="image-outline" size={42} color={colors.textMuted} /><Text className="mt-3 text-center text-sm" style={{ color: colors.textSecondary }}>Ajoutez une image pour rendre votre sortie plus facile à repérer.</Text></View>}
           <View className="flex-row gap-3 p-3">
             <View className="flex-1"><Button label={coverImage ? 'Remplacer' : 'Ajouter une image'} variant="secondary" size="sm" onPress={() => void pickCoverImage()} /></View>
+            <Button label="Caméra" variant="secondary" size="sm" fullWidth={false} onPress={() => void captureCoverImage()} />
             {coverImage ? <Button label="Retirer" variant="ghost" size="sm" fullWidth={false} onPress={() => { setCoverImage(null); setCoverMimeType(null); setEventForm({ cover_media_id: null, cover_media_uri: null }); }} /> : null}
           </View>
         </View>
@@ -78,5 +91,6 @@ export default function CreateEventScreen() {
         <Button label="Annuler la création" variant="ghost" onPress={exit} />
       </View>
     </YeyamoFormStep>
+    {editingCover ? <YeyamoImageFilterEditor asset={editingCover} onCancel={() => setEditingCover(null)} onConfirm={(filtered) => { setCoverImage(filtered.uri); setCoverMimeType(filtered.mimeType ?? 'image/jpeg'); setEventForm({ cover_media_id: null, cover_media_uri: null }); setEditingCover(null); }} /> : null}
   </YeyamoFormScreen>;
 }

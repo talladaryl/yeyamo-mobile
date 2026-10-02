@@ -1,8 +1,8 @@
 import { apiClient, apiGet } from '@/services/api/client';
 import { absoluteApiUrl, mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId, MediaAttachment } from '@/types/api.types';
-import { mediaTraceForFormData, registerMediaFormData, traceMediaRuntime } from './media.runtime-trace';
-import { normalizeImageForUpload, resolveMediaFileName, resolveMediaMimeType, type PickedMediaAsset } from './media.utils';
+import { mediaTraceForFormData, traceMediaRuntime } from './media.runtime-trace';
+import { toMediaFormData, type PickedMediaAsset } from './media.utils';
 
 export interface MediaUploadAsset {
   uri: string;
@@ -63,28 +63,15 @@ export async function uploadMedia(
   options: { usageType?: string; aggregateType?: string; aggregateId?: string; altText?: string } = {},
 ): Promise<MediaUploadResponse> {
   const flow = options.usageType?.startsWith('ARTWORK_') ? 'artwork' : options.usageType ? 'culture' : 'generic-media';
-  const normalizedAsset = await normalizeImageForUpload({
+  const pickedAsset = {
     uri: asset.uri,
     type: asset.type === 'video' ? 'video' : 'image',
     mimeType: asset.mimeType,
     fileName: asset.name,
     width: 0,
     height: 0,
-  } satisfies PickedMediaAsset, flow);
-  const mimeType = resolveMediaMimeType(normalizedAsset);
-  const fileName = resolveMediaFileName(normalizedAsset, flow);
-  traceMediaRuntime('NORMALIZE', { flow, mediaType: asset.type ?? 'unknown', mimeType, hasFileName: Boolean(asset.name) });
-  const form = new FormData();
-  form.append('file', {
-    uri: normalizedAsset.uri,
-    name: fileName,
-    type: mimeType,
-  } as unknown as Blob);
-  if (options.usageType) form.append('usageType', options.usageType);
-  if (options.aggregateType) form.append('aggregateType', options.aggregateType);
-  if (options.aggregateId) form.append('aggregateId', options.aggregateId);
-  if (options.altText) form.append('altText', options.altText);
-  registerMediaFormData(form, flow, mimeType, { mediaType: asset.type ?? undefined });
+  } satisfies PickedMediaAsset;
+  const form = await toMediaFormData(pickedAsset, flow, 0, options);
   // The extended endpoint requires a usageType. General uploads (profile,
   // public creation flows) use the canonical endpoint instead. Do not set
   // Content-Type manually: React Native supplies the multipart boundary.

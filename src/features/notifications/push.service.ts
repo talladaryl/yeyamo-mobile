@@ -5,10 +5,12 @@ import { Platform } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { secureStore } from '@/services/storage/secure-store';
 import { notificationsApi } from './notifications.api';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 type NotificationsModule = typeof import('expo-notifications');
 
 let notificationHandlerConfigured = false;
+let pendingNavigationData: Record<string, unknown> | undefined;
 
 function supportsNativeNotifications(): boolean {
   return Constants.executionEnvironment !== ExecutionEnvironment.StoreClient;
@@ -126,12 +128,21 @@ export async function subscribeToPushTokenChanges(): Promise<() => void> {
 
 export function handleNotificationNavigation(data: Record<string, unknown> | undefined) {
   if (!data) return;
+  if (!useAuthStore.getState().isAuthenticated) {
+    pendingNavigationData = data;
+    return;
+  }
   const type = typeof data.type === 'string' ? data.type : '';
-  const id = typeof data.targetId === 'string' ? data.targetId : undefined;
+  const targetId = typeof data.targetId === 'string' ? data.targetId : undefined;
+  const conversationId = typeof data.conversationId === 'string' ? data.conversationId : undefined;
+  const profileId = typeof data.profileId === 'string' ? data.profileId : targetId;
+  const postId = typeof data.postId === 'string' ? data.postId : targetId;
+  const commentId = typeof data.commentId === 'string' ? data.commentId : undefined;
+  const id = targetId;
   const eventId = typeof data.eventId === 'string' ? data.eventId : id;
   const ticketId = typeof data.ticketId === 'string' ? data.ticketId : id;
   const routes: Record<string, Href | undefined> = {
-    MESSAGE_RECEIVED: id ? (`/(chat)/${id}` as Href) : undefined,
+    MESSAGE_RECEIVED: conversationId ? (`/(chat)/${conversationId}` as Href) : undefined,
     EVENT_REMINDER: eventId ? (`/(events)/${eventId}` as Href) : undefined,
     EVENT_REGISTRATION_CREATED: eventId ? (`/(events)/${eventId}` as Href) : undefined,
     EVENT_REGISTRATION_CANCELLED: eventId ? (`/(events)/${eventId}` as Href) : undefined,
@@ -146,8 +157,19 @@ export function handleNotificationNavigation(data: Record<string, unknown> | und
     PLACE_SUGGESTION_REJECTED: '/(profile)/place-suggestions',
     CAMPAIGN_APPROVED: id ? (`/(partner-dashboard)/campaign/${id}` as Href) : undefined,
     CAMPAIGN_REJECTED: id ? (`/(partner-dashboard)/campaign/${id}` as Href) : undefined,
-    FOLLOW_RECEIVED: id ? (`/(profile)/${id}` as Href) : undefined,
+    FOLLOW_RECEIVED: profileId ? (`/(profile)/${profileId}` as Href) : undefined,
+    SOCIAL_FOLLOWED: profileId ? (`/(profile)/${profileId}` as Href) : undefined,
+    POST_LIKED: postId ? (`/(post)/${postId}` as Href) : undefined,
+    POST_REPOSTED: postId ? (`/(post)/${postId}` as Href) : undefined,
+    COMMENT_REPLIED: postId ? (`/(post)/${postId}${commentId ? `?commentId=${commentId}` : ''}` as Href) : undefined,
   };
   const route = routes[type];
   if (route) router.push(route);
+}
+
+export function flushPendingNotificationNavigation() {
+  if (!pendingNavigationData || !useAuthStore.getState().isAuthenticated) return;
+  const data = pendingNavigationData;
+  pendingNavigationData = undefined;
+  handleNotificationNavigation(data);
 }

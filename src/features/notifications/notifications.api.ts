@@ -10,6 +10,15 @@ export interface PushTokenRegistration {
   appVersion: string;
 }
 
+export interface NotificationPreferences {
+  inAppEnabled: boolean;
+  emailEnabled: boolean;
+  pushEnabled: boolean;
+  emailAddress: string | null;
+  pushToken: string | null;
+  locale: string;
+}
+
 interface BackendNotification {
   id: string;
   eventType: string;
@@ -34,6 +43,14 @@ function resolveBackendTarget(eventType: string, data: Record<string, unknown>):
   if (explicitId && explicitType) return { target_id: explicitId, target_type: explicitType };
 
   switch (eventType) {
+    case 'social.followed':
+      return { target_id: asTargetId(data.profileId ?? data.followerId), target_type: 'profile' };
+    case 'messaging.message.sent':
+      return { target_id: asTargetId(data.conversationId), target_type: 'conversation' };
+    case 'interaction.like.added':
+    case 'interaction.comment.created':
+    case 'interaction.post.shared':
+      return { target_id: asTargetId(data.postId), target_type: 'post' };
     case 'PLACE_SUGGESTION_APPROVED':
       return data.canonicalPlaceId
         ? { target_id: asTargetId(data.canonicalPlaceId), target_type: 'place' }
@@ -78,7 +95,7 @@ function mapNotification(item: BackendNotification): Notification {
 
 function toTargetType(value: unknown): Notification['target_type'] {
   const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
-  if (normalized === 'post' || normalized === 'event' || normalized === 'place' || normalized === 'place_suggestion' || normalized === 'reservation' || normalized === 'culture' || normalized === 'challenge' || normalized === 'artwork' || normalized === 'order' || normalized === 'artisan' || normalized === 'story' || normalized === 'experience' || normalized === 'collection' || normalized === 'profile') return normalized;
+  if (normalized === 'post' || normalized === 'event' || normalized === 'place' || normalized === 'place_suggestion' || normalized === 'reservation' || normalized === 'culture' || normalized === 'challenge' || normalized === 'artwork' || normalized === 'order' || normalized === 'artisan' || normalized === 'story' || normalized === 'experience' || normalized === 'collection' || normalized === 'profile' || normalized === 'conversation') return normalized;
   return undefined;
 }
 
@@ -126,6 +143,14 @@ export const notificationsApi = {
   getUnreadCount: async (): Promise<number> => {
     const response = await apiClient.get<{ count: number }>('/notifications/unread/count');
     return response.data.count;
+  },
+  getPreferences: async (): Promise<NotificationPreferences> => {
+    const response = await apiClient.get<NotificationPreferences>('/notifications/preferences');
+    return response.data;
+  },
+  updatePreferences: async (payload: NotificationPreferences): Promise<NotificationPreferences> => {
+    const response = await apiClient.put<NotificationPreferences>('/notifications/preferences', payload);
+    return response.data;
   },
   registerPushToken: async (payload: PushTokenRegistration): Promise<void> => {
     await apiClient.post('/notifications/devices/push-token', payload);

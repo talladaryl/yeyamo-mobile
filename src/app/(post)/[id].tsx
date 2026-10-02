@@ -2,7 +2,7 @@ import { ActivityIndicator, Alert, View, Text, ScrollView, TouchableOpacity, Tex
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { usePostDetail } from '@/features/post/usePost';
@@ -20,6 +20,8 @@ export default function PostDetailScreen() {
   const colors = useThemeStore((state) => state.colors);
   const queryClient = useQueryClient();
   const viewerUserId = useAuthStore((state) => state.user?.id ?? null);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  const recordedViewPostId = useRef<string | null>(null);
   const [interactionState, setInteractionState] = useState<{
     postId: string;
     isLiked: boolean;
@@ -28,6 +30,14 @@ export default function PostDetailScreen() {
   } | null>(null);
   const [comment, setComment] = useState('');
   const { data: post, isLoading, refetch } = usePostDetail(id);
+
+  useEffect(() => {
+    if (!post || !id || isDemo || recordedViewPostId.current === id) return;
+    recordedViewPostId.current = id;
+    void feedApi.recordView(id)
+      .then(() => queryClient.invalidateQueries({ queryKey: ['profile', 'backend'] }))
+      .catch(() => { recordedViewPostId.current = null; });
+  }, [id, isDemo, post, queryClient]);
 
   const currentInteraction = interactionState?.postId === id ? interactionState : null;
   const isLiked = currentInteraction?.isLiked ?? post?.is_liked ?? false;

@@ -22,6 +22,8 @@ interface BackendFeedItem {
   likes: number | null;
   comments: number | null;
   shares: number | null;
+  referenceType?: string | null;
+  referenceId?: string | null;
   linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
 }
 
@@ -58,12 +60,15 @@ interface BackendPost {
   publishedAt: string | null;
   createdAt: string;
   linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
+  referenceType?: string | null;
+  referenceId?: string | null;
 }
 
 interface InteractionSummary {
   likes: number;
   comments: number;
   shares: number;
+  views: number;
   likedByViewer: boolean;
   favoriteByViewer: boolean;
 }
@@ -153,6 +158,8 @@ async function mapFeedItem(
       : null,
     created_at: item.publishedAt,
     linkedContent: item.linkedContent ?? null,
+    reference_type: item.referenceType ?? null,
+    reference_id: item.referenceId ?? null,
     media_metadata_complete: mediaById
       ? item.mediaIds.every((id) => mediaById.has(id))
       : (metadata as PromiseSettledResult<MediaAttachment>[]).every((result) => result.status === 'fulfilled'),
@@ -253,6 +260,8 @@ export const feedApi = {
       comments: summary.comments,
       shares: summary.shares,
       linkedContent: post.linkedContent ?? null,
+      referenceType: post.referenceType ?? null,
+      referenceId: post.referenceId ?? null,
     }, identityByAuthUserId.get(post.authorId), summary);
     feedPost.comments = comments.map((comment) => mapComment(comment, identityByAuthUserId.get(comment.authorId)));
     return { data: feedPost };
@@ -282,4 +291,8 @@ export const feedApi = {
       { channel: 'NATIVE_SHARE' },
       { headers: { 'Idempotency-Key': createIdempotencyKey() } },
     ),
+
+  /** Called only by the full post viewer, never while rendering a profile grid. */
+  recordView: (postId: EntityId) =>
+    apiPost<void>(`/interactions/posts/${postId}/view`),
 };

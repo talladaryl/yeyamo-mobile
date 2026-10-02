@@ -11,6 +11,8 @@ type StoryRingProps = {
   size?: number;
   isViewed?: boolean;
   showAddButton?: boolean;
+  onAddPress?: () => void;
+  addButtonSize?: number;
 };
 
 export function StoryRing({
@@ -19,6 +21,8 @@ export function StoryRing({
   onPress,
   size = 68,
   isViewed = false,
+  onAddPress,
+  addButtonSize = 24,
   showAddButton = false,
 }: StoryRingProps) {
   const colors = useThemeStore((state) => state.colors);
@@ -27,10 +31,12 @@ export function StoryRing({
     : ['#EF4444', '#F59E0B', '#EF4444'];
 
   return (
-    <TouchableOpacity
+    <View
+      className="items-center"
+    >
+      <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.8}
-      className="items-center"
       accessibilityRole="button"
       accessibilityLabel={`Voir les stories de ${displayName}`}
     >
@@ -52,13 +58,14 @@ export function StoryRing({
           </View>
         </LinearGradient>
       </View>
+      </TouchableOpacity>
 
       {showAddButton && (
-        <View className="absolute bottom-0 right-0 h-6 w-6 items-center justify-center rounded-full border-2" style={{ borderColor: colors.background, backgroundColor: colors.primary }}>
+        <TouchableOpacity onPress={onAddPress ?? onPress} className="absolute bottom-0 right-0 items-center justify-center rounded-full border-2" style={{ width: addButtonSize, height: addButtonSize, borderColor: colors.background, backgroundColor: colors.primary }} accessibilityRole="button" accessibilityLabel="Ajouter une story">
           <View className="w-3 h-0.5 bg-white" />
           <View className="w-0.5 h-3 bg-white absolute" />
-        </View>
+        </TouchableOpacity>
       )}
-    </TouchableOpacity>
+    </View>
   );
 }

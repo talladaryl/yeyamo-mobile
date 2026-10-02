@@ -14,6 +14,16 @@ export type PickedMediaAsset = {
   fileSize?: number | null;
 };
 
+export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
+export const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024;
+
+export type MediaFormDataFields = {
+  usageType?: string;
+  aggregateType?: string;
+  aggregateId?: string;
+  altText?: string;
+};
+
 const extensionByMime: Record<string, string> = {
   'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif',
   'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov',
@@ -56,8 +66,20 @@ export function resolveMediaFileName(asset: PickedMediaAsset, prefix = 'yeyamo-m
   const expectedExtension = extensionByMime[mimeType] ?? (asset.type === 'video' ? 'mp4' : 'jpg');
   const existingName = asset.fileName?.trim();
   const existingExtension = extensionFromName(existingName);
-  if (existingName && existingExtension && mimeByExtension[existingExtension] === mimeType) return existingName;
+  if (existingName && existingExtension && mimeByExtension[existingExtension] === mimeType) {
+    const safeName = existingName.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^\.+/, '');
+    if (safeName) return safeName.slice(-180);
+  }
   return `${prefix}-${index + 1}.${expectedExtension}`;
+}
+
+export function validateMediaAsset(asset: PickedMediaAsset): void {
+  const mimeType = resolveMediaMimeType(asset);
+  if (!extensionByMime[mimeType]) throw new Error(`Format de média non pris en charge (${mimeType}).`);
+  const maximum = mimeType.startsWith('video/') ? MAX_VIDEO_UPLOAD_BYTES : MAX_IMAGE_UPLOAD_BYTES;
+  if (typeof asset.fileSize === 'number' && asset.fileSize > maximum) {
+    throw new Error(`Ce fichier dépasse la limite de ${maximum / 1024 / 1024} Mo. Choisissez un média plus léger.`);
+  }
 }
 
 function isHeicOrHeif(asset: PickedMediaAsset): boolean {
@@ -121,8 +143,9 @@ export async function normalizeImageForUpload(
   }
 }
 
-export async function toMediaFormData(asset: PickedMediaAsset, prefix?: string, index?: number): Promise<FormData> {
+export async function toMediaFormData(asset: PickedMediaAsset, prefix?: string, index?: number, fields: MediaFormDataFields = {}): Promise<FormData> {
   const flow = prefix ?? 'media';
+  validateMediaAsset(asset);
   const normalizedAsset = await normalizeImageForUpload(asset, flow, index ?? 0);
   const mimeType = resolveMediaMimeType(normalizedAsset);
   const fileName = resolveMediaFileName(normalizedAsset, prefix, index);
@@ -135,6 +158,10 @@ export async function toMediaFormData(asset: PickedMediaAsset, prefix?: string, 
   });
   const formData = new FormData();
   formData.append('file', { uri: normalizedAsset.uri, name: fileName, type: mimeType } as unknown as Blob);
+  if (fields.usageType) formData.append('usageType', fields.usageType);
+  if (fields.aggregateType) formData.append('aggregateType', fields.aggregateType);
+  if (fields.aggregateId) formData.append('aggregateId', fields.aggregateId);
+  if (fields.altText) formData.append('altText', fields.altText);
   registerMediaFormData(formData, flow, mimeType, {
     mediaType: normalizedAsset.type ?? (mimeType.startsWith('video/') ? 'video' : 'image'),
     fileSize: normalizedAsset.fileSize,

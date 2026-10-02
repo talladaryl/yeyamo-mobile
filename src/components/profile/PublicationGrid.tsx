@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { UserPublication } from '@/features/profile/types';
@@ -16,7 +16,8 @@ interface PublicationGridItemProps {
 
 const PublicationGridItem = memo(function PublicationGridItem({ publication, itemSize, onPressPublication }: PublicationGridItemProps) {
   const hasPreview = Boolean(publication.media_url);
-  const isTextTile = publication.type === 'text' || !hasPreview;
+  const [mediaFailed, setMediaFailed] = useState(false);
+  const isTextTile = publication.type === 'text' || !hasPreview || mediaFailed;
   return (
     <TouchableOpacity
       onPress={() => onPressPublication(publication)}
@@ -32,11 +33,14 @@ const PublicationGridItem = memo(function PublicationGridItem({ publication, ite
           <Text className="mt-1 text-center text-xs font-semibold text-white" numberOfLines={5}>{publication.caption?.trim() || 'Publication texte'}</Text>
         </View>
       ) : (
-        <Image source={{ uri: publication.media_url }} className="h-full w-full" resizeMode="cover" />
+        <Image source={{ uri: publication.media_url }} className="h-full w-full" resizeMode="cover" onError={() => setMediaFailed(true)} />
       )}
       {publication.type === 'video' ? <View className="absolute right-2 top-2"><Ionicons name="play-circle" size={21} color="#FFFFFF" /></View> : null}
       {publication.type === 'carousel' ? <View className="absolute right-2 top-2"><Ionicons name="copy-outline" size={18} color="#FFFFFF" /></View> : null}
-      {publication.likes_count > 0 ? <View className="absolute bottom-2 left-2 flex-row items-center rounded-full bg-black/50 px-2 py-1"><Ionicons name="heart" size={12} color="#FFFFFF" /><View className="w-1" /><Text className="text-xs font-semibold text-white">{publication.likes_count}</Text></View> : null}
+      {publication.likes_count > 0 || publication.views_count > 0 ? <View className="absolute bottom-2 left-2 flex-row items-center gap-2 rounded-full bg-black/60 px-2 py-1">
+        <View className="flex-row items-center gap-1"><Ionicons name="heart" size={12} color="#FFFFFF" /><Text className="text-xs font-semibold text-white">{publication.likes_count}</Text></View>
+        <View className="flex-row items-center gap-1"><Ionicons name="eye-outline" size={13} color="#FFFFFF" /><Text className="text-xs font-semibold text-white">{publication.views_count}</Text></View>
+      </View> : null}
     </TouchableOpacity>
   );
 });

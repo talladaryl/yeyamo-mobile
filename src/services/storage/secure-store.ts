@@ -4,10 +4,12 @@ const KEYS = {
   AUTH_TOKEN: 'yeyamo_auth_token',
   REFRESH_TOKEN: 'yeyamo_refresh_token',
   USER_ID: 'yeyamo_user_id',
+  AUTH_USER: 'yeyamo_auth_user',
   SESSION_MODE: 'yeyamo_session_mode',
   HAS_SEEN_ONBOARDING: 'yeyamo_has_seen_onboarding',
   INTERESTS: 'yeyamo_interests',
   HAS_SELECTED_INTERESTS: 'yeyamo_has_selected_interests',
+  INTEREST_PROFILE: 'yeyamo_interest_profile',
   DEVICE_ID: 'yeyamo_device_id',
   EXPO_PUSH_TOKEN: 'yeyamo_expo_push_token',
 } as const;
@@ -35,6 +37,7 @@ async function clearAuthSession(): Promise<void> {
     KEYS.AUTH_TOKEN,
     KEYS.REFRESH_TOKEN,
     KEYS.USER_ID,
+    KEYS.AUTH_USER,
     KEYS.SESSION_MODE,
     KEYS.EXPO_PUSH_TOKEN,
   ].map((key) => SecureStore.deleteItemAsync(key)));

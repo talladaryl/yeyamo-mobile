@@ -175,8 +175,8 @@ export default function RegisterScreen() {
           <View className="mb-6 flex-row items-center justify-center gap-1"><Text className="text-sm" style={{ color: colors.textSecondary }}>Vous avez déjà un compte ?</Text><TouchableOpacity onPress={() => router.back()}><Text className="text-sm font-semibold text-[#EF4444]">Se connecter</Text></TouchableOpacity></View>
           <View className="mb-6 flex-row items-center"><View className="h-px flex-1" style={{ backgroundColor: colors.border }} /><Text className="mx-4 text-sm" style={{ color: colors.textSecondary }}>ou continuer avec</Text><View className="h-px flex-1" style={{ backgroundColor: colors.border }} /></View>
           <View className="mb-6 gap-3">
-            <SocialButton provider="google" onPress={() => { void (async () => { const idToken = await requestGoogleIdToken(); if (idToken && await googleLogin(idToken)) router.replace('/interests'); })(); }} disabled={isLoading || !googleRequest} />
-            {appleAvailable ? <SocialButton provider="apple" onPress={() => { void (async () => { const idToken = await requestAppleIdToken(); if (!idToken) return; try { await socialLogin({ provider: 'apple', token: idToken }); router.replace('/interests'); } catch { /* The backend error is exposed by useAuth. */ } })(); }} disabled={isLoading} /> : null}
+            <SocialButton provider="google" onPress={() => { void (async () => { const idToken = await requestGoogleIdToken(); if (idToken && await googleLogin(idToken)) router.replace('/(tabs)'); })(); }} disabled={isLoading || !googleRequest} />
+            {appleAvailable ? <SocialButton provider="apple" onPress={() => { void (async () => { const idToken = await requestAppleIdToken(); if (!idToken) return; try { await socialLogin({ provider: 'apple', token: idToken }); router.replace('/(tabs)'); } catch { /* The backend error is exposed by useAuth. */ } })(); }} disabled={isLoading} /> : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

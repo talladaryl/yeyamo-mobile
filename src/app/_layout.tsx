@@ -1,10 +1,11 @@
 import '../../global.css';
 import '@/i18n'; // Initialiser i18n
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, AppState, Appearance, Platform, TouchableOpacity, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -22,6 +23,7 @@ import {
   subscribeToNotificationEvents,
   subscribeToPushTokenChanges,
   synchronizePushToken,
+  flushPendingNotificationNavigation,
 } from '@/features/notifications/push.service';
 import { AppErrorScreen } from '@/components/ui/AppErrorScreen';
 import { FEED_QUERY_KEY } from '@/features/feed/useFeed';
@@ -29,6 +31,10 @@ import { STORIES_QUERY_KEY } from '@/features/story/useStory';
 import { traceMessageRuntime, traceSocialRuntime } from '@/features/social/social.runtime-trace';
 import { useChatStore } from '@/features/chat/chat.store';
 import type { ErrorBoundaryProps } from 'expo-router';
+import { useNetworkStore } from '@/features/network/network.store';
+import { OfflineBanner } from '@/components/network/OfflineBanner';
+import { StartupSplash } from '@/components/onboarding/StartupSplash';
+import { interestsApi } from '@/features/interests/interests.api';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +43,7 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 2, // 2 min
       gcTime: 1000 * 60 * 10,   // 10 min
     },
+    mutations: { networkMode: 'always' },
   },
 });
 
@@ -61,17 +68,23 @@ export default function RootLayout() {
 function RootNavigator() {
   const router = useRouter();
   const segments = useSegments();
+  const [minimumSplashElapsed, setMinimumSplashElapsed] = useState(false);
+  const [maximumSplashElapsed, setMaximumSplashElapsed] = useState(false);
+  const setConnected = useNetworkStore((state) => state.setConnected);
   const {
     colors,
     resolvedTheme,
     hydrateTheme,
     syncSystemTheme,
   } = useThemeStore();
-  const { user, isAuthenticated, isHydrated, clearAuth } = useAuthStore();
+  const { user, isAuthenticated, isHydrated } = useAuthStore();
   const {
     hasCompletedInterestSelection,
     isHydrated: areInterestsHydrated,
+    isServerResolved: areInterestsServerResolved,
     hydrate: hydrateInterests,
+    syncFromServer: syncInterestsFromServer,
+    markResolutionUnavailable,
   } = useInterestsStore();
   const {
     hasCompletedLaunchFlow,
@@ -85,21 +98,30 @@ function RootNavigator() {
   const selectCountry = useCountryStore((state) => state.selectCountry);
   const applyCountryProfile = useCountryStore((state) => state.applyProfilePreferences);
   const setCountryProfileLoading = useCountryStore((state) => state.setProfileLoading);
-  const resetCountry = useCountryStore((state) => state.reset);
   const markCountryConfigurationUnavailable = useCountryStore((state) => state.markConfigurationUnavailable);
   const previousAuthUserId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const minimum = setTimeout(() => setMinimumSplashElapsed(true), 2600);
+    const maximum = setTimeout(() => setMaximumSplashElapsed(true), 6000);
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const connected = state.isConnected !== false && state.isInternetReachable !== false;
+      setConnected(connected);
+      onlineManager.setOnline(connected);
+    });
+    return () => { clearTimeout(minimum); clearTimeout(maximum); unsubscribe(); };
+  }, [setConnected]);
 
   // Register 401 handler — clears store and redirects to login
   useEffect(() => {
     registerUnauthenticatedHandler(() => {
-      clearAuth();
-      useChatStore.getState().reset();
-      queryClient.removeQueries({ queryKey: ['messaging'] });
-      void resetCountry();
+      // A terminal 401 must also tear down the persisted session and STOMP
+      // connection so a subsequent account cannot inherit this identity.
+      void authService.clearLocalSession();
       Alert.alert('Session expirée', 'Reconnectez-vous pour continuer.');
       router.replace('/(auth)/login');
     });
-  }, [clearAuth, resetCountry, router]);
+  }, [router]);
 
   // Hydrate session from SecureStore on boot
   useEffect(() => {
@@ -109,6 +131,30 @@ function RootNavigator() {
     hydrateInterests();
     hydrateCountry();
   }, [hydrateCountry, hydrateInterests, hydrateTheme, checkOnboardingStatus]);
+
+  useEffect(() => {
+    if (!isHydrated || !isAuthenticated || !user || areInterestsServerResolved) return;
+    if (useAuthStore.getState().sessionMode !== 'backend') {
+      markResolutionUnavailable();
+      return;
+    }
+    void syncInterestsFromServer(String(user.id)).catch(() => {
+      if (useNetworkStore.getState().isConnected === false) markResolutionUnavailable();
+    });
+  }, [areInterestsServerResolved, isAuthenticated, isHydrated, markResolutionUnavailable, syncInterestsFromServer, user]);
+
+  useEffect(() => {
+    if (maximumSplashElapsed && isAuthenticated && !areInterestsServerResolved) markResolutionUnavailable();
+  }, [areInterestsServerResolved, isAuthenticated, markResolutionUnavailable, maximumSplashElapsed]);
+
+  useEffect(() => {
+    if (!isHydrated || !isAuthenticated || useAuthStore.getState().sessionMode !== 'backend') return;
+    void interestsApi.activity(false).catch(() => undefined);
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void interestsApi.activity(false).catch(() => undefined);
+    });
+    return () => subscription.remove();
+  }, [isAuthenticated, isHydrated, user?.id]);
 
   useEffect(() => {
     const subscription = Appearance.addChangeListener(() => {
@@ -148,13 +194,14 @@ function RootNavigator() {
 
   useEffect(() => {
     if (!isAuthenticated || !isHydrated || useAuthStore.getState().sessionMode !== 'backend') return;
+    flushPendingNotificationNavigation();
     void synchronizePushToken();
     let unsubscribe: () => void = () => undefined;
     void subscribeToPushTokenChanges().then((cleanup) => {
       unsubscribe = cleanup;
     });
     return () => unsubscribe();
-  }, [isAuthenticated, isHydrated]);
+  }, [isAuthenticated, isHydrated, user?.id]);
 
   // A cache must be scoped to its viewer even when a host replaces session A
   // by session B without unmounting the React Query provider.
@@ -165,9 +212,9 @@ function RootNavigator() {
     if (previousUserId !== currentUserId) {
       traceSocialRuntime('AUTH_SESSION_CHANGED', { previousUserId, currentUserId });
       if (previousUserId) {
-        [FEED_QUERY_KEY, STORIES_QUERY_KEY, ['profile'], ['social'], ['post'], ['interactions']]
+        [FEED_QUERY_KEY, STORIES_QUERY_KEY, ['profile'], ['social'], ['post'], ['interactions'], ['place-suggestions']]
           .forEach((queryKey) => queryClient.removeQueries({ queryKey }));
-        [['messaging'], ['conversations'], ['messages']]
+        [['messaging'], ['conversations'], ['messages'], ['notifications']]
           .forEach((queryKey) => queryClient.removeQueries({ queryKey }));
         useChatStore.getState().reset();
         traceSocialRuntime('SOCIAL_CACHE_RESET', { previousUserId, currentUserId });
@@ -185,32 +232,11 @@ function RootNavigator() {
   // remain failed after a newly restored/authenticated session becomes ready.
   useEffect(() => {
     if (!isHydrated) return;
-    if (!isAuthenticated) {
-      // Never reuse data associated with the previous identity after logout,
-      // deactivation or a real account deletion. Public data can refetch later.
-      [
-        FEED_QUERY_KEY,
-        STORIES_QUERY_KEY,
-        ['profile'],
-        ['settings'],
-        ['social'],
-        ['notifications'],
-        ['ticketing'],
-        ['passport'],
-        ['countries', 'profile'],
-        ['recommendations'],
-        ['collections'],
-        ['favorites'],
-        ['reservations'],
-        ['auth', 'sessions'],
-        ['messaging'],
-        ['conversations'],
-        ['messages'],
-      ].forEach((queryKey) => queryClient.removeQueries({ queryKey }));
-      useChatStore.getState().reset();
-      traceMessageRuntime('MESSAGE_ACCOUNT_RESET', { previousUserId: previousAuthUserId.current, currentUserId: null });
-      return;
-    }
+    // Cache removal belongs exclusively to the identity-change effect above.
+    // Keeping a second logout cleanup here caused the same query families to
+    // be reset twice when an account signed out. A cold unauthenticated boot
+    // has no authenticated cache to clear.
+    if (!isAuthenticated) return;
     void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
     void queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
   }, [isAuthenticated, isHydrated, user?.id]);
@@ -261,6 +287,7 @@ function RootNavigator() {
   // Route guard — runs after hydration
   useEffect(() => {
     if (!isHydrated || !isOnboardingHydrated || !areInterestsHydrated) return;
+    if (isAuthenticated && !areInterestsServerResolved) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
@@ -270,7 +297,7 @@ function RootNavigator() {
     // onboarding group accessible until the user finishes or skips it.
     if (!hasCompletedLaunchFlow) {
       if (!inOnboardingGroup) {
-        router.replace('/(onboarding)/splash');
+        router.replace('/(onboarding)/step1');
       }
       return;
     }
@@ -298,6 +325,7 @@ function RootNavigator() {
     isHydrated,
     isOnboardingHydrated,
     areInterestsHydrated,
+    areInterestsServerResolved,
     hasCompletedLaunchFlow,
     hasCompletedInterestSelection,
     user?.user_type,
@@ -305,10 +333,9 @@ function RootNavigator() {
     router,
   ]);
 
-  if (!isHydrated || !isOnboardingHydrated || !areInterestsHydrated) {
-    // Splash is shown by Expo while JS loads — nothing to render here
-    return null;
-  }
+  const bootstrapReady = isHydrated && isOnboardingHydrated && areInterestsHydrated
+    && (!isAuthenticated || areInterestsServerResolved);
+  if (!minimumSplashElapsed || (!bootstrapReady && !maximumSplashElapsed)) return <StartupSplash />;
 
   return (
     <>
@@ -419,6 +446,7 @@ function RootNavigator() {
         <Stack.Screen name="+not-found" />
       </Stack>
       </View>
+      <OfflineBanner />
     </>
   );
 }

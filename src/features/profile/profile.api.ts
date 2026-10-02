@@ -1,6 +1,6 @@
-import { apiClient } from '@/services/api/client';
+import { apiClient, apiPost } from '@/services/api/client';
 import { collectionsApi } from '@/features/collections/collections.api';
-import { createIdempotencyKey, type SpringPage } from '@/services/api/contracts';
+import { createIdempotencyKey, mediaContentUrl, type SpringPage } from '@/services/api/contracts';
 import { secureStore } from '@/services/storage/secure-store';
 import { getMediaAttachments } from '@/features/media/media.api';
 import { traceProfileRuntime } from '@/features/social/social.runtime-trace';
@@ -27,6 +27,18 @@ interface BackendPost {
 interface BackendLikedPost {
   postId: string;
   likedAt: string;
+}
+
+interface BackendSavedPost {
+  postId: string;
+  savedAt: string;
+}
+
+interface BackendInteractionSummary {
+  postId: string;
+  likes: number;
+  views: number;
+  favoriteByViewer: boolean;
 }
 
 interface BackendEvent {
@@ -141,6 +153,18 @@ export const profileApi = {
     return mapProfilePosts(posts);
   },
 
+  getSavedPublications: async (): Promise<UserPublication[]> => {
+    traceProfileRuntime('PROFILE_SAVED_REQUEST', { flow: 'profile', method: 'GET', url: '/saves' });
+    const { data: saved } = await apiClient.get<BackendSavedPost[]>('/saves');
+    traceProfileRuntime('PROFILE_SAVED_RESPONSE', { flow: 'profile', method: 'GET', url: '/saves', status: 200, postCount: saved.length });
+    if (!saved.length) return [];
+    const query = saved.map(({ postId }) => `ids=${encodeURIComponent(postId)}`).join('&');
+    const { data: posts } = await apiClient.get<BackendPost[]>(`/posts/batch?${query}`);
+    const mapped = await mapProfilePosts(posts, new Set(saved.map(({ postId }) => String(postId))));
+    const byId = new Map(mapped.map((post) => [String(post.id), post]));
+    return saved.map(({ postId }) => byId.get(String(postId))).filter((post): post is UserPublication => Boolean(post));
+  },
+
   getPublicationsByAuthor: async (authorId: string): Promise<UserPublication[]> => {
     const { data } = await apiClient.get<BackendPost[]>(`/posts/authors/${encodeURIComponent(authorId)}`);
     return mapProfilePosts(data);
@@ -247,7 +271,7 @@ export const profileApi = {
 };
 
 /** Maps posts using one batch request and intentionally has no N+1 fallback. */
-export async function mapProfilePosts(posts: BackendPost[]): Promise<UserPublication[]> {
+export async function mapProfilePosts(posts: BackendPost[], savedPostIds: ReadonlySet<string> = new Set()): Promise<UserPublication[]> {
   const mediaIds = [...new Set(posts.flatMap((post) => post.mediaIds ?? []).map(String).filter(Boolean))];
   traceProfileRuntime('PROFILE_MEDIA_BATCH_REQUEST', { flow: 'profile', postCount: posts.length, uniqueMediaCount: mediaIds.length });
   let mediaById = new Map<string, MediaAttachment>();
@@ -259,21 +283,32 @@ export async function mapProfilePosts(posts: BackendPost[]): Promise<UserPublica
     }
   }
   traceProfileRuntime('PROFILE_MEDIA_BATCH_RESPONSE', { flow: 'profile', requestedCount: mediaIds.length, resolvedCount: mediaById.size });
+  const summariesByPostId = new Map<string, BackendInteractionSummary>();
+  if (posts.length) {
+    try {
+      const summaries = await apiPost<BackendInteractionSummary[]>('/interactions/posts/summaries', { postIds: posts.map((post) => post.id) });
+      summaries.forEach((summary) => summariesByPostId.set(String(summary.postId), summary));
+    } catch (error) {
+      traceProfileRuntime('PROFILE_INTERACTION_SUMMARIES_ERROR', { flow: 'profile', postCount: posts.length, errorType: error instanceof Error ? error.name : 'UnknownError' });
+    }
+  }
   return posts.map((post) => {
     const firstMediaId = post.mediaIds?.[0] ?? null;
     const attachment = firstMediaId ? mediaById.get(String(firstMediaId)) : undefined;
-    const type = !attachment ? 'text' : (post.mediaIds?.length ?? 0) > 1 ? 'carousel' : attachment.type;
+    const hasMedia = Boolean(firstMediaId);
+    const type = !hasMedia ? 'text' : (post.mediaIds?.length ?? 0) > 1 ? 'carousel' : attachment?.type ?? 'image';
+    const interaction = summariesByPostId.get(String(post.id));
     traceProfileRuntime('PROFILE_POST_MEDIA_RESOLVE', { postId: post.id, mediaId: firstMediaId, found: Boolean(attachment?.url), mediaType: attachment?.type ?? 'text' });
     return {
       id: post.id,
       type,
-      media_url: attachment?.thumbnail_url ?? attachment?.url ?? '',
+      media_url: attachment?.thumbnail_url ?? attachment?.url ?? (firstMediaId ? mediaContentUrl(firstMediaId) : ''),
       media_id: firstMediaId,
       media_type: attachment?.type ?? null,
       caption: post.caption ?? post.content ?? null,
-      likes_count: 0,
-      comments_count: 0,
-      is_saved: false,
+      likes_count: interaction?.likes ?? 0,
+      views_count: interaction?.views ?? 0,
+      is_saved: savedPostIds.has(String(post.id)) || interaction?.favoriteByViewer === true,
       created_at: post.createdAt,
     };
   });

@@ -53,7 +53,7 @@ export interface ProfilePost {
   media: MediaAttachment[];
   caption?: string | null;
   likes_count: number;
-  comments_count: number;
+  views_count: number;
   created_at: string;
 }
 
@@ -65,7 +65,7 @@ export interface UserPublication {
   media_type: 'video' | 'image' | null;
   caption?: string | null;
   likes_count: number;
-  comments_count: number;
+  views_count: number;
   is_saved: boolean;
   created_at: string;
 }

@@ -72,6 +72,7 @@ export function useCreateStory() {
             id: `demo-story-${Date.now()}`,
             media: { ...MOCK_STORIES[0].media, id: payload.mediaId },
             text: payload.caption,
+            caption_style: payload.captionStyle,
             duration_seconds: payload.durationSeconds,
             created_at: new Date().toISOString(),
             expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),

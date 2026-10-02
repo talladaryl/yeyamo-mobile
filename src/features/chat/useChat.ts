@@ -19,6 +19,8 @@ type ChatMode = 'demo' | 'backend';
 
 export const chatKeys = {
   inbox: (mode: ChatMode, viewerId: string) => ['messaging', mode, viewerId, 'conversations'] as const,
+  outingGroup: (mode: ChatMode, viewerId: string, outingId: EntityId) =>
+    ['messaging', mode, viewerId, 'outing', String(outingId), 'group'] as const,
   messages: (mode: ChatMode, viewerId: string, conversationId: EntityId) =>
     ['messaging', mode, viewerId, 'conversation', String(conversationId), 'messages'] as const,
 };
@@ -50,6 +52,41 @@ export function useConversations() {
           })
         : chatApi.getConversations(viewerId),
     select: (res) => res.data,
+  });
+}
+
+/** Reads the durable outing-to-group association only for an authenticated
+ * participant. A 403 is deliberately not retried or converted into a group. */
+export function useOutingGroup(outingId: EntityId, enabled = true) {
+  const { mode, viewerId } = useChatSession();
+  const isDemo = mode === 'demo';
+  return useQuery({
+    queryKey: chatKeys.outingGroup(mode, viewerId, outingId),
+    enabled: enabled && (isDemo || Boolean(viewerId)) && Boolean(outingId),
+    queryFn: () => isDemo
+      ? Promise.resolve(MOCK_CONVERSATIONS.find((conversation) => conversation.type === 'group') ?? MOCK_CONVERSATIONS[0])
+      : chatApi.getOutingGroup(outingId, viewerId).then((result) => result.data),
+    retry: (failureCount, error) => {
+      const status = (error as { status?: number } | null)?.status;
+      return status !== 403 && failureCount < 3;
+    },
+  });
+}
+
+/** Lazy resolver for a Feed CTA. It does no work while cards scroll and keeps
+ * the inbox coherent before navigation enters the existing chat route. */
+export function useResolveOutingGroup() {
+  const queryClient = useQueryClient();
+  const { mode, viewerId } = useChatSession();
+  const isDemo = mode === 'demo';
+  return useMutation({
+    mutationFn: (outingId: EntityId) => isDemo
+      ? Promise.resolve(MOCK_CONVERSATIONS.find((conversation) => conversation.type === 'group') ?? MOCK_CONVERSATIONS[0])
+      : chatApi.getOutingGroup(outingId, viewerId).then((result) => result.data),
+    onSuccess: (conversation, outingId) => {
+      queryClient.setQueryData(chatKeys.outingGroup(mode, viewerId, outingId), conversation);
+      void queryClient.invalidateQueries({ queryKey: chatKeys.inbox(mode, viewerId) });
+    },
   });
 }
 

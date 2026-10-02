@@ -158,7 +158,7 @@ async function resolveIdentities(authUserIds: string[], context: string): Promis
   if (!requested.length) return new Map();
   traceMessageRuntime('MESSAGE_PARTICIPANTS_REQUEST', { context, requestedCount: requested.length });
   try {
-    const identities = await socialApi.resolveContentAuthorIdentities(requested);
+    const identities = await socialApi.resolveMessagingIdentities(requested);
     const byAuthId = new Map(identities.map((identity) => [identity.authUserId, identity]));
     traceMessageRuntime('MESSAGE_PARTICIPANTS_RESOLVED', {
       context,
@@ -228,9 +228,24 @@ export const chatApi = {
     return result;
   },
 
+  getOutingGroup: async (outingId: EntityId, viewerAuthUserId: string): Promise<{ data: Conversation }> => {
+    const correlationId = createIdempotencyKey();
+    traceMessageRuntime('OUTING_GROUP_RESOLVE_REQUEST', { outingId: String(outingId), viewerAuthUserId, correlationId });
+    const conversation = await apiGet<BackendConversationView>(
+      `/messaging/outings/${encodeURIComponent(String(outingId))}/group`,
+      messagingRequestConfig(correlationId, 'OUTING_GROUP_RESOLVE'),
+    );
+    const identities = await resolveIdentities(memberIds(conversation), 'outing-group');
+    const mapped = mapConversation(conversation, viewerAuthUserId, identities);
+    traceMessageRuntime('OUTING_GROUP_RESOLVE_RESPONSE', { outingId: String(outingId), conversationId: String(mapped.id), correlationId });
+    return { data: mapped };
+  },
+
   sendMessage: async (payload: SendMessagePayload): Promise<{ data: ChatMessage }> => {
     const correlationId = createIdempotencyKey();
-    const clientMessageId = createIdempotencyKey();
+    // The caller may retain this key while retrying an ambiguous network
+    // response, allowing the backend idempotency table to return the first send.
+    const clientMessageId = payload.client_message_id ?? createIdempotencyKey();
     traceMessageRuntime('MESSAGE_SEND_REQUEST', {
       conversationId: String(payload.conversation_id),
       hasReply: Boolean(payload.reply_to_message_id),
