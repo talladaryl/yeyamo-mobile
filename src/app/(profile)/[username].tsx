@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useCreateConversation } from '@/features/chat/useChat';
 import type { UserProfile } from '@/features/profile/types';
 import { usePublicProfilePublications } from '@/features/profile/useProfile';
-import { useFollowActions, useUserSearch } from '@/features/social/useSocial';
+import { useFollowActions, usePublicSocialProfile, useUserSearch } from '@/features/social/useSocial';
 import { useThemeStore } from '@/features/theme/theme.store';
 import { useStories } from '@/features/story/useStory';
 import { traceProfileRuntime, traceStoryRuntime } from '@/features/social/social.runtime-trace';
@@ -25,8 +25,13 @@ export default function PublicProfileScreen() {
   const storiesQuery = useStories();
   const [isFollowing, setFollowing] = useState(false);
   const [safetySheetOpen, setSafetySheetOpen] = useState(false);
-  const { data: users = [], isLoading } = useUserSearch(username);
-  const searchResult = users.find((item) => item.username === username) ?? users[0];
+  const routeIsProfileUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(username);
+  const directProfile = usePublicSocialProfile(routeIsProfileUuid ? username : undefined);
+  const search = useUserSearch(routeIsProfileUuid ? '' : username);
+  const searchResult = routeIsProfileUuid
+    ? directProfile.data
+    : (search.data ?? []).find((item) => item.username === username) ?? search.data?.[0];
+  const isLoading = routeIsProfileUuid ? directProfile.isLoading : search.isLoading;
   const publicPosts = usePublicProfilePublications(searchResult?.content_author_id);
   const { follow, unfollow } = useFollowActions();
   const createConversation = useCreateConversation();

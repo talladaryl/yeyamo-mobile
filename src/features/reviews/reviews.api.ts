@@ -19,17 +19,35 @@ export interface VerifiedReview {
 
 export interface ReviewAggregate { count: number; averageRating: number | null; }
 interface ReviewPage { content: VerifiedReview[]; totalPages: number; totalElements: number; }
+export type ReviewEligibilityReason = 'ELIGIBLE' | 'EVENT_NOT_COMPLETED' | 'REGISTRATION_NOT_CONFIRMED' | 'BOOKING_NOT_ELIGIBLE' | 'CHECKIN_REQUIRED' | 'VERIFICATION_NOT_SUPPORTED' | 'TARGET_NOT_FOUND';
+export interface ReviewEligibility {
+  eligible: boolean;
+  reasonCode: ReviewEligibilityReason;
+  targetType: ReviewTargetType;
+  targetId: string;
+}
 
 export const reviewsApi = {
   list: (targetType: ReviewTargetType, targetId: string, page = 0) =>
     apiGet<ReviewPage>(`/reviews/${targetType}/${targetId}?page=${page}&size=20&sort=createdAt,desc`),
   aggregate: (targetType: ReviewTargetType, targetId: string) =>
     apiGet<ReviewAggregate>(`/reviews/${targetType}/${targetId}/aggregate`),
+  eligibility: (targetType: ReviewTargetType, targetId: string) =>
+    apiGet<ReviewEligibility>(`/reviews/eligibility?targetType=${encodeURIComponent(targetType)}&targetId=${encodeURIComponent(targetId)}`),
   create: (input: { targetType: ReviewTargetType; targetId: string; rating: number; comment?: string }) =>
     apiPost<VerifiedReview>('/reviews', input, { headers: { 'Idempotency-Key': createIdempotencyKey() } }),
   remove: (reviewId: string) => apiDelete<void>(`/reviews/${reviewId}`, { headers: { 'Idempotency-Key': createIdempotencyKey() } }),
   report: (reviewId: string) => apiPost<void>(`/reviews/${reviewId}/report`),
 };
+
+export function useReviewEligibility(targetType: ReviewTargetType, targetId: string, enabled = true) {
+  return useQuery({
+    queryKey: ['verified-review-eligibility', targetType, targetId],
+    queryFn: () => reviewsApi.eligibility(targetType, targetId),
+    enabled: enabled && Boolean(targetId),
+    staleTime: 30_000,
+  });
+}
 
 export function usePublicReviews(targetType: ReviewTargetType, targetId: string | undefined) {
   const enabled = Boolean(targetId);

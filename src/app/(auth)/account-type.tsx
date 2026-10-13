@@ -43,7 +43,7 @@ export default function AuthAccountTypeScreen() {
             icon="map-outline"
             accent="#EF4444"
             benefits={['Feed découverte', 'Favoris et collections', 'Messages et interactions']}
-            onPress={() => router.push('/(auth)/register')}
+            onPress={() => router.push({ pathname: '/(auth)/register', params: { accountType: 'EXPLORER' } })}
           />
 
           <ChoiceCard

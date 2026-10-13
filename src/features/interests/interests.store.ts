@@ -46,6 +46,17 @@ export const useInterestsStore = create<InterestState>((set, get) => ({
   saveInterests: async (completeOnboarding = true) => {
     const selectedInterestIds = get().selectedInterestIds;
     console.info('INTEREST_SELECTION_SAVE', selectedInterestIds);
+    const auth = useAuthStore.getState();
+    if (auth.sessionMode === 'demo-user' || auth.sessionMode === 'demo-partner') {
+      set({ selectedInterestIds, hasCompletedInterestSelection: completeOnboarding, isServerResolved: true });
+      await secureStore.set(secureStore.KEYS.INTEREST_PROFILE, JSON.stringify({
+        viewerId: String(auth.user?.id ?? ''),
+        interestCodes: selectedInterestIds,
+        interestsOnboardingCompleted: completeOnboarding,
+      }));
+      console.info('INTEREST_ONBOARDING_COMPLETE');
+      return;
+    }
     const profile = await interestsApi.save(selectedInterestIds, completeOnboarding);
     set({ selectedInterestIds: profile.interestCodes ?? selectedInterestIds, hasCompletedInterestSelection: profile.interestsOnboardingCompleted, isServerResolved: true });
     const viewerId = String(useAuthStore.getState().user?.id ?? '');

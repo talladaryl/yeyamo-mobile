@@ -25,6 +25,7 @@ export interface LoginCredentials {
 }
 
 export interface RegisterCredentials {
+  accountType?: AccountType;
   username: string;
   display_name: string;
   email: string;
@@ -49,9 +50,12 @@ export interface ForgotPasswordCredentials {
 }
 
 export interface SocialLoginCredentials {
-  provider: 'google' | 'apple';
+  provider: 'google' | 'apple' | 'microsoft';
   token: string;
+  accountType?: AccountType;
 }
+
+export type AccountType = 'EXPLORER' | 'PARTNER';
 
 export interface AuthResponse {
   accessToken: string;
@@ -69,6 +73,7 @@ export interface AuthApiUser {
   roles: string[];
   createdAt: string;
   emailVerifiedAt: string | null;
+  accountType: AccountType;
 }
 
 export interface PasswordResetCredentials {

@@ -68,8 +68,8 @@ export default function EventDetailScreen() {
     } catch (error) {
       const status = (error as { status?: number } | null)?.status;
       Alert.alert('Groupe indisponible', status === 403
-        ? 'Votre participation doit Ãªtre confirmÃ©e avant lâ€™accÃ¨s au groupe.'
-        : 'Le groupe de cette sortie est encore en cours de prÃ©paration. RÃ©essayez dans un instant.');
+        ? 'Votre participation doit être confirmée avant l’accès au groupe.'
+        : 'Le groupe de cette sortie est encore en cours de préparation. Réessayez dans un instant.');
     }
   };
   const addToCalendar = () => {
@@ -208,9 +208,9 @@ export default function EventDetailScreen() {
           )}
 
           {event.is_participating ? <View className="mb-5">
-            {outingGroup.isLoading ? <View className="flex-row items-center rounded-xl border px-4 py-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}><ActivityIndicator size="small" color={colors.primary} /><Text className="ml-3 flex-1 text-sm" style={{ color: colors.textSecondary }}>PrÃ©paration de votre groupe de sortieâ€¦</Text></View> : null}
-            {outingGroup.isSuccess ? <TouchableOpacity onPress={() => void openOutingGroup()} disabled={resolveOutingGroup.isPending} className="min-h-13 flex-row items-center justify-center rounded-xl bg-[#DC2626] px-4 py-3.5" style={{ opacity: resolveOutingGroup.isPending ? 0.65 : 1 }} accessibilityRole="button" accessibilityLabel="Accéder au groupe de cette sortie"><Ionicons name="people-outline" size={21} color="#FFFFFF" /><Text className="ml-2 text-base font-bold text-white">AccÃ©der au groupe</Text><Ionicons name="chevron-forward" size={20} color="#FFFFFF" /></TouchableOpacity> : null}
-            {outingGroup.isError ? <View className="rounded-xl border px-4 py-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Text className="text-sm" style={{ color: colors.textSecondary }}>Votre participation est confirmÃ©e. Le groupe sera accessible dÃ¨s sa prÃ©paration terminÃ©e.</Text><TouchableOpacity onPress={() => void outingGroup.refetch()} className="mt-2 min-h-10 self-start justify-center" accessibilityRole="button" accessibilityLabel="Réessayer de charger le groupe"><Text className="font-bold" style={{ color: colors.primary }}>RÃ©essayer</Text></TouchableOpacity></View> : null}
+            {outingGroup.isLoading ? <View className="flex-row items-center rounded-xl border px-4 py-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}><ActivityIndicator size="small" color={colors.primary} /><Text className="ml-3 flex-1 text-sm" style={{ color: colors.textSecondary }}>Préparation de votre groupe de sortie…</Text></View> : null}
+            {outingGroup.isSuccess ? <TouchableOpacity onPress={() => void openOutingGroup()} disabled={resolveOutingGroup.isPending} className="min-h-13 flex-row items-center justify-center rounded-xl bg-[#DC2626] px-4 py-3.5" style={{ opacity: resolveOutingGroup.isPending ? 0.65 : 1 }} accessibilityRole="button" accessibilityLabel="Accéder au groupe de cette sortie"><Ionicons name="people-outline" size={21} color="#FFFFFF" /><Text className="ml-2 text-base font-bold text-white">Accéder au groupe</Text><Ionicons name="chevron-forward" size={20} color="#FFFFFF" /></TouchableOpacity> : null}
+            {outingGroup.isError ? <View className="rounded-xl border px-4 py-3" style={{ backgroundColor: colors.card, borderColor: colors.border }}><Text className="text-sm" style={{ color: colors.textSecondary }}>Votre participation est confirmée. Le groupe sera accessible dès sa préparation terminée.</Text><TouchableOpacity onPress={() => void outingGroup.refetch()} className="mt-2 min-h-10 self-start justify-center" accessibilityRole="button" accessibilityLabel="Réessayer de charger le groupe"><Text className="font-bold" style={{ color: colors.primary }}>Réessayer</Text></TouchableOpacity></View> : null}
           </View> : null}
 
           {ticketing && ticketing.tickets.some((ticket) => ticket.available) ? (

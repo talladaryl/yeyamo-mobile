@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, RefreshControl, Text, View } from 'react-native';
+import { Alert, FlatList, KeyboardAvoidingView, Modal, Platform, RefreshControl, Text, View } from 'react-native';
 import { useYeyamoTabBarHeight } from '@/components/navigation/useYeyamoTabBarHeight';
 import { useRouter } from 'expo-router';
 import type { ListRenderItemInfo, ViewToken } from 'react-native';
@@ -38,6 +38,7 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
   const [activeIndex, setActiveIndex] = useState(0);
   const [itemHeight, setItemHeight] = useState(0);
   const trackedDeliveries = useRef<Set<string>>(new Set());
+  const likeMutationsInFlight = useRef<Set<string>>(new Set());
   const [savedPostIds, setSavedPostIds] = useState<Set<EntityId>>(
     () => new Set(posts.filter((post) => !isSponsoredFeedItem(post) && post.is_saved).map((post) => post.id)),
   );
@@ -177,10 +178,10 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
       const apiError = error as AppApiError;
       traceMessageRuntime('OUTING_GROUP_NAVIGATION_ERROR', { outingId, source: 'feed', status: apiError.status ?? null, code: apiError.code ?? null });
       const message = apiError.status === 403
-        ? 'Participez dâ€™abord Ã  cette sortie pour accÃ©der Ã  son groupe.'
+        ? 'Participez d’abord à cette sortie pour accéder à son groupe.'
         : apiError.status === 404
-          ? 'Le groupe de cette sortie est encore en cours de prÃ©paration. RÃ©essayez dans un instant.'
-          : 'Le groupe nâ€™a pas pu Ãªtre ouvert. RÃ©essayez plus tard.';
+          ? 'Le groupe de cette sortie est encore en cours de préparation. Réessayez dans un instant.'
+          : 'Le groupe n’a pas pu être ouvert. Réessayez plus tard.';
       Alert.alert('Groupe indisponible', message);
     }
   }, [resolveOutingGroup, router]);
@@ -204,7 +205,15 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
       playbackRate={playbackRates[String(item.id)] ?? 1}
       onFollow={() => void handleFollow(item)}
       onAuthorPress={() => handleAuthorPress(item)}
-      onLike={() => toggleLike({ postId: item.id, isLiked: item.is_liked })}
+      onLike={() => {
+        const postId = String(item.id);
+        if (likeMutationsInFlight.current.has(postId)) return;
+        likeMutationsInFlight.current.add(postId);
+        toggleLike(
+          { postId: item.id, isLiked: item.is_liked },
+          { onSettled: () => likeMutationsInFlight.current.delete(postId) },
+        );
+      }}
       onComment={() => setCommentsPostId(String(item.id))}
       onShare={() => setSharePost(item)}
       onSave={() => toggleSaved(item.id)}
@@ -291,11 +300,13 @@ export function VerticalFeedList({ posts, onEndReached, onRefresh, refreshing = 
         }}
       />
 
-      {commentsPostId ? <View className="absolute bottom-0 left-0 right-0 overflow-hidden rounded-t-[28px] border-t" style={{ bottom: tabBarHeight, height: Math.max(300, Math.round((itemHeight - tabBarHeight) * 0.54)), backgroundColor: colors.surfaceElevated, borderColor: colors.border, shadowColor: '#000000', shadowOpacity: 0.28, shadowRadius: 16, elevation: 12 }}>
-        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
-          <CommentsThread postId={commentsPostId} onClose={() => setCommentsPostId(null)} presentation="sheet" />
+      <Modal visible={Boolean(commentsPostId)} transparent animationType="slide" onRequestClose={() => setCommentsPostId(null)}>
+        <KeyboardAvoidingView className="flex-1 justify-end" behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
+          <View className="overflow-hidden rounded-t-[28px] border-t" style={{ height: Math.max(300, Math.round((itemHeight - tabBarHeight) * 0.54)), backgroundColor: colors.surfaceElevated, borderColor: colors.border, shadowColor: '#000000', shadowOpacity: 0.28, shadowRadius: 16, elevation: 12 }}>
+            {commentsPostId ? <CommentsThread postId={commentsPostId} onClose={() => setCommentsPostId(null)} presentation="sheet" /> : null}
+          </View>
         </KeyboardAvoidingView>
-      </View> : null}
+      </Modal>
     </View>
   );
 }

@@ -17,6 +17,7 @@ import { useInterestsStore } from '@/features/interests/interests.store';
 import { TurnstileWidget } from '@/components/security/TurnstileWidget';
 import { useGoogleIdToken } from '@/features/auth/useGoogleIdToken';
 import { useAppleIdToken } from '@/features/auth/useAppleIdToken';
+import { useMicrosoftIdToken } from '@/features/auth/useMicrosoftIdToken';
 import ENV from '@/config/env';
 
 export default function LoginScreen() {
@@ -28,7 +29,8 @@ export default function LoginScreen() {
   const [turnstileVersion, setTurnstileVersion] = useState(0);
   const [turnstileMessage, setTurnstileMessage] = useState<string | null>(null);
   const { googleRequest, requestGoogleIdToken, googleError } = useGoogleIdToken();
-  const { appleAvailable, appleError, requestAppleIdToken } = useAppleIdToken();
+  const { appleError, requestAppleIdToken } = useAppleIdToken();
+  const { microsoftError, requestMicrosoftIdToken } = useMicrosoftIdToken();
   const { control, handleSubmit, formState: { errors, isValid } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     mode: 'onChange',
@@ -88,14 +90,25 @@ export default function LoginScreen() {
     }
   };
 
+  const handleMicrosoftLogin = async () => {
+    const idToken = await requestMicrosoftIdToken();
+    if (!idToken) return;
+    try {
+      await socialLogin({ provider: 'microsoft', token: idToken });
+      router.replace('/(tabs)');
+    } catch {
+      // The normalized backend error is exposed by useAuth.
+    }
+  };
+
   const partnerDemoLogin = async () => {
     try {
+      await loginDemo('partner');
       const interests = useInterestsStore.getState();
       if (!interests.selectedInterestIds.length) {
         ['sorties', 'gastronomie', 'voyage'].forEach(interests.toggleInterest);
       }
       await useInterestsStore.getState().saveInterests();
-      await loginDemo('partner');
       router.replace('/(tabs)');
     } catch {
       // The request error is exposed by useAuth.
@@ -178,18 +191,18 @@ export default function LoginScreen() {
                 />
                 {turnstileMessage ? <Text className="text-center text-xs text-[#B45309]">{turnstileMessage}</Text> : null}
               </> : null}
-              {error || googleError || appleError ? <Text className="text-center text-sm" style={{ color: colors.primary }}>{error ?? googleError ?? appleError}</Text> : null}
+              {error || googleError || appleError || microsoftError ? <Text className="text-center text-sm" style={{ color: colors.primary }}>{error ?? googleError ?? appleError ?? microsoftError}</Text> : null}
               <Button label="Se connecter" onPress={handleSubmit(signIn)} isLoading={isLoading} disabled={!isValid || isLoading} />
-              {ENV.APP_ENV !== 'production' ? <TouchableOpacity
+              {(__DEV__ || ENV.APP_ENV !== 'production') ? <TouchableOpacity
                 onPress={demoLogin}
                 disabled={isLoading}
                 activeOpacity={0.8}
                 className="items-center rounded-xl border py-3"
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
               >
-                <Text className="font-semibold" style={{ color: colors.text }}>Entrer en mode démo</Text>
+                <Text className="font-semibold" style={{ color: colors.text }}>Se connecter en mode démo Explorateur</Text>
               </TouchableOpacity> : null}
-              {ENV.APP_ENV !== 'production' ? <TouchableOpacity
+              {(__DEV__ || ENV.APP_ENV !== 'production') ? <TouchableOpacity
                 onPress={partnerDemoLogin}
                 disabled={isLoading}
                 activeOpacity={0.8}
@@ -198,7 +211,7 @@ export default function LoginScreen() {
               >
                 <Icon name="business" size={19} color="#7C3AED" />
                 <Text className="font-semibold" style={{ color: colors.text }}>
-                  Se connecter en tant que partenaire démo
+                  Se connecter en mode démo Partenaire
                 </Text>
               </TouchableOpacity> : null}
             </View>
@@ -210,7 +223,8 @@ export default function LoginScreen() {
             </View>
             <View className="gap-3">
               <SocialButton provider="google" onPress={() => void handleGoogleLogin()} disabled={isLoading || !googleRequest} />
-              {appleAvailable ? <SocialButton provider="apple" onPress={() => void handleAppleLogin()} disabled={isLoading} /> : null}
+              <SocialButton provider="apple" onPress={() => void handleAppleLogin()} disabled={isLoading} />
+              <SocialButton provider="microsoft" onPress={() => void handleMicrosoftLogin()} disabled={isLoading} />
             </View>
 
             <View className="mt-7 flex-row items-center justify-center">

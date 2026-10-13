@@ -5,7 +5,7 @@ import { useThemeStore } from '@/features/theme/theme.store';
 import Svg, { Path } from 'react-native-svg';
 
 interface SocialButtonProps {
-  provider: 'google' | 'apple';
+  provider: 'google' | 'apple' | 'microsoft';
   onPress: () => void;
   disabled?: boolean;
 }
@@ -25,7 +25,15 @@ export function SocialButton({ provider, onPress, disabled = false }: SocialButt
       case 'apple':
         return {
           icon: 'logo-apple',
-          text: 'Apple',
+          text: 'Continuer avec Apple',
+          bgColor: colors.card,
+          textColor: colors.text,
+          borderColor: colors.border,
+        };
+      case 'microsoft':
+        return {
+          icon: 'logo-microsoft',
+          text: 'Continuer avec Microsoft',
           bgColor: colors.card,
           textColor: colors.text,
           borderColor: colors.border,

@@ -1,7 +1,7 @@
 import { apiClient, apiGet } from '@/services/api/client';
 import { absoluteApiUrl, mediaContentUrl } from '@/services/api/contracts';
 import type { EntityId, MediaAttachment } from '@/types/api.types';
-import { mediaTraceForFormData, traceMediaRuntime } from './media.runtime-trace';
+import { mediaTraceForFormData, registerCreatedMedia, traceMediaRuntime } from './media.runtime-trace';
 import { toMediaFormData, type PickedMediaAsset } from './media.utils';
 
 export interface MediaUploadAsset {
@@ -87,7 +87,8 @@ export async function uploadMedia(
 export async function uploadMediaFormData(form: FormData, endpoint = '/media'): Promise<MediaUploadResponse> {
   const context = mediaTraceForFormData(form);
   const flow = context?.flow ?? 'generic-media';
-  traceMediaRuntime('MEDIA_UPLOAD_REQUEST', {
+  traceMediaRuntime('MEDIA_UPLOAD_START', {
+    traceId: context?.id ?? null,
     flow,
     method: 'POST',
     url: endpoint,
@@ -99,15 +100,30 @@ export async function uploadMediaFormData(form: FormData, endpoint = '/media'): 
     // Do not provide Content-Type: React Native assigns the multipart
     // boundary. The client transform preserves FormData before Axios defaults.
     const { data } = await apiClient.post<MediaUploadResponse>(endpoint, form, { timeout: 120_000 });
-    traceMediaRuntime('MEDIA_UPLOAD_RESPONSE', { flow, method: 'POST', url: endpoint, status: 201, mediaId: String(data.id) });
+    traceMediaRuntime('MEDIA_UPLOAD_HTTP_RESULT', { traceId: context?.id ?? null, flow, method: 'POST', url: endpoint, httpStatus: 201 });
+    traceMediaRuntime('MEDIA_CREATED', { traceId: context?.id ?? null, flow, mediaId: String(data.id) });
+    registerCreatedMedia(String(data.id), context);
+    if (data.processingStatus || data.thumbnailStatus) {
+      traceMediaRuntime('MEDIA_PROCESSING_STATUS', {
+        traceId: context?.id ?? null,
+        flow,
+        processingStatus: data.processingStatus ?? null,
+        thumbnailStatus: data.thumbnailStatus ?? null,
+      });
+    }
     return data;
   } catch (error) {
     const normalized = error as { status?: number; code?: string; message?: string };
     traceMediaRuntime('MEDIA_UPLOAD_ERROR', {
       flow,
+      traceId: context?.id ?? null,
+      stage: 'MEDIA_UPLOAD_START',
       method: 'POST',
       url: endpoint,
       mimeType: context?.mimeType ?? 'unknown',
+      declaredMime: context?.declaredMime ?? 'unknown',
+      normalizedMime: context?.mimeType ?? 'unknown',
+      extension: context?.extension ?? 'unknown',
       mediaType: context?.mediaType ?? 'unknown',
       fileSizeBucket: context?.fileSizeBucket ?? 'unknown',
       status: normalized.status ?? null,

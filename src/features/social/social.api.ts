@@ -101,6 +101,12 @@ function mapSettings(settings: BackendSocialSettings): SocialSettings {
 }
 
 export const socialApi = {
+  getPublicProfile: async (profileId: EntityId): Promise<UserSearchResult> => {
+    const { data } = await apiClient.get<BackendProfileSummary>(
+      `/users/social/profiles/${encodeURIComponent(String(profileId))}`,
+    );
+    return { ...mapFollowUser(data), mutual_friends_count: 0 };
+  },
   resolveContentAuthorIdentities: async (authUserIds: string[]): Promise<ContentAuthorIdentity[]> => {
     const unique = [...new Set(authUserIds.filter(Boolean))];
     if (!unique.length) return [];

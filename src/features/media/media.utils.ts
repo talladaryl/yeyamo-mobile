@@ -139,17 +139,41 @@ export async function normalizeImageForUpload(
       sourceMimeType,
       errorType: error instanceof Error ? error.name : 'UnknownError',
     });
-    throw new Error('Cette image HEIC ne peut pas Ãªtre convertie en JPEG. Choisissez une autre image puis rÃ©essayez.');
+    throw new Error('Cette image HEIC ne peut pas être convertie en JPEG. Choisissez une autre image puis réessayez.');
   }
 }
 
 export async function toMediaFormData(asset: PickedMediaAsset, prefix?: string, index?: number, fields: MediaFormDataFields = {}): Promise<FormData> {
   const flow = prefix ?? 'media';
-  validateMediaAsset(asset);
+  traceMediaRuntime('MEDIA_PICKED', {
+    flow,
+    mediaType: asset.type ?? 'unknown',
+    extension: extensionFromName(asset.fileName) ?? 'unknown',
+    declaredMime: asset.mimeType ?? 'unknown',
+    size: asset.fileSize ?? null,
+  });
+  traceMediaRuntime('MEDIA_VALIDATION_START', { flow, declaredMime: asset.mimeType ?? 'unknown' });
+  try {
+    validateMediaAsset(asset);
+  } catch (error) {
+    traceMediaRuntime('MEDIA_UPLOAD_ERROR', {
+      flow,
+      stage: 'MEDIA_VALIDATION_START',
+      mediaType: asset.type ?? 'unknown',
+      extension: extensionFromName(asset.fileName) ?? 'unknown',
+      declaredMime: asset.mimeType ?? 'unknown',
+      normalizedMime: resolveMediaMimeType(asset),
+      size: asset.fileSize ?? null,
+      message: error instanceof Error ? error.message : 'Validation failed',
+    });
+    throw error;
+  }
+  traceMediaRuntime('MEDIA_VALIDATION_OK', { flow, normalizedMime: resolveMediaMimeType(asset) });
+  traceMediaRuntime('MEDIA_NORMALIZATION_START', { flow, declaredMime: asset.mimeType ?? 'unknown' });
   const normalizedAsset = await normalizeImageForUpload(asset, flow, index ?? 0);
   const mimeType = resolveMediaMimeType(normalizedAsset);
   const fileName = resolveMediaFileName(normalizedAsset, prefix, index);
-  traceMediaRuntime('NORMALIZE', {
+  traceMediaRuntime('MEDIA_NORMALIZATION_OK', {
     flow,
     mediaType: normalizedAsset.type ?? 'unknown',
     mimeType,
@@ -165,6 +189,8 @@ export async function toMediaFormData(asset: PickedMediaAsset, prefix?: string, 
   registerMediaFormData(formData, flow, mimeType, {
     mediaType: normalizedAsset.type ?? (mimeType.startsWith('video/') ? 'video' : 'image'),
     fileSize: normalizedAsset.fileSize,
+    declaredMime: asset.mimeType,
+    extension: extensionFromName(normalizedAsset.fileName) ?? extensionFromName(fileName) ?? 'unknown',
   });
   return formData;
 }

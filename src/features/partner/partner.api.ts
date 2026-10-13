@@ -1,6 +1,17 @@
 import { apiGet, apiPost } from '@/services/api/client';
 
-export type PartnerBusinessType = 'ARTISAN' | 'ARTIST';
+export type PartnerBusinessType =
+  | 'INDIVIDUAL'
+  | 'COMPANY'
+  | 'ASSOCIATION'
+  | 'PUBLIC_ORGANIZATION'
+  | 'BUSINESS'
+  | 'ARTISAN'
+  | 'ARTIST'
+  | 'CULTURAL_ASSOCIATION'
+  | 'MUSEUM'
+  | 'CULTURAL_EXPERT'
+  | 'TOURISM_OPERATOR';
 
 export interface Partner {
   id: string;

@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from 'expo-router';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { useThemeStore } from '@/features/theme/theme.store';
@@ -65,7 +65,10 @@ function TabIcon({
   const [inactiveName, activeName] = names[kind];
 
   return (
-    <View className="h-10 w-10 items-center justify-center rounded-2xl">
+    <View
+      className="h-11 w-11 items-center justify-center rounded-full"
+      style={{ backgroundColor: focused ? 'rgba(239,68,68,0.12)' : 'transparent' }}
+    >
       <Icon name={focused ? activeName : inactiveName} size={25} color={focused ? '#EF4444' : inactiveColor} />
     </View>
   );
@@ -74,6 +77,7 @@ function TabIcon({
 export default function TabsLayout() {
   const { colors } = useThemeStore();
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const router = useRouter();
   const { user } = useAuth();
   const { data: conversations = [] } = useConversations();
@@ -81,30 +85,56 @@ export default function TabsLayout() {
   const unreadMessages = conversations.reduce((total, conversation) => total + conversation.unread_count, 0);
   const unreadInbox = unreadMessages + unreadNotifications;
   const badgeStyle = { backgroundColor: '#EF4444', color: '#FFFFFF', fontSize: 10 };
+  const horizontalRatio = screenWidth < 360 ? 0.92 : screenWidth < 430 ? 0.86 : 0.82;
+  const tabBarWidth = Math.min(Math.round(screenWidth * horizontalRatio), 460);
+  const tabBarLeft = Math.round((screenWidth - tabBarWidth) / 2);
+  const tabBarBottom = Math.max(insets.bottom, 10);
 
   return (
     <Tabs
+      safeAreaInsets={{ bottom: 0 }}
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
           left: 0,
-          right: 0,
-          bottom: 0,
-          height: 58 + insets.bottom,
-          paddingTop: 4,
-          paddingBottom: Math.max(insets.bottom, 4),
+          right: undefined,
+          bottom: tabBarBottom,
+          width: tabBarWidth,
+          height: 64,
+          transform: [{ translateX: tabBarLeft }],
+          paddingHorizontal: 8,
+          paddingTop: 0,
+          paddingBottom: 0,
           backgroundColor: colors.tabBar,
+          borderRadius: 32,
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          borderBottomWidth: 0,
-          borderLeftWidth: 0,
-          borderRightWidth: 0,
-          shadowOpacity: 0,
-          elevation: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          borderLeftWidth: 1,
+          borderLeftColor: colors.border,
+          borderRightWidth: 1,
+          borderRightColor: colors.border,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.18,
+          shadowRadius: 14,
+          elevation: 12,
         },
         tabBarItemStyle: {
-          paddingTop: 1,
+          height: 64,
+          maxWidth: 64,
+          marginHorizontal: 1,
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
+        tabBarIconStyle: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 0,
+          marginBottom: 0,
         },
         tabBarActiveTintColor: '#EF4444',
         tabBarInactiveTintColor: colors.textMuted,

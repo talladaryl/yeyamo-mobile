@@ -36,6 +36,10 @@ export interface AppApiError {
   message: string;
   fieldErrors?: Record<string, string>;
   correlationId?: string;
+  axiosCode?: string;
+  requestUrl?: string;
+  method?: string;
+  isNetworkError?: boolean;
 }
 
 declare module '@tanstack/react-query' {

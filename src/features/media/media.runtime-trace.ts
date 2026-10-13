@@ -10,11 +10,14 @@ export type MediaTraceContext = Readonly<{
   id: string;
   flow: string;
   mimeType: string;
+  declaredMime: string;
+  extension: string;
   mediaType: string;
   fileSizeBucket: 'unknown' | 'small' | 'medium' | 'large' | 'oversize';
 }>;
 
 const formContexts = new WeakMap<object, MediaTraceContext>();
+const mediaContexts = new Map<string, MediaTraceContext>();
 
 function devEnabled(): boolean {
   return typeof __DEV__ !== 'undefined' && __DEV__;
@@ -41,21 +44,25 @@ export function registerMediaFormData(
   formData: FormData,
   flow: string,
   mimeType: string,
-  options: { mediaType?: string; fileSize?: number | null } = {},
+  options: { mediaType?: string; fileSize?: number | null; declaredMime?: string | null; extension?: string } = {},
 ): MediaTraceContext {
   const context: MediaTraceContext = {
     id: newTraceId(),
     flow,
     mimeType,
+    declaredMime: options.declaredMime ?? 'unknown',
+    extension: options.extension ?? 'unknown',
     mediaType: options.mediaType ?? (mimeType.startsWith('video/') ? 'video' : 'image'),
     fileSizeBucket: fileSizeBucket(options.fileSize),
   };
   formContexts.set(formData, context);
-  traceMediaRuntime('FORM_DATA', {
+  traceMediaRuntime('MEDIA_FORMDATA_READY', {
     traceId: context.id,
     flow: context.flow,
     bodyType: 'FormData',
     mimeType: context.mimeType,
+    declaredMime: context.declaredMime,
+    extension: context.extension,
     mediaType: context.mediaType,
     fileSizeBucket: context.fileSizeBucket,
     partNames: ['file'],
@@ -65,4 +72,27 @@ export function registerMediaFormData(
 
 export function mediaTraceForFormData(value: unknown): MediaTraceContext | undefined {
   return value && typeof value === 'object' ? formContexts.get(value) : undefined;
+}
+
+export function registerCreatedMedia(mediaId: string, context?: MediaTraceContext): void {
+  if (!context || !mediaId) return;
+  mediaContexts.set(mediaId, context);
+}
+
+export function mediaTraceForAssociation(value: unknown): MediaTraceContext | undefined {
+  const visited = new Set<unknown>();
+  const find = (candidate: unknown): MediaTraceContext | undefined => {
+    if (typeof candidate === 'string') return mediaContexts.get(candidate);
+    if (!candidate || typeof candidate !== 'object' || visited.has(candidate)) return undefined;
+    visited.add(candidate);
+    if (Array.isArray(candidate)) {
+      for (const item of candidate) { const context = find(item); if (context) return context; }
+      return undefined;
+    }
+    for (const [key, item] of Object.entries(candidate as Record<string, unknown>)) {
+      if (/media/i.test(key)) { const context = find(item); if (context) return context; }
+    }
+    return undefined;
+  };
+  return find(value);
 }

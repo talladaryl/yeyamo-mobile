@@ -28,6 +28,7 @@ export const authApi = {
       cityId: credentials.cityId ?? null,
       preferredLanguageCode: credentials.preferredLanguageCode ?? null,
       timezone: credentials.timezone ?? null,
+      accountType: credentials.accountType ?? 'EXPLORER',
     }),
 
   logout: () => apiPost<void>('/auth/logout'),
@@ -59,6 +60,7 @@ export const authApi = {
   socialLogin: (credentials: SocialLoginCredentials) =>
     apiPost<AuthResponse>(`/auth/oauth/${credentials.provider}`, {
       idToken: credentials.token,
+      accountType: credentials.accountType ?? 'EXPLORER',
     }),
 
   oauthGoogle: (idToken: string) =>

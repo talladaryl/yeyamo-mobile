@@ -7,7 +7,7 @@ import ENV from '@/config/env';
 import { secureStore } from '@/services/storage/secure-store';
 import { normalizeApiError } from './errors';
 import { isMultipartFormData, removeJsonContentTypeForMultipart } from './multipart';
-import { mediaTraceForFormData, traceMediaRuntime } from '@/features/media/media.runtime-trace';
+import { mediaTraceForAssociation, mediaTraceForFormData, traceMediaRuntime } from '@/features/media/media.runtime-trace';
 
 // ─── Singleton router ref (set from root layout) ────────────────────────────
 // Avoids importing expo-router directly in a service (no React context here)
@@ -53,6 +53,8 @@ function traceMediaHttp(config: InternalAxiosRequestConfig, stage: 'HTTP_MEDIA_R
     url: `${apiBaseUrl}${config.url ?? ''}`,
     bodyType: 'FormData',
     mimeType: context.mimeType,
+    declaredMime: context.declaredMime,
+    extension: context.extension,
     mediaType: context.mediaType,
     fileSizeBucket: context.fileSizeBucket,
     // null is intentional: RN must attach the multipart boundary itself.
@@ -95,6 +97,16 @@ function traceBusinessHttp(config: InternalAxiosRequestConfig, phase: 'HTTP_BUSI
     serverMessage: typeof body?.message === 'string' ? body.message : null,
     correlationId: headerValue(config.headers, 'X-Correlation-ID'),
   });
+  const mediaContext = mediaTraceForAssociation(config.data);
+  if (mediaContext) {
+    traceMediaRuntime(phase === 'HTTP_BUSINESS_REQUEST' ? 'MEDIA_ASSOCIATION_START' : 'MEDIA_ASSOCIATION_RESULT', {
+      traceId: mediaContext.id,
+      flow: trace.flow,
+      stage: trace.stage,
+      httpStatus: status ?? null,
+      result: phase === 'HTTP_BUSINESS_ERROR' ? 'ERROR' : phase === 'HTTP_BUSINESS_RESPONSE' ? 'SUCCESS' : 'STARTED',
+    });
+  }
 }
 
 function isPublicRequest(config: InternalAxiosRequestConfig): boolean {

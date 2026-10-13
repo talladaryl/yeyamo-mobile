@@ -30,7 +30,7 @@ function toAuthUser(user: AuthApiUser, displayName?: string): AuthUser {
     badge_type: null,
     // An email-verification timestamp never proves public certification.
     is_verified: false,
-    user_type: user.roles.includes('PARTNER') ? 'partner' : 'user',
+    user_type: user.accountType === 'PARTNER' || user.roles.includes('PARTNER') ? 'partner' : 'user',
     created_at: user.createdAt,
   };
 }
@@ -89,7 +89,7 @@ export const authService = {
         console.info('SESSION_CREDENTIAL_FOUND');
         const storedMode = await secureStore.get(secureStore.KEYS.SESSION_MODE);
         if (storedMode === 'demo-user' || storedMode === 'demo-partner') {
-          if (ENV.APP_ENV === 'production') {
+          if (!__DEV__ && ENV.APP_ENV === 'production') {
             await secureStore.clearAuthSession();
             useAuthStore.getState().clearAuth();
             return;
@@ -117,6 +117,8 @@ export const authService = {
         reverbClient.connect(token);
         void synchronizePushToken();
         console.info('SESSION_RESTORE_SUCCESS');
+      } else {
+        console.info('SESSION_CREDENTIAL_NOT_FOUND');
       }
     } catch (error: unknown) {
       const status = typeof error === 'object' && error !== null && 'status' in error
@@ -160,8 +162,10 @@ export const authService = {
   },
 
   async loginDemo(kind: 'user' | 'partner'): Promise<void> {
-    if (ENV.APP_ENV === 'production') throw new Error('DEMO_DISABLED_IN_PRODUCTION');
-    await persistDemoSession(kind === 'partner' ? 'demo-partner' : 'demo-user');
+    if (!__DEV__ && ENV.APP_ENV === 'production') throw new Error('DEMO_DISABLED_IN_PRODUCTION');
+    const mode = kind === 'partner' ? 'demo-partner' : 'demo-user';
+    await persistDemoSession(mode);
+    console.info('DEMO_SESSION_STARTED', mode);
   },
 
   async logout(): Promise<void> {

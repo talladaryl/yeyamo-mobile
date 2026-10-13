@@ -35,6 +35,9 @@ import { useNetworkStore } from '@/features/network/network.store';
 import { OfflineBanner } from '@/components/network/OfflineBanner';
 import { StartupSplash } from '@/components/onboarding/StartupSplash';
 import { interestsApi } from '@/features/interests/interests.api';
+import type { AppApiError } from '@/types/api.types';
+import ENV from '@/config/env';
+import { clearLocalDevelopmentSession } from '@/features/auth/dev-session';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -100,6 +103,7 @@ function RootNavigator() {
   const setCountryProfileLoading = useCountryStore((state) => state.setProfileLoading);
   const markCountryConfigurationUnavailable = useCountryStore((state) => state.markConfigurationUnavailable);
   const previousAuthUserId = useRef<string | null>(null);
+  const countryProfileBootstrapUserId = useRef<string | null>(null);
 
   useEffect(() => {
     const minimum = setTimeout(() => setMinimumSplashElapsed(true), 2600);
@@ -125,11 +129,18 @@ function RootNavigator() {
 
   // Hydrate session from SecureStore on boot
   useEffect(() => {
-    authService.hydrate();
-    checkOnboardingStatus();
-    hydrateTheme();
-    hydrateInterests();
-    hydrateCountry();
+    void (async () => {
+      if (__DEV__ && ENV.DEV_FORCE_CLEAN_SESSION) {
+        await clearLocalDevelopmentSession(queryClient);
+      }
+      await Promise.all([
+        checkOnboardingStatus(),
+        hydrateTheme(),
+        hydrateInterests(),
+        hydrateCountry(),
+      ]);
+      await authService.hydrate();
+    })();
   }, [hydrateCountry, hydrateInterests, hydrateTheme, checkOnboardingStatus]);
 
   useEffect(() => {
@@ -244,7 +255,16 @@ function RootNavigator() {
   // Profile remains the source of truth once authenticated. The persisted
   // selection only avoids a blank UI while the profile request is in flight.
   useEffect(() => {
-    if (!isAuthenticated || !isHydrated || !isCountryHydrated || useAuthStore.getState().sessionMode !== 'backend') return;
+    if (!isAuthenticated) {
+      countryProfileBootstrapUserId.current = null;
+      return;
+    }
+    if (!isHydrated || !isCountryHydrated || useAuthStore.getState().sessionMode !== 'backend') return;
+    const authenticatedUserId = user?.id ? String(user.id) : null;
+    if (!authenticatedUserId || countryProfileBootstrapUserId.current === authenticatedUserId) return;
+    // Resolve the profile country once per authenticated identity. Country
+    // configuration state changes must never restart /users/me indefinitely.
+    countryProfileBootstrapUserId.current = authenticatedUserId;
     let active = true;
     setCountryProfileLoading();
     traceCountryRuntime('PROFILE_COUNTRY_REQUEST', { queryKey: ['countries', 'profile', 'backend'], url: '/users/me' });
@@ -263,22 +283,50 @@ function RootNavigator() {
         if (active) markCountryConfigurationUnavailable();
       });
     return () => { active = false; };
-  }, [applyCountryProfile, isAuthenticated, isCountryHydrated, isHydrated, markCountryConfigurationUnavailable, setCountryProfileLoading]);
+  }, [applyCountryProfile, isAuthenticated, isCountryHydrated, isHydrated, markCountryConfigurationUnavailable, setCountryProfileLoading, user?.id]);
 
   useEffect(() => {
     if (!selectedCountryCode) return;
     // Do not issue Create reference/configuration requests from a stale
     // SecureStore country while the authoritative backend profile is loading.
     if (useAuthStore.getState().sessionMode === 'backend' && countryResolutionStatus === 'PROFILE_LOADING') return;
+    // COUNTRY_ERROR is terminal for this bootstrap attempt. Without this guard,
+    // marking the request unavailable retriggers this effect indefinitely.
+    if (countryResolutionStatus !== 'COUNTRY_LOADING') return;
     let active = true;
     traceCountryRuntime('COUNTRY_CONFIGURATION_REQUEST', { queryKey: ['countries', 'configuration', selectedCountryCode], countryCode: selectedCountryCode });
-    void Promise.all([countryApi.configuration(selectedCountryCode), countryApi.features(selectedCountryCode)])
+    const loadConfiguration = () => Promise.all([
+      countryApi.configuration(selectedCountryCode),
+      countryApi.features(selectedCountryCode),
+    ]);
+    void loadConfiguration()
+      .catch(async (firstError: AppApiError) => {
+        if (!active || useNetworkStore.getState().isConnected === false) throw firstError;
+        await new Promise((resolve) => setTimeout(resolve, 750));
+        if (!active) throw firstError;
+        traceCountryRuntime('COUNTRY_CONFIGURATION_RETRY', {
+          queryKey: ['countries', 'configuration', selectedCountryCode],
+          countryCode: selectedCountryCode,
+          attempt: 2,
+        });
+        return loadConfiguration();
+      })
       .then(async ([configuration, features]) => {
         traceCountryRuntime('COUNTRY_CONFIGURATION_RESPONSE', { queryKey: ['countries', 'configuration', selectedCountryCode], countryCode: selectedCountryCode });
         if (active) await selectCountry(mapCountryConfiguration(configuration, features));
       })
-      .catch(() => {
-        traceCountryRuntime('COUNTRY_CONFIGURATION_ERROR', { queryKey: ['countries', 'configuration', selectedCountryCode], countryCode: selectedCountryCode });
+      .catch((error: AppApiError) => {
+        traceCountryRuntime('COUNTRY_CONFIGURATION_ERROR', {
+          queryKey: ['countries', 'configuration', selectedCountryCode],
+          countryCode: selectedCountryCode,
+          url: error.requestUrl,
+          method: error.method,
+          httpStatus: error.status,
+          axiosCode: error.axiosCode,
+          backendErrorCode: error.code,
+          message: error.message,
+          isNetworkError: error.isNetworkError,
+        });
         if (active) markCountryConfigurationUnavailable();
       });
     return () => { active = false; };
@@ -292,6 +340,11 @@ function RootNavigator() {
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
     const inInterests = segments[0] === 'interests';
+    // Route groups are omitted from usePathname(): both `index` and
+    // `(tabs)/index` have pathname `/`. Segments are required to distinguish
+    // them and avoid redirecting the Feed to itself forever.
+    const routeSegments = segments as readonly string[];
+    const inRootIndex = routeSegments.length === 0 || routeSegments[0] === 'index';
 
     // Every cold launch starts with the animated logo and keeps the full
     // onboarding group accessible until the user finishes or skips it.
@@ -314,7 +367,7 @@ function RootNavigator() {
     } else if (
       isAuthenticated
       && hasCompletedInterestSelection
-      && (inAuthGroup || inOnboardingGroup || inInterests)
+      && (inRootIndex || inAuthGroup || inOnboardingGroup || inInterests)
     ) {
       // A partner keeps the complete consumer experience. Professional tools are
       // exposed from the Profile tab instead of replacing the main navigation.

@@ -50,7 +50,7 @@ export default function FeedScreen() {
   if (!feed.isLoading && !feed.isError && posts.length === 0) {
     const followsNobody = audience === 'FOLLOWING' && following.data?.length === 0;
     const title = followsNobody ? 'Vous ne suivez encore personne.' : audience === 'FOLLOWING' ? 'Aucune publication de vos abonnements' : 'Aucune publication pour le moment';
-    const message = followsNobody ? 'Suivez des profils pour retrouver ici leurs prochaines publications.' : audience === 'FOLLOWING' ? 'Les comptes que vous suivez nâ€™ont pas encore publiÃ© de contenu visible.' : 'Explorez Yeyamo ou revenez un peu plus tard.';
+    const message = followsNobody ? 'Suivez des profils pour retrouver ici leurs prochaines publications.' : audience === 'FOLLOWING' ? 'Les comptes que vous suivez n’ont pas encore publié de contenu visible.' : 'Explorez Yeyamo ou revenez un peu plus tard.';
     return <View className="flex-1 bg-black"><StatusBar style="light" /><EmptyState title={title} message={message} /></View>;
   }
 

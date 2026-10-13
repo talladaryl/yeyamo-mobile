@@ -137,6 +137,16 @@ export function useUserSearch(query: string) {
   });
 }
 
+export function usePublicSocialProfile(profileId: EntityId | undefined) {
+  const isDemo = useDemoMode();
+  const viewerKey = useViewerKey();
+  return useQuery({
+    queryKey: ['social', isDemo ? 'demo' : 'backend', 'profile', viewerKey, String(profileId ?? '')],
+    enabled: Boolean(profileId) && !isDemo,
+    queryFn: () => socialApi.getPublicProfile(profileId!),
+  });
+}
+
 export function useNetworkActivity() {
   const isDemo = useDemoMode();
   const viewerKey = useViewerKey();

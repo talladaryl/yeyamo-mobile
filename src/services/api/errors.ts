@@ -47,5 +47,15 @@ export function normalizeApiError(error: unknown): AppApiError {
         ? `Une erreur serveur est survenue. Réessayez plus tard.${correlationId ? ` Référence : ${correlationId}` : ''}`
         : safeBackendMessage ?? 'Une erreur serveur est survenue. Réessayez plus tard.')
       : safeBackendMessage ?? defaults[status] ?? 'La demande a échoué.';
-  return { status, code, message, fieldErrors: status === 422 || status === 400 ? fields(body) : undefined, correlationId };
+  return {
+    status,
+    code,
+    message,
+    fieldErrors: status === 422 || status === 400 ? fields(body) : undefined,
+    correlationId,
+    axiosCode: error.code,
+    requestUrl: error.config?.url,
+    method: error.config?.method?.toUpperCase(),
+    isNetworkError: !error.response,
+  };
 }

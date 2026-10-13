@@ -123,7 +123,7 @@ export function CommentsThread({ postId, onClose, presentation = 'screen' }: Com
       setReactionOverrides((current) => ({ ...current, [String(comment.id)]: { likes_count: response.likeCount, is_liked: response.liked } }));
       traceInteractionRuntime('COMMENT_LIKE_RESPONSE', { flow: 'comment', postId, commentId: String(comment.id), status: 200, likeCount: response.likeCount });
     } catch {
-      Alert.alert('RÃ©action impossible', 'Votre rÃ©action nâ€™a pas pu Ãªtre enregistrÃ©e.');
+      Alert.alert('Réaction impossible', 'Votre réaction n’a pas pu être enregistrée.');
     }
   };
 
@@ -133,7 +133,7 @@ export function CommentsThread({ postId, onClose, presentation = 'screen' }: Com
       <Text className="flex-1 text-center text-[16px] font-extrabold" style={{ color: colors.text }}>Commentaires</Text>
       {presentation === 'sheet' ? <TouchableOpacity onPress={onClose} className="h-11 w-11 items-center justify-center" accessibilityRole="button" accessibilityLabel={i18n.t('comments.close')}><Icon library="ionicons" name="close" size={23} color={colors.text} /></TouchableOpacity> : <View className="w-11" />}
     </View>
-    {isLoading ? <View className="flex-1 items-center justify-center"><ActivityIndicator color={colors.primary} /></View> : isError ? <View className="flex-1 items-center justify-center px-8"><Text className="text-center" style={{ color: colors.textSecondary }}>Impossible de charger les commentaires.</Text><TouchableOpacity onPress={() => void refreshComments()} className="mt-4"><Text className="font-bold" style={{ color: colors.primary }}>RÃ©essayer</Text></TouchableOpacity></View> : <FlatList
+    {isLoading ? <View className="flex-1 items-center justify-center"><ActivityIndicator color={colors.primary} /></View> : isError ? <View className="flex-1 items-center justify-center px-8"><Text className="text-center" style={{ color: colors.textSecondary }}>Impossible de charger les commentaires.</Text><TouchableOpacity onPress={() => void refreshComments()} className="mt-4"><Text className="font-bold" style={{ color: colors.primary }}>Réessayer</Text></TouchableOpacity></View> : <FlatList
       data={roots}
       keyExtractor={(item) => String(item.id)}
       renderItem={({ item }) => <View>
