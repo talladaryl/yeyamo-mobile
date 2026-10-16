@@ -1,16 +1,10 @@
-import { ActivityIndicator, View } from 'react-native';
-import { CatalogListScreen } from '@/features/culture/components/CatalogListScreen';
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { SafeScreen } from '@/components/ui/SafeScreen';
+import { Icon } from '@/components/ui/Icon';
+import { CultureCategoryCard } from '@/features/culture/components/CultureCategoryCard';
 import { useCultureContents } from '@/features/culture/culture.hooks';
 import { demoProverbs, proverbCategories } from '@/features/culture/culturalCatalog.demo';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useThemeStore } from '@/features/theme/theme.store';
-
-export default function ProverbsScreen() {
-  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
-  const colors = useThemeStore((state) => state.colors);
-  const query = useCultureContents({ type: 'PROVERB', size: 100 });
-  if (!isDemo && query.isLoading) return <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.background }}><ActivityIndicator color={colors.primary} /></View>;
-  const items = isDemo ? demoProverbs.map((item) => ({ id: item.id, title: item.text, subtitle: `${item.region} · ${item.language.toUpperCase()}`, category: item.category, imageUrl: item.imageUrl })) : (query.data?.content ?? []).map((item) => ({ id: item.id, title: item.slug, subtitle: item.primaryLanguageCode, category: item.type, imageUrl: undefined }));
-  const categories = isDemo ? proverbCategories : ['Tous', ...new Set(items.map((item) => item.category))];
-  return <CatalogListScreen title="Proverbes" subtitle={isDemo ? 'Catalogue de démonstration' : 'Contenus culturels publiés'} categories={categories} detailBase="/(explore)/proverbs" items={items} />;
-}
+export default function ProverbCategories(){const router=useRouter();const colors=useThemeStore((s)=>s.colors);const demo=useAuthStore((s)=>s.sessionMode?.startsWith('demo-')??false);const query=useCultureContents({type:'PROVERB',size:100});const categories=demo?proverbCategories.filter((x)=>x!=='Tous').map((name)=>({id:name,name,imageUrl:demoProverbs.find((x)=>x.category===name)?.imageUrl,kind:'theme'})):[...new Set((query.data?.content??[]).map((x)=>x.primaryLanguageCode))].map((code)=>({id:code,name:code.toUpperCase(),imageUrl:undefined,kind:'language'}));return <SafeScreen><View className="flex-row items-center px-4 py-3"><TouchableOpacity onPress={()=>router.back()} className="h-11 w-11 items-center justify-center"><Icon name="chevron-back" size={24} color={colors.text}/></TouchableOpacity><View className="ml-2 flex-1"><Text className="text-2xl font-extrabold" style={{color:colors.text}}>Proverbes</Text><Text className="mt-1 text-sm" style={{color:colors.textSecondary}}>{demo?'Choisissez un thème.':'Choisissez une langue disponible.'}</Text></View></View>{!demo&&query.isLoading?<ActivityIndicator className="mt-16" color={colors.primary}/>:<FlatList data={categories} numColumns={2} columnWrapperStyle={{gap:12}} keyExtractor={(item)=>item.id} contentContainerStyle={{padding:16,paddingBottom:40}} renderItem={({item})=><CultureCategoryCard title={item.name} imageUrl={item.imageUrl} icon="chatbubble-ellipses-outline" onPress={()=>router.push({pathname:'/(explore)/proverbs/category/[slug]',params:{slug:item.id,name:item.name,kind:item.kind}})}/>} ListEmptyComponent={<Text className="p-8 text-center" style={{color:colors.textSecondary}}>Aucune catégorie de proverbes disponible.</Text>}/>}</SafeScreen>;}

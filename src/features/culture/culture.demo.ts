@@ -7,6 +7,20 @@ export const demoCultureTranslations: CultureTranslation[] = demoCultureContents
 export const demoLanguages: CultureLanguage[] = [
   ['bas', 'Bassa', 'Basaá', 'Langue du peuple Bassa.'], ['dua', 'Douala', 'Duala', 'Langue Sawa parlée sur le littoral.'], ['ewo', 'Ewondo', 'Ewondo', 'Langue largement parlée autour de Yaoundé.'], ['ff', 'Fulfulde', 'Fulfulde', 'Langue véhiculaire du Nord Cameroun.'], ['bax', 'Bamoun', 'Shüpamom', 'Langue du royaume Bamoun.'], ['mgo', 'Metaʼ', 'Mətaʼ', 'Langue des Grassfields.'], ['baf', 'Bafaw', 'Bafaw', 'Langue du Sud-Ouest.'], ['bul', 'Bulu', 'Bulu', 'Langue du sud forestier.'], ['ken', 'Kenyang', 'Kenyang', 'Langue du Sud-Ouest camerounais.'], ['yba', 'Yemba', 'Yemba', 'Langue parlée autour de Dschang.'],
 ].map(([code, name, nativeName, description]) => ({ code, name, nativeName, countryCodes: ['CM'], writingSystem: 'Latin', status: 'ACTIVE', description, speakerEstimate: null, verified: true }));
+demoLanguages.push(
+  { code: 'wo', name: 'Wolof', nativeName: 'Wolof', countryCodes: ['SN'], writingSystem: 'Latin', status: 'ACTIVE', description: 'Langue largement parlée au Sénégal.', speakerEstimate: null, verified: true },
+  { code: 'dyu', name: 'Dioula', nativeName: 'Julakan', countryCodes: ['CI'], writingSystem: 'Latin', status: 'ACTIVE', description: "Langue véhiculaire de Côte d'Ivoire.", speakerEstimate: null, verified: true },
+  { code: 'baq', name: 'Baoulé', nativeName: 'Baoulé', countryCodes: ['CI'], writingSystem: 'Latin', status: 'ACTIVE', description: "Langue du peuple Baoulé de Côte d'Ivoire.", speakerEstimate: null, verified: true },
+  { code: 'yo', name: 'Yoruba', nativeName: 'Yorùbá', countryCodes: ['NG'], writingSystem: 'Latin', status: 'ACTIVE', description: 'Langue majeure du sud-ouest du Nigeria.', speakerEstimate: null, verified: true },
+  { code: 'ig', name: 'Igbo', nativeName: 'Asụsụ Igbo', countryCodes: ['NG'], writingSystem: 'Latin', status: 'ACTIVE', description: 'Langue majeure du sud-est du Nigeria.', speakerEstimate: null, verified: true },
+  { code: 'ha', name: 'Haoussa', nativeName: 'Hausa', countryCodes: ['NG'], writingSystem: 'Latin', status: 'ACTIVE', description: 'Langue véhiculaire du nord du Nigeria.', speakerEstimate: null, verified: true },
+);
+export const demoLanguageCountries = [
+  { code: 'CM', name: 'Cameroun', flag: '🇨🇲' },
+  { code: 'SN', name: 'Sénégal', flag: '🇸🇳' },
+  { code: 'CI', name: "Côte d'Ivoire", flag: '🇨🇮' },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬' },
+] as const;
 export const demoLessons: LanguageLesson[] = demoLanguages.flatMap((language, languageIndex) => [
   { id: `lesson-${language.code}-1`, languageCode: language.code, topicId: null, title: `Saluer en ${language.name}`, description: 'Les salutations essentielles.', difficulty: 1, estimatedMinutes: 4, status: 'PUBLISHED', displayOrder: languageIndex * 2 + 1 },
   { id: `lesson-${language.code}-2`, languageCode: language.code, topicId: null, title: `Se présenter en ${language.name}`, description: 'Nom, origine et formules de politesse.', difficulty: 2, estimatedMinutes: 7, status: 'PUBLISHED', displayOrder: languageIndex * 2 + 2 },

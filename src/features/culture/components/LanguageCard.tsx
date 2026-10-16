@@ -2,12 +2,4 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { useThemeStore } from '@/features/theme/theme.store';
 import type { CultureLanguage } from '../culture.types';
-
-export function LanguageCard({ language, onPress }: { language: CultureLanguage; onPress: () => void }) {
-  const colors = useThemeStore((state) => state.colors);
-  return <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Découvrir la langue ${language.name}`} onPress={onPress} className="mr-3 w-52 rounded-2xl border p-4" style={{ backgroundColor: colors.card, borderColor: colors.border }}>
-    <View className="flex-row items-center justify-between"><View className="h-10 w-10 items-center justify-center rounded-xl bg-[#FEF3C7]"><Icon name="chatbubbles-outline" size={20} color="#B45309" /></View>{language.verified ? <Icon name="checkmark-circle" size={18} color="#22C55E" /> : null}</View>
-    <Text className="mt-4 font-bold" style={{ color: colors.text }}>{language.nativeName || language.name}</Text><Text className="mt-1 text-sm" style={{ color: colors.textSecondary }}>{language.name}</Text>
-    <Text className="mt-3 text-xs font-semibold" style={{ color: colors.textMuted }}>{language.countryCodes.join(', ')}</Text>
-  </TouchableOpacity>;
-}
+export function LanguageCard({language,onPress,variant='rail'}:{language:CultureLanguage;onPress:()=>void;variant?:'rail'|'grid'}){const colors=useThemeStore((state)=>state.colors);return <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Découvrir la langue ${language.name}`} onPress={onPress} className={`${variant==='grid'?'flex-1':'mr-3 w-52'} rounded-2xl border p-4`} style={{backgroundColor:colors.card,borderColor:colors.border}}><View className="flex-row items-center justify-between"><View className="h-10 w-10 items-center justify-center rounded-xl bg-[#FEF3C7]"><Icon name="chatbubbles-outline" size={20} color="#B45309"/></View>{language.verified?<Icon name="checkmark-circle" size={18} color="#22C55E"/>:null}</View><Text className="mt-4 font-bold" style={{color:colors.text}} numberOfLines={1}>{language.nativeName||language.name}</Text><Text className="mt-1 text-sm" style={{color:colors.textSecondary}} numberOfLines={1}>{language.name}</Text><Text className="mt-3 text-xs font-semibold" style={{color:colors.textMuted}} numberOfLines={1}>{language.countryCodes.join(', ')}</Text></TouchableOpacity>;}

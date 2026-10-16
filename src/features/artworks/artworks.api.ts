@@ -1,16 +1,17 @@
 import { apiGet, apiPost } from '@/services/api/client';
 import { createIdempotencyKey } from '@/services/api/contracts';
 import type { SpringPage } from '@/services/api/contracts';
-import type { Artwork, ArtworkDetail, ArtworkFilters, ArtworkHistory, ArtworkMedia, ArtworkOffer, ArtworkOfferInput, ArtworkRequest } from './artworks.types';
+import type { ArtworkDetail, ArtworkFilters, ArtworkHistory, ArtworkMedia, ArtworkOffer, ArtworkOfferInput, ArtworkRequest } from './artworks.types';
 import { traceMediaRuntime } from '@/features/media/media.runtime-trace';
+import { mapArtworkDetail, mapArtworkPage, type ArtworkApiDto } from './artworks.mappers';
 const params = <T extends object>(values: T) => Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined && value !== null && value !== ''));
 export const artworksApi = {
-  list: (filters: ArtworkFilters) => apiGet<SpringPage<Artwork>>('/artworks', { params: params(filters) }),
-  detail: (id: string) => apiGet<ArtworkDetail>(`/artworks/${id}`),
+  list: async (filters: ArtworkFilters) => mapArtworkPage(await apiGet<SpringPage<ArtworkApiDto>>('/artworks', { params: params(filters) })),
+  detail: async (id: string) => mapArtworkDetail(await apiGet<ArtworkApiDto>(`/artworks/${id}`)),
   history: (id: string) => apiGet<ArtworkHistory[]>(`/artworks/${id}/history`),
   media: (id: string) => apiGet<ArtworkMedia[]>(`/artworks/${id}/media`),
-  related: (id: string) => apiGet<SpringPage<Artwork>>(`/artworks/${id}/related`),
-  byArtisan: (artisanId: string, page = 0, size = 20) => apiGet<SpringPage<Artwork>>(`/artisans/${artisanId}/artworks`, { params: { page, size } }),
+  related: async (id: string) => mapArtworkPage(await apiGet<SpringPage<ArtworkApiDto>>(`/artworks/${id}/related`)),
+  byArtisan: async (artisanId: string, page = 0, size = 20) => mapArtworkPage(await apiGet<SpringPage<ArtworkApiDto>>(`/artisans/${artisanId}/artworks`, { params: { page, size } })),
   offer: (artworkId: string) => apiGet<ArtworkOffer>(`/artwork-offers/${artworkId}`),
   create: async (input: ArtworkRequest) => {
     try {
