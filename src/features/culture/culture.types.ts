@@ -10,6 +10,11 @@ export interface CultureRecipeDetails {
   steps: CultureRecipeStep[];
   prepTimeMinutes: number | null;
   servings: number | null;
+  // Additive frontend compatibility for the proposed backend contract. These
+  // fields remain optional and are never fabricated for real accounts.
+  cookTimeMinutes?: number | null; restTimeMinutes?: number | null; difficulty?: 'Facile' | 'Intermédiaire' | 'Avancée' | null;
+  heroMediaUrl?: string | null; videoUrl?: string | null; equipment?: string[]; preparationAhead?: string | null;
+  tips?: string[]; variants?: string[]; accompaniments?: string[]; plating?: string | null; storage?: string | null; reheating?: string | null; safetyNotes?: string[];
 }
 export interface CultureProverbDetails {
   literalTranslation: string | null;
