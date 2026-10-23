@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { VerticalFeedList } from '@/components/feed/VerticalFeedList';
 import { Icon } from '@/components/ui/Icon';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/ViewStates';
-import { useFeed, useSponsoredFeed } from '@/features/feed/useFeed';
+import { useFeed } from '@/features/feed/useFeed';
 import { isSponsoredFeedItem, type FeedAudience, type FeedItem } from '@/features/feed/types';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { traceFeedRuntime } from '@/features/social/social.runtime-trace';
@@ -29,15 +29,10 @@ export default function FeedScreen() {
   const [audience, setAudience] = useState<FeedAudience>('FOR_YOU');
   const feed = useFeed(audience);
   const following = useFollowing(audience === 'FOLLOWING');
-  const { data: sponsoredItems = [] } = useSponsoredFeed(undefined, audience === 'FOR_YOU');
 
   const posts = useMemo<FeedItem[]>(() => {
-    const organic = feed.data?.pages.flatMap((page) => page.data) ?? [];
-    const withSponsored = audience === 'FOR_YOU' && sponsoredItems.length && organic.length >= 2
-      ? [...organic.slice(0, 2), sponsoredItems[0], ...organic.slice(2)]
-      : organic;
-    return deduplicateFeed(withSponsored);
-  }, [audience, feed.data, sponsoredItems]);
+    return deduplicateFeed(feed.data?.pages.flatMap((page) => page.data) ?? []);
+  }, [feed.data]);
 
   if (!isHydrated || !isAuthenticated || feed.isLoading) {
     return <View className="flex-1 bg-black"><StatusBar style="light" /><LoadingState label="Chargement de votre feed…" /></View>;

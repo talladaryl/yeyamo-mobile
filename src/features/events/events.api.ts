@@ -1,5 +1,5 @@
 import { apiDelete, apiGet, apiPost } from '@/services/api/client';
-import { createIdempotencyKey, mediaContentUrl } from '@/services/api/contracts';
+import { createIdempotencyKey, mediaContentUrl, type SpringPage } from '@/services/api/contracts';
 import type { EntityId } from '@/types/api.types';
 import type { Event } from './types';
 import { traceCreateRuntime } from '@/features/create/create.runtime-trace';
@@ -116,6 +116,11 @@ export const eventsApi = {
   },
   upcoming: async (): Promise<Event[]> =>
     (await apiGet<BackendEvent[]>('/events/upcoming')).map(mapEvent),
+
+  organizedByMe: async (page = 0, size = 20): Promise<SpringPage<Event>> => {
+    const response = await apiGet<SpringPage<BackendEvent>>('/events/organized/me', { params: { page, size } });
+    return { ...response, content: response.content.map(mapEvent) };
+  },
 
   detail: async (eventId: EntityId): Promise<Event> => {
     const [detail, mine] = await Promise.all([

@@ -35,11 +35,22 @@ function toAuthUser(user: AuthApiUser, displayName?: string): AuthUser {
   };
 }
 
+function isEligibleApiUser(user: AuthApiUser): boolean {
+  return user.status === 'ACTIVE' && (!user.email || Boolean(user.emailVerifiedAt));
+}
+
+function isEligibleCachedUser(user: AuthUser): boolean {
+  return !user.email || user.email_verified;
+}
+
 async function persistSession(response: {
-  accessToken: string;
-  refreshToken: string;
+  accessToken: string | null;
+  refreshToken: string | null;
   user: AuthApiUser;
 }, displayName?: string): Promise<void> {
+  if (!response.accessToken || !response.refreshToken || !isEligibleApiUser(response.user)) {
+    throw new Error('SESSION_TOKENS_MISSING');
+  }
   const user = toAuthUser(response.user, displayName);
   await Promise.all([
     secureStore.set(secureStore.KEYS.AUTH_TOKEN, response.accessToken),
@@ -102,13 +113,18 @@ export const authService = {
         let cachedUser: AuthUser | null = null;
         try { cachedUser = cachedUserJson ? JSON.parse(cachedUserJson) as AuthUser : null; } catch { cachedUser = null; }
         const network = await NetInfo.fetch();
-        if (network.isConnected === false && cachedUser && refreshToken) {
+        if (network.isConnected === false && cachedUser && refreshToken && isEligibleCachedUser(cachedUser)) {
           useAuthStore.getState().setAuth(cachedUser, token, 'backend');
           resetUnauthenticatedSessionHandler();
           console.info('SESSION_OFFLINE_RESTORE');
           return;
         }
         const apiUser = await authApi.me();
+        if (!isEligibleApiUser(apiUser)) {
+          await secureStore.clearAuthSession();
+          useAuthStore.getState().clearAuth();
+          return;
+        }
         const user = toAuthUser(apiUser);
         useAuthStore.getState().setAuth(user, token, 'backend');
         await secureStore.set(secureStore.KEYS.AUTH_USER, JSON.stringify(user));
@@ -134,7 +150,13 @@ export const authService = {
         ]);
         if (token && refreshToken && cachedUserJson) {
           try {
-            useAuthStore.getState().setAuth(JSON.parse(cachedUserJson) as AuthUser, token, 'backend');
+            const cachedUser = JSON.parse(cachedUserJson) as AuthUser;
+            if (!isEligibleCachedUser(cachedUser)) {
+              await secureStore.clearAuthSession();
+              useAuthStore.getState().clearAuth();
+              return;
+            }
+            useAuthStore.getState().setAuth(cachedUser, token, 'backend');
             resetUnauthenticatedSessionHandler();
             console.info('SESSION_OFFLINE_RESTORE');
           } catch { /* An unreadable identity cannot establish an offline session. */ }
@@ -150,7 +172,13 @@ export const authService = {
   },
 
   async register(credentials: RegisterCredentials, turnstileToken?: string): Promise<void> {
-    await persistSession(await authApi.register(credentials, turnstileToken), credentials.display_name);
+    const response = await authApi.register(credentials, turnstileToken);
+    if (response.verificationRequired) {
+      await secureStore.clearAuthSession();
+      useAuthStore.getState().clearAuth();
+      return;
+    }
+    await persistSession(response, credentials.display_name);
   },
 
   async socialLogin(credentials: SocialLoginCredentials): Promise<void> {

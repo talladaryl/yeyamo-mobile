@@ -3,8 +3,13 @@ import type { SpringPage } from '@/services/api/contracts';
 export type CultureContentType = 'WORD' | 'EXPRESSION' | 'PROVERB' | 'STORY' | 'ORAL_HISTORY' | 'TRADITION' | 'HISTORICAL_FIGURE' | 'HISTORICAL_EVENT' | 'RECIPE' | 'DANCE' | 'SONG' | 'SYMBOL';
 export type CultureSensitivity = 'PUBLIC' | 'SENSITIVE' | 'SACRED' | string;
 
-export interface CultureRecipeIngredient { name: string; quantity: string | null; unit: string | null; }
-export interface CultureRecipeStep { instruction: string; }
+export type RecipeDifficultyCode = 'SIMPLE' | 'INTERMEDIAIRE' | 'AVANCE';
+export type RecipeQuantityUnitCode = 'G' | 'KG' | 'ML' | 'L' | 'UNIT' | 'TSP' | 'TBSP';
+export type RecipeTemperatureUnit = 'C' | 'F';
+export interface CultureRecipeIngredient { id?: string; name: string; quantity: string | null; unit: string | null; groupName?: string | null; optional?: boolean; substitutionNotes?: string | null; quantityValue?: number | null; quantityMaxValue?: number | null; quantityUnitCode?: RecipeQuantityUnitCode | null; }
+export interface CultureRecipeStep { id?: string; title?: string | null; instruction: string; durationMinutes?: number | null; temperatureValue?: number | null; temperatureUnit?: RecipeTemperatureUnit | null; expectedResult?: string | null; tip?: string | null; safetyNote?: string | null; mediaId?: string | null; ingredientIds?: string[]; }
+export interface CultureRecipeEquipment { id?: string; name: string; optional?: boolean; }
+export interface CultureRecipeMedia { id?: string; mediaId: string; role: 'GALLERY' | 'RESULT' | 'PROCESS'; caption?: string | null; altText?: string | null; }
 export interface CultureRecipeDetails {
   ingredients: CultureRecipeIngredient[];
   steps: CultureRecipeStep[];
@@ -12,9 +17,9 @@ export interface CultureRecipeDetails {
   servings: number | null;
   // Additive frontend compatibility for the proposed backend contract. These
   // fields remain optional and are never fabricated for real accounts.
-  cookTimeMinutes?: number | null; restTimeMinutes?: number | null; difficulty?: 'Facile' | 'Intermédiaire' | 'Avancée' | null;
-  heroMediaUrl?: string | null; videoUrl?: string | null; equipment?: string[]; preparationAhead?: string | null;
-  tips?: string[]; variants?: string[]; accompaniments?: string[]; plating?: string | null; storage?: string | null; reheating?: string | null; safetyNotes?: string[];
+  cookTimeMinutes?: number | null; restTimeMinutes?: number | null; difficulty?: RecipeDifficultyCode | null; yieldText?: string | null;
+  heroMediaId?: string | null; videoMediaId?: string | null; youtubeVideoUrl?: string | null; equipment?: CultureRecipeEquipment[]; gallery?: CultureRecipeMedia[]; preparationAhead?: string | null;
+  tips?: string | null; variants?: string | null; accompaniments?: string | null; plating?: string | null; storage?: string | null; reheating?: string | null; safetyNotes?: string | null;
 }
 export interface CultureProverbDetails {
   literalTranslation: string | null;
@@ -27,7 +32,8 @@ export interface CultureContent {
   id: string; type: CultureContentType; slug: string; status: string; visibility: string;
   primaryLanguageCode: string; countryCode: string; adminLevel1Id: string | null; cityId: string | null;
   communityName: string | null; sourceType: string; verificationStatus: string; sensitivityLevel: CultureSensitivity;
-  createdAt: string; updatedAt: string; publishedAt: string | null;
+  createdAt: string; updatedAt: string; publishedAt: string | null; version?: number;
+  recipeRevision?: { id: string; status: string; baseVersion: number; createdAt: string; submittedAt: string | null; decidedAt: string | null; rejectionReason: string | null } | null;
   recipeDetails?: CultureRecipeDetails | null;
   proverbDetails?: CultureProverbDetails | null;
 }

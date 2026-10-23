@@ -1,4 +1,4 @@
-import type { CultureRecipeDetails, CultureRecipeIngredient, CultureRecipeStep } from './culture.types';
+import type { CultureRecipeDetails, CultureRecipeIngredient, CultureRecipeStep, RecipeDifficultyCode } from './culture.types';
 
 export type RecipeDifficulty = 'Facile' | 'Intermédiaire' | 'Avancée';
 
@@ -26,12 +26,14 @@ export interface RichRecipeStep extends CultureRecipeStep {
 
 /** Optional extension understood by the frontend. Real responses remain valid
  * while the additive backend contract is awaiting approval. */
-export interface RichRecipeDetails extends Omit<CultureRecipeDetails, 'ingredients' | 'steps'> {
+export interface RichRecipeDetails extends Omit<CultureRecipeDetails, 'ingredients' | 'steps' | 'difficulty' | 'equipment' | 'tips' | 'variants' | 'accompaniments' | 'safetyNotes'> {
   ingredients: RichRecipeIngredient[];
   steps: RichRecipeStep[];
   cookTimeMinutes?: number | null;
   restTimeMinutes?: number | null;
   difficulty?: RecipeDifficulty | null;
+  heroMediaId?: string | null;
+  videoMediaId?: string | null;
   heroMediaUrl?: string | null;
   videoUrl?: string | null;
   equipment?: string[];
@@ -43,6 +45,20 @@ export interface RichRecipeDetails extends Omit<CultureRecipeDetails, 'ingredien
   storage?: string | null;
   reheating?: string | null;
   safetyNotes?: string[];
+}
+
+const DIFFICULTY_LABELS: Record<RecipeDifficultyCode, RecipeDifficulty> = { SIMPLE: 'Facile', INTERMEDIAIRE: 'Intermédiaire', AVANCE: 'Avancée' };
+const lines = (value?: string | null) => value?.split(/\r?\n/).map((item) => item.trim()).filter(Boolean) ?? [];
+
+export function adaptRecipeDetails(details: CultureRecipeDetails): RichRecipeDetails {
+  return {
+    ...details,
+    difficulty: details.difficulty ? DIFFICULTY_LABELS[details.difficulty] : null,
+    equipment: details.equipment?.map((item) => item.name) ?? [],
+    tips: lines(details.tips), variants: lines(details.variants), accompaniments: lines(details.accompaniments), safetyNotes: lines(details.safetyNotes),
+    ingredients: details.ingredients.map((item) => ({ ...item, group: item.groupName, substitution: item.substitutionNotes })),
+    steps: details.steps.map((step) => ({ ...step, temperature: step.temperatureValue == null ? null : `${step.temperatureValue} °${step.temperatureUnit ?? 'C'}` })),
+  };
 }
 
 export interface DemoRecipe {

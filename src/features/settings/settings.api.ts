@@ -10,7 +10,7 @@ export interface BackendUserProfile {
   status: string;
   notificationsEnabled: boolean;
   locationSharingEnabled: boolean;
-  preferredRegionId: string | null;
+  preferredRegionId: number | null;
   countryCode: string | null;
   adminLevel1Id: string | null;
   adminLevel2Id: string | null;
@@ -51,7 +51,7 @@ export const settingsApi = {
   updatePreferences: (input: {
     notificationsEnabled: boolean;
     locationSharingEnabled: boolean;
-    preferredRegionId: string | null;
+    preferredRegionId: number | null;
   }) => apiPatch<BackendUserProfile>('/users/me/preferences', input),
   updateLocation: (input: UpdateBackendLocation) =>
     apiPatch<BackendUserProfile>('/users/me/location', input),

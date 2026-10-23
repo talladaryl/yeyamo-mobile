@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useCountryStore } from '@/features/country/country.store';
 import { traceCountryRuntime } from '@/features/country/country.runtime-trace';
@@ -10,6 +10,7 @@ import type { CultureFilters } from './culture.types';
 
 const useDemoMode = () => useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
 export function useCultureContents(filters: CultureFilters = {}) { const demo = useDemoMode(); return useQuery({ queryKey: ['culture', demo ? 'demo' : 'backend', 'contents', filters], queryFn: () => demo ? Promise.resolve(toSpringPage(demoCultureContents.filter((item)=>(!filters.type||item.type===filters.type)&&(!filters.countryCode||item.countryCode===filters.countryCode)&&(!filters.search||item.slug.includes(filters.search.toLowerCase()))))) : cultureApi.listContents(filters) }); }
+export function useInfiniteCultureContents(filters: Omit<CultureFilters,'page'> = {}) { const demo=useDemoMode(); return useInfiniteQuery({queryKey:['culture',demo?'demo':'backend','contents-infinite',filters],initialPageParam:0,queryFn:({pageParam})=>demo?Promise.resolve(toSpringPage(demoCultureContents.filter((item)=>(!filters.type||item.type===filters.type)&&(!filters.countryCode||item.countryCode===filters.countryCode)),Number(pageParam),filters.size??20)):cultureApi.listContents({...filters,page:Number(pageParam)}),getNextPageParam:(page)=>page.last?undefined:page.number+1}); }
 export function useCultureContent(id?: string) { const demo = useDemoMode(); return useQuery({ queryKey: ['culture', demo ? 'demo' : 'backend', 'content', id ?? ''], enabled: Boolean(id), queryFn: () => { if (!demo) return cultureApi.getContent(id!); const selected=demoCultureContents.find((item)=>item.id===id)??demoCultureContents[0]; return Promise.resolve({ content: selected, translations: demoCultureTranslations.filter((translation)=>translation.id.includes(selected.id)) }); } }); }
 export function useCultureLanguages(countryCode?: string | null) {
  const demo = useDemoMode();

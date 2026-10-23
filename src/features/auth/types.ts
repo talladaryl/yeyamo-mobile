@@ -58,11 +58,12 @@ export interface SocialLoginCredentials {
 export type AccountType = 'EXPLORER' | 'PARTNER';
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
+  accessToken: string | null;
+  refreshToken: string | null;
   tokenType: 'Bearer';
   expiresIn: number;
   user: AuthApiUser;
+  verificationRequired: boolean;
 }
 
 export interface AuthApiUser {
@@ -71,6 +72,8 @@ export interface AuthApiUser {
   phone: string | null;
   status: string;
   roles: string[];
+  permissions: string[];
+  scopes: string[];
   createdAt: string;
   emailVerifiedAt: string | null;
   accountType: AccountType;

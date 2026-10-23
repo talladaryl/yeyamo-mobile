@@ -112,7 +112,18 @@ function traceBusinessHttp(config: InternalAxiosRequestConfig, phase: 'HTTP_BUSI
 function isPublicRequest(config: InternalAxiosRequestConfig): boolean {
   const url = config.url ?? '';
   return url.startsWith('/countries')
-    || /^\/auth\/(?:login|register|refresh|oauth|google|apple|verify|resend|forgot|reset)/.test(url);
+    || new Set([
+      '/auth/login',
+      '/auth/register',
+      '/auth/refresh',
+      '/auth/email/verification/request',
+      '/auth/email/verification/confirm',
+      '/auth/password/forgot',
+      '/auth/password/reset',
+      '/auth/oauth/google',
+      '/auth/oauth/apple',
+      '/auth/oauth/microsoft',
+    ]).has(url);
 }
 
 // ─── Axios instance ──────────────────────────────────────────────────────────
@@ -184,9 +195,7 @@ apiClient.interceptors.response.use(
       errorType: error.code ?? error.name,
     });
     if (request) traceBusinessHttp(request, 'HTTP_BUSINESS_ERROR', error.response?.status, error.response?.data);
-    const isAuthenticationRequest = request?.url?.startsWith('/auth/login')
-      || request?.url?.startsWith('/auth/register')
-      || request?.url?.startsWith('/auth/refresh');
+    const isAuthenticationRequest = request ? isPublicRequest(request) : false;
 
     if (error.response?.status === 401 && request && !request._retry && !isAuthenticationRequest) {
       const [sessionMode, accessToken, refreshToken] = await Promise.all([

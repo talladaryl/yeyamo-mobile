@@ -80,7 +80,7 @@ function RootNavigator() {
     hydrateTheme,
     syncSystemTheme,
   } = useThemeStore();
-  const { user, isAuthenticated, isHydrated } = useAuthStore();
+  const { user, isAuthenticated, isHydrated, sessionMode } = useAuthStore();
   const {
     hasCompletedInterestSelection,
     isHydrated: areInterestsHydrated,
@@ -104,6 +104,13 @@ function RootNavigator() {
   const markCountryConfigurationUnavailable = useCountryStore((state) => state.markConfigurationUnavailable);
   const previousAuthUserId = useRef<string | null>(null);
   const countryProfileBootstrapUserId = useRef<string | null>(null);
+  const backendSessionEligible = sessionMode !== 'backend'
+    || Boolean(user && (!user.email || user.email_verified));
+
+  useEffect(() => {
+    if (!isHydrated || !isAuthenticated || backendSessionEligible) return;
+    void authService.clearLocalSession();
+  }, [backendSessionEligible, isAuthenticated, isHydrated]);
 
   useEffect(() => {
     const minimum = setTimeout(() => setMinimumSplashElapsed(true), 2600);
@@ -335,7 +342,7 @@ function RootNavigator() {
   // Route guard — runs after hydration
   useEffect(() => {
     if (!isHydrated || !isOnboardingHydrated || !areInterestsHydrated) return;
-    if (isAuthenticated && !areInterestsServerResolved) return;
+    if (isAuthenticated && backendSessionEligible && !areInterestsServerResolved) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
@@ -355,17 +362,17 @@ function RootNavigator() {
       return;
     }
 
-    if (!isAuthenticated && !inAuthGroup && !inOnboardingGroup) {
+    if ((!isAuthenticated || !backendSessionEligible) && !inAuthGroup && !inOnboardingGroup) {
       router.replace('/(auth)/login');
     } else if (
-      isAuthenticated
+      isAuthenticated && backendSessionEligible
       && !hasCompletedInterestSelection
       && !inInterests
       && !inAuthGroup
     ) {
       router.replace('/interests');
     } else if (
-      isAuthenticated
+      isAuthenticated && backendSessionEligible
       && hasCompletedInterestSelection
       && (inRootIndex || inAuthGroup || inOnboardingGroup || inInterests)
     ) {
@@ -375,6 +382,7 @@ function RootNavigator() {
     }
   }, [
     isAuthenticated,
+    backendSessionEligible,
     isHydrated,
     isOnboardingHydrated,
     areInterestsHydrated,
@@ -387,7 +395,7 @@ function RootNavigator() {
   ]);
 
   const bootstrapReady = isHydrated && isOnboardingHydrated && areInterestsHydrated
-    && (!isAuthenticated || areInterestsServerResolved);
+    && (!isAuthenticated || !backendSessionEligible || areInterestsServerResolved);
   if (!minimumSplashElapsed || (!bootstrapReady && !maximumSplashElapsed)) return <StartupSplash />;
 
   return (

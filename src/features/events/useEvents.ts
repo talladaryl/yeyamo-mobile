@@ -12,6 +12,16 @@ export function useUpcomingEvents() {
   });
 }
 
+export function useMyOrganizedEvents() {
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
+  return useQuery({
+    queryKey: ['events', isDemo ? 'demo' : 'backend', 'organized', 'me'],
+    queryFn: () => isDemo
+      ? Promise.resolve(mockEvents)
+      : eventsApi.organizedByMe().then((page) => page.content),
+  });
+}
+
 export function useEventDetail(eventId: EntityId) {
   const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   return useQuery({

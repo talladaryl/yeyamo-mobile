@@ -3,12 +3,9 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { MOCK_FEED_PAGE } from '@/features/mock/mockData';
 import { feedApi } from './feed.api';
 import { feedService } from './feed.service';
-import type { FeedAudience, FeedPost } from './types';
+import { isSponsoredFeedItem, type FeedAudience, type FeedItem, type FeedPost } from './types';
 import type { PaginatedResponse , EntityId } from '@/types/api.types';
 import { useInterestsStore } from '@/features/interests/interests.store';
-import { mockSponsoredFeedItems } from './sponsoredMockData';
-import { sponsoredFeedApi } from './sponsored-feed.api';
-import { FEATURE_FLAGS } from '@/config/featureFlags';
 import { traceInteractionRuntime } from '@/features/social/social.runtime-trace';
 
 export const FEED_QUERY_KEY = ['feed'] as const;
@@ -16,15 +13,18 @@ export const FEED_QUERY_KEY = ['feed'] as const;
 /** Updates a single rendered post across For You and Following pages without
  * invalidating/refetching the active feed. */
 export function incrementFeedCommentCount(queryClient: ReturnType<typeof useQueryClient>, postId: EntityId, delta: number) {
-  queryClient.setQueriesData<InfiniteData<PaginatedResponse<FeedPost>>>(
+  queryClient.setQueriesData<InfiniteData<PaginatedResponse<FeedItem>>>(
     { queryKey: FEED_QUERY_KEY },
     (current) => current ? {
       ...current,
       pages: current.pages.map((page) => ({
         ...page,
-        data: page.data.map((post) => String(post.id) === String(postId)
-          ? { ...post, comments_count: Math.max(0, post.comments_count + delta) }
-          : post),
+         data: page.data.map((item) => {
+           if (isSponsoredFeedItem(item)) return item;
+           return String(item.id) === String(postId)
+             ? { ...item, comments_count: Math.max(0, item.comments_count + delta) }
+             : item;
+         }),
       })),
     } : current,
   );
@@ -47,7 +47,7 @@ export function useFeed(audience: FeedAudience = 'FOR_YOU', enabled = true) {
         : feedApi.getFeed(pageParam, audience),
     initialPageParam: 0,
     enabled: canLoad,
-    getNextPageParam: (lastPage: PaginatedResponse<FeedPost>) => {
+    getNextPageParam: (lastPage: PaginatedResponse<FeedItem>) => {
       if (lastPage.links.next) {
         const next = Number(lastPage.links.next);
         if (Number.isInteger(next) && next > lastPage.meta.current_page) return next;
@@ -56,15 +56,6 @@ export function useFeed(audience: FeedAudience = 'FOR_YOU', enabled = true) {
         ? lastPage.meta.current_page + 1
         : undefined;
     },
-  });
-}
-
-export function useSponsoredFeed(regionId?: number, enabled = true) {
-  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
-  return useQuery({
-    queryKey: ['feed', 'sponsored', regionId ?? 'all', isDemo ? 'demo' : 'backend'],
-    enabled: enabled && FEATURE_FLAGS.ads_delivery_enabled,
-    queryFn: () => isDemo ? Promise.resolve(mockSponsoredFeedItems) : sponsoredFeedApi.deliveries(regionId),
   });
 }
 
@@ -78,7 +69,7 @@ const MOCK_POST_INTERESTS: Record<string, string[]> = {
   107: ['culture', 'langues', 'education'],
 };
 
-function personalizeMockFeed(selectedInterestIds: string[]): PaginatedResponse<FeedPost> {
+function personalizeMockFeed(selectedInterestIds: string[]): PaginatedResponse<FeedItem> {
   const score = (post: FeedPost) =>
     (MOCK_POST_INTERESTS[String(post.id)] ?? []).filter((interest) => selectedInterestIds.includes(interest)).length;
 
@@ -100,14 +91,14 @@ export function useLikePost() {
 
     // Optimistic update
     onMutate: async ({ postId, isLiked }) => {
-      const current = queryClient.getQueriesData<InfiniteData<PaginatedResponse<FeedPost>>>({ queryKey: FEED_QUERY_KEY })
+      const current = queryClient.getQueriesData<InfiniteData<PaginatedResponse<FeedItem>>>({ queryKey: FEED_QUERY_KEY })
         .flatMap(([, data]) => data?.pages.flatMap((page) => page.data) ?? [])
-        .find((post) => String(post.id) === String(postId));
+        .find((item): item is FeedPost => !isSponsoredFeedItem(item) && String(item.id) === String(postId));
       traceInteractionRuntime('LIKE_REQUEST', { flow: 'like', postId: String(postId), viewerUserId: viewerId, beforeViewerLiked: isLiked, beforeCount: current?.likes_count ?? 0, afterCount: Math.max(0, (current?.likes_count ?? 0) + (isLiked ? -1 : 1)) });
       await queryClient.cancelQueries({ queryKey: FEED_QUERY_KEY });
-      const previous = queryClient.getQueriesData<InfiniteData<PaginatedResponse<FeedPost>>>({ queryKey: FEED_QUERY_KEY });
+      const previous = queryClient.getQueriesData<InfiniteData<PaginatedResponse<FeedItem>>>({ queryKey: FEED_QUERY_KEY });
 
-      queryClient.setQueriesData<InfiniteData<PaginatedResponse<FeedPost>>>(
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<FeedItem>>>(
         { queryKey: FEED_QUERY_KEY },
         (old) => {
           if (!old) return old;
@@ -115,15 +106,16 @@ export function useLikePost() {
             ...old,
             pages: old.pages.map((page) => ({
               ...page,
-              data: page.data.map((post) =>
-                post.id === postId
-                  ? {
-                      ...post,
-                      is_liked: !isLiked,
-                      likes_count: post.likes_count + (isLiked ? -1 : 1),
-                    }
-                  : post,
-              ),
+               data: page.data.map((item) => {
+                 if (isSponsoredFeedItem(item)) return item;
+                 return item.id === postId
+                   ? {
+                       ...item,
+                       is_liked: !isLiked,
+                       likes_count: item.likes_count + (isLiked ? -1 : 1),
+                     }
+                   : item;
+               }),
             })),
           };
         },

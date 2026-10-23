@@ -52,7 +52,7 @@ export default function VerifyCodeScreen() {
   const onSubmit = async (data: VerifyCodeForm) => {
     try {
       await verifyCode({ code: data.code, email });
-      router.replace('/(tabs)');
+      router.replace('/(auth)/login');
     } catch {
       // error displayed via useAuth state
     }

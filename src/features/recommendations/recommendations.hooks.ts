@@ -9,6 +9,7 @@ export function useRecommendations(request: RecommendationRequest = {}) {
     queryKey: ['recommendations', backendSession ? 'backend' : 'local', request],
     enabled: backendSession,
     queryFn: () => recommendationsApi.list(request),
+    retry: false,
     staleTime: 60_000,
   });
 }

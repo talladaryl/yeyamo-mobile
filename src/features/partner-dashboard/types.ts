@@ -1,9 +1,9 @@
 // ─── Partner Dashboard Types ────────────────────────────────────────────────
 
 export interface DashboardMetrics {
-  publications: number;
+  publications: number | null;
   views: number;
-  establishments: number;
+  establishments: number | null;
 }
 
 export interface RecentActivity {

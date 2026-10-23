@@ -1,13 +1,16 @@
+/* eslint-disable no-unused-expressions */
 import { useState } from 'react';
 import { ActivityIndicator, Share, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
+import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeScreen } from '@/components/ui/SafeScreen';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { useCultureContent } from '@/features/culture/culture.hooks';
 import { getDemoRecipe } from '@/features/culture/recipe.demo';
-import { formatScaledQuantity, type RichRecipeDetails, type RichRecipeIngredient, type RichRecipeStep } from '@/features/culture/recipe.types';
+import { adaptRecipeDetails, formatScaledQuantity, type RichRecipeIngredient, type RichRecipeStep } from '@/features/culture/recipe.types';
+import { getMediaAttachments } from '@/features/media/media.api';
 import { RecipeGuidedCooking } from '@/features/culture/components/RecipeGuidedCooking';
 import { useInteractionStatus, useToggleInteraction } from '@/features/interactions/generic-interactions.hooks';
 import { useAuthStore } from '@/features/auth/auth.store';
@@ -16,10 +19,12 @@ import { useThemeStore } from '@/features/theme/theme.store';
 export default function RecipeDetail(){
  const {id}=useLocalSearchParams<{id:string}>();const router=useRouter();const colors=useThemeStore((s)=>s.colors);const demoMode=useAuthStore((s)=>s.sessionMode?.startsWith('demo-')??false);const query=useCultureContent(id);const fixture=getDemoRecipe(id);
  const [checked,setChecked]=useState<Set<number>>(new Set());const [guided,setGuided]=useState(false);const [demoFavorite,setDemoFavorite]=useState(false);const favorite=useInteractionStatus('CULTURE_CONTENT',demoMode?undefined:id);const toggleFavorite=useToggleInteraction('CULTURE_CONTENT',demoMode?undefined:id);
+ const content=query.data?.content;const rawDetails=content?.recipeDetails;const details=demoMode?fixture?.details:rawDetails?adaptRecipeDetails(rawDetails):undefined;const mediaIds=demoMode||!details?[]:[details.heroMediaId,details.videoMediaId,...(rawDetails?.gallery?.map((item)=>item.mediaId)??[]),...details.steps.map((step)=>step.mediaId)].filter((value):value is string=>Boolean(value));const media=useQuery({queryKey:['recipe-media',content?.id,content?.version,mediaIds],enabled:!demoMode&&mediaIds.length>0,queryFn:()=>getMediaAttachments(mediaIds)});const heroUrl=demoMode?details?.heroMediaUrl:details?.heroMediaId?media.data?.get(details.heroMediaId)?.url:null;
+ if(details)details.heroMediaUrl=heroUrl;
  if(!demoMode&&query.isLoading)return <SafeScreen><ActivityIndicator className="mt-24" color={colors.primary}/></SafeScreen>;
  if(!demoMode&&query.isError)return <SafeScreen><View className="flex-1 items-center justify-center px-8"><Icon name="cloud-offline-outline" size={44} color={colors.textMuted}/><Text className="mt-4 text-center" style={{color:colors.textSecondary}}>Impossible de charger cette recette.</Text><TouchableOpacity onPress={()=>query.refetch()} className="mt-4"><Text className="font-bold" style={{color:colors.primary}}>Réessayer</Text></TouchableOpacity></View></SafeScreen>;
  if((demoMode&&!fixture)||(!demoMode&&!query.data))return <SafeScreen><View className="flex-1 items-center justify-center"><Text style={{color:colors.text}}>Recette introuvable.</Text></View></SafeScreen>;
- const content=query.data?.content;const translation=query.data?.translations[0];const details=(demoMode?fixture!.details:content?.recipeDetails) as RichRecipeDetails|undefined;const title=demoMode?fixture!.title:translation?.title??content!.slug;const summary=demoMode?fixture!.summary:translation?.summary;const history=demoMode?fixture!.history:translation?.body;const country=demoMode?fixture!.countryName:content!.countryCode;const region=demoMode?fixture!.region:content!.communityName;const steps=details?.steps??[];const ingredients=details?.ingredients??[];
+ const translation=query.data?.translations[0];const title=demoMode?fixture!.title:translation?.title??content!.slug;const summary=demoMode?fixture!.summary:translation?.summary;const history=demoMode?fixture!.history:translation?.body;const country=demoMode?fixture!.countryName:content!.countryCode;const region=demoMode?fixture!.region:content!.communityName;const steps=details?.steps??[];const ingredients=details?.ingredients??[];
  const durationParts=[details?.prepTimeMinutes,details?.cookTimeMinutes,details?.restTimeMinutes];const total=durationParts.every((value)=>value!=null)?durationParts.reduce<number>((sum,value)=>sum+(value??0),0):null;
  const favoriteActive=demoMode?demoFavorite:Boolean(favorite.data);const share=()=>void Share.share({title,message:`Découvrez ${title} sur Yeyamo.`,url:`https://yeyamo.app/recipes/${id}`});
  const favoritePress=()=>{if(demoMode)setDemoFavorite((value)=>!value);else toggleFavorite.mutate(favoriteActive);};

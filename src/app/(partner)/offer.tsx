@@ -10,10 +10,12 @@ import { DateTimeField } from '@/components/ui/DateTimeField';
 import { formValidation } from '@/utils/formValidation';
 import { usePartnerStore } from '@/features/partner/partner.store';
 import { useThemeStore } from '@/features/theme/theme.store';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 export default function PartnerOfferScreen() {
   const router = useRouter();
   const colors = useThemeStore((state) => state.colors);
+  const isDemo = useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
   const { offerForm, setOfferForm, resetOfferForm } = usePartnerStore();
   const [title, setTitle] = useState(offerForm.title ?? '');
   const [description, setDescription] = useState(offerForm.description ?? '');
@@ -29,6 +31,10 @@ export default function PartnerOfferScreen() {
   };
 
   const publish = () => {
+    if (!isDemo) {
+      Alert.alert('Fonctionnalité indisponible', 'La publication d’offres n’est pas encore raccordée à un contrat backend.');
+      return;
+    }
     const numericPrice = Number(price.replace(/\s/g, ''));
     const numericOriginalPrice = originalPrice ? Number(originalPrice.replace(/\s/g, '')) : undefined;
     const error = formValidation.required(title, 'Titre') ?? formValidation.required(description, 'Description') ?? formValidation.positiveNumber(price.replace(/\s/g, ''), 'Prix', true) ?? formValidation.date(validUntil, 'Date de fin', true);
@@ -66,8 +72,8 @@ export default function PartnerOfferScreen() {
           <View className="flex-row gap-3"><View className="flex-1"><Field label="Prix promotionnel *" value={price} onChangeText={setPrice} placeholder="25 000" keyboardType="numeric" suffix="FCFA" /></View><View className="flex-1"><Field label="Prix initial" value={originalPrice} onChangeText={setOriginalPrice} placeholder="30 000" keyboardType="numeric" suffix="FCFA" /></View></View>
           <DateTimeField label="Valable jusqu’au" value={validUntil} onChange={setValidUntil} minimumDate={new Date()} required />
           <Field label="Conditions de l’offre" value={terms} onChangeText={setTerms} placeholder="Ex. Sur réservation, hors boissons…" multiline />
-          <View className="mb-5 flex-row rounded-xl bg-[#FEE2E2] p-3"><Icon name="information-circle-outline" size={20} color="#E60012" /><Text className="ml-2 flex-1 text-xs leading-5 text-[#991B1B]">L’offre sera visible après validation par l’équipe Yeyamo.</Text></View>
-          <CTAButton title="Publier l’offre" variant="primary" onPress={publish} />
+          <View className="mb-5 flex-row rounded-xl bg-[#FEE2E2] p-3"><Icon name="information-circle-outline" size={20} color="#E60012" /><Text className="ml-2 flex-1 text-xs leading-5 text-[#991B1B]">{isDemo ? 'Démonstration : aucune offre réelle ne sera publiée.' : 'Publication indisponible : aucun contrat backend d’offre n’est actuellement disponible.'}</Text></View>
+          <CTAButton title={isDemo ? 'Simuler la publication' : 'Publication indisponible'} variant="primary" onPress={publish} disabled={!isDemo} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeScreen>

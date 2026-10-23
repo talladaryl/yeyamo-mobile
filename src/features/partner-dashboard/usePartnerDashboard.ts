@@ -3,6 +3,7 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { dashboardMetrics, statisticCards } from './mockData';
 import { partnerApi } from './partner.api';
 import type { DashboardMetrics, StatisticCard } from './types';
+import { placesApi } from '@/features/places/places.api';
 
 function useDemoPartner() {
   return useAuthStore((state) => state.sessionMode?.startsWith('demo-') ?? false);
@@ -46,7 +47,10 @@ export function usePartnerStatistics() {
       if (isDemo) {
         return { cards: statisticCards, bars: [34, 48, 42, 68, 56, 78, 64, 84], metrics: dashboardMetrics };
       }
-      const points = await partnerApi.analytics(profile.data!.id);
+      const [points, places] = await Promise.all([
+        partnerApi.analytics(profile.data!.id),
+        placesApi.myPlaces().catch(() => null),
+      ]);
       const views = points.map((point) => point.totalViews);
       const maxViews = Math.max(1, ...views);
       const totalViews = views.reduce((sum, value) => sum + value, 0);
@@ -57,7 +61,11 @@ export function usePartnerStatistics() {
           { label: 'Réservations', value: String(bookings), change: '', isPositive: true },
         ],
         bars: views.slice(-8).map((value) => Math.round((value / maxViews) * 100)),
-        metrics: { publications: 0, views: totalViews, establishments: 0 },
+        metrics: {
+          publications: null,
+          views: totalViews,
+          establishments: places?.page?.totalElements ?? places?.content.length ?? null,
+        },
       };
     },
   });

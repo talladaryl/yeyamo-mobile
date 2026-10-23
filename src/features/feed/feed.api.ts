@@ -8,7 +8,7 @@ import {
 import { getMediaAttachment, getMediaAttachments } from '@/features/media/media.api';
 import { socialApi, type ContentAuthorIdentity } from '@/features/social/social.api';
 import { traceFeedRuntime, traceInteractionRuntime } from '@/features/social/social.runtime-trace';
-import type { FeedAudience, FeedPost , PostComment } from './types';
+import type { FeedAudience, FeedItem, FeedPost, PostComment, SponsoredFeedItem } from './types';
 
 interface BackendFeedItem {
   itemType?: 'ORGANIC' | 'SPONSORED';
@@ -25,6 +25,15 @@ interface BackendFeedItem {
   referenceType?: string | null;
   referenceId?: string | null;
   linkedContent?: { type: 'PROVERB' | 'RECIPE'; id: string; title: string | null } | null;
+  deliveryId?: string | null;
+  campaignId?: string | null;
+  sponsorId?: string | null;
+  promotedEntityType?: string | null;
+  promotedEntityId?: string | null;
+  creative?: Record<string, unknown> | null;
+  trackingToken?: string | null;
+  impressionTrackingToken?: string | null;
+  clickTrackingToken?: string | null;
 }
 
 interface BackendFeedPage {
@@ -49,6 +58,46 @@ function isOrganicFeedItem(item: BackendFeedItem): item is OrganicBackendFeedIte
     && typeof item.authorId === 'string'
     && Array.isArray(item.mediaIds)
     && typeof item.publishedAt === 'string';
+}
+
+function isSponsoredBackendItem(item: BackendFeedItem): boolean {
+  return item.itemType === 'SPONSORED' && typeof item.deliveryId === 'string';
+}
+
+function sponsoredEntityType(type: string | null | undefined): SponsoredFeedItem['promoted_entity']['type'] {
+  switch (type?.toLowerCase()) {
+    case 'place': return 'place';
+    case 'event': return 'event';
+    case 'post': return 'post';
+    default: return 'partner';
+  }
+}
+
+function mapSponsoredFeedItem(item: BackendFeedItem): SponsoredFeedItem {
+  const creative = item.creative ?? {};
+  const media = Array.isArray(creative.media) ? creative.media as SponsoredFeedItem['media'] : [];
+  const promotedType = sponsoredEntityType(item.promotedEntityType);
+  const promotedId = item.promotedEntityId ?? item.deliveryId!;
+  return {
+    item_kind: 'sponsored',
+    id: item.deliveryId!,
+    delivery_id: item.deliveryId!,
+    campaign_id: item.campaignId ?? item.deliveryId!,
+    sponsor: {
+      id: item.sponsorId ?? item.campaignId ?? item.deliveryId!,
+      username: item.sponsorId ?? 'annonceur',
+      display_name: item.sponsorId ? 'Partenaire' : 'Annonceur',
+      avatar_url: null,
+      is_verified: false,
+      user_type: 'partner',
+    },
+    media,
+    caption: typeof creative.caption === 'string' ? creative.caption : null,
+    cta: { label: typeof creative.ctaLabel === 'string' ? creative.ctaLabel : 'Découvrir' },
+    promoted_entity: { type: promotedType, id: promotedId },
+    impression_tracking_token: item.impressionTrackingToken ?? item.trackingToken ?? '',
+    click_tracking_token: item.clickTrackingToken ?? item.trackingToken ?? '',
+  };
 }
 
 interface BackendPost {
@@ -170,7 +219,8 @@ export const feedApi = {
   getFeed: async (pageParam?: number, audience: FeedAudience = 'FOR_YOU') => {
     const page = Number.isInteger(pageParam) && pageParam! >= 0 ? pageParam! : 0;
     const response = await apiGet<BackendFeedPage>(`/feed?page=${page}&size=20&audience=${audience}`);
-    const organicItems = (response.items ?? []).filter(isOrganicFeedItem);
+    const backendItems = response.items ?? [];
+    const organicItems = backendItems.filter(isOrganicFeedItem);
     const identities = await socialApi.resolveContentAuthorIdentities(organicItems.map((item) => item.authorId));
     const identityByAuthUserId = new Map(identities.map((identity) => [identity.authUserId, identity]));
     let mediaById: Map<string, MediaAttachment> | undefined;
@@ -194,7 +244,9 @@ export const feedApi = {
         if (summary) interactionByPostId.set(item.postId, summary);
       }));
     }
-    const posts = await Promise.all(organicItems.map(async (item) => {
+    const mappedItems = await Promise.all(backendItems.map(async (item): Promise<FeedItem | null> => {
+      if (isSponsoredBackendItem(item)) return mapSponsoredFeedItem(item);
+      if (!isOrganicFeedItem(item)) return null;
       const interaction = interactionByPostId.get(item.postId);
       const post = await mapFeedItem(item, identityByAuthUserId.get(item.authorId), interaction, mediaById);
       traceFeedRuntime('FEED_ITEM_RESOLVED', {
@@ -208,7 +260,7 @@ export const feedApi = {
       return post;
     }));
     return toPaginatedResponse(
-      posts,
+      mappedItems.filter((item): item is FeedItem => item !== null),
       response.page,
       response.size,
       response.hasNext,
